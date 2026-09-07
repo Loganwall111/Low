@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.dabicco.witherstormmod.structures.McsmSchematic;
+import net.mcsm.extras.McsmNpcs;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -41,6 +42,8 @@ public abstract class McsmWorldgenPatch {
             McsmWorldgen.clear();
         }
         McsmWorldgen.setBudget(900000);
+        // mega-phase 9: the towns get their cast, and their dialogue hook
+        McsmNpcs.tick(level);
     }
 
     @Inject(method = "enqueue", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
