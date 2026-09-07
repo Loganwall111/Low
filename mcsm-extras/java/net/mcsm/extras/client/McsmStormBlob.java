@@ -33,9 +33,9 @@ import net.minecraft.world.phys.Vec3;
  *  - the MOUTHS are flat emissive squares over the body: cyan-white inner
  *    mouth, a zigzagged U-arc of tiny white dashed teeth, one magenta cube
  *    per emitter - exactly what the close-up frames show;
- *  - new for 5.5+: a PURPLE OVERLAY over the storm's face - an additive
- *    fringe hugging the silhouette plus a faint violet wash across the
- *    whole face, like a second silhouette layered on the creature.
+ *  - the old three-headed halo/symbol disc is DELETED; 5.5+ instead gets a
+ *    plain palette fringe on the body (dark blue, then dark purple over it)
+ *    while the wide halo is sky-glued in McsmPhaseSky.
  *
  * Every call is copied verbatim from the base mod's own compiled
  * StormBackdrop (verified 26.2 surface).
@@ -54,8 +54,6 @@ public final class McsmStormBlob {
             "dabywitherstormmod", "textures/misc/backdrop_purple_pink.png");
     private static final Identifier EMBER = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/backdrop_ember.png");
-    private static final Identifier STORM_FACE = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/storm_face.png");
     // mega-phase 5c: the reference frames exposed how the original game
     // builds the glare - a plain soft gradient quad BEHIND the silhouette,
     // plus flat emissive squares for the mouth details. The old hard ring
@@ -224,13 +222,17 @@ public final class McsmStormBlob {
                 quad(poseStack, collector, GlowRenderTypes.translucent(BLACK), at, view,
                         baseR * 0.85, 255, 255, 255, (int) (a * wCore * 235.0F));
             }
-            // the purple overlay: additive fringe on the silhouette plus a
-            // faint violet wash across the whole face, 5.5 and up
+            // the OLD halo - the far-off disc carrying three heads and a
+            // symbol behind the creature - is deleted at the user's order.
+            // What replaces it over the body is a plain palette fringe: a
+            // dark-blue over-storm light with a dark purple layer laid on top
+            // of it, drawn from the soft gradient, no face anywhere. The wide
+            // halo itself is sky-glued and lives in McsmPhaseSky.
             if (key == mainKey && wFace > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.glow(STORM_FACE), at, view,
-                        baseR * 1.06, 255, 255, 255, (int) (a * wFace * 140.0F));
-                quad(poseStack, collector, GlowRenderTypes.translucent(STORM_FACE), at, view,
-                        baseR * 0.92, 255, 255, 255, (int) (a * wFace * 55.0F));
+                quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
+                        baseR * 1.14, 26, 52, 124, (int) (a * wFace * 92.0F));
+                quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
+                        baseR * 1.02, 78, 28, 118, (int) (a * wFace * 76.0F));
             }
             if (wBlue > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.glow(BLUE4), at, view,

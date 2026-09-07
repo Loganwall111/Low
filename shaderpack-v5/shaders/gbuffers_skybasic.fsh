@@ -44,7 +44,7 @@ uniform mat4 gbufferModelViewInverse;
 #define STORM_SKY       1     // [0 1]
 #define SKY_SATURATION  1.15  // [0.50 0.75 1.00 1.15 1.30 1.60 2.00]
 #define HORIZON_GLOW    1     // [0 1]
-#define AURORA          1     // [0 1]
+#define AURORA          0     // [0 1]
 #define AURORA_STRENGTH 1.00  // [0.00 0.25 0.50 0.75 1.00 1.50 2.00]
 #define AURORA_SPEED    1.00  // [0.25 0.50 1.00 1.50 2.00]
 #define AURORA_HEIGHT   0.30  // [0.10 0.20 0.30 0.45 0.60]
@@ -196,15 +196,15 @@ vec3 storyCalmSky(vec3 dirS) {
 
     // vanilla's dawn and dusk both read orange, so the dawn palette carries
     // both ends of the day here - exactly like the core-shader round-5 sky.
-    vec3 zen = day   * vec3(0.216, 0.394, 0.716)
+    vec3 zen = day   * vec3(0.106, 0.286, 0.694)
              + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 mid = day   * vec3(0.394, 0.578, 0.806)
+             + night * vec3(0.007, 0.013, 0.058);
+    vec3 mid = day   * vec3(0.318, 0.545, 0.867)
              + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 hor = day   * vec3(0.870, 0.745, 0.690)
+             + night * vec3(0.007, 0.013, 0.058);
+    vec3 hor = day   * vec3(0.678, 0.835, 0.949)
              + dusk  * vec3(0.890, 0.680, 0.730)
-             + night * vec3(0.019, 0.031, 0.130);
+             + night * vec3(0.030, 0.062, 0.178);
 
     // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
@@ -383,8 +383,8 @@ void main() {
         // night is blue (r<g) - so neither false-positives into a storm sky.
         float stormK = 0.0;
 #if STORM_SKY
-        stormK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.0, 0.0, 1.0)
-               * (1.0 - rainStrength * 0.6);
+        float purple = min(fogColor.r, fogColor.b) - fogColor.g;
+        stormK = smoothstep(0.085, 0.150, purple) * (1.0 - rainStrength * 0.6);
 #endif
 
 #if SKY_STORY_MODE

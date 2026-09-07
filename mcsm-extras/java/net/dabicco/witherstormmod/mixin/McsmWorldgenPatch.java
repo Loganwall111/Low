@@ -1,22 +1,19 @@
 package net.dabicco.witherstormmod.mixin;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyReturnValue;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.dabicco.witherstormmod.structures.McsmSchematic;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 /**
  * Mega-phase 7: structures land WHOLE, and Sky City goes up among the
  * cloud decks (user orders: "structures never in segments", "no scattered
- * Sky City fragments", "Sky City ~1000-10,000 blocks up, fall through
- * 5-15 cloud layers").
+ * Sky City fragments", "Sky City thousands of blocks up").
  *
  * The base mod places every schematic through a static queue with a 24k
  * blocks/tick budget, slicing towns upward over many ticks (the visible
@@ -26,9 +23,12 @@ import net.minecraft.server.level.ServerLevel;
  * level instance changes, and the budget is raised so each schematic
  * completes in about a tick.
  *
- * The floating sites (Sky City y=296 and siblings) are raised +3904:
- * Sky City ends at y=4200, above the 3500 cloud deck - jumping off falls
- * through seven of the story decks on the way down.
+ * Altitude: the shipped Mixin jar predates ModifyReturnValue, so the
+ * raise hooks enqueue() instead. Ground sites top out at y=64; the
+ * floating ones (Sky City 296, Speakeasy 284, Jungle Fortress 276,
+ * Mushroom Island 308) are the only jobs in the 200..1000 band, so they
+ * get re-enqueued 3904 blocks higher and the original call is cancelled.
+ * The re-entered call sees y ~4200 and passes straight through.
  */
 @Mixin(McsmWorldgen.class)
 public abstract class McsmWorldgenPatch {
@@ -44,16 +44,12 @@ public abstract class McsmWorldgenPatch {
         McsmWorldgen.setBudget(900000);
     }
 
-    @ModifyReturnValue(method = "layout", at = @At("RETURN"), remap = false, require = 0)
-    private static List<McsmWorldgen.Site> dabyws$skyCityAltitude(List<McsmWorldgen.Site> in) {
-        List<McsmWorldgen.Site> out = new ArrayList<>(in.size());
-        for (McsmWorldgen.Site s : in) {
-            if (s.floating() && s.y() < 1000) {
-                out.add(new McsmWorldgen.Site(s.path(), s.x(), s.y() + 3904, s.z(), s.label(), true));
-            } else {
-                out.add(s);
-            }
+    @Inject(method = "enqueue", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private static void dabyws$skyCityAltitude(McsmSchematic sch, BlockPos origin, String label, CallbackInfo ci) {
+        int y = origin.getY();
+        if (y > 200 && y < 1000) {
+            McsmWorldgen.enqueue(sch, new BlockPos(origin.getX(), y + 3904, origin.getZ()), label);
+            ci.cancel();
         }
-        return out;
     }
 }

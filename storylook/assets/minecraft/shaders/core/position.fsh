@@ -209,15 +209,15 @@ void main() {
     float day = max(1.0 - night - dawn, 0.0);
 
     // EnderCon gate / Sky City pastels: soft story blue, pink-warm horizon
-    vec3 zen = day * vec3(0.216, 0.394, 0.716)
+    vec3 zen = day * vec3(0.106, 0.286, 0.694)
              + dawn * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 mid = day * vec3(0.394, 0.578, 0.806)
+             + night * vec3(0.007, 0.013, 0.058);
+    vec3 mid = day * vec3(0.318, 0.545, 0.867)
              + dawn * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 hor = day * vec3(0.870, 0.745, 0.690)
+             + night * vec3(0.007, 0.013, 0.058);
+    vec3 hor = day * vec3(0.678, 0.835, 0.949)
              + dawn * vec3(0.890, 0.680, 0.730)
-             + night * vec3(0.019, 0.031, 0.130);
+             + night * vec3(0.030, 0.062, 0.178);
 
     // per-biome variants (vanilla hands us the biome sky hue in ColorModulator)
     float gk = clamp((C.g - max(C.r, C.b)) * 3.0, 0.0, 0.6) * day;
