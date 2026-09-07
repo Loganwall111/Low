@@ -129,24 +129,25 @@ void main() {
     float ty = clamp(dirS.y, -1.0, 1.0);
     float t = pow(1.0 - clamp(ty, 0.0, 1.0), 1.35);
 
-    // --- storm phases: the mod tints the sky per phase; map that tint to the
-    //     reference frame whose palette belongs to it -------------------------
-    bool storm = (C.r > C.g * 1.25 && C.b > C.g * 1.05)
-              || (C.r > C.g * 1.25 && clum < 0.18);
+    // --- storm phases (5.4-5.9 purple ONLY when fog is phase-tinted) ---------
+    // 1.9.152: calm night/midnight is DEEP BLUE (user sky strips). Never treat
+    // dark fog as storm — that false-trigger defaulted magK=1 and painted the
+    // whole night purple/pink. Purple vault is phase 5.4-5.9 + McsmPhaseSky.
+    float purpleChroma = min(C.r, C.b) - C.g;
+    float tealChroma   = C.g - max(C.r, C.b);
+    float emberChroma  = C.r - max(C.g, C.b);
+    float greenK  = clamp((C.g - max(C.r, C.b)) * 2.5, 0.0, 1.0);
+    float orangeK = clamp((C.r - C.g) * 2.2, 0.0, 1.0) * step(C.b, C.g) * (1.0 - greenK);
+    float pinkK   = clamp(1.0 - abs(C.r - C.b) * 3.0, 0.0, 1.0)
+                  * step(C.g * 1.05, min(C.r, C.b)) * (1.0 - greenK);
+    float magK    = clamp((C.r - C.b) * 2.0, 0.0, 1.0) * (1.0 - orangeK) * (1.0 - greenK);
+    float wsum = pinkK + greenK + orangeK + magK;
+    bool storm = wsum > 0.08
+              && ((purpleChroma > 0.04 && min(C.r, C.b) > 0.08)
+               || (tealChroma > 0.06 && C.g > 0.12)
+               || (emberChroma > 0.10 && C.r > 0.25 && clum > 0.12));
     if (storm) {
-        float greenK  = clamp((C.g - max(C.r, C.b)) * 2.5, 0.0, 1.0);
-        float orangeK = clamp((C.r - C.g) * 2.2, 0.0, 1.0) * step(C.b, C.g) * (1.0 - greenK);
-        float pinkK   = clamp(1.0 - abs(C.r - C.b) * 3.0, 0.0, 1.0)
-                      * step(C.g * 1.05, min(C.r, C.b)) * (1.0 - greenK);
-        float magK    = clamp((C.r - C.b) * 2.0, 0.0, 1.0) * (1.0 - orangeK) * (1.0 - greenK);
-        float wsum = pinkK + greenK + orangeK + magK;
-        if (wsum < 0.02) {
-            magK = 1.0;
-            wsum = 1.0;
-        }
-        // 5.4-5.9 phase fog/sky: violet zenith, magenta mid, SALMON-PINK
-        // horizon. The purple body is the storm blob, not the sky.
-        // After ~6 the same deck shifts toward a light pink wash.
+        // 5.4-5.9: violet zenith, magenta mid, SALMON-PINK horizon
         vec3 z1 = vec3(0.035, 0.010, 0.120);
         vec3 m1 = vec3(0.320, 0.060, 0.380);
         vec3 h1 = vec3(0.920, 0.360, 0.480);
@@ -154,53 +155,42 @@ void main() {
         vec3 z2 = vec3(0.030, 0.100, 0.095);
         vec3 m2 = vec3(0.080, 0.260, 0.220);
         vec3 h2 = vec3(0.380, 0.620, 0.480);
-        // sunset-orange frames
-        vec3 z3 = vec3(0.120, 0.060, 0.080);
-        vec3 m3 = vec3(0.350, 0.140, 0.110);
-        vec3 h3 = vec3(0.780, 0.280, 0.100);
-        // deep purple / magenta frames (phase ~5 punch + post-6 light pink)
+        // sunset-orange frames (user storymode_sky_sunset strip)
+        vec3 z3 = vec3(0.188, 0.329, 0.376);
+        vec3 m3 = vec3(0.863, 0.353, 0.157);
+        vec3 h3 = vec3(0.494, 0.098, 0.165);
+        // deep purple / magenta frames
         vec3 z4 = vec3(0.040, 0.012, 0.110);
         vec3 m4 = vec3(0.340, 0.050, 0.320);
         vec3 h4 = vec3(0.860, 0.320, 0.480);
         vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
         vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
         vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
-        // keep the mod's own tint in the mix so the blob colour still reads
-        zen = mix(zen, C * 0.35, 0.30);
-        mid = mix(mid, C * 0.80, 0.30);
-        hor = mix(hor, C * 1.35, 0.22);
+        zen = mix(zen, C * 0.35, 0.22);
+        mid = mix(mid, C * 0.80, 0.22);
+        hor = mix(hor, C * 1.20, 0.18);
 
         vec3 col = mix(zen, mid, smoothstep(0.04, 0.45, t));
         col = mix(col, hor, smoothstep(0.45, 0.95, t));
-        // soft horizon glow band, continuous - no seam between vault and rim
         col += hor * 0.22 * exp(-abs(ty) * 6.0);
-        // blue silhouette rim hugging the horizon, all the way around
         float rim = exp(-abs(ty - 0.015) * 42.0);
         col = mix(col, vec3(0.16, 0.34, 0.95), rim * 0.50);
-        // gigantic purple glow band across the upper vault (5.4-5.9 punch)
-        // stronger than the old thin line so the phase fog actually reads
+        // purple glow bands ONLY on storm path (phase 5.4-5.9)
         float topLine = exp(-abs(ty - 0.68) * 18.0);
         col = mix(col, vec3(0.48, 0.14, 0.92), topLine * 0.48);
-        // second, higher purple wash so the roof carries the big glow
         float topWash = exp(-abs(ty - 0.82) * 10.0);
         col = mix(col, vec3(0.32, 0.08, 0.70), topWash * 0.35);
-        // darker back tone so the roof reads heavier than the sides
         col *= 1.0 - 0.42 * smoothstep(0.50, 1.0, ty);
-        // mega-phase 7b: overhead collapses into a dark purple+black stack
-        // (silhouette nightglow), not a calm violet. The coloured shell
-        // around the storm's flanks is carried by McsmStormBlob's thick
-        // welded aura — not a far three-headed HALO ring.
         float over = smoothstep(0.28, 0.72, ty);
         float olum = dot(col, vec3(0.299, 0.587, 0.114));
-        // purple + moon-blue + black atmospheric top
         vec3 ocol = mix(vec3(olum) * vec3(0.30, 0.18, 0.48), vec3(0.012, 0.008, 0.022), 0.62);
-        ocol = mix(ocol, vec3(0.05, 0.08, 0.22), 0.18); // moon-blue fringe
+        ocol = mix(ocol, vec3(0.05, 0.08, 0.22), 0.18);
         col = mix(col, ocol, over * 0.90);
 
         vec3 litC = mix(vec3(0.52, 0.42, 0.62), hor, 0.35);
         vec3 shadeC = mix(zen, hor, 0.30) * 0.60;
         col = paintDecks(dirS, col, 0.0, litC, shadeC, 0.35, 0.5, 0.35, 0.0);
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, 0.35, 0.5, 0.80, 1.0);
+        col = paintDecks(dirS, col, 0.0, litC, shadeC, 0.35, 0.5, 0.80, 1.0);
 
         col = mix(col, hor * 0.45, smoothstep(0.0, -0.35, ty));
         float lum = dot(col, vec3(0.299, 0.587, 0.114));
@@ -216,17 +206,24 @@ void main() {
     float dawn = smoothstep(0.25, 0.50, orange) * step(C.b, C.g) * (1.0 - night);
     float day = max(1.0 - night - dawn, 0.0);
 
-    // mega-phase 8: contrasted bluish day/noon per frames; true deep-blue night
-    // (purple vault lives in McsmPhaseSky for phases 5.4-5.9 only)
-    vec3 zen = day * vec3(0.085, 0.255, 0.720)
-             + dawn * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.007, 0.013, 0.058);
-    vec3 mid = day * vec3(0.280, 0.500, 0.880)
-             + dawn * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.007, 0.013, 0.058);
-    vec3 hor = day * vec3(0.620, 0.700, 0.920)
-             + dawn * vec3(0.890, 0.680, 0.730)
-             + night * vec3(0.030, 0.062, 0.178);
+    // 1.9.152: palettes sampled from user storymode_sky_* strips
+    // day: sky-blue zenith -> pale lavender mid -> muted lilac horizon
+    // night/midnight: deep navy zenith -> bright blue horizon glow (NOT purple)
+    // dusk/sunset: teal vault -> orange belly -> crimson rim
+    float midn = night * smoothstep(0.12, 0.02, clum); // darkest = midnight strip
+    float nite = night * (1.0 - midn);
+    vec3 zen = day  * vec3(0.353, 0.627, 0.863)
+             + dawn * vec3(0.188, 0.329, 0.376)
+             + nite * vec3(0.420, 0.480, 0.780)
+             + midn * vec3(0.031, 0.051, 0.310);
+    vec3 mid = day  * vec3(0.706, 0.773, 0.902)
+             + dawn * vec3(0.863, 0.353, 0.157)
+             + nite * vec3(0.620, 0.600, 0.860)
+             + midn * vec3(0.059, 0.118, 0.549);
+    vec3 hor = day  * vec3(0.651, 0.616, 0.741)
+             + dawn * vec3(0.494, 0.098, 0.165)
+             + nite * vec3(0.780, 0.720, 0.900)
+             + midn * vec3(0.220, 0.392, 0.933);
 
     // per-biome variants (vanilla hands us the biome sky hue in ColorModulator)
     float gk = clamp((C.g - max(C.r, C.b)) * 3.0, 0.0, 0.6) * day;
@@ -248,11 +245,17 @@ void main() {
     float star = smoothstep(0.996, 0.9995, sn) * night;
     col += star * (0.55 + 0.45 * hash13(sg + 7.7)) * vec3(0.92, 0.96, 1.0);
 
-    // white story clouds with pale-blue shadowed fringes
-    vec3 litC = mix(vec3(0.960, 0.975, 1.000), hor, 0.10);
-    vec3 shadeC = mix(zen, hor, 0.35) * 0.85;
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 0.0);
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 1.0);
+    // volumetric soft cloud decks (NOT blocky MC clouds) — sticker-like
+    // soft mass glued high in the vault + layered decks with void gaps
+    vec3 litC = mix(vec3(0.980, 0.985, 1.000), hor, 0.08);
+    vec3 shadeC = mix(zen * 0.85, hor, 0.30);
+    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 0.0);
+    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 1.0);
+    // soft overhead "sticker" cloud mass looking straight up
+    float up = smoothstep(0.55, 0.95, ty);
+    float sticker = fbm(vec3(dirS.xz * 3.5, 0.7)) * fbm(vec3(dirS.xz * 7.0 + 4.1, 1.3));
+    sticker = smoothstep(0.42, 0.72, sticker) * up * (0.55 * day + 0.25 * night);
+    col = mix(col, mix(litC, shadeC, 0.35), sticker * 0.85);
 
     col = mix(col, hor * 0.5, smoothstep(0.0, -0.3, ty));
     float lum = dot(col, vec3(0.299, 0.587, 0.114));

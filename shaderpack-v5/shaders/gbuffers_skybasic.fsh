@@ -196,17 +196,22 @@ vec3 storyCalmSky(vec3 dirS) {
 
     // vanilla's dawn and dusk both read orange, so the dawn palette carries
     // both ends of the day here - exactly like the core-shader round-5 sky.
-    // mega-phase 8: contrasted bluish day/noon; true deep-blue night
-    // (purple vault is McsmPhaseSky for 5.4-5.9 only)
-    vec3 zen = day   * vec3(0.085, 0.255, 0.720)
-             + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.007, 0.013, 0.058);
-    vec3 mid = day   * vec3(0.280, 0.500, 0.880)
-             + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.007, 0.013, 0.058);
-    vec3 hor = day   * vec3(0.620, 0.700, 0.920)
-             + dusk  * vec3(0.890, 0.680, 0.730)
-             + night * vec3(0.030, 0.062, 0.178);
+    // 1.9.152: user storymode_sky_* strips — day/night/midnight/sunset
+    float clumN = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
+    float midn = night * smoothstep(0.12, 0.02, clumN);
+    float nite = night * (1.0 - midn);
+    vec3 zen = day  * vec3(0.353, 0.627, 0.863)
+             + dusk * vec3(0.188, 0.329, 0.376)
+             + nite * vec3(0.420, 0.480, 0.780)
+             + midn * vec3(0.031, 0.051, 0.310);
+    vec3 mid = day  * vec3(0.706, 0.773, 0.902)
+             + dusk * vec3(0.863, 0.353, 0.157)
+             + nite * vec3(0.620, 0.600, 0.860)
+             + midn * vec3(0.059, 0.118, 0.549);
+    vec3 hor = day  * vec3(0.651, 0.616, 0.741)
+             + dusk * vec3(0.494, 0.098, 0.165)
+             + nite * vec3(0.780, 0.720, 0.900)
+             + midn * vec3(0.220, 0.392, 0.933);
 
     // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
@@ -227,11 +232,15 @@ vec3 storyCalmSky(vec3 dirS) {
     col += hor * 0.14 * exp(-abs(ty) * 7.0);
 #endif
 
-    // white story clouds with pale-blue shadowed fringes
-    vec3 litC = mix(vec3(0.960, 0.975, 1.000), hor, 0.10);
-    vec3 shadeC = mix(zen, hor, 0.35) * 0.85;
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 0.0);
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 1.0);
+    // volumetric soft cloud decks + overhead sticker (not blocky MC clouds)
+    vec3 litC = mix(vec3(0.980, 0.985, 1.000), hor, 0.08);
+    vec3 shadeC = mix(zen * 0.85, hor, 0.30);
+    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 0.0);
+    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 1.0);
+    float up = smoothstep(0.55, 0.95, ty);
+    float sticker = fbm3(vec3(dirS.xz * 3.5, 0.7)) * fbm3(vec3(dirS.xz * 7.0 + 4.1, 1.3));
+    sticker = smoothstep(0.42, 0.72, sticker) * up * (0.55 * day + 0.25 * night);
+    col = mix(col, mix(litC, shadeC, 0.35), sticker * 0.85);
 
     col = mix(col, hor * 0.5, smoothstep(0.0, -0.3, ty));
     float lum = dot(col, vec3(0.299, 0.587, 0.114));
@@ -252,9 +261,13 @@ vec3 storyStormSky(vec3 dirS) {
                   * step(C.g * 1.05, min(C.r, C.b)) * (1.0 - greenK);
     float magK    = clamp((C.r - C.b) * 2.0, 0.0, 1.0) * (1.0 - orangeK) * (1.0 - greenK);
     float wsum = pinkK + greenK + orangeK + magK;
-    if (wsum < 0.02) {
-        magK = 1.0;
-        wsum = 1.0;
+    // 1.9.152: never default to full purple — fall back to calm if unclassified
+    if (wsum < 0.08) {
+        return storyCalmSky(dirS);
+    }
+    float purpleChroma = min(C.r, C.b) - C.g;
+    if (purpleChroma < 0.02 && greenK < 0.05 && orangeK < 0.05) {
+        return storyCalmSky(dirS);
     }
     // 5.4-5.9 phase fog/sky: violet zenith, magenta mid, SALMON-PINK horizon
     vec3 z1 = vec3(0.035, 0.010, 0.120);
@@ -264,10 +277,10 @@ vec3 storyStormSky(vec3 dirS) {
     vec3 z2 = vec3(0.030, 0.100, 0.095);
     vec3 m2 = vec3(0.080, 0.260, 0.220);
     vec3 h2 = vec3(0.380, 0.620, 0.480);
-    // sunset-orange frames
-    vec3 z3 = vec3(0.120, 0.060, 0.080);
-    vec3 m3 = vec3(0.350, 0.140, 0.110);
-    vec3 h3 = vec3(0.780, 0.280, 0.100);
+    // sunset-orange frames (user storymode_sky_sunset)
+    vec3 z3 = vec3(0.188, 0.329, 0.376);
+    vec3 m3 = vec3(0.863, 0.353, 0.157);
+    vec3 h3 = vec3(0.494, 0.098, 0.165);
     // deep purple / magenta frames (phase ~5 punch + post-6 light pink)
     vec3 z4 = vec3(0.040, 0.012, 0.110);
     vec3 m4 = vec3(0.340, 0.050, 0.320);
