@@ -311,6 +311,33 @@ public final class McsmStormBlob {
                         baseR * 0.90, 190, 215, 255, (int) (a * wBlue * 230.0F));
             }
 
+            // ---------- OG GLOSSY STRIPE (user frame 2026-08-24) ------------
+            // MCSM body is pure black mass with a blue sheen UNDER the black
+            // (or black stripe over blue) — reverse-shading glossy read.
+            // Painted as stacked depth plates: blue underlay, black stripe
+            // bars, thin cyan-blue rim. No three-head symbol.
+            if (key == mainKey && wShell > 0.004F && baseR > 6.0) {
+                float wg = Math.max(wCore, Math.max(wBlue, Math.max(wHard, wViolet)));
+                wg = Math.max(wg, 0.55F * wShell);
+                // blue sheen under the black mass (the "blue under black")
+                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4),
+                        at.add(view.scale(-bodyR * 0.08)), view,
+                        baseR * 0.96, 40, 90, 220, (int) (a * wg * 70.0F));
+                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4),
+                        at.add(view.scale(-bodyR * 0.04)), view,
+                        baseR * 0.88, 20, 55, 180, (int) (a * wg * 95.0F));
+                // black stripe mass over the blue (the "black under/over blue")
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK), at, view,
+                        baseR * 0.82, 255, 255, 255, (int) (a * wg * 210.0F));
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.05)), view,
+                        baseR * 0.70, 255, 255, 255, (int) (a * wg * 180.0F));
+                // thin glossy cyan-blue rim catching light on the silhouette
+                quad(poseStack, collector, GlowRenderTypes.glow(GLARE),
+                        at.add(view.scale(bodyR * 0.02)), view,
+                        baseR * 0.78, 70, 140, 255, (int) (a * wg * 55.0F));
+            }
+
             // ---------- PARTICLES (cubes / beams / motes / mist) -----------
             if (key == mainKey && wShell > 0.004F && baseR > 8.0) {
                 final float bR = (float) baseR;

@@ -167,9 +167,20 @@ public final class McsmGate {
             changed += floorField(c, null, "chromaticGlitchStrength", 0.35);
             changed += floorField(c, null, "debrisDustParticles", 1.0);
             changed += floorField(c, null, "debrisAmount", 1.0);
-            changed += floorField(c, null, "volumetricFogDensity", 0.6);
+            // 1.9.150: volumetric coloured fog / lighting for the MCSM contrast
+            // read (shafts of coloured light, thick atmospheric depth)
+            changed += floorField(c, null, "volumetricFogDensity", 0.92);
+            changed += setBool(c, "volumetricFog", true);
+            changed += setBool(c, "colouredLighting", true);
+            changed += setBool(c, "coloredLighting", true);
+            changed += floorField(c, null, "colouredLightStrength", 0.85);
+            changed += floorField(c, null, "coloredLightStrength", 0.85);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += floorField(c, null, "sunGlowStrength", 1.0);
+            // reverseShading is the OG glossy body look, but on 26.2 it also
+            // selects the broken FoglessRenderTypes.bodyCutout path
+            // (McsmStormVisibilityPatch). Glossy blue-under-black is painted
+            // by McsmStormBlob instead — do NOT force reverseShading true.
             // blackGlareStrength left alone — the far ring is off
             // mega-phase 9: vivid world — push shadows + glow to the ceiling
             // so trees/mobs cast hard trailer shadows and teeth/eyes burn

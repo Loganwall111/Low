@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.dabicco.witherstormmod.structures.McsmSchematic;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
@@ -12,8 +13,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * Mega-phase 7 / 7b / 9: structures land WHOLE, Sky City goes up among the
- * cloud decks, and towns get their cast (McsmNpcs).
+ * Mega-phase 7 / 7b / 9 / 12: structures land WHOLE, Sky City goes up among
+ * the cloud decks, and towns get their cast (McsmNpcs).
+ *
+ * 1.9.150 CRASH FIX: McsmWorldgen.tick(ServerLevel) returns int. Mixin
+ * injects on a returning method MUST take CallbackInfoReturnable, not plain
+ * CallbackInfo — otherwise APPLY fails with InvalidInjectionException and
+ * the whole world tick dies the moment McsmWorldgen is first classloaded.
  *
  * The base places every schematic through a static queue with a 24k
  * blocks/tick budget (visible "segments"), and that static queue survives
@@ -35,17 +41,22 @@ public abstract class McsmWorldgenPatch {
     private static ServerLevel lastLevel;
     private static final ThreadLocal<Boolean> RAISING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
+    /** tick(ServerLevel) -> int. CIR required (1.9.150 crash fix). */
     @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 0)
-    private static void dabyws$wholeStructures(ServerLevel level, CallbackInfo ci) {
-        if (lastLevel != level) {
-            lastLevel = level;
-            McsmWorldgen.clear();
-        }
-        McsmWorldgen.setBudget(900000);
-        // mega-phase 9: the towns get their cast, and their dialogue hook
+    private static void dabyws$wholeStructures(ServerLevel level, CallbackInfoReturnable<Integer> cir) {
         try {
-            McsmNpcs.tick(level);
+            if (lastLevel != level) {
+                lastLevel = level;
+                McsmWorldgen.clear();
+            }
+            McsmWorldgen.setBudget(900000);
+            // mega-phase 9: the towns get their cast, and their dialogue hook
+            try {
+                McsmNpcs.tick(level);
+            } catch (Throwable ignored) {
+            }
         } catch (Throwable ignored) {
+            // never take the world tick down — budget/NPC fail soft
         }
     }
 

@@ -22,7 +22,7 @@ uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 
 #define COLORED_LIGHT       1     // [0 1]
-#define COLORED_LIGHT_AMT   0.70  // [0.00 0.25 0.50 0.70 0.75 1.00]
+#define COLORED_LIGHT_AMT   0.85  // [0.00 0.25 0.50 0.70 0.75 1.00]
 
 vec3 mcsmLightmap(float t) {
     vec3 day   = vec3(1.10, 1.02, 0.92);

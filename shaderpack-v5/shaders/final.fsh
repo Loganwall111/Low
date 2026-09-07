@@ -23,11 +23,11 @@ uniform float frameTimeCounter;
 uniform vec3 fogColor;
 
 #define BLOOM             1     // [0 1]
-#define BLOOM_STRENGTH    0.55  // [0.00 0.20 0.35 0.55 0.60 0.90 1.30]
+#define BLOOM_STRENGTH    0.65  // [0.00 0.20 0.35 0.55 0.60 0.90 1.30]
 #define TONEMAP           1     // [0 1]
-#define EXPOSURE          1.08  // [0.60 0.80 1.00 1.08 1.20 1.50]
-#define CONTRAST          1.10  // [0.80 1.00 1.10 1.12 1.25 1.40]
-#define VIBRANCE          1.28  // [0.50 0.80 1.00 1.20 1.28 1.45 1.70 1.90]
+#define EXPOSURE          1.12  // [0.60 0.80 1.00 1.08 1.20 1.50]
+#define CONTRAST          1.18  // [0.80 1.00 1.10 1.12 1.25 1.40]
+#define VIBRANCE          1.40  // [0.50 0.80 1.00 1.20 1.28 1.45 1.70 1.90]
 #define STORM_PURPLE_ON   1     // [0 1]
 #define STORM_PURPLE      0.40  // [0.00 0.25 0.40 0.55 0.75 1.00]
 #define STORM_VIGNETTE_ON 1     // [0 1]

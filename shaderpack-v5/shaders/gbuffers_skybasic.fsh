@@ -137,8 +137,8 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
     }
     vec2 pxz = dirS.xz / dy;
     float H[9];
-    H[0] = 96.0;  H[1] = 146.0; H[2] = 152.0; H[3] = 420.0; H[4] = 430.0;
-    H[5] = 1200.0; H[6] = 3500.0; H[7] = 9000.0; H[8] = 16000.0;
+    H[0] = 90.0;  H[1] = 180.0; H[2] = 280.0; H[3] = 520.0; H[4] = 780.0;
+    H[5] = 1400.0; H[6] = 3200.0; H[7] = 7800.0; H[8] = 16000.0;
     float acc = acc0;
     for (int i = 0; i < 9; i++) {
         int grp = (i < 3) ? 0 : ((i < 6) ? 1 : 2);
@@ -146,7 +146,7 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
         float pres = (grp == 0) ? 1.0
                 : smoothstep(0.30, 0.44, fbm3(vec3(pxz * 0.010 + vec2(float(grp) * 31.7), float(grp) * 13.0)));
         float cov = fbm3(vec3(uv * 0.9, float(i) * 3.1));
-        float gapmask = smoothstep(0.40, 0.54, fbm3(vec3(uv * 0.33, float(i) * 9.0)));
+        float gapmask = smoothstep(0.48, 0.62, fbm3(vec3(uv * 0.33, float(i) * 9.0)));
         float nest = fbm3(vec3(uv * 3.4 + 17.0, float(i) * 5.7));
         float th = (i < 3) ? 0.62 : ((i < 7) ? 0.50 : 0.44);
         float ceilBonus = (i == 8) ? 0.25 : 0.0;

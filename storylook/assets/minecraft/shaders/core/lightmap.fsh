@@ -48,12 +48,12 @@ void main() {
     float block_brightness = get_brightness(block_level) * lightmapInfo.BlockFactor;
     // Story Mode torches throw real light: wider, hotter falloff so a torch
     // reads as a source, not a decal.
-    block_brightness *= 1.0 + 0.40 * smoothstep(0.15, 0.85, block_level);
+    block_brightness *= 1.0 + 0.65 * smoothstep(0.10, 0.85, block_level);
     float sky_brightness = get_brightness(sky_level) * lightmapInfo.SkyFactor;
 
     // Story Look: soft shadow floor, scaled by day strength and gated so
     // sky_level 0 (caves, interiors) keeps vanilla darkness.
-    sky_brightness += 0.16 * lightmapInfo.SkyFactor
+    sky_brightness += 0.22 * lightmapInfo.SkyFactor
                     * smoothstep(0.0, 0.35, sky_level)
                     * (1.0 - sky_brightness);
 
@@ -62,12 +62,12 @@ void main() {
     vec3 color = max(lightmapInfo.AmbientColor, nightVisionColor);
 
     // Add sky light, with the cool shadow tint at low sky levels
-    vec3 skyTint = mix(vec3(1.0), vec3(0.93, 0.92, 1.08), (1.0 - sky_level) * 0.6);
+    vec3 skyTint = mix(vec3(1.0), vec3(0.78, 0.82, 1.18), (1.0 - sky_level) * 0.75);
     color += lightmapInfo.SkyLightColor * skyTint * sky_brightness;
 
     // Add block light
     vec3 BlockLightColor = mix(lightmapInfo.BlockLightTint, vec3(1.0), 0.9 * parabolicMixFactor(block_level));
-    BlockLightColor *= vec3(1.06, 0.97, 0.86);
+    BlockLightColor *= vec3(1.18, 0.92, 0.72);  // MCSM warm torch key
     color += BlockLightColor * block_brightness;
 
     // Apply boss overlay darkening effect
@@ -77,6 +77,10 @@ void main() {
     color = color - vec3(lightmapInfo.DarknessScale);
 
     // Apply brightness
+    // MCSM contrast lift + vibrance (vanilla-embedded vivid style, no Iris needed)
+    float lum = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    color = mix(vec3(lum), color, 1.22);
+    color = (color - 0.5) * 1.12 + 0.5;
     color = clamp(color, 0.0, 1.0);
     vec3 notGamma = notGamma(color);
     color = mix(color, notGamma, lightmapInfo.BrightnessFactor);

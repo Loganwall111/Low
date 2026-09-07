@@ -1,38 +1,45 @@
-# Devouring Storms 1.9.149 — MCSM ground-truth retarget
+# Devouring Storms 1.9.150 — crash fix + OG glossy + embedded vivid
 
-User supplied the full MCSM reference frame set (phase skies, glare,
-teeth close-ups, Formidi-bomb core, multi-head storm, tractor beams,
-env stills). This build retargets the overlay against those frames.
+## CRASH FIX (must update)
+`McsmWorldgen.tick(ServerLevel)` returns `int`. The 1.9.149 inject used plain
+`CallbackInfo` → `InvalidInjectionException` the moment worldgen classloaded,
+killing the integrated server tick. Fixed to `CallbackInfoReturnable<Integer>`.
+**Replace 1.9.149 with this jar.**
 
-## Teeth = model body detail (not glare)
-- Phase-4 atlas UV `(8,510)` painted bright cyan-white; eye UV hot magenta.
-- Emissive overlays (`phase_4_assets_e`, `wither_storm_*_e`) so
-  `turquoiseTeeth` burns.
-- Distant-blob mouths redrawn as **11 chunky white blocks on a U-arc**
-  + inner dotted arc + magenta emitter cube above (match close-ups).
-- Gate floors `turquoiseTeethIntensity` 2.4 and eye tint toward cyan-white.
+## OG glossy body (your 2026-08-24 frame)
+The MCSM body is pure black mass with a **blue sheen under the black** (and
+black stripe over blue) — the reverse-shading glossy read. Painted as stacked
+depth plates on the welded shell: blue underlay → black stripe mass → thin
+cyan-blue rim. No three-head symbol. (We cannot force upstream `reverseShading`
+ON on 26.2 — it selects the broken `bodyCutout` path; the gloss lives in the
+blob instead.)
 
-## Formidi-bomb / early OG core
-- `formidibomb.png` retargeted to brown command-block face + RGB button
-  grid (MCSM summon frames). Emissive lights the coloured buttons only.
-- `wither_storm_og.png` + emissives shipped so `stormSkin=OG` resolves
-  (near-black flesh, warm CB belly, bright teeth).
-- `phase_4_assets_og.png` + `devourer_assets_og.png` paths filled.
+## Vanilla-embedded vivid style (no Iris required)
+Story Look pack already ships inside the jar and auto-enables. 1.9.150 pushes:
+- lightmap: hotter torch colour, deeper cool lavender shade, contrast + vibrance
+  lift so the world reads vivid without a shader pack
+- Iris pack (optional): contrast 1.18, vibrance 1.40, bloom 0.65, coloured light 0.85
+- volumetric fog density floor 0.92 + coloured-lighting gates
 
-## Tractor beams
-- Distant blob draws thick purple/blue conical shafts with sparkle motes.
-- Gate floors `beamOpacity` 0.92 and MCSM purple beam colour bias.
+Iris is still optional eye-candy on top. Vanilla + the embedded pack is the
+baseline look.
 
-## Phase skies (sampled from gradient strips)
-- Day/noon: deeper pure-blue zenith → soft lavender horizon.
-- 5.4–5.9: near-black indigo zenith → magenta mid → **salmon-pink** rim.
-- Turquoise phase-5 strip punched greener.
-- `McsmPhaseSky` dome palette matched to the same decks.
+## Layered clouds + void gaps
+Already painted by the sky pass (9 decks, mirrored under the horizon for the
+Sky City fall-through). 1.9.150 spreads deck altitudes and hardens the void
+gap mask so the gigantic holes between layers read clearer.
 
-## Already live (1.9.145–1.9.148)
-- Thick welded glare shell; far three-head halo killed.
-- OG CEM default ON; vivid shade/lighting under Iris.
-- Story town NPCs + dialogue; presets stick; Sky City ~y4200.
+## OG / Totally Accurate models
+`ogs-stuff` is not reachable from this sandbox (404 / private). The base jar
+already carries `assets/dabywitherstormmod/cem/`. Force MCSM Look +
+`ogCemModels=true` (default) keeps stormSkin on Obsidian Gloss. **When you
+embed the Totally Accurate CEM/jem pack into the repo**, drop it under
+`jar-overrides/assets/dabywitherstormmod/cem/` (or EMF `emf/entity/`) and the
+next build will ship it as default — animations (tentacle grab/slap) stay on
+the base entity animation system as long as bone names match.
 
-Install: drop the jar in `mods/`. Force MCSM Look stays ON for the OG
-skin + teeth path. Walk a story town and right-click the cast.
+## Already live (1.9.145–1.9.149)
+Teeth U-arcs, Formidi CB face, thick beams, phase sky palettes, NPCs, presets,
+Sky City ~y4200, far three-head halo killed.
+
+Install: drop the jar in `mods/`, remove 1.9.149. Story Look auto-enables.

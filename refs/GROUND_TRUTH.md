@@ -43,3 +43,11 @@ from the attached screenshots so every later change can cite them.
 5. **Black cube field** → denser, always on at phase 5+.
 6. **Vivid shadows** → already pushed in 1.9.148; keep matching Beacon Town roof shadows.
 7. **Sky Island altitude** → already ~y4200; keep cloud decks under it.
+
+## E. Frame 2026-08-24 (user crash-batch image)
+Close-up of multi-mouth black mass against purple/pink sky:
+- pure black blocky body with **blue sheen stripes under/through the black**
+  (glossy reverse-shading)
+- cyan-white **dotted U-arc teeth** (individual glowing cubes)
+- hot **magenta square emitters** above mouths
+- thick **purple tractor beam** cones with black debris cubes peeling off
