@@ -117,7 +117,14 @@ public final class McsmGate {
             // Obsidian Gloss is the mod's built-in OG/MCSM texture set. The
             // user expects Force MCSM Look to make the body/teeth/command-block
             // textures stop falling back to the Classic orange/plain skin.
+            // 1.9.146: ogCemModels defaults ON and locks stormSkin to OG.
             changed += floorField(c, null, "stormSkin", 1.0);
+            try {
+                if (McsmExtrasConfig.ogCemModels) {
+                    changed += floorField(c, null, "stormSkin", 1.0);
+                }
+            } catch (Throwable ignored) {
+            }
 
             // ---- the halo / glare the user has been chasing ----------------
             // mega-phase 7b: blackGlare + cataclysmHalos paint the FAR
@@ -164,8 +171,12 @@ public final class McsmGate {
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += floorField(c, null, "sunGlowStrength", 1.0);
             // blackGlareStrength left alone — the far ring is off
+            // mega-phase 9: vivid world — push shadows + glow to the ceiling
+            // so trees/mobs cast hard trailer shadows and teeth/eyes burn
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);
+            changed += floorField(c, null, "bloomStrength", 1.0);
+            changed += floorField(c, null, "impactLightStrength", 1.0);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
@@ -225,6 +236,11 @@ public final class McsmGate {
 
             // ---- the ground itself reacts ----------------------------------
             changed += floorField(c, cfg, "caveRumble", 1.0);
+
+            // ---- story towns get a full cast of named NPCs ----------------
+            // default 10 is fine; floor to at least 8 so every town has a cast
+            changed += floorField(c, cfg, "townNpcPopulation", 10.0);
+
             McsmDiag.say("MCSM world gate opened: " + changed + " world fields raised/enabled");
         } catch (Throwable t) {
             McsmDiag.say("MCSM world gate failed before field loop: " + t);

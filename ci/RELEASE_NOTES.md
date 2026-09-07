@@ -1,31 +1,28 @@
-# Devouring Storms 1.9.147 — mega-phase 10: the visual presets actually stick
+# Devouring Storms 1.9.148 — mega-phase 11: OG look default + vivid shaded world
 
-## Root cause of "the new model preset doesn't work"
-The mod ships five presets — Custom, **MCSM OG Visuals**, Legacy Java,
-Cinematic, **Netflix** — but its own recogniser only ever scanned three:
+## OG / MCSM look is the default
+`ogCemModels` defaults **ON**. Force MCSM Look keeps `stormSkin` at Obsidian
+Gloss (shiny near-black flesh, purple sheen, command-block belly as
+obsidian-purple tiles) so the body stops falling back to Classic orange.
+The extras panel toggle still lets players opt out.
 
-```java
-for (int preset = 1; preset <= 3; preset++)   // Netflix is 4
-```
+## Vivid world lighting + real shade
+- Iris pack final grade: bloom 0.55, exposure 1.08, contrast 1.10, vibrance 1.28.
+- Terrain coloured-light strength 0.70; warmer day key, deeper night blue.
+- Terrain vertex now computes a Lambert sun term (`mcsmShade`) so tree
+  canopies and block faces throw real shade under Iris — the “shadows vanished
+  under the shader pack” bug, closed.
+- Client gate floors `glowStrength` / `stormShadowStrength` / bloom + impact
+  light so teeth, eyes and trailer shadows burn at full.
+- World gate floors `townNpcPopulation` so story towns keep a full cast.
 
-and `refreshPreset()` runs at the end of `load()`. So picking the newest
-preset *did* apply its values, and then the very next launch read those
-values back, failed to recognise them, and reset the selector to
-"Custom". The look was applied but the mod had forgotten which preset it
-was — no way back to it in the GUI, and any reset lost it.
+## Already live (1.9.145–1.9.147)
+- Thick welded glare shell + sky-glued phase halo; purple vault 5.4–5.9 only;
+  true deep-blue night; far three-head halo killed.
+- Story towns inhabited with per-character dialogue trees (`McsmNpcs`).
+- Visual presets stick (Netflix / Cinematic / MCSM OG / Legacy all recognised).
+- Structures whole; Sky City ~y4200.
 
-The same oversight hit `isPresetKey()`, which asked only the MCSM map
-whether a key belongs to a preset, so keys unique to Cinematic and
-Netflix were never treated as preset-owned.
-
-## Fixed
-- The recogniser now scans **all four** preset maps, newest first, so
-  Netflix and Cinematic survive a restart and stay selected.
-- `isPresetKey()` answers for any preset, not just MCSM OG Visuals.
-- The comparison reads the config's own public static fields by name and
-  understands double, float, int and boolean storage; a key it cannot
-  resolve is skipped rather than counted as a mismatch, so a partial
-  match never silently drops you back to Custom.
-
-Both hooks are `require = 0` and wrapped in a catch — if anything about
-the surface is unexpected, the base implementation simply runs instead.
+Install: drop the jar in `mods/`. Walk into a story town to meet the cast;
+right-click them to talk. Pick a look preset — it will still be selected next
+launch.

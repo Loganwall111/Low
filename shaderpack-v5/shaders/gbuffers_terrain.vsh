@@ -12,6 +12,7 @@ out vec2 lmcoord;
 out vec4 glcolor;
 out vec3 mcsmN;
 out float mcsmDay;
+out float mcsmShade;
 
 void main() {
     gl_Position = ftransform();
@@ -24,4 +25,11 @@ void main() {
     float elev = cos(ang);                       // ~+1 at noon, <0 at night
     mcsmDay = clamp(elev * 2.4, 0.0, 1.0);
     mcsmN = gl_Normal;                           // terrain is never rotated
+    // hard-ish sun term so tree canopies and block faces throw real shade
+    // under Iris (the pack previously only graded colour, never shaded)
+    vec3 L = normalize(vec3(0.35, max(elev, 0.05), 0.55));
+    float ndotl = clamp(dot(normalize(mcsmN), L), 0.0, 1.0);
+    // keep a floor so caves/undersides aren't pure black
+    mcsmShade = mix(0.42, 1.0, ndotl) * mix(0.70, 1.0, mcsmDay) + (1.0 - mcsmDay) * 0.55;
+    mcsmShade = clamp(mcsmShade, 0.35, 1.15);
 }

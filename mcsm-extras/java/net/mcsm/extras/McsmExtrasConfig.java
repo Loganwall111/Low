@@ -26,10 +26,11 @@ public final class McsmExtrasConfig {
     // ---- fields that ALSO existed in the 1.9.88-1.9.95 jars ----------------
     // (these live in the shipped jar's bytecode; other jar-side classes read
     // them, so the names/types must NEVER change or those classes crash with
-    // NoSuchFieldError. ogCemModels defaults false: the redone model is the
-    // default look, Tainted's original CEM is opt-in.)
-    /** Use Tainted's original 103-part CEM model for the phase-5 body. */
-    public static boolean ogCemModels = false;
+    // NoSuchFieldError. ogCemModels defaults TRUE as of 1.9.146: the user
+    // wants the MCSM/OG look (3 heads + command block, Obsidian Gloss) on
+    // by default. The toggle still lets players opt out.)
+    /** Prefer the OG/MCSM body look (Obsidian Gloss + trailer model path). */
+    public static boolean ogCemModels = true;
     /** Apparent size of the smudge/halo quads behind the storm (0.5 = new). */
     public static double  smudgeScale = 0.5;
 

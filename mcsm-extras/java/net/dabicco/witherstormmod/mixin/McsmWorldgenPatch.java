@@ -6,14 +6,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.dabicco.witherstormmod.structures.McsmSchematic;
-import net.mcsm.extras.McsmNpcs;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
+import net.mcsm.extras.McsmNpcs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * Mega-phase 7 / 7b: structures land WHOLE, and Sky City goes up among the
- * cloud decks.
+ * Mega-phase 7 / 7b / 9: structures land WHOLE, Sky City goes up among the
+ * cloud decks, and towns get their cast (McsmNpcs).
  *
  * The base places every schematic through a static queue with a 24k
  * blocks/tick budget (visible "segments"), and that static queue survives
@@ -27,7 +27,7 @@ import net.minecraft.server.level.ServerLevel;
  * so we cancel the original enqueue and re-enqueue with the raised origin.
  * Floating y values sit at 276-308; ground sites sit at 34-64, so the
  * (200, 1000) window isolates them cleanly. The re-entered call sees
- * y~4200 and passes through untouched.
+ * y~4200 and passes through untouched (ThreadLocal re-entry guard).
  */
 @Mixin(McsmWorldgen.class)
 public abstract class McsmWorldgenPatch {
@@ -43,7 +43,10 @@ public abstract class McsmWorldgenPatch {
         }
         McsmWorldgen.setBudget(900000);
         // mega-phase 9: the towns get their cast, and their dialogue hook
-        McsmNpcs.tick(level);
+        try {
+            McsmNpcs.tick(level);
+        } catch (Throwable ignored) {
+        }
     }
 
     @Inject(method = "enqueue", at = @At("HEAD"), cancellable = true, remap = false, require = 0)

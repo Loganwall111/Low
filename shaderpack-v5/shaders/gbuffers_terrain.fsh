@@ -16,17 +16,18 @@ in vec2 lmcoord;
 in vec4 glcolor;
 in vec3 mcsmN;
 in float mcsmDay;
+in float mcsmShade;
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 
 #define COLORED_LIGHT       1     // [0 1]
-#define COLORED_LIGHT_AMT   0.50  // [0.00 0.25 0.50 0.75 1.00]
+#define COLORED_LIGHT_AMT   0.70  // [0.00 0.25 0.50 0.70 0.75 1.00]
 
 vec3 mcsmLightmap(float t) {
-    vec3 day   = vec3(1.06, 0.99, 0.90);
-    vec3 warm  = vec3(1.10, 0.86, 0.66);
-    vec3 night = vec3(0.42, 0.55, 1.00);
+    vec3 day   = vec3(1.10, 1.02, 0.92);
+    vec3 warm  = vec3(1.18, 0.88, 0.62);
+    vec3 night = vec3(0.38, 0.52, 1.05);
     vec3 c = mix(warm, day, smoothstep(0.55, 0.95, t));
     c = mix(night * (0.55 + 0.45 * t), c, smoothstep(0.05, 0.45, t));
     return c;
@@ -39,10 +40,12 @@ void main() {
 #if COLORED_LIGHT
     vec2 lm = texture(lightmap, lmcoord).xy;
     float t = min(lm.x, lm.y);
-    // half strength by default: the mod already grades the frame, this only
-    // adds the coloured key/fill tint on top.
+    // coloured key/fill tint on top of the mod's own grade
     color.rgb *= mix(vec3(1.0), mcsmLightmap(t), COLORED_LIGHT_AMT);
 #endif
+
+    // sun-face shading (tree canopies, block sides) — the vivid-world read
+    color.rgb *= mcsmShade;
 
     gl_FragData[0] = vec4(color.rgb, color.a);
 }
