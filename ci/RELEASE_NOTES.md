@@ -1,45 +1,25 @@
-# Devouring Storms 1.9.150 — crash fix + OG glossy + embedded vivid
+# Devouring Storms 1.9.151 — Totally Accurate OG models default ON
 
-## CRASH FIX (must update)
-`McsmWorldgen.tick(ServerLevel)` returns `int`. The 1.9.149 inject used plain
-`CallbackInfo` → `InvalidInjectionException` the moment worldgen classloaded,
-killing the integrated server tick. Fixed to `CallbackInfoReturnable<Integer>`.
-**Replace 1.9.149 with this jar.**
+## Totally Accurate / MCSM OG CEM (from ogs-stuff)
+The pack at https://github.com/Loganwall111/ogs-stuff is now **embedded** in
+the mod jar as built-in resource pack `ogs-cem`, **DEFAULT ENABLED**.
 
-## OG glossy body (your 2026-08-24 frame)
-The MCSM body is pure black mass with a **blue sheen under the black** (and
-black stripe over blue) — the reverse-shading glossy read. Painted as stacked
-depth plates on the welded shell: blue underlay → black stripe mass → thin
-cyan-blue rim. No three-head symbol. (We cannot force upstream `reverseShading`
-ON on 26.2 — it selects the broken `bodyCutout` path; the gloss lives in the
-blob instead.)
+- Full phase ladder of `.jem` models (phase4 → 4.5 → 5 → 5.5 → 6 → 6.5 → 7,
+  plus torn / dismantled / segment / head / grab tentacle aliases)
+- OG textures (160×160 wither_storm body, head, tentacle, tractor beam)
+- Both `dabywitherstormmod` and legacy `witherstormmod` texture namespaces
+- Phase switching via entity NBT `Phase` (not ConsumedEntities)
 
-## Vanilla-embedded vivid style (no Iris required)
-Story Look pack already ships inside the jar and auto-enables. 1.9.150 pushes:
-- lightmap: hotter torch colour, deeper cool lavender shade, contrast + vibrance
-  lift so the world reads vivid without a shader pack
-- Iris pack (optional): contrast 1.18, vibrance 1.40, bloom 0.65, coloured light 0.85
-- volumetric fog density floor 0.92 + coloured-lighting gates
+**Requires Entity Model Features** (you already run EMF 3.3.5) for the mesh
+swap. Without EMF you still get the OG textures on the base models.
 
-Iris is still optional eye-candy on top. Vanilla + the embedded pack is the
-baseline look.
+## Also in this line
+- 1.9.150 crash fix (`McsmWorldgen.tick` → `CallbackInfoReturnable`)
+- OG glossy blue-under-black body plates
+- Vanilla-embedded vivid lightmap (no Iris required)
+- Harder cloud void gaps; volumetric + coloured-light floors
 
-## Layered clouds + void gaps
-Already painted by the sky pass (9 decks, mirrored under the horizon for the
-Sky City fall-through). 1.9.150 spreads deck altitudes and hardens the void
-gap mask so the gigantic holes between layers read clearer.
-
-## OG / Totally Accurate models
-`ogs-stuff` is not reachable from this sandbox (404 / private). The base jar
-already carries `assets/dabywitherstormmod/cem/`. Force MCSM Look +
-`ogCemModels=true` (default) keeps stormSkin on Obsidian Gloss. **When you
-embed the Totally Accurate CEM/jem pack into the repo**, drop it under
-`jar-overrides/assets/dabywitherstormmod/cem/` (or EMF `emf/entity/`) and the
-next build will ship it as default — animations (tentacle grab/slap) stay on
-the base entity animation system as long as bone names match.
-
-## Already live (1.9.145–1.9.149)
-Teeth U-arcs, Formidi CB face, thick beams, phase sky palettes, NPCs, presets,
-Sky City ~y4200, far three-head halo killed.
-
-Install: drop the jar in `mods/`, remove 1.9.149. Story Look auto-enables.
+Install: drop the jar in `mods/`. Keep EMF + ETF. Open resource packs once
+if the new `ogs-cem` pack did not auto-enable, and turn it ON (it should be
+default). Scrap/disable any old external Totally Accurate pack to avoid
+double-loading.

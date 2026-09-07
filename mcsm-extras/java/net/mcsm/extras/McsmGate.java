@@ -192,7 +192,7 @@ public final class McsmGate {
             // Floor opacity + MCSM purple bias; never lower a user's pick.
             changed += floorField(c, null, "beamOpacity", 0.92);
             changed += floorField(c, null, "beamColorR", 0.42);
-            changed += floorField(c, null, "beamColorG", 0.22);
+            changed += floorField(c, null, "beamColorG", 0.12); // OG pack colors.json green=31
             changed += floorField(c, null, "beamColorB", 0.98);
             // teeth: cyan-white cubes (frames) — push eye/glow tint toward
             // the tooth read so the model teethBoost pass burns white-cyan

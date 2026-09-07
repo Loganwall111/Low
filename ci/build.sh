@@ -554,6 +554,19 @@ cp -r storylook/pack.mcmeta storylook/pack.png "$FX/cls/resourcepacks/storylook/
 cp -r storylook/assets "$FX/cls/resourcepacks/storylook/"
 echo "[build] built-in story look pack embedded at resourcepacks/storylook"
 
+# 1.9.151: Totally Accurate / MCSM OG CEM models (from Loganwall111/ogs-stuff)
+# ship as a second DEFAULT_ENABLED built-in pack. EMF / OptiFine CEM reads
+# assets/minecraft/optifine/cem/dabywitherstormmod/*.jem with Phase NBT ladder.
+if [ -d ogs-cem/assets ] && [ -f ogs-cem/pack.mcmeta ]; then
+  mkdir -p "$FX/cls/resourcepacks/ogs-cem"
+  cp -f ogs-cem/pack.mcmeta "$FX/cls/resourcepacks/ogs-cem/"
+  [ -f ogs-cem/pack.png ] && cp -f ogs-cem/pack.png "$FX/cls/resourcepacks/ogs-cem/"
+  cp -r ogs-cem/assets "$FX/cls/resourcepacks/ogs-cem/"
+  echo "[build] built-in OG CEM pack embedded at resourcepacks/ogs-cem ($(du -sh ogs-cem | cut -f1))"
+else
+  echo "::warning title=build::ogs-cem pack missing — Totally Accurate models will not ship"
+fi
+
 # Mega-phase 5b: the Devouring Storms Iris pack rides inside the mod jar;
 # McsmShaderPackInstall extracts it into shaderpacks/ and selects it in Iris
 # on launch (MCSM Control Panel toggle, DEFAULT ON).
@@ -580,6 +593,12 @@ python3 ci/make_stormface.py "$FX/cls/assets/dabywitherstormmod/textures/misc/st
 
 if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/shaders/core/position.fsh" ]; then
   echo "::error title=jar audit::built-in Story Look pack missing from the jar"
+  AUDIT_FAIL=1
+fi
+
+if [ ! -f "$FX/cls/resourcepacks/ogs-cem/pack.mcmeta" ] \
+   || [ ! -f "$FX/cls/resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm.jem" ]; then
+  echo "::error title=jar audit::built-in OG CEM pack missing from the jar"
   AUDIT_FAIL=1
 fi
 
