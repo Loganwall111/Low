@@ -198,13 +198,13 @@ vec3 storyCalmSky(vec3 dirS) {
     // both ends of the day here - exactly like the core-shader round-5 sky.
     // mega-phase 8: contrasted bluish day/noon; true deep-blue night
     // (purple vault is McsmPhaseSky for 5.4-5.9 only)
-    vec3 zen = day   * vec3(0.106, 0.286, 0.694)
+    vec3 zen = day   * vec3(0.085, 0.255, 0.720)
              + dusk  * vec3(0.620, 0.560, 0.810)
              + night * vec3(0.007, 0.013, 0.058);
-    vec3 mid = day   * vec3(0.318, 0.545, 0.867)
+    vec3 mid = day   * vec3(0.280, 0.500, 0.880)
              + dusk  * vec3(0.620, 0.560, 0.810)
              + night * vec3(0.007, 0.013, 0.058);
-    vec3 hor = day   * vec3(0.678, 0.835, 0.949)
+    vec3 hor = day   * vec3(0.620, 0.700, 0.920)
              + dusk  * vec3(0.890, 0.680, 0.730)
              + night * vec3(0.030, 0.062, 0.178);
 
@@ -257,21 +257,21 @@ vec3 storyStormSky(vec3 dirS) {
         wsum = 1.0;
     }
     // 5.4-5.9 phase fog/sky: violet zenith, magenta mid, SALMON-PINK horizon
-    vec3 z1 = vec3(0.048, 0.016, 0.145);
-    vec3 m1 = vec3(0.255, 0.055, 0.275);
-    vec3 h1 = vec3(0.720, 0.310, 0.340);
+    vec3 z1 = vec3(0.035, 0.010, 0.120);
+    vec3 m1 = vec3(0.320, 0.060, 0.380);
+    vec3 h1 = vec3(0.920, 0.360, 0.480);
     // green-teal frames
-    vec3 z2 = vec3(0.050, 0.110, 0.095);
-    vec3 m2 = vec3(0.120, 0.220, 0.180);
-    vec3 h2 = vec3(0.440, 0.560, 0.360);
+    vec3 z2 = vec3(0.030, 0.100, 0.095);
+    vec3 m2 = vec3(0.080, 0.260, 0.220);
+    vec3 h2 = vec3(0.380, 0.620, 0.480);
     // sunset-orange frames
     vec3 z3 = vec3(0.120, 0.060, 0.080);
     vec3 m3 = vec3(0.350, 0.140, 0.110);
     vec3 h3 = vec3(0.780, 0.280, 0.100);
     // deep purple / magenta frames (phase ~5 punch + post-6 light pink)
-    vec3 z4 = vec3(0.065, 0.018, 0.135);
-    vec3 m4 = vec3(0.260, 0.050, 0.245);
-    vec3 h4 = vec3(0.620, 0.250, 0.360);
+    vec3 z4 = vec3(0.040, 0.012, 0.110);
+    vec3 m4 = vec3(0.340, 0.050, 0.320);
+    vec3 h4 = vec3(0.860, 0.320, 0.480);
     vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
     vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
     vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;

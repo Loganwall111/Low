@@ -139,14 +139,15 @@ public final class McsmPhaseSky {
      */
     private static void dome(PoseStack poseStack, SubmitNodeCollector collector, Vec3 cam,
             Vec3 bearing, float wPurple, float wPink, float sky) {
-        // purple window (5.4-5.9): violet roof, magenta belly, glowing lilac rim
-        final float[] pz = { 0.196F, 0.078F, 0.365F };
-        final float[] pm = { 0.451F, 0.169F, 0.612F };
-        final float[] ph = { 0.741F, 0.353F, 0.694F };
-        // past 5.9: the vault turns light pink
-        final float[] kz = { 0.549F, 0.376F, 0.573F };
-        final float[] km = { 0.831F, 0.588F, 0.702F };
-        final float[] kh = { 0.976F, 0.784F, 0.816F };
+        // purple window (5.4-5.9) — sampled from user phase strips:
+        //   near-black / deep indigo zenith → magenta mid → salmon-pink horizon
+        final float[] pz = { 0.055F, 0.018F, 0.145F };
+        final float[] pm = { 0.420F, 0.090F, 0.520F };
+        final float[] ph = { 0.920F, 0.380F, 0.520F };
+        // past 5.9: light pink / hot-magenta dusk wash from the frames
+        final float[] kz = { 0.380F, 0.160F, 0.360F };
+        final float[] km = { 0.780F, 0.340F, 0.560F };
+        final float[] kh = { 0.980F, 0.620F, 0.700F };
 
         final float pw = wPurple;
         final float kw = wPink;

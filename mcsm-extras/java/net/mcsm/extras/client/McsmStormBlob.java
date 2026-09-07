@@ -347,76 +347,103 @@ public final class McsmStormBlob {
                 });
                 collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
                         (pose, consumer) -> {
-                    // sparkle dots riding down inside each beam cone
+                    // thick purple/blue tractor-beam cones (frames: bright
+                    // conical shafts from each mouth with sparkle motes)
                     for (int m = 0; m < 3; m++) {
-                        for (int j = 0; j < 10; j++) {
+                        for (int k = 0; k < 8; k++) {
+                            float tp = k / 7.0F;
+                            float gx = MOUTH_X[m] * 2.8F;
+                            float gy = -1.7F;
+                            float x = MOUTH_X[m] + (gx - MOUTH_X[m]) * tp;
+                            float y = MOUTH_Y[m] + (gy - MOUTH_Y[m]) * tp;
+                            Vec3 pq = billboardOffset(atF, viewF, bR * x, bR * y);
+                            // cone widens toward the ground
+                            float coneR = bR * (0.035F + 0.14F * tp);
+                            // purple core + blue fringe
+                            quadVerts(pose, consumer, pq, viewF, coneR,
+                                    160, 70, 255, (int) (aa * wg * 55.0F * (1.0F - tp * 0.45F)));
+                            quadVerts(pose, consumer, pq, viewF, coneR * 0.55F,
+                                    90, 140, 255, (int) (aa * wg * 80.0F * (1.0F - tp * 0.35F)));
+                        }
+                        // sparkle dots riding down inside each beam cone
+                        for (int j = 0; j < 14; j++) {
                             float sd = m * 0.37F + j * 0.111F;
                             float tp = fract(tt * 0.22F + sd);
-                            float gx = MOUTH_X[m] * 2.6F;
-                            float gy = -1.5F;
+                            float gx = MOUTH_X[m] * 2.8F;
+                            float gy = -1.7F;
                             float x = MOUTH_X[m] + (gx - MOUTH_X[m]) * tp
-                                    + (fract(sd * 13.7F) - 0.5F) * 0.5F * tp;
+                                    + (fract(sd * 13.7F) - 0.5F) * 0.55F * tp;
                             float y = MOUTH_Y[m] + (gy - MOUTH_Y[m]) * tp
-                                    + (fract(sd * 17.3F) - 0.5F) * 0.35F * tp;
+                                    + (fract(sd * 17.3F) - 0.5F) * 0.40F * tp;
                             Vec3 pq = billboardOffset(atF, viewF, bR * x, bR * y);
-                            quadVerts(pose, consumer, pq, viewF, bR * 0.012F, 235, 225, 255,
-                                    (int) (aa * wg * 190.0F * (1.0F - tp)));
+                            quadVerts(pose, consumer, pq, viewF, bR * 0.016F, 240, 230, 255,
+                                    (int) (aa * wg * 210.0F * (1.0F - tp)));
                         }
                     }
-                    // faint motes orbiting the whole storm
-                    for (int i = 0; i < 36; i++) {
+                    // denser black cube debris field peeling off the body
+                    for (int i = 0; i < 48; i++) {
                         float sd = i * 0.4717F;
                         float ang = fract(sd) * 6.28318F + tt * 0.04F;
                         float rr = (0.35F + 1.25F * fract(sd * 5.1F)) * bR;
                         Vec3 pq = billboardOffset(atF, viewF,
                                 (float) Math.cos(ang) * rr, (float) Math.sin(ang) * rr * 0.8F);
-                        boolean purple = fract(sd * 3.3F) > 0.5F;
-                        quadVerts(pose, consumer, pq, viewF, bR * 0.010F,
+                        boolean purple = fract(sd * 3.3F) > 0.55F;
+                        quadVerts(pose, consumer, pq, viewF, bR * 0.012F,
                                 purple ? 200 : 240, purple ? 160 : 240, purple ? 255 : 250,
-                                (int) (aa * wg * 70.0F * (0.4F + 0.6F * fract(sd * 11.0F))));
+                                (int) (aa * wg * 85.0F * (0.4F + 0.6F * fract(sd * 11.0F))));
                     }
                 });
             }
 
             // ---------- TEETH (body detail, NOT glare) --------------------
-            // Reference frames: chunky white zigzag / dotted U-arc of teeth
-            // sitting on each mouth emitter. Drawn last so they sit over the
-            // body plate. The cyan inner-mouth + magenta emitter cube stay.
+            // Ground-truth frames (user batch 2026-09-07): each mouth is a
+            // U-shaped arc of DISCRETE glowing cyan-white rectangular blocks
+            // (dotted ring / dashed smile), with a hot-magenta cube above.
+            // Not a solid bar, not a glare decal — chunky emissive cubes.
             if (key == mainKey && wMouth > 0.004F && baseR > 10.0) {
                 for (int m = 0; m < 3; m++) {
                     Vec3 mo = billboardOffset(at, view, baseR * MOUTH_X[m], baseR * MOUTH_Y[m]);
-                    // inner mouth cavity
+                    // dark cavity behind the teeth so the white blocks pop
+                    quadAt(poseStack, collector, GlowRenderTypes.translucent(BLACK), mo, view,
+                            baseR * 0.16, 8, 6, 14, (int) (a * wMouth * 200.0F));
+                    // cyan-white inner mouth wash (frames: soft teal cavity)
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), mo, view,
-                            baseR * 0.11, 120, 230, 225, (int) (a * wMouth * 110.0F));
-                    // chunky zigzag teeth: 9 dashed blocks on a downward U,
-                    // alternating offset for the dotted/zigzag read
-                    for (int i = 0; i < 9; i++) {
-                        float t = i / 8.0F;
-                        float ang = (float) (Math.PI * (1.08 + 0.84 * t));
-                        float zig = ((i & 1) == 1) ? 0.022F : -0.006F;
-                        float tx = MOUTH_X[m] + (float) Math.cos(ang) * 0.135F;
-                        float ty = MOUTH_Y[m] + (float) Math.sin(ang) * 0.115F + zig;
+                            baseR * 0.12, 140, 245, 240, (int) (a * wMouth * 90.0F));
+                    // outer U-arc: 11 chunky blocks, alternating size + stagger
+                    // for the dotted/zigzag read from the close-ups
+                    for (int i = 0; i < 11; i++) {
+                        float t = i / 10.0F;
+                        float ang = (float) (Math.PI * (1.05 + 0.90 * t));
+                        float zig = ((i & 1) == 1) ? 0.028F : -0.010F;
+                        float rad = 0.155F + (((i & 1) == 1) ? 0.012F : 0.0F);
+                        float tx = MOUTH_X[m] + (float) Math.cos(ang) * rad;
+                        float ty = MOUTH_Y[m] + (float) Math.sin(ang) * (rad * 0.88F) + zig;
                         Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
-                        // chunky: larger than the old 0.028 dashes
-                        double toothR = baseR * (0.038 + (((i & 1) == 1) ? 0.012 : 0.0));
+                        double toothR = baseR * (0.048 + (((i & 1) == 1) ? 0.016 : 0.0));
+                        // pure white block
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                toothR, 255, 255, 255, (int) (a * wMouth * 250.0F));
+                                toothR, 255, 255, 255, (int) (a * wMouth * 255.0F));
+                        // cyan rim so the cube reads as glowing, not flat
+                        quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
+                                toothR * 1.35, 170, 250, 255, (int) (a * wMouth * 70.0F));
                     }
-                    // secondary inner dotted arc (the "dotted U" read)
-                    for (int i = 0; i < 5; i++) {
-                        float t = i / 4.0F;
-                        float ang = (float) (Math.PI * (1.20 + 0.60 * t));
-                        float tx = MOUTH_X[m] + (float) Math.cos(ang) * 0.085F;
-                        float ty = MOUTH_Y[m] + (float) Math.sin(ang) * 0.070F;
+                    // secondary inner dotted arc (the tight "dotted U")
+                    for (int i = 0; i < 7; i++) {
+                        float t = i / 6.0F;
+                        float ang = (float) (Math.PI * (1.18 + 0.64 * t));
+                        float tx = MOUTH_X[m] + (float) Math.cos(ang) * 0.095F;
+                        float ty = MOUTH_Y[m] + (float) Math.sin(ang) * 0.078F;
                         Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                baseR * 0.018, 240, 250, 255, (int) (a * wMouth * 200.0F));
+                                baseR * 0.026, 230, 255, 255, (int) (a * wMouth * 220.0F));
                     }
-                    // magenta emitter cube above the mouth
+                    // hot-magenta emitter cube ABOVE the mouth (frames)
                     Vec3 cp = billboardOffset(at, view, baseR * MOUTH_X[m],
-                            baseR * (MOUTH_Y[m] + 0.18F));
+                            baseR * (MOUTH_Y[m] + 0.20F));
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,
-                            baseR * 0.048, 232, 40, 226, (int) (a * wMouth * 255.0F));
+                            baseR * 0.062, 255, 28, 220, (int) (a * wMouth * 255.0F));
+                    quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,
+                            baseR * 0.095, 255, 80, 235, (int) (a * wMouth * 90.0F));
                 }
             }
         }

@@ -177,6 +177,19 @@ public final class McsmGate {
             changed += floorField(c, null, "glowStrength", 1.0);
             changed += floorField(c, null, "bloomStrength", 1.0);
             changed += floorField(c, null, "impactLightStrength", 1.0);
+            // 1.9.149: MCSM tractor beams = thick purple/blue cones (frames).
+            // Floor opacity + MCSM purple bias; never lower a user's pick.
+            changed += floorField(c, null, "beamOpacity", 0.92);
+            changed += floorField(c, null, "beamColorR", 0.42);
+            changed += floorField(c, null, "beamColorG", 0.22);
+            changed += floorField(c, null, "beamColorB", 0.98);
+            // teeth: cyan-white cubes (frames) — push eye/glow tint toward
+            // the tooth read so the model teethBoost pass burns white-cyan
+            changed += floorField(c, null, "eyeColorR", 0.85);
+            changed += floorField(c, null, "eyeColorG", 0.95);
+            changed += floorField(c, null, "eyeColorB", 1.0);
+            changed += floorField(c, null, "turquoiseTeethIntensity", 2.4);
+            changed += setBool(c, "turquoiseTeeth", true);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);

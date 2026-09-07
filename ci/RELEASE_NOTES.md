@@ -1,28 +1,38 @@
-# Devouring Storms 1.9.148 — mega-phase 11: OG look default + vivid shaded world
+# Devouring Storms 1.9.149 — MCSM ground-truth retarget
 
-## OG / MCSM look is the default
-`ogCemModels` defaults **ON**. Force MCSM Look keeps `stormSkin` at Obsidian
-Gloss (shiny near-black flesh, purple sheen, command-block belly as
-obsidian-purple tiles) so the body stops falling back to Classic orange.
-The extras panel toggle still lets players opt out.
+User supplied the full MCSM reference frame set (phase skies, glare,
+teeth close-ups, Formidi-bomb core, multi-head storm, tractor beams,
+env stills). This build retargets the overlay against those frames.
 
-## Vivid world lighting + real shade
-- Iris pack final grade: bloom 0.55, exposure 1.08, contrast 1.10, vibrance 1.28.
-- Terrain coloured-light strength 0.70; warmer day key, deeper night blue.
-- Terrain vertex now computes a Lambert sun term (`mcsmShade`) so tree
-  canopies and block faces throw real shade under Iris — the “shadows vanished
-  under the shader pack” bug, closed.
-- Client gate floors `glowStrength` / `stormShadowStrength` / bloom + impact
-  light so teeth, eyes and trailer shadows burn at full.
-- World gate floors `townNpcPopulation` so story towns keep a full cast.
+## Teeth = model body detail (not glare)
+- Phase-4 atlas UV `(8,510)` painted bright cyan-white; eye UV hot magenta.
+- Emissive overlays (`phase_4_assets_e`, `wither_storm_*_e`) so
+  `turquoiseTeeth` burns.
+- Distant-blob mouths redrawn as **11 chunky white blocks on a U-arc**
+  + inner dotted arc + magenta emitter cube above (match close-ups).
+- Gate floors `turquoiseTeethIntensity` 2.4 and eye tint toward cyan-white.
 
-## Already live (1.9.145–1.9.147)
-- Thick welded glare shell + sky-glued phase halo; purple vault 5.4–5.9 only;
-  true deep-blue night; far three-head halo killed.
-- Story towns inhabited with per-character dialogue trees (`McsmNpcs`).
-- Visual presets stick (Netflix / Cinematic / MCSM OG / Legacy all recognised).
-- Structures whole; Sky City ~y4200.
+## Formidi-bomb / early OG core
+- `formidibomb.png` retargeted to brown command-block face + RGB button
+  grid (MCSM summon frames). Emissive lights the coloured buttons only.
+- `wither_storm_og.png` + emissives shipped so `stormSkin=OG` resolves
+  (near-black flesh, warm CB belly, bright teeth).
+- `phase_4_assets_og.png` + `devourer_assets_og.png` paths filled.
 
-Install: drop the jar in `mods/`. Walk into a story town to meet the cast;
-right-click them to talk. Pick a look preset — it will still be selected next
-launch.
+## Tractor beams
+- Distant blob draws thick purple/blue conical shafts with sparkle motes.
+- Gate floors `beamOpacity` 0.92 and MCSM purple beam colour bias.
+
+## Phase skies (sampled from gradient strips)
+- Day/noon: deeper pure-blue zenith → soft lavender horizon.
+- 5.4–5.9: near-black indigo zenith → magenta mid → **salmon-pink** rim.
+- Turquoise phase-5 strip punched greener.
+- `McsmPhaseSky` dome palette matched to the same decks.
+
+## Already live (1.9.145–1.9.148)
+- Thick welded glare shell; far three-head halo killed.
+- OG CEM default ON; vivid shade/lighting under Iris.
+- Story town NPCs + dialogue; presets stick; Sky City ~y4200.
+
+Install: drop the jar in `mods/`. Force MCSM Look stays ON for the OG
+skin + teeth path. Walk a story town and right-click the cast.
