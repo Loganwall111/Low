@@ -52,9 +52,16 @@ public final class McsmPhaseSky {
     private static final Identifier GLARE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_glare.png");
 
-    /** Sky radius for the dome; the halo sits just inside it, the blob at 220. */
+    /** Sky radius for the dome. The halo is a thick multi-depth shell that
+     *  sits just behind the body shell (McsmStormBlob placeDist ≤ ~280), so
+     *  it reads as glued to the storm rather than a far disc. */
     private static final double DOME_R = 480.0;
-    private static final double HALO_R = 300.0;
+    private static final double HALO_R = 260.0;
+    /** Depth slices (along the view axis, in world units) that give the halo
+     *  real thickness — visible from behind, moves with the storm. */
+    private static final double[] HALO_DEPTH = { -40.0, -18.0, 0.0, 16.0, 32.0 };
+    private static final float[] HALO_SCALE = { 1.28F, 1.14F, 1.00F, 1.10F, 1.22F };
+    private static final float[] HALO_ALPHA = { 0.55F, 0.75F, 1.00F, 0.70F, 0.45F };
 
     private static final int LON = 28;
     private static final int LAT = 14;
@@ -242,14 +249,20 @@ public final class McsmPhaseSky {
         int g = (int) (hg * 255.0F);
         int b = (int) (hb * 255.0F);
 
-        // the halo proper: three concentric gradient discs, widest and faintest
-        // outside, so the sky still shows around it
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
-                168.0, r, g, b, (int) (a * 42.0F));
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
-                112.0, r, g, b, (int) (a * 62.0F));
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
-                68.0, r, g, b, (int) (a * 78.0F));
+        // thick multi-depth halo: concentric discs at several depths along the
+        // storm ray so the aura has real thickness, still reads from behind,
+        // and leaves ordinary sky around the rim (no heads, pure palette)
+        for (int s = 0; s < HALO_DEPTH.length; s++) {
+            Vec3 slice = cam.add(bearing.scale(HALO_R + HALO_DEPTH[s]));
+            float sc = HALO_SCALE[s];
+            float aa = HALO_ALPHA[s];
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), slice, bearing, 0.0, 0.0,
+                    168.0 * sc, r, g, b, (int) (a * aa * 42.0F));
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), slice, bearing, 0.0, 0.0,
+                    112.0 * sc, r, g, b, (int) (a * aa * 62.0F));
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), slice, bearing, 0.0, 0.0,
+                    68.0 * sc, r, g, b, (int) (a * aa * 78.0F));
+        }
 
         // ---- silhouette stack, 5.5 to 5.9 --------------------------------
         float sil = ramp(phase, 5.46F, 5.58F) * (1.0F - ramp(phase, 5.90F, 6.10F)) * near;

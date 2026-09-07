@@ -17,7 +17,7 @@ out vec4 fragColor;
 //   day      - EnderCon gate / Sky City aerials (soft pastel story blue)
 //   dawn     - vanilla-strong-orange sunrise only
 //   night    - floating-island night
-//   pinkK    - phases 5.5-5.9: violet zenith, magenta mid, SALMON-PINK
+//   pinkK    - phases 5.4-5.9: violet zenith, magenta mid, SALMON-PINK
 //              horizon (the purple body comes from the storm blob, not sky)
 //   greenK   - the green-teal frames: desaturated teal dome, pale horizon
 //   orangeK  - sunset frames: mauve-brown zenith into burnt orange horizon
@@ -144,10 +144,12 @@ void main() {
             magK = 1.0;
             wsum = 1.0;
         }
-        // 5.5-5.9 pinkish-violet (violet zenith, salmon-pink horizon)
-        vec3 z1 = vec3(0.055, 0.022, 0.130);
-        vec3 m1 = vec3(0.200, 0.060, 0.230);
-        vec3 h1 = vec3(0.640, 0.300, 0.310);
+        // 5.4-5.9 phase fog/sky: violet zenith, magenta mid, SALMON-PINK
+        // horizon. The purple body is the storm blob, not the sky.
+        // After ~6 the same deck shifts toward a light pink wash.
+        vec3 z1 = vec3(0.048, 0.016, 0.145);
+        vec3 m1 = vec3(0.255, 0.055, 0.275);
+        vec3 h1 = vec3(0.720, 0.310, 0.340);
         // green-teal frames
         vec3 z2 = vec3(0.050, 0.110, 0.095);
         vec3 m2 = vec3(0.120, 0.220, 0.180);
@@ -156,10 +158,10 @@ void main() {
         vec3 z3 = vec3(0.120, 0.060, 0.080);
         vec3 m3 = vec3(0.350, 0.140, 0.110);
         vec3 h3 = vec3(0.780, 0.280, 0.100);
-        // deep purple / magenta frames
-        vec3 z4 = vec3(0.070, 0.022, 0.120);
-        vec3 m4 = vec3(0.230, 0.055, 0.220);
-        vec3 h4 = vec3(0.560, 0.220, 0.320);
+        // deep purple / magenta frames (phase ~5 punch + post-6 light pink)
+        vec3 z4 = vec3(0.065, 0.018, 0.135);
+        vec3 m4 = vec3(0.260, 0.050, 0.245);
+        vec3 h4 = vec3(0.620, 0.250, 0.360);
         vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
         vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
         vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
@@ -175,19 +177,25 @@ void main() {
         // blue silhouette rim hugging the horizon, all the way around
         float rim = exp(-abs(ty - 0.015) * 42.0);
         col = mix(col, vec3(0.16, 0.34, 0.95), rim * 0.50);
-        // gigantic purple line across the upper vault
-        float topLine = exp(-abs(ty - 0.72) * 26.0);
-        col = mix(col, vec3(0.40, 0.15, 0.85), topLine * 0.30);
+        // gigantic purple glow band across the upper vault (5.4-5.9 punch)
+        // stronger than the old thin line so the phase fog actually reads
+        float topLine = exp(-abs(ty - 0.68) * 18.0);
+        col = mix(col, vec3(0.48, 0.14, 0.92), topLine * 0.48);
+        // second, higher purple wash so the roof carries the big glow
+        float topWash = exp(-abs(ty - 0.82) * 10.0);
+        col = mix(col, vec3(0.32, 0.08, 0.70), topWash * 0.35);
         // darker back tone so the roof reads heavier than the sides
-        col *= 1.0 - 0.38 * smoothstep(0.50, 1.0, ty);
-        // mega-phase 3: the storm sky SHRINKS to the sides. Overhead the
-        // dome collapses into a dark calm violet instead of stretching the
-        // storm palette across the whole sky; the coloured halo around the
-        // storm's flanks is carried by the mod's halo ring quad instead.
-        float over = smoothstep(0.30, 0.70, ty);
+        col *= 1.0 - 0.42 * smoothstep(0.50, 1.0, ty);
+        // mega-phase 7b: overhead collapses into a dark purple+black stack
+        // (silhouette nightglow), not a calm violet. The coloured shell
+        // around the storm's flanks is carried by McsmStormBlob's thick
+        // welded aura — not a far three-headed HALO ring.
+        float over = smoothstep(0.28, 0.72, ty);
         float olum = dot(col, vec3(0.299, 0.587, 0.114));
-        vec3 ocol = mix(vec3(olum) * vec3(0.42, 0.30, 0.52), vec3(0.02, 0.012, 0.03), 0.55);
-        col = mix(col, ocol, over * 0.85);
+        // purple + moon-blue + black atmospheric top
+        vec3 ocol = mix(vec3(olum) * vec3(0.30, 0.18, 0.48), vec3(0.012, 0.008, 0.022), 0.62);
+        ocol = mix(ocol, vec3(0.05, 0.08, 0.22), 0.18); // moon-blue fringe
+        col = mix(col, ocol, over * 0.90);
 
         vec3 litC = mix(vec3(0.52, 0.42, 0.62), hor, 0.35);
         vec3 shadeC = mix(zen, hor, 0.30) * 0.60;
@@ -208,7 +216,8 @@ void main() {
     float dawn = smoothstep(0.25, 0.50, orange) * step(C.b, C.g) * (1.0 - night);
     float day = max(1.0 - night - dawn, 0.0);
 
-    // EnderCon gate / Sky City pastels: soft story blue, pink-warm horizon
+    // mega-phase 8: contrasted bluish day/noon per frames; true deep-blue night
+    // (purple vault lives in McsmPhaseSky for phases 5.4-5.9 only)
     vec3 zen = day * vec3(0.106, 0.286, 0.694)
              + dawn * vec3(0.620, 0.560, 0.810)
              + night * vec3(0.007, 0.013, 0.058);

@@ -1,57 +1,43 @@
-# Devouring Storms 1.9.144 — mega-phase 8: the phase sky, and the halo without heads
+# Devouring Storms 1.9.145 — mega-phase 8+7b: phase sky, thick shell, whole structures
 
-## The purple sky is a PHASE, not a night
-The big glowing purple vault was being painted by the shader pack's night
-and aurora path, so it showed up on ordinary nights and never lined up
-with the creature. It has been taken off the clock entirely:
-
-- **night and midnight go back to a true deep blue** in both sky paths
-  (the embedded Iris pack and the core-shader fallback), and the aurora
-  ribbons are off by default — nothing paints the night purple any more;
-- the purple vault and its fog are now drawn by the mod itself, on a sky
-  dome it only paints while the storm sits in **phase 5.4 through 5.9**;
-- **past 5.9 the purple leaves and the vault turns light pink**, exactly
-  where the reference frames end;
-- the vault is lit *from* the storm's bearing rather than washed flat, and
-  the phase fog is thickest at the horizon so the zenith stays readable;
-- the storm sky gate now needs a strong purple fog, so phases 4–5.3 no
-  longer swap the sky out from under the player.
+## Phase sky is 5.4–5.9 only (not night)
+The big glowing purple sky is **not night**. Night and midnight are a true
+deep blue again in both sky shaders. The purple vault and its fog are drawn
+by the mod itself (`McsmPhaseSky`) only while the storm sits in **phase 5.4
+through 5.9**. Past 5.9 the purple leaves and the vault turns **light pink**,
+exactly where the reference frames end. The vault is lit from the storm's
+bearing; phase fog is thickest at the horizon.
 
 ## Daytime and noon
-The day gradient was carrying a warm beige horizon. It now runs the
-contrasted bluish ramp from the reference sheet: deep blue zenith
+Contrasted bluish ramp from the reference sheet: deep blue zenith
 (0.106, 0.286, 0.694) → azure mid → pale blue-white horizon.
 
-## The halo, rebuilt with no heads
-The old halo hung far off the storm and carried three heads and a symbol
-behind the creature. **That disc is deleted.** In its place:
+## The far three-headed halo is gone
+`StormPresenceFX.blackGlare` + `cataclysmHalos` painted `halo_ring.png` at
+bodyR×1.3..1.9 — the "three heads / symbol far behind the wither". Both knobs
+are forced OFF every frame (`McsmPresenceFxPatch` + `McsmGate`). Atmosphere
+pulse and ejecta debris still run.
 
-- a **pure colour palette halo** — three concentric soft-gradient discs,
-  no face anywhere — drawn in sky space at the storm's own bearing, so it
-  rides with the sky *and* with the storm, faces the camera (it still
-  reads when you walk around behind it), and stays small enough that the
-  ordinary sky shows around its rim;
-- palette per phase, sampled off the frames: desaturated teal-grey at 5.2,
-  lavender/periwinkle at 5.4, deep purple-magenta 5.5–5.9, rose mauve 6+.
+## Thick welded glare shell + sky-glued halo
+- **McsmStormBlob**: multi-depth thick 3D shell of 7 plates offset along the
+  camera→storm ray (behind / through / in front). World-space near the body,
+  angular blend at range — never detaches. Body palette fringe (dark blue +
+  dark purple) replaces the old face overlay. Chunky zigzag / dotted U-arc
+  teeth sit on each mouth emitter as body detail, not glare.
+- **McsmPhaseSky**: pure-colour multi-depth halo (no heads) at the storm's
+  bearing, plus the 5.5–5.9 silhouette stack — dark-blue over-storm light,
+  dark purple wrap, purple + moon-blue pair, black atmospheric cap that erases
+  the top of the sky around the storm (not the body).
 
-## The silhouette stack, 5.5 → 5.9
-Layered outward from the body, all sky-glued:
-1. the mod's **dark-blue over-storm light**, replicated;
-2. a **dark purple layer** laid on top of it and wrapped round the back;
-3. the second pair — **purple over, dark moon-blue** beneath;
-4. a **black glow capping the storm** that takes the top of the
-   *atmosphere* out of the picture completely (alpha-blended, not
-   additive, so it truly erases rather than brightens).
+## Structures whole + Sky City altitude
+1.9.143 failed because `@ModifyReturnValue` is not on the shipped Mixin jar.
+`McsmWorldgenPatch` hooks `enqueue` with a ThreadLocal re-entry guard:
+floating sites (y∈(200,1000)) are re-enqueued at y+3904 (~y4200) and the
+original call is cancelled. Tick still clears the static queue on level change
+and raises the budget to 900k so schematics land whole.
 
-On the body itself the removed face overlay is replaced by a plain
-palette fringe: dark blue, then dark purple over it.
+Unchanged: 6b warp portals, 6a particle field, built-in shader pack DEFAULT ON,
+mirrored cloud decks.
 
-## Sky City altitude (1.9.143's fix, now actually shipping)
-1.9.143 failed to compile — the shipped Mixin jar predates
-`@ModifyReturnValue`. The altitude raise now hooks `enqueue` instead:
-floating sites are the only jobs in the 200–1000 band, so they are
-re-enqueued 3,904 blocks higher and the original call is cancelled.
-Sky City lands at y≈4,200, above the 96/146/152/420/430/1200 decks — a
-jump off the edge falls through the story cloud layers on the way down.
-Structures still place whole, and the static queue is still cleared on
-every world change.
+Install: drop the jar in `mods/`. Existing worlds pick the new Sky City
+altitude on fresh structure placement; already-placed blocks stay put.

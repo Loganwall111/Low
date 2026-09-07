@@ -120,8 +120,13 @@ public final class McsmGate {
             changed += floorField(c, null, "stormSkin", 1.0);
 
             // ---- the halo / glare the user has been chasing ----------------
+            // mega-phase 7b: blackGlare + cataclysmHalos paint the FAR
+            // three-headed HALO ring the user rejects. Keep them OFF; the
+            // thick welded shell lives in McsmStormBlob. McsmPresenceFxPatch
+            // also forces them off every frame so presets cannot revive them.
             changed += setBool(c, "sunGlow", true);
-            changed += setBool(c, "blackGlare", true);
+            changed += setBool(c, "blackGlare", false);
+            changed += setBool(c, "cataclysmHalos", false);
             changed += setBool(c, "glareEjecta", true);
             changed += setBool(c, "headEyeGlow", true);
             changed += setBool(c, "devourerDebrisGlow", true);
@@ -158,7 +163,7 @@ public final class McsmGate {
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += floorField(c, null, "sunGlowStrength", 1.0);
-            changed += floorField(c, null, "blackGlareStrength", 1.0);
+            // blackGlareStrength left alone — the far ring is off
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);
             changed += floorField(c, null, "ambienceVolume", 0.8);

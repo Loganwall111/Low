@@ -20,25 +20,27 @@ import net.mcsm.extras.McsmExtrasConfig;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Devouring Storms: mega-phase 2+5 - the storm blob, corrected and welded.
+ * Devouring Storms mega-phase 7b — welded thick-shell storm aura.
  *
- *  - phases 5.5-5.9 get the PINKISH-VIOLET blob; the reddish cast is gone;
- *  - the dark storm heart sits dead-centre in every phase from 4 up;
- *  - the centre direction is temporally smoothed (25% per frame) so blob
- *    and storm glide as one sky element;
- *  - the GLARE is the original game's construction, exposed by the reference
- *    frames: one soft gradient billboard hung BEHIND the silhouette (wide
- *    purple aura 5.5+, blue at 4-5), terrain occluding it for free - the old
- *    hard ring glare is deleted;
- *  - the MOUTHS are flat emissive squares over the body: cyan-white inner
- *    mouth, a zigzagged U-arc of tiny white dashed teeth, one magenta cube
- *    per emitter - exactly what the close-up frames show;
- *  - the old three-headed halo/symbol disc is DELETED; 5.5+ instead gets a
- *    plain palette fringe on the body (dark blue, then dark purple over it)
- *    while the wide halo is sky-glued in McsmPhaseSky.
+ * The glare is a thick 3D layer glued to the storm body (not a far 2D
+ * skybox billboard). Multiple depth slices sit in front of, through, and
+ * behind the silhouette so the player can walk behind the storm and still
+ * see the shell, and the back always tracks the storm as it moves.
  *
- * Every call is copied verbatim from the base mod's own compiled
- * StormBackdrop (verified 26.2 surface).
+ * Phase colour decks (sampled from the Story Mode frames):
+ *   4.x   moon-blue
+ *   5.0   soft violet wash begins
+ *   5.4   big purple glow ramps hard
+ *   5.5–5.9 violet zenith / magenta mid / salmon-pink rim (body is purple)
+ *   6.x   deep purple + ember
+ *
+ * Silhouette / nightglow stack (5.5+): dark-blue base + dark-purple wrap
+ * over the top + moon-blue fringe + black atmospheric top that eats the
+ * roof of the sky around the storm (not the body itself).
+ *
+ * Teeth are body detail on the mouth emitters (chunky white zigzag U-arcs),
+ * never part of the glare shell. The far three-headed HALO ring from
+ * StormPresenceFX is killed by McsmPresenceFxPatch.
  */
 public final class McsmStormBlob {
 
@@ -54,18 +56,30 @@ public final class McsmStormBlob {
             "dabywitherstormmod", "textures/misc/backdrop_purple_pink.png");
     private static final Identifier EMBER = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/backdrop_ember.png");
-    // mega-phase 5c: the reference frames exposed how the original game
-    // builds the glare - a plain soft gradient quad BEHIND the silhouette,
-    // plus flat emissive squares for the mouth details. The old hard ring
-    // glare is gone.
     private static final Identifier GLARE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_glare.png");
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
 
-    /** The three beam mouths, in billboard units of baseR (x right, y up). */
-    private static final float[] MOUTH_X = { -0.30F, 0.00F, 0.30F };
-    private static final float[] MOUTH_Y = { -0.04F, -0.14F, -0.02F };
+    /** Three beam mouths, in body-radius units (x right, y up). */
+    private static final float[] MOUTH_X = { -0.28F, 0.00F, 0.28F };
+    private static final float[] MOUTH_Y = { -0.02F, -0.12F, 0.00F };
+
+    /**
+     * Depth slices of the thick shell, in body-radius units along the view
+     * axis. Negative = behind the storm (visible when the player is behind
+     * or off to the side), positive = in front. The zero slice is the
+     * welded face plate.
+     */
+    private static final float[] SHELL_DEPTH = {
+            -1.35F, -0.85F, -0.40F, 0.00F, 0.35F, 0.75F, 1.15F
+    };
+    private static final float[] SHELL_SCALE = {
+            1.55F, 1.38F, 1.22F, 1.08F, 1.18F, 1.32F, 1.48F
+    };
+    private static final float[] SHELL_ALPHA = {
+            0.55F, 0.70F, 0.85F, 1.00F, 0.80F, 0.60F, 0.40F
+    };
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
 
@@ -94,7 +108,7 @@ public final class McsmStormBlob {
         try {
             submitInner(ctx);
         } catch (Throwable ignored) {
-            // an unexpected base-jar surface degrades to no blob, never a crash
+            // unexpected base-jar surface degrades to no blob, never a crash
         }
     }
 
@@ -109,10 +123,11 @@ public final class McsmStormBlob {
         Vec3 cam = ctx.levelState().cameraRenderState.pos;
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
-        float master = 1.0F; // config-free: the corrected blob always runs
+        McsmExtrasConfig.load();
+        double glareMul = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
+        double smudge = Mth.clamp(McsmExtrasConfig.smudgeScale, 0.15, 2.5);
 
-        // pass 1: the NEAREST storm is the main one - halo and face overlay
-        // attach to it and nothing else
+        // nearest storm owns the face overlay + mouth detail
         int mainKey = -1;
         double mainDist = Double.MAX_VALUE;
         int probe = 0;
@@ -142,92 +157,149 @@ public final class McsmStormBlob {
                 centre = prev.add(centre.subtract(prev).scale(0.25D));
             }
             SMOOTH.put(key, centre);
+
             Vec3 toStorm = centre.subtract(cam);
             double dist = toStorm.length();
             if (dist < 1.0E-4) {
                 continue;
             }
             Vec3 view = toStorm.scale(1.0D / dist);
-            float distFade = 1.0F - Mth.clamp((float) ((dist - 1200.0) / 900.0), 0.0F, 1.0F);
+            float distFade = 1.0F - Mth.clamp((float) ((dist - 1600.0) / 1100.0), 0.0F, 1.0F);
             if (distFade <= 0.004F) {
                 continue;
             }
-            double skyDist = 220.0D;
-            Vec3 at = cam.add(view.scale(skyDist));
-            double angular = Mth.clamp(bodyRadius(phase) / Math.max(dist, 1.0), 0.012, 0.85);
-            double baseR = skyDist * angular * 1.5;
-            if (phase > 5.5F) {
-                baseR *= 1.0F + (phase - 5.5F) * 0.26F;
-            }
-            float breathe = 1.0F + 0.03F * Mth.sin(nowSec * 0.045F);
-            baseR *= breathe;
-            float a = master * distFade;
 
-            float wBlue = ramp(phase, 3.95F, 4.2F) * (1.0F - ramp(phase, 4.6F, 5.0F));
-            float wTurq = ramp(phase, 4.45F, 4.9F) * (1.0F - ramp(phase, 5.2F, 5.5F));
-            float wViolet = ramp(phase, 5.2F, 5.5F) * (1.0F - ramp(phase, 6.0F, 6.35F));
-            float wPurp = ramp(phase, 6.0F, 6.35F);
-            float wPink = ramp(phase, 6.3F, 7.0F);
+            double bodyR = bodyRadius(phase);
+            // world-space shell radius — welded to the body, not a far sky disc
+            double shellR = bodyR * (1.55 + 1.10 * glareMul) * smudge;
+            if (phase > 5.4F) {
+                shellR *= 1.0F + (phase - 5.4F) * 0.18F;
+            }
+            float breathe = 1.0F + 0.028F * Mth.sin(nowSec * 0.045F);
+            shellR *= breathe;
+
+            // far storms still need a skybox-scale disc so the silhouette
+            // reads at range; blend world-space radius up toward an angular
+            // sky radius past ~350 blocks without ever detaching the shell
+            double skyDist = Math.min(Math.max(dist * 0.92, bodyR * 2.5), 280.0);
+            double angular = Mth.clamp(bodyR / Math.max(dist, 1.0), 0.010, 0.90);
+            double skyR = skyDist * angular * (1.65 + 1.4 * glareMul) * smudge;
+            float nearW = 1.0F - Mth.clamp((float) ((dist - 180.0) / 420.0), 0.0F, 1.0F);
+            double baseR = shellR * nearW + skyR * (1.0F - nearW);
+            // when far, the shell still sits ON the storm ray (at the storm
+            // itself when near, sliding toward skyDist only as distance grows)
+            double placeDist = dist * nearW + skyDist * (1.0F - nearW);
+            // never push past the real storm centre when we are in front of it
+            placeDist = Math.min(placeDist, dist * 0.98);
+            Vec3 at = cam.add(view.scale(Math.max(placeDist, bodyR * 1.2)));
+
+            float a = distFade;
+
+            // phase colour weights — match the frame decks
+            float wBlue = ramp(phase, 3.95F, 4.2F) * (1.0F - ramp(phase, 4.7F, 5.15F));
+            float wTurq = ramp(phase, 4.5F, 4.95F) * (1.0F - ramp(phase, 5.25F, 5.45F));
+            // 5.0 soft violet → 5.4 hard purple → 5.5–5.9 pinkish-violet peak
+            float wViolet = ramp(phase, 5.0F, 5.35F) * (1.0F - ramp(phase, 5.95F, 6.25F));
+            float wHard = ramp(phase, 5.35F, 5.55F) * (1.0F - ramp(phase, 5.95F, 6.25F)); // 5.4–5.9 punch
+            float wPurp = ramp(phase, 5.95F, 6.3F);
+            float wPink = ramp(phase, 6.25F, 6.9F); // post-cataclysm light pink
             float wCore = ramp(phase, 4.0F, 4.3F);
-            float wFace = ramp(phase, 5.5F, 5.8F);
-            float wGlare = ramp(phase, 3.95F, 4.3F);
+            // body fringe 5.5+ (plain palette, no face — the wide halo +
+            // silhouette stack live sky-glued in McsmPhaseSky)
+            float wFace = ramp(phase, 5.45F, 5.75F);
+            float wShell = ramp(phase, 3.95F, 4.25F);
             float wMouth = ramp(phase, 3.9F, 4.3F);
 
-            // THE GLARE, FIRST: one soft gradient billboard hung behind the
-            // silhouette, exactly as the original frames expose it - wide
-            // purple aura at 5.5+, blue at phase 4-5, teal in the green
-            // phase. Terrain draws later, so trees and buildings occlude it
-            // for free. Scale rides the Glare Size slider (default 0.58).
-            if (key == mainKey && wGlare > 0.004F) {
-                McsmExtrasConfig.load();
-                double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-                float gr = (float) (baseR * (1.7D + 2.2D * gs));
-                float wr = 0.30F * wBlue + 0.35F * wTurq + 0.48F * wViolet
-                        + 0.55F * wPurp + 0.72F * wPink;
-                float wg = 0.45F * wBlue + 0.85F * wTurq + 0.28F * wViolet
-                        + 0.22F * wPurp + 0.32F * wPink;
-                float wb = 0.92F * wBlue + 0.85F * wTurq + 0.80F * wViolet
-                        + 0.78F * wPurp + 0.62F * wPink;
-                float wsum = wBlue + wTurq + wViolet + wPurp + wPink;
+            // ---------- THICK 3D SHELL (glued, multi-depth) ----------------
+            // Each slice is a soft gradient plate offset along the view axis
+            // so the aura has real thickness. Behind-slices (negative depth)
+            // stay lit when the camera is behind or beside the storm.
+            if (wShell > 0.004F) {
+                // phase-tinted shell colour (exact frame decks)
+                float wr = 0.28F * wBlue + 0.30F * wTurq + 0.55F * wViolet
+                        + 0.62F * wHard + 0.50F * wPurp + 0.78F * wPink;
+                float wg = 0.48F * wBlue + 0.82F * wTurq + 0.22F * wViolet
+                        + 0.18F * wHard + 0.16F * wPurp + 0.38F * wPink;
+                float wb = 0.95F * wBlue + 0.80F * wTurq + 0.78F * wViolet
+                        + 0.88F * wHard + 0.82F * wPurp + 0.58F * wPink;
+                float wsum = wBlue + wTurq + wViolet + wHard + wPurp + wPink;
                 if (wsum > 0.004F) {
-                    wr /= wsum; wg /= wsum; wb /= wsum;
+                    wr /= wsum;
+                    wg /= wsum;
+                    wb /= wsum;
                 } else {
-                    wr = 0.48F; wg = 0.28F; wb = 0.80F;
+                    wr = 0.50F;
+                    wg = 0.22F;
+                    wb = 0.82F;
                 }
-                quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
-                        gr, (int) (wr * 255.0F), (int) (wg * 255.0F), (int) (wb * 255.0F),
-                        (int) (a * wGlare * 110.0F));
+                int cr = (int) (wr * 255.0F);
+                int cg = (int) (wg * 255.0F);
+                int cb = (int) (wb * 255.0F);
+
+                for (int s = 0; s < SHELL_DEPTH.length; s++) {
+                    double depth = bodyR * SHELL_DEPTH[s];
+                    // offset along the camera→storm ray: negative depth sits
+                    // BEHIND the silhouette (farther from cam when looking
+                    // at the front face, closer to cam when looking from behind)
+                    Vec3 slice = at.add(view.scale(depth));
+                    double r = baseR * SHELL_SCALE[s];
+                    int alpha = (int) (a * wShell * SHELL_ALPHA[s] * 125.0F);
+                    // outer slices use the soft glare gradient; mid slices
+                    // use the phase backdrop so the body colour bleeds through
+                    Identifier tex = (s == 0 || s == SHELL_DEPTH.length - 1) ? GLARE
+                            : (wHard > 0.4F || wViolet > 0.4F) ? PURPLE_PINK
+                            : (wBlue > 0.4F) ? BLUE4
+                            : (wTurq > 0.4F) ? TURQUOISE
+                            : PURPLE;
+                    RenderType rt = (s <= 2) ? GlowRenderTypes.glow(tex)
+                            : GlowRenderTypes.translucent(tex);
+                    quad(poseStack, collector, rt, slice, view, r, cr, cg, cb, alpha);
+                }
+
+                // extra outer wash — the wide soft aura the frames show
+                // wrapping the flanks without floating off as a ring symbol
+                quad(poseStack, collector, GlowRenderTypes.glow(GLARE),
+                        at.add(view.scale(-bodyR * 0.15)), view,
+                        baseR * (1.85 + 0.55 * glareMul),
+                        cr, cg, cb, (int) (a * wShell * 70.0F));
             }
+
+            // body colour plates (welded, slightly smaller than the shell)
             if (wPink > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE_PINK), at, view,
-                        baseR * 1.55, 255, 205, 225, (int) (a * wPink * 245.0F));
+                        baseR * 1.05, 255, 210, 230, (int) (a * wPink * 230.0F));
             }
             if (wPurp > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE), at, view,
-                        baseR * 1.18, 236, 200, 255, (int) (a * wPurp * 250.0F));
+                        baseR * 0.98, 230, 190, 255, (int) (a * wPurp * 240.0F));
             }
-            if (wViolet > 0.004F) {
+            if (wHard > 0.004F || wViolet > 0.004F) {
+                float wv = Math.max(wHard, wViolet);
+                // 5.4–5.9 pinkish-violet body — the purple comes from HERE,
+                // not the sky (sky carries the salmon-pink horizon)
                 quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE_PINK), at, view,
-                        baseR * 1.35, 255, 214, 236, (int) (a * wViolet * 240.0F));
+                        baseR * 1.02, 245, 200, 235, (int) (a * wv * 235.0F));
+                quad(poseStack, collector, GlowRenderTypes.glow(PURPLE), at, view,
+                        baseR * 0.88, 200, 90, 230, (int) (a * wv * 110.0F));
             }
             if (wTurq > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.translucent(TURQUOISE), at, view,
-                        baseR * 1.1, 255, 255, 255, (int) (a * wTurq * 250.0F));
+                        baseR * 0.95, 255, 255, 255, (int) (a * wTurq * 245.0F));
             }
-            if (phase >= 6.5F) {
+            if (phase >= 6.4F) {
                 quad(poseStack, collector, GlowRenderTypes.translucent(EMBER), at, view,
-                        baseR * 1.34, 255, 255, 255, (int) (a * 60.0F));
+                        baseR * 1.10, 255, 255, 255, (int) (a * 55.0F));
             }
             if (wCore > 0.004F) {
+                // dark storm heart, dead-centre
                 quad(poseStack, collector, GlowRenderTypes.translucent(BLACK), at, view,
-                        baseR * 0.85, 255, 255, 255, (int) (a * wCore * 235.0F));
+                        baseR * 0.72, 255, 255, 255, (int) (a * wCore * 240.0F));
             }
-            // the OLD halo - the far-off disc carrying three heads and a
-            // symbol behind the creature - is deleted at the user's order.
-            // What replaces it over the body is a plain palette fringe: a
-            // dark-blue over-storm light with a dark purple layer laid on top
-            // of it, drawn from the soft gradient, no face anywhere. The wide
-            // halo itself is sky-glued and lives in McsmPhaseSky.
+
+            // body palette fringe 5.5+ — dark-blue then dark-purple over it,
+            // plain soft gradient, NO face/heads. The wide sky-glued halo and
+            // the full silhouette stack (purple + moon-blue + black roof) are
+            // drawn by McsmPhaseSky behind this shell.
             if (key == mainKey && wFace > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
                         baseR * 1.14, 26, 52, 124, (int) (a * wFace * 92.0F));
@@ -236,50 +308,48 @@ public final class McsmStormBlob {
             }
             if (wBlue > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.glow(BLUE4), at, view,
-                        baseR * 0.95, 190, 215, 255, (int) (a * wBlue * 235.0F));
+                        baseR * 0.90, 190, 215, 255, (int) (a * wBlue * 230.0F));
             }
-            // PHASE-6 PARTICLE FIELD (batched into two draws): black cubes
-            // peeling off the body edge, sparkle dots travelling down inside
-            // the beam cones, faint motes orbiting the whole storm and mist
-            // puffs clinging to its base - exactly the four particle reads
-            // the reference frames show. Stateless: every position is a hash
-            // of its index plus time, so nothing is stored or synced.
-            if (key == mainKey && wGlare > 0.004F && baseR > 10.0) {
+
+            // ---------- PARTICLES (cubes / beams / motes / mist) -----------
+            if (key == mainKey && wShell > 0.004F && baseR > 8.0) {
                 final float bR = (float) baseR;
                 final float tt = nowSec;
                 final float aa = a;
-                final float wg = wGlare;
+                final float wg = wShell;
+                final Vec3 atF = at;
+                final Vec3 viewF = view;
                 collector.submitCustomGeometry(poseStack, GlowRenderTypes.translucent(WHITE),
                         (pose, consumer) -> {
-                    // black cubes: cycle outward off the silhouette edge
-                    for (int i = 0; i < 26; i++) {
+                    // black cubes peeling off the silhouette edge
+                    for (int i = 0; i < 32; i++) {
                         float sd = i * 0.618034F;
                         float cyc = fract(tt * 0.05F + sd);
                         float ang = fract(sd) * 6.28318F;
-                        float rr = (0.75F + 0.65F * cyc) * bR;
+                        float rr = (0.70F + 0.80F * cyc) * bR;
                         float x = (float) Math.cos(ang) * rr * 0.95F;
-                        float y = (float) Math.sin(ang) * rr * 0.70F - cyc * 0.35F * bR;
-                        Vec3 pq = billboardOffset(at, view, x, y);
-                        float sz = bR * (0.020F + 0.020F * fract(sd * 7.3F));
-                        quadVerts(pose, consumer, pq, view, sz, 8, 6, 12,
+                        float y = (float) Math.sin(ang) * rr * 0.70F - cyc * 0.40F * bR;
+                        Vec3 pq = billboardOffset(atF, viewF, x, y);
+                        float sz = bR * (0.018F + 0.022F * fract(sd * 7.3F));
+                        quadVerts(pose, consumer, pq, viewF, sz, 8, 6, 12,
                                 (int) (aa * wg * 210.0F * (1.0F - cyc * 0.7F)));
                     }
                     // mist puffs at the storm's base
-                    for (int i = 0; i < 6; i++) {
+                    for (int i = 0; i < 8; i++) {
                         float sd = i * 0.31F + 0.17F;
                         float x = (fract(sd * 3.7F) * 2.4F - 1.2F) * bR;
                         float y = -1.05F * bR + fract(sd * 9.1F) * 0.3F * bR;
-                        Vec3 pq = billboardOffset(at, view, x, y);
-                        quadVerts(pose, consumer, pq, view,
+                        Vec3 pq = billboardOffset(atF, viewF, x, y);
+                        quadVerts(pose, consumer, pq, viewF,
                                 bR * (0.35F + 0.2F * fract(sd * 5.3F)), 150, 130, 170,
-                                (int) (aa * wg * 26.0F));
+                                (int) (aa * wg * 28.0F));
                     }
                 });
                 collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
                         (pose, consumer) -> {
                     // sparkle dots riding down inside each beam cone
                     for (int m = 0; m < 3; m++) {
-                        for (int j = 0; j < 9; j++) {
+                        for (int j = 0; j < 10; j++) {
                             float sd = m * 0.37F + j * 0.111F;
                             float tp = fract(tt * 0.22F + sd);
                             float gx = MOUTH_X[m] * 2.6F;
@@ -288,53 +358,65 @@ public final class McsmStormBlob {
                                     + (fract(sd * 13.7F) - 0.5F) * 0.5F * tp;
                             float y = MOUTH_Y[m] + (gy - MOUTH_Y[m]) * tp
                                     + (fract(sd * 17.3F) - 0.5F) * 0.35F * tp;
-                            Vec3 pq = billboardOffset(at, view, bR * x, bR * y);
-                            quadVerts(pose, consumer, pq, view, bR * 0.012F, 235, 225, 255,
+                            Vec3 pq = billboardOffset(atF, viewF, bR * x, bR * y);
+                            quadVerts(pose, consumer, pq, viewF, bR * 0.012F, 235, 225, 255,
                                     (int) (aa * wg * 190.0F * (1.0F - tp)));
                         }
                     }
-                    // faint motes orbiting the whole storm - the "subtle
-                    // particles everywhere" read
-                    for (int i = 0; i < 30; i++) {
+                    // faint motes orbiting the whole storm
+                    for (int i = 0; i < 36; i++) {
                         float sd = i * 0.4717F;
                         float ang = fract(sd) * 6.28318F + tt * 0.04F;
                         float rr = (0.35F + 1.25F * fract(sd * 5.1F)) * bR;
-                        Vec3 pq = billboardOffset(at, view,
+                        Vec3 pq = billboardOffset(atF, viewF,
                                 (float) Math.cos(ang) * rr, (float) Math.sin(ang) * rr * 0.8F);
                         boolean purple = fract(sd * 3.3F) > 0.5F;
-                        quadVerts(pose, consumer, pq, view, bR * 0.010F,
+                        quadVerts(pose, consumer, pq, viewF, bR * 0.010F,
                                 purple ? 200 : 240, purple ? 160 : 240, purple ? 255 : 250,
                                 (int) (aa * wg * 70.0F * (0.4F + 0.6F * fract(sd * 11.0F))));
                     }
                 });
             }
 
-            // MOUTH DETAILS, LAST (over the body): the original frames show
-            // each emitter as a cyan-white inner-mouth square, a U-arc of
-            // tiny white dashed teeth (zigzagged), and one small magenta
-            // cube floating above. Flat emissive squares - their softness
-            // comes from distance alone.
-            if (key == mainKey && wMouth > 0.004F && baseR > 12.0) {
+            // ---------- TEETH (body detail, NOT glare) --------------------
+            // Reference frames: chunky white zigzag / dotted U-arc of teeth
+            // sitting on each mouth emitter. Drawn last so they sit over the
+            // body plate. The cyan inner-mouth + magenta emitter cube stay.
+            if (key == mainKey && wMouth > 0.004F && baseR > 10.0) {
                 for (int m = 0; m < 3; m++) {
                     Vec3 mo = billboardOffset(at, view, baseR * MOUTH_X[m], baseR * MOUTH_Y[m]);
-                    // inner mouth: cyan-white emissive square
+                    // inner mouth cavity
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), mo, view,
-                            baseR * 0.10, 140, 240, 235, (int) (a * wMouth * 120.0F));
-                    // dashed teeth: 7 tiny squares on a downward U-arc
-                    for (int i = 0; i < 7; i++) {
-                        float ang = (float) (Math.PI * (1.12 + 0.76 * i / 6.0));
-                        float tx = MOUTH_X[m] + (float) Math.cos(ang) * 0.115F;
-                        float ty = MOUTH_Y[m] + (float) Math.sin(ang) * 0.10F
-                                + ((i & 1) == 1 ? 0.014F : 0.0F);
+                            baseR * 0.11, 120, 230, 225, (int) (a * wMouth * 110.0F));
+                    // chunky zigzag teeth: 9 dashed blocks on a downward U,
+                    // alternating offset for the dotted/zigzag read
+                    for (int i = 0; i < 9; i++) {
+                        float t = i / 8.0F;
+                        float ang = (float) (Math.PI * (1.08 + 0.84 * t));
+                        float zig = ((i & 1) == 1) ? 0.022F : -0.006F;
+                        float tx = MOUTH_X[m] + (float) Math.cos(ang) * 0.135F;
+                        float ty = MOUTH_Y[m] + (float) Math.sin(ang) * 0.115F + zig;
+                        Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
+                        // chunky: larger than the old 0.028 dashes
+                        double toothR = baseR * (0.038 + (((i & 1) == 1) ? 0.012 : 0.0));
+                        quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
+                                toothR, 255, 255, 255, (int) (a * wMouth * 250.0F));
+                    }
+                    // secondary inner dotted arc (the "dotted U" read)
+                    for (int i = 0; i < 5; i++) {
+                        float t = i / 4.0F;
+                        float ang = (float) (Math.PI * (1.20 + 0.60 * t));
+                        float tx = MOUTH_X[m] + (float) Math.cos(ang) * 0.085F;
+                        float ty = MOUTH_Y[m] + (float) Math.sin(ang) * 0.070F;
                         Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                baseR * 0.028, 255, 255, 255, (int) (a * wMouth * 235.0F));
+                                baseR * 0.018, 240, 250, 255, (int) (a * wMouth * 200.0F));
                     }
-                    // the magenta emitter cube above the mouth
+                    // magenta emitter cube above the mouth
                     Vec3 cp = billboardOffset(at, view, baseR * MOUTH_X[m],
-                            baseR * (MOUTH_Y[m] + 0.17F));
+                            baseR * (MOUTH_Y[m] + 0.18F));
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,
-                            baseR * 0.045, 232, 40, 226, (int) (a * wMouth * 255.0F));
+                            baseR * 0.048, 232, 40, 226, (int) (a * wMouth * 255.0F));
                 }
             }
         }

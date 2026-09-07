@@ -4,17 +4,19 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.util.Mth;
 
 public final class StoryModeSkyTint {
-   private static final float[] SKY_DAY = new float[]{0.596F, 0.549F, 0.965F};
-   private static final float[] SKY_NIGHT = new float[]{0.098F, 0.114F, 0.4F};
+   // mega-phase 7b: day/noon bluish gradient per frames; night is deep indigo
+   // (the previous SKY_NIGHT read as a wrong purple midnight)
+   private static final float[] SKY_DAY = new float[]{0.318F, 0.545F, 0.867F};
+   private static final float[] SKY_NIGHT = new float[]{0.007F, 0.013F, 0.058F}
    private static final float[] SKY_DUSK = new float[]{0.69F, 0.4F, 0.4F};
    private static final float[] SKY_DAWN = new float[]{0.76F, 0.56F, 0.66F};
    private static final float[] LIGHT_DAY = new float[]{1.0F, 0.98F, 1.0F};
-   private static final float[] LIGHT_NIGHT = new float[]{0.56F, 0.64F, 1.0F};
+   private static final float[] LIGHT_NIGHT = new float[]{0.50F, 0.58F, 0.95F};
    private static final float[] LIGHT_DUSK = new float[]{1.0F, 0.78F, 0.64F};
    private static final float[] LIGHT_DAWN = new float[]{1.0F, 0.86F, 0.9F};
-   private static final float[] HORIZON_DAY = new float[]{0.76F, 0.72F, 0.98F};
+   private static final float[] HORIZON_DAY = new float[]{0.678F, 0.835F, 0.949F};
    private static final float[] HORIZON_DUSK = new float[]{0.945F, 0.573F, 0.404F};
-   private static final float[] HORIZON_NIGHT = new float[]{0.29F, 0.4F, 0.925F};
+   private static final float[] HORIZON_NIGHT = new float[]{0.030F, 0.062F, 0.178F};
    private static final float[] HORIZON_DAWN = new float[]{0.96F, 0.66F, 0.76F};
 
    private StoryModeSkyTint() {
