@@ -140,8 +140,12 @@ public final class McsmStormBlob {
             return 4.0F + 1.5F * phase;
         } else if (phase < 5.0F) {
             return 10.0F + 8.0F * (phase - 4.0F);
+        } else if (phase < 6.0F) {
+            return 18.0F + 22.0F * (phase - 5.0F);
+        } else if (phase < 7.0F) {
+            return 40.0F + 55.0F * (phase - 6.0F);
         } else {
-            return phase < 6.0F ? 18.0F + 22.0F * (phase - 5.0F) : 40.0F + 30.0F * (phase - 6.0F);
+            return 95.0F + 80.0F * Math.min(phase - 7.0F, 3.0F);
         }
     }
 

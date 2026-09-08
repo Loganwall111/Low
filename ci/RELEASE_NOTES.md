@@ -1,41 +1,24 @@
-# Devouring Storms 1.9.160 — OptiFine purple sky kill, beams, debris ring, stage0, NPCs
+# Devouring Storms 1.9.161 — phase 6 mega black rings + phase 7 sky field
 
-## Purple sky folder — FIXED
-OptiFine `assets/minecraft/optifine/sky/world0/sky1–4.png` now ships as jar
-overrides. **sky4 was the purple/magenta calm-night culprit** from extracted
-1.9.158 jars. All four skies rewritten:
-- sky1 day lavender-blue
-- sky2 sunset
-- sky3 / sky4 **deep navy midnight** (never purple)
+## Phase 6 — four gigantic black orbital rings
+When the storm reaches phase 6 size, **four huge black rings** flank the body:
+- staggered elevations around the sides
+- each drifts horizontally (slow X/Z sway)
+- spin direction **reverses** over time (sine flip)
+- thick near-black torus bands locked to the storm centre
 
-Phase purple stays on the storm halo / McsmPhaseSky only (≥5.4 / 5.5).
-FabricSkyBoxes + dabywitherstormmod night textures re-stamped navy.
+## Phase 7 — sky swallowed by rings
+Phase 7+ stacks **dozens of black rings** from below the body to far above the
+vault so the top of the sky disappears under the ring field, plus outer wash
+discs.
 
-## Tractor beams — weather + density rewrite
-- **Clear** → blue beam; **rain/thunder** → pink/magenta (hot pink at 5.5+)
-- `McsmBeamWeatherTint` drives `beamColor*` every frame
-- Motes denser (14/tick), **larger**, **synchronized upward climb** (shared SYNC_CLIMB)
-- Preview motes denser/larger; colours follow live beam config
-- Ground crumbs boosted: denser `BLOCK` particles matching actual floor blocks
-  (phase 4+ pulled dirt/stone/grass — not glacier cards)
+## Body scale
+Phase 6/7 body radius raised so the rings read at MCSM giant scale.
 
-## Debris ring — new (StormDebris cube swarm stays KILLED)
-Orbiting dark mass chunks around the lower body from phase 4+, gray-edge on
-pre-6, blue sheen edge on 6+. Not the StormDebris cube halo.
+## Rain beams (from your frames)
+Rain/thunder beams pushed hotter pink-white to match the MCSM rain tractor
+beam stills. Clear stays blue; phase 6 clear stays deep blue-violet.
 
-## Halo / phase volume
-Shell radii + alphas tightened so the 3D gradient stays a body-glued volume,
-not a sky flood. 5.5 pink-magenta rim retuned from user sky refs.
-
-## Stage 0 Formidi atlas
-64×96 rebuilt: three black heads with white eye slots + command-block body
-with coloured button grid (MCSM Formidi CB wither look).
-
-## Characters (first pass)
-- Distinct entity types per cast member (not every face a plain villager)
-- Speak anim: look-at player + hop + villager yes/ambient
-- Dialogue trees unchanged
-
-## Kept from 1.9.159
-Phase 4–5.9 gray-edge black skins, phase-6 black+blue, phase-dynamic teeth
-ladder, baked Story Look (Iris optional), StormDebris kill.
+## Kept
+OptiFine navy sky overrides (160), debris ring, stage0 Formidi, weather mote
+sync, teeth ladder, gray-edge 4–5.9 skins.
