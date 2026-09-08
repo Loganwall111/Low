@@ -71,7 +71,15 @@ public final class StormSkyDome {
    }
 
    public static float strength() {
-      return !DabyWSClientConfig.stormBackdrop ? 0.0F : Mth.clamp(displayed * (float)DabyWSClientConfig.stormBackdropStrength, 0.0F, 1.0F);
+      // 1.9.155: fog tint only while a real phase-5+ storm is nearby AND displayed.
+      // Cap at 0.72 so residual fog cannot purple-wash the calm night vault.
+      if (!DabyWSClientConfig.stormBackdrop) {
+         return 0.0F;
+      }
+      if (phaseSeen < 4.95F) {
+         return 0.0F;
+      }
+      return Mth.clamp(displayed * (float)DabyWSClientConfig.stormBackdropStrength * 0.72F, 0.0F, 0.72F);
    }
 
    public static float coreStrength() {

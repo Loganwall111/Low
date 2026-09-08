@@ -78,7 +78,7 @@ public final class McsmStormBlob {
             1.55F, 1.38F, 1.22F, 1.08F, 1.18F, 1.32F, 1.48F
     };
     private static final float[] SHELL_ALPHA = {
-            0.28F, 0.40F, 0.55F, 0.70F, 0.52F, 0.35F, 0.20F
+            0.16F, 0.26F, 0.38F, 0.50F, 0.36F, 0.22F, 0.12F
     };
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
@@ -181,11 +181,13 @@ public final class McsmStormBlob {
             // far storms still need a skybox-scale disc so the silhouette
             // reads at range; blend world-space radius up toward an angular
             // sky radius past ~350 blocks without ever detaching the shell
-            double skyDist = Math.min(Math.max(dist * 0.92, bodyR * 2.5), 280.0);
-            double angular = Mth.clamp(bodyR / Math.max(dist, 1.0), 0.010, 0.90);
-            double skyR = skyDist * angular * (1.65 + 1.4 * glareMul) * smudge;
-            float nearW = 1.0F - Mth.clamp((float) ((dist - 180.0) / 420.0), 0.0F, 1.0F);
-            double baseR = shellR * nearW + skyR * (1.0F - nearW);
+            // 1.9.155: keep shell ON the body — no far floating sky disc
+            double skyDist = Math.min(Math.max(dist * 0.88, bodyR * 2.0), 200.0);
+            double angular = Mth.clamp(bodyR / Math.max(dist, 1.0), 0.010, 0.55);
+            double skyR = skyDist * angular * (1.25 + 0.9 * glareMul) * smudge;
+            float nearW = 1.0F - Mth.clamp((float) ((dist - 100.0) / 500.0), 0.0F, 1.0F);
+            // bias hard toward body-glued radius
+            double baseR = shellR * (0.55 + 0.45 * nearW) + skyR * (0.45 * (1.0F - nearW));
             // when far, the shell still sits ON the storm ray (at the storm
             // itself when near, sliding toward skyDist only as distance grows)
             double placeDist = dist * nearW + skyDist * (1.0F - nearW);
@@ -243,7 +245,7 @@ public final class McsmStormBlob {
                     // at the front face, closer to cam when looking from behind)
                     Vec3 slice = at.add(view.scale(depth));
                     double r = baseR * SHELL_SCALE[s];
-                    int alpha = (int) (a * wShell * SHELL_ALPHA[s] * 85.0F);
+                    int alpha = (int) (a * wShell * SHELL_ALPHA[s] * 62.0F);
                     // outer slices use the soft glare gradient; mid slices
                     // use the phase backdrop so the body colour bleeds through
                     Identifier tex = (s == 0 || s == SHELL_DEPTH.length - 1) ? GLARE

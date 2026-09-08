@@ -10,27 +10,26 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 
 /**
- * Mega-phase 7b: kill the far three-headed HALO ring / black-glare symbol
- * that StormPresenceFX draws behind the storm. Those two knobs paint the
- * halo_ring.png texture at bodyR*1.3..1.9 — the "three heads / symbol far
- * behind the wither" the user keeps rejecting.
+ * 1.9.155: CANCEL the entire StormPresenceFX pass.
  *
- * We force the knobs OFF every frame (so presets/gates cannot re-enable them)
- * and leave the rest of submit() alone: atmospherePulse, glareEjecta debris
- * and the beat tick still run. The thick welded shell aura is owned by
- * McsmStormBlob instead.
+ * That pass paints the far three-headed HALO ring (halo_ring.png), the
+ * black-glare symbol, and the floating atmosphere-pulse spheres the user
+ * keeps rejecting as "weird halo floating in mid air" / "face on it".
  *
- * require=0 so a renamed base method degrades silently.
+ * All aura / glare / silhouette now lives in McsmStormBlob (body-glued) and
+ * McsmPhaseSky (sky-glued to the storm bearing). require=0 so a rename is safe.
  */
 @Mixin(StormPresenceFX.class)
 public abstract class McsmPresenceFxPatch {
 
-    @Inject(method = "submit", at = @At("HEAD"), remap = false, require = 0)
-    private static void dabyws$killFarHalo(LevelRenderContext ctx, CallbackInfo ci) {
+    @Inject(method = "submit", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private static void dabyws$killAllPresenceFx(LevelRenderContext ctx, CallbackInfo ci) {
         try {
             DabyWSClientConfig.cataclysmHalos = false;
             DabyWSClientConfig.blackGlare = false;
+            DabyWSClientConfig.atmospherePulse = false;
         } catch (Throwable ignored) {
         }
+        ci.cancel();
     }
 }

@@ -11,7 +11,7 @@ public final class StoryModeSkyTint {
    // skyday strip: soft lavender-blue (NOT orange daytime)
    private static final float[] SKY_DAY = new float[]{0.55F, 0.58F, 0.92F};
    // midnight strip: deep navy
-   private static final float[] SKY_NIGHT = new float[]{0.02F, 0.04F, 0.28F};
+   private static final float[] SKY_NIGHT = new float[]{0.015F, 0.030F, 0.220F}; // deep navy, never purple
    // sunset strip only at dusk
    private static final float[] SKY_DUSK = new float[]{0.494F, 0.220F, 0.180F};
    private static final float[] SKY_DAWN = new float[]{0.620F, 0.420F, 0.380F};
@@ -21,7 +21,7 @@ public final class StoryModeSkyTint {
    private static final float[] LIGHT_DAWN = new float[]{1.0F, 0.86F, 0.82F};
    private static final float[] HORIZON_DAY = new float[]{0.78F, 0.72F, 0.95F};
    private static final float[] HORIZON_DUSK = new float[]{0.494F, 0.098F, 0.165F};
-   private static final float[] HORIZON_NIGHT = new float[]{0.18F, 0.32F, 0.88F};
+   private static final float[] HORIZON_NIGHT = new float[]{0.12F, 0.28F, 0.82F};
    private static final float[] HORIZON_DAWN = new float[]{0.860F, 0.560F, 0.480F};
 
    private StoryModeSkyTint() {
@@ -72,7 +72,7 @@ public final class StoryModeSkyTint {
    }
 
    public static float fogStrength() {
-      return DabyWSClientConfig.storyModeSky ? Mth.clamp((float)DabyWSClientConfig.storyModeFogStrength, 0.0F, 1.0F) : 0.0F;
+      return DabyWSClientConfig.storyModeSky ? Mth.clamp((float)DabyWSClientConfig.storyModeFogStrength * 0.55F, 0.0F, 0.55F) : 0.0F;
    }
 
    public static float strength() {

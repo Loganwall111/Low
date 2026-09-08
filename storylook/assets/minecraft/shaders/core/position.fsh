@@ -142,12 +142,14 @@ void main() {
                   * step(C.g * 1.05, min(C.r, C.b)) * (1.0 - greenK);
     float magK    = clamp((C.r - C.b) * 2.0, 0.0, 1.0) * (1.0 - orangeK) * (1.0 - greenK);
     float wsum = pinkK + greenK + orangeK + magK;
-    // 1.9.153: never treat calm blue night (B-heavy, low R) as storm
-    bool calmBlue = (C.b > C.r * 1.8 && C.b > C.g * 1.4 && purpleChroma < 0.02);
-    bool storm = !calmBlue && wsum > 0.10
-              && ((purpleChroma > 0.05 && min(C.r, C.b) > 0.10)
-               || (tealChroma > 0.08 && C.g > 0.14)
-               || (emberChroma > 0.12 && C.r > 0.28 && clum > 0.14));
+    // 1.9.155: calm blue night NEVER storms. Require strong purple/teal chroma
+    // AND mid-luminance — pure dark navy (user midnight strip) stays calm.
+    bool calmBlue = (C.b > max(C.r, C.g) * 1.35 && purpleChroma < 0.03)
+                 || (clum < 0.14 && C.b >= C.r && C.b >= C.g * 0.9 && purpleChroma < 0.04);
+    bool storm = !calmBlue && wsum > 0.14
+              && ((purpleChroma > 0.07 && min(C.r, C.b) > 0.12 && clum > 0.08)
+               || (tealChroma > 0.10 && C.g > 0.16)
+               || (emberChroma > 0.14 && C.r > 0.30 && clum > 0.16));
     if (storm) {
         // phase 5.5 pink-magenta (user) — pinkK path
         vec3 z1 = vec3(0.180, 0.040, 0.220);
@@ -221,15 +223,15 @@ void main() {
     vec3 zen = day  * vec3(0.55, 0.58, 0.92)
              + dawn * vec3(0.188, 0.329, 0.376)
              + nite * vec3(0.48, 0.52, 0.88)
-             + midn * vec3(0.02, 0.04, 0.28);
+             + midn * vec3(0.015, 0.030, 0.200);
     vec3 mid = day  * vec3(0.68, 0.66, 0.94)
              + dawn * vec3(0.863, 0.353, 0.157)
              + nite * vec3(0.62, 0.58, 0.90)
-             + midn * vec3(0.05, 0.10, 0.48);
+             + midn * vec3(0.04, 0.08, 0.42);
     vec3 hor = day  * vec3(0.78, 0.72, 0.95)
              + dawn * vec3(0.494, 0.098, 0.165)
              + nite * vec3(0.80, 0.74, 0.92)
-             + midn * vec3(0.18, 0.32, 0.88);
+             + midn * vec3(0.10, 0.22, 0.75);
 
     // per-biome variants (vanilla hands us the biome sky hue in ColorModulator)
     float gk = clamp((C.g - max(C.r, C.b)) * 3.0, 0.0, 0.6) * day;

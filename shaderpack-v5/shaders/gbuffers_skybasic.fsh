@@ -204,15 +204,15 @@ vec3 storyCalmSky(vec3 dirS) {
     vec3 zen = day  * vec3(0.55, 0.58, 0.92)
              + dusk * vec3(0.188, 0.329, 0.376)
              + nite * vec3(0.48, 0.52, 0.88)
-             + midn * vec3(0.02, 0.04, 0.28);
+             + midn * vec3(0.015, 0.030, 0.200);
     vec3 mid = day  * vec3(0.68, 0.66, 0.94)
              + dusk * vec3(0.863, 0.353, 0.157)
              + nite * vec3(0.62, 0.58, 0.90)
-             + midn * vec3(0.05, 0.10, 0.48);
+             + midn * vec3(0.04, 0.08, 0.42);
     vec3 hor = day  * vec3(0.78, 0.72, 0.95)
              + dusk * vec3(0.494, 0.098, 0.165)
              + nite * vec3(0.80, 0.74, 0.92)
-             + midn * vec3(0.18, 0.32, 0.88);
+             + midn * vec3(0.10, 0.22, 0.75);
 
     // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
@@ -404,11 +404,17 @@ void main() {
         float stormK = 0.0;
 #if STORM_SKY
         // purple/magenta OR teal (phase 5). Never calm blue night (b>>r,g).
-        float purpleK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.0, 0.0, 1.0);
-        float tealK   = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 1.0);
-        float calmBlue = step(fogColor.r * 1.8, fogColor.b) * step(fogColor.g * 1.4, fogColor.b)
-                       * step(min(fogColor.r, fogColor.b) - fogColor.g, 0.02);
+        float purpleK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.5, 0.0, 1.0);
+        float tealK   = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.5, 0.0, 1.0);
+        float flum = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
+        // calm navy night: B-dominant OR very dark with no purple chroma
+        float calmBlue = max(
+            step(max(fogColor.r, fogColor.g) * 1.25, fogColor.b) * step(min(fogColor.r, fogColor.b) - fogColor.g, 0.03),
+            step(flum, 0.12) * step(min(fogColor.r, fogColor.b) - fogColor.g, 0.04)
+        );
         stormK = max(purpleK, tealK) * (1.0 - calmBlue) * (1.0 - rainStrength * 0.6);
+        // require real chroma before any storm mix
+        stormK *= step(0.08, max(purpleK, tealK));
 #endif
 
 #if SKY_STORY_MODE

@@ -134,6 +134,7 @@ public final class McsmGate {
             changed += setBool(c, "sunGlow", true);
             changed += setBool(c, "blackGlare", false);
             changed += setBool(c, "cataclysmHalos", false);
+            changed += setBool(c, "atmospherePulse", false); // 1.9.155: floating pulse spheres
             changed += setBool(c, "glareEjecta", true);
             changed += setBool(c, "headEyeGlow", true);
             changed += setBool(c, "devourerDebrisGlow", true);
