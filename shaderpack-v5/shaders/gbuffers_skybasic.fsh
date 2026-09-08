@@ -202,15 +202,15 @@ vec3 storyCalmSky(vec3 dirS) {
     float nite = night * (1.0 - midn);
     // 1.9.153: day lavender, midnight deep navy (user strips)
     // calm night = DEEP BLUE only (never purple/magenta/lavender)
-    vec3 zen = day  * vec3(0.55, 0.58, 0.92)
+    vec3 zen = day  * vec3(0.32, 0.42, 0.70)
              + dusk * vec3(0.188, 0.329, 0.376)
              + nite * vec3(0.04, 0.08, 0.28)
              + midn * vec3(0.010, 0.025, 0.200);
-    vec3 mid = day  * vec3(0.68, 0.66, 0.94)
+    vec3 mid = day  * vec3(0.42, 0.50, 0.74)
              + dusk * vec3(0.863, 0.353, 0.157)
              + nite * vec3(0.08, 0.14, 0.42)
              + midn * vec3(0.03, 0.07, 0.38);
-    vec3 hor = day  * vec3(0.78, 0.72, 0.95)
+    vec3 hor = day  * vec3(0.52, 0.56, 0.76)
              + dusk * vec3(0.494, 0.098, 0.165)
              + nite * vec3(0.12, 0.22, 0.55)
              + midn * vec3(0.08, 0.18, 0.62);
@@ -241,7 +241,7 @@ vec3 storyCalmSky(vec3 dirS) {
     col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 1.0);
     float up = smoothstep(0.55, 0.95, ty);
     float sticker = fbm3(vec3(dirS.xz * 3.5, 0.7)) * fbm3(vec3(dirS.xz * 7.0 + 4.1, 1.3));
-    sticker = smoothstep(0.42, 0.72, sticker) * up * (0.55 * day + 0.25 * night);
+    sticker = smoothstep(0.48, 0.78, sticker) * up * (0.28 * day + 0.18 * night); // softer, less cube-like
     col = mix(col, mix(litC, shadeC, 0.35), sticker * 0.85);
 
     col = mix(col, hor * 0.5, smoothstep(0.0, -0.3, ty));

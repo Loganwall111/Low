@@ -48,12 +48,12 @@ void main() {
     float block_brightness = get_brightness(block_level) * lightmapInfo.BlockFactor;
     // Story Mode torches throw real light: wider, hotter falloff so a torch
     // reads as a source, not a decal.
-    block_brightness *= 1.0 + 0.65 * smoothstep(0.10, 0.85, block_level);
+    block_brightness *= 1.0 + 0.85 * smoothstep(0.10, 0.85, block_level); // hotter torches
     float sky_brightness = get_brightness(sky_level) * lightmapInfo.SkyFactor;
 
     // Story Look: soft shadow floor, scaled by day strength and gated so
     // sky_level 0 (caves, interiors) keeps vanilla darkness.
-    sky_brightness += 0.22 * lightmapInfo.SkyFactor
+    sky_brightness += 0.18 * lightmapInfo.SkyFactor
                     * smoothstep(0.0, 0.35, sky_level)
                     * (1.0 - sky_brightness);
 

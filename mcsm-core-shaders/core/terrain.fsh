@@ -135,12 +135,16 @@ void main() {
 
     // directional key light (sun by day, dim moon by night)
     float ndlA   = dot(nrm, sunT.y >= 0.0 ? sunT : -sunT);
-    float crispA = mix(ndlA, step(-0.05, ndlA), 0.75);
-    float keyA   = sunT.y >= 0.0 ? 1.0 : 0.42;
-    color.rgb *= mix(1.0, clamp(0.58 + 0.42 * crispA, 0.0, 1.0), keyA);
+    float crispA = mix(ndlA, step(-0.08, ndlA), 0.88); // harder block-face shadows
+    float keyA   = sunT.y >= 0.0 ? 1.0 : 0.48;
+    // deeper shade side + brighter lit side = MCSM contrast
+    color.rgb *= mix(1.0, clamp(0.42 + 0.68 * crispA, 0.0, 1.25), keyA);
 
     // clouds / cinematic tree-like bands cast moving shape onto the ground
-    color.rgb *= mcsm_cloud_shadow(mcsmWorldPos, sunT, clockS, upFace);
+    float csh = mcsm_cloud_shadow(mcsmWorldPos, sunT, clockS, upFace);
+    // exaggerate cloud occlusion so ground reads cinematic
+    csh = mix(1.0, csh, 1.35);
+    color.rgb *= clamp(csh, 0.35, 1.15);
 
     // local emissive lift after shadows: torches/glow blocks keep their colour
     // and read like little Story Mode light sources.

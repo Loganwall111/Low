@@ -41,9 +41,9 @@ float parabolicMixFactor(float level) {
     return (2.0 * level - 1.0) * (2.0 * level - 1.0);
 }
 
-const vec3 LIGHT_DAY   = vec3(1.000, 0.980, 1.000);
-const vec3 LIGHT_NIGHT = vec3(0.420, 0.550, 1.000);   // deep blue nights
-const vec3 LIGHT_DUSK  = vec3(1.000, 0.720, 0.500);   // warm dusk/dawn cast
+const vec3 LIGHT_DAY   = vec3(1.08, 0.98, 0.88);   // warm MCSM key (1.9.165)
+const vec3 LIGHT_NIGHT = vec3(0.32, 0.48, 1.10);   // deep blue nights
+const vec3 LIGHT_DUSK  = vec3(1.12, 0.68, 0.42);   // warmer dusk/dawn cast
 
 void main() {
     float block_level = floor(texCoord.x * 16.0) / 15.0;
@@ -53,13 +53,13 @@ void main() {
     float sky_brightness = get_brightness(sky_level) * lightmapInfo.SkyFactor;
 
     vec3 nightVisionColor = lightmapInfo.NightVisionColor * lightmapInfo.NightVisionFactor;
-    vec3 color = max(lightmapInfo.AmbientColor, nightVisionColor);
+    vec3 color = max(lightmapInfo.AmbientColor * 0.82, nightVisionColor); // 1.9.165 deeper shade floor
 
     // Add sky light - MCSM: Story tint rides the sky channel only.
     float sf = clamp(lightmapInfo.SkyFactor, 0.0, 1.0);
     float duskW = pow(1.0 - abs(2.0 * sf - 1.0), 1.4) * 1.0;
     vec3 skyTint = mix(mix(LIGHT_NIGHT, LIGHT_DAY, sf), LIGHT_DUSK, duskW);
-    color += lightmapInfo.SkyLightColor * sky_brightness * skyTint;
+    color += lightmapInfo.SkyLightColor * sky_brightness * skyTint * 1.12;
 
     // Add block light (vanilla, untouched)
     vec3 BlockLightColor = mix(lightmapInfo.BlockLightTint, vec3(1.0), 0.9 * parabolicMixFactor(block_level));

@@ -57,9 +57,9 @@ float mcsm_ramp(float v, float lo, float hi);
 // below 1.34 (phase 4: that clipped channels and destroyed gradients) -- 1.14
 // is measured-safe: mcsm_story_grade() clips to >= 0 only at the dark end, and
 // the storm dome rows top out near 0.50 so 1.14x saturation cannot clip them.
-const float MCSM_SATURATION = 1.28;   // 1.9.71: 1.34 clipped channels to 1.0 and flattened the gradient
-const float MCSM_CONTRAST   = 1.15;   // 1.9.71: reduced with saturation
-const float MCSM_LIFT       = 0.010;  // keeps blacks from crushing
+const float MCSM_SATURATION = 1.38;   // 1.9.165: MCSM frame vivid colour (user: never showed up)
+const float MCSM_CONTRAST   = 1.22;   // harder light/shadow split like trailer frames
+const float MCSM_LIFT       = 0.006;  // slightly deeper blacks
 
 vec3 mcsm_story_grade(vec3 c) {
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
@@ -150,18 +150,17 @@ float mcsm_cloud_shadow(vec3 worldPos, vec3 sunDir, float clock, float upFace) {
     float t = dy / max(sunDir.y, 0.05);
     vec2 hit = worldPos.xz + sunDir.xz * t;
 
-    // MCSM 1.9.107 -- visible MOVING shadows even with no storm. The previous
-    // cell-accurate shadow matched vanilla cloud speed but moved too slowly to
-    // read in play. This keeps the correct sun projection and adds large soft
-    // Story-Mode cloud/tree-shadow bands drifting over terrain.
+    // MCSM 1.9.107 -- visible MOVING shadows even with no storm.
+    // 1.9.165: deeper coverage so trailer-style ground shadows actually read.
     vec2 uv = hit * 0.030 + vec2(clock * 0.050, -clock * 0.020);
     float n1 = mcsm_cloud_noise(uv);
     float n2 = mcsm_cloud_noise(uv * 2.15 + vec2(17.4, clock * 0.030));
-    float soft = smoothstep(0.48, 0.78, n1 * 0.70 + n2 * 0.30);
-    float streak = smoothstep(0.62, 0.86, sin((hit.x + hit.y * 0.55) * 0.020 + clock * 0.18) * 0.5 + 0.5);
-    float cov = clamp(soft * 0.85 + streak * 0.22, 0.0, 1.0);
-    float strength = 0.58 * clamp(sunDir.y * 1.7, 0.0, 1.0) * upFace;
-    return 1.0 - cov * strength;
+    float soft = smoothstep(0.42, 0.74, n1 * 0.70 + n2 * 0.30);
+    float streak = smoothstep(0.58, 0.84, sin((hit.x + hit.y * 0.55) * 0.020 + clock * 0.18) * 0.5 + 0.5);
+    float cov = clamp(soft * 0.90 + streak * 0.28, 0.0, 1.0);
+    float strength = 0.78 * clamp(sunDir.y * 1.7, 0.0, 1.0) * max(upFace, 0.35);
+    float sh = 1.0 - cov * strength;
+    return clamp(sh, 0.30, 1.0);
 }
 // ---------------------------------------------------------------- decode
 bool mcsm_fog_active(float p) { return p >= 4.42 && p <= 8.06; }

@@ -1,33 +1,34 @@
-# Devouring Storms 1.9.164 — permanent reset to the good base
+# Devouring Storms 1.9.165 — deep clean: sky, light, no cube vault
 
-## Why
-1.9.160–163 stacked sky/glare/beam experiments that washed the world pink,
-blew out day skies, broke stage-0, blackened teeth, and left flat billboards.
-That was not the MCSM look. This build **rolls the visual stack back to
-1.9.159** (the last solid build you liked: Totally Accurate models, gray-edge
-4–5.9 skins, phase-dynamic teeth, 3D body-glued glare, calm navy night) and
-keeps only safe additions.
+Built on the permanent 1.9.164 (159 visual) base. Accuracy pass only.
 
-## Restored from 1.9.159
-- McsmPhaseSky / McsmStormBlob / StormSkyDome / StoryModeSkyTint / StormSkins
-- Gate + teeth phase tint + debris kill
-- Phase 4 gray-edge + phase 6 devourer skins + emissive teeth atlases
-- Shader sky vectors from 159
-- Totally Accurate OG CEM default path
+## Sky deep-clean (duplicate folders fixed)
+Three calm-sky sources were fighting each other and day was bright purple-white:
 
-## Safe keep from later
-- OptiFine `world0/sky1–4` overrides: calm day soft lavender, **night/midnight
-  deep navy** (sky4 is NOT purple — that was the calm-night purple culprit)
-- Mild day sky dim so noon is not pure white
+| Folder | Role after clean |
+|--------|------------------|
+| `minecraft/optifine/sky/world0` | Day soft blue, sunset, **navy night/midnight** (sky4 NOT purple) |
+| `dabywitherstormmod/textures/sky` | Same calm day/night/sunset + phase-only refs |
+| `fabricskyboxes/textures/sky` | **Calm only** (day/night/sunset). Phase PNGs **removed** so FSB cannot load purple/pink as ambient world sky |
 
-## Explicitly NOT brought back
-- Pink full-sky flood / over-amped StormSkyDome
-- Phase 6/7 orbital ring field experiments
-- Inflated beam cube motes / BeamMoteSpawner overrides
-- Beam weather tint forcing pink wash
-- 2D billboard kill that also stripped working body detail
-- Broken stage-0 atlas rewrite
+Day average ~ (121,137,185) soft blue — was (164,162,230) bright purple. Soft wisps only (no blocky cube noise).
 
-## Going forward
-New MCSM accuracy work is added **on top of this 159 base only**, one system
-at a time, with your frames — no more cascade rewrites.
+## Calm shader skies dimmed
+- Core `sky.fsh` + Iris `gbuffers_skybasic` + Story Look `position.fsh`
+- Soft MCSM blue day, deep navy night (not lavender night)
+- Overhead cloud sticker softened (less cube-like looking up)
+
+## Vivid light / contrast / shadows (user: never showed up)
+Baked stronger into always-on core shaders (works without Iris):
+- Story grade sat 1.38 / contrast 1.22
+- Harder block-face sun key + deeper shade side
+- Stronger moving cloud shadows on ground
+- Lightmap: warm day key, deep blue night fill, hotter torches, deeper shade floor
+- Gate floors `storyModeLightingStrength` / coloured light to 1.0
+- Iris pack final: more contrast/vibrance, less exposure blowout
+
+## Clouds
+Vanilla cloud pass more translucent soft mass (not MC cube stickers).
+
+## Not touched (159 base kept)
+PhaseSky / Blob / Formidi / gray-edge skins / teeth ladder / Debris kill.

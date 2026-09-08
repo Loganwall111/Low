@@ -220,18 +220,19 @@ void main() {
     float midn = night * smoothstep(0.12, 0.02, clum); // darkest = midnight strip
     float nite = night * (1.0 - midn);
     // 1.9.153: day = lavender (skyday strip), NOT orange. Midnight = deep navy.
-    vec3 zen = day  * vec3(0.55, 0.58, 0.92)
+    // 1.9.165: soft MCSM blue day (not blown white/purple); deep navy night
+    vec3 zen = day  * vec3(0.28, 0.38, 0.66)
              + dawn * vec3(0.188, 0.329, 0.376)
-             + nite * vec3(0.48, 0.52, 0.88)
-             + midn * vec3(0.015, 0.030, 0.200);
-    vec3 mid = day  * vec3(0.68, 0.66, 0.94)
+             + nite * vec3(0.04, 0.08, 0.28)
+             + midn * vec3(0.012, 0.025, 0.160);
+    vec3 mid = day  * vec3(0.40, 0.48, 0.72)
              + dawn * vec3(0.863, 0.353, 0.157)
-             + nite * vec3(0.62, 0.58, 0.90)
-             + midn * vec3(0.04, 0.08, 0.42);
-    vec3 hor = day  * vec3(0.78, 0.72, 0.95)
+             + nite * vec3(0.08, 0.14, 0.42)
+             + midn * vec3(0.03, 0.07, 0.36);
+    vec3 hor = day  * vec3(0.52, 0.56, 0.74)
              + dawn * vec3(0.494, 0.098, 0.165)
-             + nite * vec3(0.80, 0.74, 0.92)
-             + midn * vec3(0.10, 0.22, 0.75);
+             + nite * vec3(0.14, 0.24, 0.58)
+             + midn * vec3(0.08, 0.18, 0.58);
 
     // per-biome variants (vanilla hands us the biome sky hue in ColorModulator)
     float gk = clamp((C.g - max(C.r, C.b)) * 3.0, 0.0, 0.6) * day;
@@ -262,7 +263,7 @@ void main() {
     // soft overhead "sticker" cloud mass looking straight up
     float up = smoothstep(0.55, 0.95, ty);
     float sticker = fbm(vec3(dirS.xz * 3.5, 0.7)) * fbm(vec3(dirS.xz * 7.0 + 4.1, 1.3));
-    sticker = smoothstep(0.42, 0.72, sticker) * up * (0.55 * day + 0.25 * night);
+    sticker = smoothstep(0.50, 0.80, sticker) * up * (0.30 * day + 0.18 * night); // softer decks, less cube
     col = mix(col, mix(litC, shadeC, 0.35), sticker * 0.85);
 
     col = mix(col, hor * 0.5, smoothstep(0.0, -0.3, ty));

@@ -22,12 +22,12 @@ uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 
 #define COLORED_LIGHT       1     // [0 1]
-#define COLORED_LIGHT_AMT   0.85  // [0.00 0.25 0.50 0.70 0.75 1.00]
+#define COLORED_LIGHT_AMT   1.00  // [0.00 0.25 0.50 0.70 0.75 1.00]
 
 vec3 mcsmLightmap(float t) {
-    vec3 day   = vec3(1.10, 1.02, 0.92);
+    vec3 day   = vec3(1.18, 1.05, 0.88); // warmer key
     vec3 warm  = vec3(1.18, 0.88, 0.62);
-    vec3 night = vec3(0.38, 0.52, 1.05);
+    vec3 night = vec3(0.32, 0.48, 1.15); // deeper blue night fill
     vec3 c = mix(warm, day, smoothstep(0.55, 0.95, t));
     c = mix(night * (0.55 + 0.45 * t), c, smoothstep(0.05, 0.45, t));
     return c;

@@ -108,6 +108,12 @@ public final class McsmGate {
             changed += setBool(c, "customSkyboxes", true);
             changed += setBool(c, "storyModeSky", true);
             changed += setBool(c, "storyModeLighting", true);
+            changed += floorField(c, null, "storyModeLightingStrength", 1.0);
+            changed += floorField(c, null, "storyModeSkyStrength", 0.85);
+            changed += setBool(c, "colouredLighting", true);
+            changed += setBool(c, "coloredLighting", true);
+            changed += floorField(c, null, "colouredLightStrength", 1.0);
+            changed += floorField(c, null, "coloredLightStrength", 1.0);
             changed += setBool(c, "cloudDeckLayer", true);
             changed += setBool(c, "regionalBiomeFog", true);
             changed += setBool(c, "phaseAnim", true);
