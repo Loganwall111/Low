@@ -195,12 +195,12 @@ public final class McsmGate {
             changed += floorField(c, null, "beamColorR", 0.42);
             changed += floorField(c, null, "beamColorG", 0.12); // OG pack colors.json green=31
             changed += floorField(c, null, "beamColorB", 0.98);
-            // teeth: cyan-white cubes (frames) — push eye/glow tint toward
-            // the tooth read so the model teethBoost pass burns white-cyan
-            changed += floorField(c, null, "eyeColorR", 0.85);
-            changed += floorField(c, null, "eyeColorG", 0.95);
-            changed += floorField(c, null, "eyeColorB", 1.0);
-            changed += floorField(c, null, "turquoiseTeethIntensity", 2.4);
+            // teeth: soft cyan-white dotted U-arcs (MCSM frames) — NOT pure-white blast.
+            // Force intensity DOWN from the old 2.4 floor so teeth match refs.
+            changed += setNum(c, null, "eyeColorR", 0.72);
+            changed += setNum(c, null, "eyeColorG", 0.88);
+            changed += setNum(c, null, "eyeColorB", 0.95);
+            changed += setNum(c, null, "turquoiseTeethIntensity", 1.15);
             changed += setBool(c, "turquoiseTeeth", true);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
@@ -300,6 +300,28 @@ public final class McsmGate {
                 return 0;   // changed after us (preset/player): respect it
             }
             double nv = writeNum(f, instance, Math.max(cur, min));
+            LAST_SET.put(key, nv);
+            return 1;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    /**
+     * Force a numeric field to an exact value (still respects player/preset
+     * edits after the gate last wrote). Used when a previous floor left a
+     * value too high for the MCSM frames (e.g. teeth blast brightness).
+     */
+    private static int setNum(Class<?> owner, Object instance, String name, double value) {
+        try {
+            Field f = owner.getField(name);
+            String key = memKey(owner, instance, name);
+            double cur = readNum(f, instance);
+            Object prev = LAST_SET.get(key);
+            if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
+                return 0;   // changed after us (preset/player): respect it
+            }
+            double nv = writeNum(f, instance, value);
             LAST_SET.put(key, nv);
             return 1;
         } catch (Throwable ignored) {

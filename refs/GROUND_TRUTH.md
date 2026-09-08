@@ -59,3 +59,19 @@ Close-up of multi-mouth black mass against purple/pink sky:
 3. Calm night = deep **blue** fabric skybox + navy fog (never purple/magenta).
 4. Stage 0 = 64×96 atlas with black 3-head + Formidi command-block belly UV at texOffs(0,64).
 5. Phase-only left/right sway shared by volume + body detail.
+
+## G. Body skins (user frames phase-4 + phase-6)
+
+1. **Phase 4 skin** (covers grown body from phase ~4 through 5.9, and the
+   early post-summon mass before Formidi split): pure **black block mass**,
+   soft **cyan-white dotted U-arc teeth** (toned, not pure white), hot magenta
+   emitter cubes above mouths, purple tractor beams. Atlas =
+   `phase_4_assets(_og).png` via `StormSkins.phase4()`.
+
+2. **Phase 6+ / devourer skin** (post-Formidi three-storm era, phase 6→9):
+   multi-lobe **black mass** with **blue sheen under the black**, cyan teeth,
+   magenta/purple eye clusters on the body, blue tractor beams. Atlas =
+   `devourer_assets(_og).png` via `StormSkins.devourer()` when `state.devourer`.
+
+3. Teeth brightness: soft cyan-white (~200,235,245), intensity ~1.15 — not
+   the old pure-white 2.4 blast.
