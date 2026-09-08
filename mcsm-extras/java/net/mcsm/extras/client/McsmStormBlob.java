@@ -20,19 +20,31 @@ import net.mcsm.extras.McsmExtrasConfig;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Body-local mouth / teeth / beam detail + debris ring ONLY.
+ * Body-local mouth / teeth / beam detail + glossy stripe.
  *
- * 1.9.162: ALL 2D body billboards / face plates / silhouette quads / glossy
- * stripe plates REMOVED. The giant 3D phase gradient glare lives exclusively
- * in McsmPhaseSky (world-space nested spheres). This class never paints a
- * flat backdrop behind the storm.
+ * The giant 3D phase gradient volume lives in McsmPhaseSky (world-space
+ * nested spheres glued to the storm). This class does NOT paint halo
+ * billboards, orbiting dots, black debris cubes, or underside motes —
+ * those were rejected. Teeth stay on the body; tractor beams stay as
+ * soft cones without sparkle particle fields.
  *
- * Phase-only L/R sway is shared with McsmPhaseSky.swayOffset.
+ * Phase-only left/right sway is shared with McsmPhaseSky.swayOffset so
+ * the body detail never slides off the volume.
  */
 public final class McsmStormBlob {
 
+    private static final Identifier BLUE4 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/misc/backdrop_phase4_blue.png");
     private static final Identifier BLACK = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/backdrop_black.png");
+    private static final Identifier TURQUOISE = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/misc/backdrop_turquoise.png");
+    private static final Identifier PURPLE = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/misc/backdrop_purple.png");
+    private static final Identifier PURPLE_PINK = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/misc/backdrop_purple_pink.png");
+    private static final Identifier EMBER = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/misc/backdrop_ember.png");
     private static final Identifier GLARE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_glare.png");
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
@@ -41,6 +53,22 @@ public final class McsmStormBlob {
     /** Three beam mouths, in body-radius units (x right, y up). */
     private static final float[] MOUTH_X = { -0.28F, 0.00F, 0.28F };
     private static final float[] MOUTH_Y = { -0.02F, -0.12F, 0.00F };
+
+    /**
+     * Depth slices of the thick shell, in body-radius units along the view
+     * axis. Negative = behind the storm (visible when the player is behind
+     * or off to the side), positive = in front. The zero slice is the
+     * welded face plate.
+     */
+    private static final float[] SHELL_DEPTH = {
+            -1.35F, -0.85F, -0.40F, 0.00F, 0.35F, 0.75F, 1.15F
+    };
+    private static final float[] SHELL_SCALE = {
+            1.55F, 1.38F, 1.22F, 1.08F, 1.18F, 1.32F, 1.48F
+    };
+    private static final float[] SHELL_ALPHA = {
+            0.00F, 0.00F, 0.00F, 0.00F, 0.00F, 0.00F, 0.00F
+    };
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
 
@@ -112,12 +140,8 @@ public final class McsmStormBlob {
             return 4.0F + 1.5F * phase;
         } else if (phase < 5.0F) {
             return 10.0F + 8.0F * (phase - 4.0F);
-        } else if (phase < 6.0F) {
-            return 18.0F + 22.0F * (phase - 5.0F);
-        } else if (phase < 7.0F) {
-            return 40.0F + 55.0F * (phase - 6.0F);
         } else {
-            return 95.0F + 80.0F * Math.min(phase - 7.0F, 3.0F);
+            return phase < 6.0F ? 18.0F + 22.0F * (phase - 5.0F) : 40.0F + 30.0F * (phase - 6.0F);
         }
     }
 
@@ -217,15 +241,157 @@ public final class McsmStormBlob {
 
             float a = distFade;
 
-            // body detail gates only — glare volume is McsmPhaseSky
+            // phase colour weights — user strips:
+            //   5.0 teal/green, 5.4 purple, 5.5 pink-magenta (was SKIPPED),
+            //   6+ deep purple. NO face backdrop. Black blur core always.
+            float wBlue = ramp(phase, 3.95F, 4.2F) * (1.0F - ramp(phase, 4.7F, 5.05F));
+            float wTurq = ramp(phase, 4.85F, 5.10F) * (1.0F - ramp(phase, 5.30F, 5.42F)); // phase 5 green
+            float wViolet = ramp(phase, 5.30F, 5.42F) * (1.0F - ramp(phase, 5.52F, 5.65F)); // 5.4 purple
+            float wHard = ramp(phase, 5.52F, 5.65F) * (1.0F - ramp(phase, 5.92F, 6.10F)); // 5.5 pink
+            float wPurp = ramp(phase, 5.92F, 6.15F); // 6+ deep purple
+            float wPink = ramp(phase, 6.20F, 6.9F); // post light pink
+            float wCore = ramp(phase, 4.0F, 4.3F);
+            // NO face overlay — user killed the face-painted backdrop
+            float wFace = 0.0F;
             float wShell = ramp(phase, 3.95F, 4.25F);
             float wMouth = ramp(phase, 3.9F, 4.3F);
 
-            // ---------- BODY 2D BILLBOARDS REMOVED (1.9.162) ---------------
-            // User: every flat face-plate / silhouette quad / glossy billboard
-            // behind the storm was broken. McsmPhaseSky owns the 3D glare volume
-            // exclusively. This class only draws mouth teeth, tractor beam
-            // cones, and the debris ring (below).
+            // ---------- BODY COLOUR PLATES (tight, not the sky volume) ----
+            // McsmPhaseSky owns the giant 3D gradient shell. These plates
+            // only tint the body mass itself so the silhouette still reads.
+            if (wShell > 0.004F) {
+                // phase-tinted shell colour (exact frame decks)
+                float wr = 0.28F * wBlue + 0.30F * wTurq + 0.55F * wViolet
+                        + 0.62F * wHard + 0.50F * wPurp + 0.78F * wPink;
+                float wg = 0.48F * wBlue + 0.82F * wTurq + 0.22F * wViolet
+                        + 0.18F * wHard + 0.16F * wPurp + 0.38F * wPink;
+                float wb = 0.95F * wBlue + 0.80F * wTurq + 0.78F * wViolet
+                        + 0.88F * wHard + 0.82F * wPurp + 0.58F * wPink;
+                float wsum = wBlue + wTurq + wViolet + wHard + wPurp + wPink;
+                if (wsum > 0.004F) {
+                    wr /= wsum;
+                    wg /= wsum;
+                    wb /= wsum;
+                } else {
+                    wr = 0.50F;
+                    wg = 0.22F;
+                    wb = 0.82F;
+                }
+                int cr = (int) (wr * 255.0F);
+                int cg = (int) (wg * 255.0F);
+                int cb = (int) (wb * 255.0F);
+
+                for (int s = 0; s < SHELL_DEPTH.length; s++) {
+                    double depth = bodyR * SHELL_DEPTH[s];
+                    // offset along the camera→storm ray: negative depth sits
+                    // BEHIND the silhouette (farther from cam when looking
+                    // at the front face, closer to cam when looking from behind)
+                    Vec3 slice = at.add(view.scale(depth));
+                    double r = baseR * SHELL_SCALE[s];
+                    int alpha = (int) (a * wShell * SHELL_ALPHA[s] * 62.0F);
+                    // outer slices use the soft glare gradient; mid slices
+                    // use the phase backdrop so the body colour bleeds through
+                    Identifier tex = (s == 0 || s == SHELL_DEPTH.length - 1) ? GLARE
+                            : (wHard > 0.4F || wViolet > 0.4F) ? PURPLE_PINK
+                            : (wBlue > 0.4F) ? BLUE4
+                            : (wTurq > 0.4F) ? TURQUOISE
+                            : PURPLE;
+                    RenderType rt = (s <= 2) ? GlowRenderTypes.glow(tex)
+                            : GlowRenderTypes.translucent(tex);
+                    quad(poseStack, collector, rt, slice, view, r, cr, cg, cb, alpha);
+                }
+
+                // extra outer wash — the wide soft aura the frames show
+                // wrapping the flanks without floating off as a ring symbol
+                quad(poseStack, collector, GlowRenderTypes.glow(GLARE),
+                        at.add(view.scale(-bodyR * 0.15)), view,
+                        baseR * (1.85 + 0.55 * glareMul),
+                        cr, cg, cb, (int) (a * wShell * 70.0F));
+            }
+
+            // body colour plates (welded, slightly smaller than the shell)
+            if (wPink > 0.004F) {
+                quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE_PINK), at, view,
+                        baseR * 1.05, 255, 210, 230, (int) (a * wPink * 230.0F));
+            }
+            if (wPurp > 0.004F) {
+                quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE), at, view,
+                        baseR * 0.98, 230, 190, 255, (int) (a * wPurp * 240.0F));
+            }
+            if (wHard > 0.004F || wViolet > 0.004F) {
+                float wv = Math.max(wHard, wViolet);
+                // 5.4–5.9 pinkish-violet body — the purple comes from HERE,
+                // not the sky (sky carries the salmon-pink horizon)
+                quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE_PINK), at, view,
+                        baseR * 1.02, 245, 200, 235, (int) (a * wv * 235.0F));
+                quad(poseStack, collector, GlowRenderTypes.glow(PURPLE), at, view,
+                        baseR * 0.88, 200, 90, 230, (int) (a * wv * 110.0F));
+            }
+            if (wTurq > 0.004F) {
+                quad(poseStack, collector, GlowRenderTypes.translucent(TURQUOISE), at, view,
+                        baseR * 0.95, 255, 255, 255, (int) (a * wTurq * 245.0F));
+            }
+            if (phase >= 6.4F) {
+                quad(poseStack, collector, GlowRenderTypes.translucent(EMBER), at, view,
+                        baseR * 1.10, 255, 255, 255, (int) (a * 55.0F));
+            }
+            if (wCore > 0.004F) {
+                // dark storm heart, dead-centre
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK), at, view,
+                        baseR * 0.72, 255, 255, 255, (int) (a * wCore * 240.0F));
+            }
+
+            // body-local extremely dark blue-black silhouette for phase
+            // 5.5+ — layered over purple/blue plates so the upper body reads as
+            // a black silhouette next to the purple + blue stack (matches the
+            // sky-glued wrap in McsmPhaseSky). Face backdrop stays removed.
+            if (key == mainKey && wHard > 0.004F) {
+                float ws = a * wHard;
+                // outer dark-blue-black wrap (sides + bottom of body)
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.05)), view,
+                        baseR * 1.12, 6, 10, 24, (int) (ws * 195.0F));
+                // dense upper-body black silhouette mass
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.08)), view,
+                        baseR * 0.95, 3, 5, 14, (int) (ws * 235.0F));
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.12)), view,
+                        baseR * 0.78, 2, 3, 10, (int) (ws * 245.0F));
+                // cold blue-black fringe so it sits "next to" the blue silhouette
+                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4),
+                        at.add(view.scale(bodyR * 0.02)), view,
+                        baseR * 1.05, 8, 16, 40, (int) (ws * 55.0F));
+            }
+            if (wBlue > 0.004F) {
+                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4), at, view,
+                        baseR * 0.90, 190, 215, 255, (int) (a * wBlue * 230.0F));
+            }
+
+            // ---------- OG GLOSSY STRIPE (user frame 2026-08-24) ------------
+            // MCSM body is pure black mass with a blue sheen UNDER the black
+            // (or black stripe over blue) — reverse-shading glossy read.
+            // Painted as stacked depth plates: blue underlay, black stripe
+            // bars, thin cyan-blue rim. No three-head symbol.
+            if (key == mainKey && wShell > 0.004F && baseR > 6.0) {
+                float wg = Math.max(wCore, Math.max(wBlue, Math.max(wHard, wViolet)));
+                wg = Math.max(wg, 0.55F * wShell);
+                // blue sheen under the black mass (the "blue under black")
+                // blue sheen only as thin under-stripe (phase6 glossy), not gray outline
+                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4),
+                        at.add(view.scale(-bodyR * 0.06)), view,
+                        baseR * 0.90, 12, 30, 90, (int) (a * wg * 35.0F));
+                // black stripe mass over the blue (the "black under/over blue")
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK), at, view,
+                        baseR * 0.82, 255, 255, 255, (int) (a * wg * 210.0F));
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.05)), view,
+                        baseR * 0.70, 255, 255, 255, (int) (a * wg * 180.0F));
+                // thin glossy cyan-blue rim catching light on the silhouette
+                quad(poseStack, collector, GlowRenderTypes.glow(GLARE),
+                        at.add(view.scale(bodyR * 0.02)), view,
+                        baseR * 0.78, 70, 140, 255, (int) (a * wg * 55.0F));
+            }
 
             // ---------- TRACTOR BEAMS (no debris cubes / no motes) --------
             // Soft purple/blue cones from each mouth. No orbiting black
@@ -306,53 +472,6 @@ public final class McsmStormBlob {
                             baseR * 0.062, 235, 30, 200, (int) (a * wMouth * 230.0F));
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,
                             baseR * 0.095, 230, 60, 210, (int) (a * wMouth * 70.0F));
-                }
-            }
-
-            // ---------- DEBRIS RING (phase 4+, NOT StormDebris cube swarm) --
-            // MCSM refs: loose dark mass chunks orbiting the lower body / waist,
-            // pulled upward into the storm. Soft dark slabs + phase-tinted edges.
-            // Distinct from the killed StormDebris particle cube field.
-            if (key == mainKey && phase >= 3.9F && baseR > 12.0) {
-                float ringA = a * ramp(phase, 3.9F, 4.4F);
-                float spin = nowSec * 0.18F;
-                int pieces = phase >= 5.5F ? 28 : (phase >= 5.0F ? 22 : 16);
-                for (int i = 0; i < pieces; i++) {
-                    float ang = spin + (float) (i * Math.PI * 2.0 / pieces);
-                    float wobble = 0.08F * Mth.sin(nowSec * 0.55F + i * 1.7F);
-                    float radMul = 0.95F + 0.35F * ((i % 5) / 4.0F) + wobble;
-                    float elev = -0.55F + 0.18F * Mth.sin(ang * 2.0F + nowSec * 0.3F)
-                            + 0.08F * ((i % 3) - 1);
-                    // orbit in a plane roughly under the body, slightly tilted
-                    float ox = (float) Math.cos(ang) * radMul;
-                    float oz = (float) Math.sin(ang) * radMul * 0.55F; // depth via view
-                    float oy = elev;
-                    Vec3 piece = billboardOffset(at, view,
-                            baseR * ox * 1.15F,
-                            baseR * oy);
-                    // push along view for depth variety
-                    piece = piece.add(view.scale(baseR * oz * 0.35F));
-                    double pr = baseR * (0.055 + 0.04 * ((i % 4) / 3.0));
-                    // dark mass chunk
-                    int da = (int) (ringA * (160.0F + 40.0F * ((i % 3) / 2.0F)));
-                    quadAt(poseStack, collector, GlowRenderTypes.translucent(BLACK), piece, view,
-                            pr, 8, 8, 12, da);
-                    // gray edge lines on pre-6 chunks (match flesh gray edges)
-                    if (phase < 6.0F) {
-                        quadAt(poseStack, collector, GlowRenderTypes.translucent(WHITE), piece, view,
-                                pr * 1.12, 55, 58, 65, (int) (ringA * 35.0F));
-                    } else {
-                        // phase 6+ blue sheen edge
-                        quadAt(poseStack, collector, GlowRenderTypes.glow(GLARE), piece, view,
-                                pr * 1.08, 20, 50, 120, (int) (ringA * 40.0F));
-                    }
-                    // occasional pulled-up trail chunk
-                    if ((i % 4) == 0) {
-                        Vec3 trail = piece.add(view.scale(-baseR * 0.08F))
-                                .add(0.0, baseR * 0.12F, 0.0);
-                        quadAt(poseStack, collector, GlowRenderTypes.translucent(BLACK), trail, view,
-                                pr * 0.55, 10, 10, 14, (int) (ringA * 90.0F));
-                    }
                 }
             }
         }

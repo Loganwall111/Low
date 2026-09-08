@@ -201,10 +201,6 @@ public final class McsmGate {
             // teeth colours are phase-dynamic (McsmTeethPhaseTint every frame).
             // Only ensure the glow path is ON; RGB/intensity are driven by phase.
             changed += setBool(c, "turquoiseTeeth", true);
-            changed += floorField(c, null, "turquoiseTeethIntensity", 1.35);
-            changed += floorField(c, null, "eyeColorR", 0.55);
-            changed += floorField(c, null, "eyeColorG", 0.75);
-            changed += floorField(c, null, "eyeColorB", 1.00);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
