@@ -135,7 +135,7 @@ public final class McsmGate {
             changed += setBool(c, "blackGlare", false);
             changed += setBool(c, "cataclysmHalos", false);
             changed += setBool(c, "atmospherePulse", false); // floating pulse spheres killed
-            changed += setBool(c, "glareEjecta", true);
+            changed += setBool(c, "glareEjecta", false); // cube ejecta ring killed
             changed += setBool(c, "headEyeGlow", true);
             changed += setBool(c, "devourerDebrisGlow", true);
 
@@ -166,8 +166,9 @@ public final class McsmGate {
             changed += floorField(c, null, "sicknessVeinIntensity", 0.7);
             changed += floorField(c, null, "screenTremorIntensity", 0.8);
             changed += floorField(c, null, "chromaticGlitchStrength", 0.35);
-            changed += floorField(c, null, "debrisDustParticles", 1.0);
-            changed += floorField(c, null, "debrisAmount", 1.0);
+            changed += setNum(c, null, "debrisDustParticles", 0.0);
+            changed += setNum(c, null, "debrisAmount", 0.0);
+            changed += setNum(c, null, "debrisSize", 0.0);
             // 1.9.150: volumetric coloured fog / lighting for the MCSM contrast
             // read (shafts of coloured light, thick atmospheric depth)
             changed += floorField(c, null, "volumetricFogDensity", 0.92);

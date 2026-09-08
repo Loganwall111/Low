@@ -17,35 +17,32 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Giant 3D gradient volume glued to the storm in WORLD space.
  *
- * Not a 2D billboard. Nested translucent spheres sit on the storm's world
- * position so:
- *   - the volume moves with the storm (not with the camera)
- *   - the player can walk through it and still see it from behind
- *   - the storm body is nested inside the volume
+ * Nested translucent spheres on the storm centre — traversable, visible from
+ * behind, locked to the body (no billboard parallax). NO particles, cubes,
+ * debris rings, or face/three-head symbols.
  *
- * NO particles, NO orbiting dots, NO debris cubes, NO face/three-head.
- * Soft fade edges. Phase colour decks from user strips.
- * Calm night/day never live here.
+ * Phase glare decks (user frames):
+ *   5.0–5.2  teal / soft green-black
+ *   5.2–5.45 purple
+ *   5.5–5.9  dark purple-black CORE + soft pink/lavender RIM (not full-sky magenta)
+ *   6.0+     darker black core, cooler blue-purple rim (phase-6 different)
+ *
+ * Calm night/day never live here — StoryModeSkyTint + sky shaders own those.
  */
 public final class McsmPhaseSky {
 
     private static final Identifier GLARE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_glare.png");
 
-    /** Sphere mesh resolution. */
-    private static final int LON = 24;
-    private static final int LAT = 14;
+    private static final int LON = 28;
+    private static final int LAT = 16;
 
-    /**
-     * Nested shell radii as multiples of body radius. Inner = black smudge core,
-     * outer = blue/purple fade into the world sky. Drawn back-to-front for
-     * correct translucency when the camera is inside.
-     */
+    /** Nested shell radii as multiples of body radius. Outer = soft fade. */
     private static final float[] SHELL_R = {
-            0.55F, 0.85F, 1.15F, 1.55F, 2.10F, 2.80F, 3.60F, 4.60F
+            0.45F, 0.70F, 0.95F, 1.25F, 1.65F, 2.15F, 2.80F, 3.60F
     };
     private static final float[] SHELL_A = {
-            0.72F, 0.58F, 0.48F, 0.36F, 0.26F, 0.18F, 0.11F, 0.06F
+            0.82F, 0.64F, 0.48F, 0.32F, 0.20F, 0.12F, 0.06F, 0.025F
     };
 
     private McsmPhaseSky() {
@@ -69,12 +66,10 @@ public final class McsmPhaseSky {
         }
     }
 
-    /** Shared sway so shell + blob stay locked (radians-scale world offset). */
     public static Vec3 swayOffset(float phase, float timeSec, double bodyR) {
         if (phase < 4.0F) {
             return Vec3.ZERO;
         }
-        // slow left-right sway; amplitude grows with phase
         float amp = (float) (bodyR * (0.08 + 0.06 * Mth.clamp((phase - 4.0F) / 3.0F, 0.0F, 1.0F)));
         float x = Mth.sin(timeSec * 0.22F) * amp;
         float z = Mth.sin(timeSec * 0.17F + 1.3F) * amp * 0.55F;
@@ -118,12 +113,13 @@ public final class McsmPhaseSky {
             return;
         }
 
-        float wTeal = ramp(phase, 4.95F, 5.10F) * (1.0F - ramp(phase, 5.30F, 5.42F));
-        float wPurp = ramp(phase, 5.30F, 5.42F) * (1.0F - ramp(phase, 5.52F, 5.65F));
-        float wPink = ramp(phase, 5.52F, 5.65F) * (1.0F - ramp(phase, 5.92F, 6.10F));
-        float wSix  = ramp(phase, 5.92F, 6.15F);
+        // phase weights — match user glare frames
+        float wTeal = ramp(phase, 4.95F, 5.10F) * (1.0F - ramp(phase, 5.25F, 5.38F));
+        float wPurp = ramp(phase, 5.20F, 5.38F) * (1.0F - ramp(phase, 5.48F, 5.58F));
+        float wPink = ramp(phase, 5.48F, 5.60F) * (1.0F - ramp(phase, 5.95F, 6.12F)); // 5.5-5.9
+        float wSix  = ramp(phase, 5.95F, 6.20F);
         float sky = Mth.clamp(wTeal + wPurp + wPink + wSix, 0.0F, 1.0F);
-        float near = 1.0F - Mth.clamp((float) ((best - 900.0) / 1100.0), 0.0F, 1.0F);
+        float near = 1.0F - Mth.clamp((float) ((best - 1100.0) / 1200.0), 0.0F, 1.0F);
         sky *= near;
         if (sky <= 0.012F) {
             return;
@@ -132,66 +128,75 @@ public final class McsmPhaseSky {
         double bodyR = bodyRadius(phase);
         Vec3 centre = stormPos.add(swayOffset(phase, nowSec, bodyR));
 
-        // phase core / mid / outer colours (user strips)
+        // CORE = dark centre of the halo (black / deep purple-black)
+        // User: "the colour of the Halo in the night time" for 5.5+ is the
+        // deep purple-black core — NOT flooding the whole calm night sky.
         float[] core = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.02F, 0.08F, 0.08F},   // teal black-green
-                new float[]{0.06F, 0.02F, 0.12F},   // purple black
-                new float[]{0.12F, 0.02F, 0.10F},   // pink black
-                new float[]{0.10F, 0.02F, 0.08F});  // six black
+                new float[]{0.02F, 0.06F, 0.06F},   // teal black-green
+                new float[]{0.05F, 0.01F, 0.10F},   // purple black
+                new float[]{0.04F, 0.01F, 0.08F},   // 5.5 dark purple-black core
+                new float[]{0.02F, 0.02F, 0.05F});  // phase6 near-black
+        // MID = coloured body of the glare ball
         float[] mid = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.08F, 0.36F, 0.34F},
-                new float[]{0.42F, 0.10F, 0.55F},
-                new float[]{0.72F, 0.14F, 0.55F},
-                new float[]{0.55F, 0.12F, 0.42F});
+                new float[]{0.06F, 0.28F, 0.26F},
+                new float[]{0.32F, 0.08F, 0.48F},
+                new float[]{0.28F, 0.06F, 0.42F},   // purple mid for 5.5 halo
+                new float[]{0.12F, 0.06F, 0.22F});  // phase6 cooler
+        // OUT / RIM = soft fade into the world (pink-lavender for 5.5, not solid magenta sky)
         float[] out = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.18F, 0.48F, 0.46F},
-                new float[]{0.55F, 0.22F, 0.72F},
-                new float[]{0.90F, 0.35F, 0.70F},
-                new float[]{0.70F, 0.28F, 0.48F});
-        // outer rim: blue + purple smudge around the outside
+                new float[]{0.14F, 0.40F, 0.38F},
+                new float[]{0.48F, 0.18F, 0.62F},
+                new float[]{0.72F, 0.42F, 0.78F},   // soft pink-lavender rim (5.5 frame)
+                new float[]{0.35F, 0.22F, 0.48F});  // phase6 blue-purple rim
         float[] rim = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.12F, 0.28F, 0.42F},
-                new float[]{0.22F, 0.12F, 0.55F},
-                new float[]{0.28F, 0.10F, 0.48F},
-                new float[]{0.30F, 0.10F, 0.40F});
+                new float[]{0.10F, 0.26F, 0.38F},
+                new float[]{0.30F, 0.14F, 0.50F},
+                new float[]{0.55F, 0.35F, 0.70F},   // soft lavender edge
+                new float[]{0.22F, 0.18F, 0.40F});
 
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
         float amp = sky;
 
-        // draw outer shells first (far), then inner (near) so translucency stacks
+        // outer shells first
         for (int s = SHELL_R.length - 1; s >= 0; s--) {
             float t = s / (float) (SHELL_R.length - 1);
-            // colour: core (black smudge) → mid → out → rim (blue/purple outside)
             float[] col;
-            if (t < 0.25F) {
-                col = lerp3(core, mid, t / 0.25F);
-            } else if (t < 0.60F) {
-                col = lerp3(mid, out, (t - 0.25F) / 0.35F);
+            if (t < 0.22F) {
+                col = lerp3(core, mid, t / 0.22F);
+            } else if (t < 0.55F) {
+                col = lerp3(mid, out, (t - 0.22F) / 0.33F);
             } else {
-                col = lerp3(out, rim, (t - 0.60F) / 0.40F);
+                col = lerp3(out, rim, (t - 0.55F) / 0.45F);
             }
             double radius = bodyR * SHELL_R[s];
             float alpha = amp * SHELL_A[s];
-            // soft breathe so it doesn't feel static/flat
-            radius *= 1.0 + 0.02 * Math.sin(nowSec * 0.31 + s * 0.4);
-            boolean glow = s >= 3; // outer shells additive, inner translucent black
-            sphere(poseStack, collector, centre, cam, radius, col[0], col[1], col[2], alpha, glow);
+            // 5.5+ rim is softer so it doesn't paint the whole sky magenta
+            if (wPink > 0.3F && t > 0.55F) {
+                alpha *= 0.70F;
+            }
+            // phase 6 glare is more restrained
+            if (wSix > 0.3F) {
+                alpha *= 0.75F;
+                radius *= 0.92;
+            }
+            radius *= 1.0 + 0.015 * Math.sin(nowSec * 0.28 + s * 0.35);
+            boolean glow = s >= 4 && t < 0.85F;
+            sphere(poseStack, collector, centre, radius, col[0], col[1], col[2], alpha, glow);
         }
 
-        // extra outer blue-black smudge ring (the "outside" dark wrap)
-        float sil = (wPink + wSix * 0.85F + wPurp * 0.35F) * near;
+        // 5.5+ extremely dark blue-black wrap on the back / upper body side
+        float sil = (wPink + wSix * 0.7F + wPurp * 0.25F) * near;
         if (sil > 0.01F) {
-            sphere(poseStack, collector, centre, cam, bodyR * 5.2,
-                    0.02F, 0.04F, 0.12F, amp * sil * 0.10F, false);
-            sphere(poseStack, collector, centre, cam, bodyR * 4.0,
-                    0.04F, 0.06F, 0.18F, amp * sil * 0.14F, false);
+            sphere(poseStack, collector, centre, bodyR * 4.8,
+                    0.015F, 0.03F, 0.10F, amp * sil * 0.09F, false);
+            sphere(poseStack, collector, centre, bodyR * 3.6,
+                    0.03F, 0.04F, 0.12F, amp * sil * 0.12F, false);
         }
     }
 
-    /** Full UV sphere in WORLD space, centred on storm. Two-sided via full mesh. */
     private static void sphere(PoseStack poseStack, SubmitNodeCollector collector,
-            Vec3 centre, Vec3 cam, double radius, float cr, float cg, float cb, float alpha, boolean glow) {
+            Vec3 centre, double radius, float cr, float cg, float cb, float alpha, boolean glow) {
         if (alpha <= 0.008F || radius < 1.0) {
             return;
         }
@@ -209,9 +214,9 @@ public final class McsmPhaseSky {
                 double y1 = Math.cos(v1);
                 double r0 = Math.sin(v0);
                 double r1 = Math.sin(v1);
-                // fade alpha toward poles/equator edges for soft blend
-                float band0 = (float) (0.55 + 0.45 * Math.sin(v0));
-                float band1 = (float) (0.55 + 0.45 * Math.sin(v1));
+                // soft equator bias so poles fade cleaner into sky
+                float band0 = (float) (0.50 + 0.50 * Math.sin(v0));
+                float band1 = (float) (0.50 + 0.50 * Math.sin(v1));
                 for (int i = 0; i < LON; i++) {
                     double u0 = 2.0 * Math.PI * i / LON;
                     double u1 = 2.0 * Math.PI * (i + 1) / LON;
@@ -221,12 +226,10 @@ public final class McsmPhaseSky {
                     Vec3 p01 = centre.add(r1 * Math.cos(u0) * radius, y1 * radius, r1 * Math.sin(u0) * radius);
                     int a0 = Mth.clamp((int) (aa * band0), 0, 255);
                     int a1 = Mth.clamp((int) (aa * band1), 0, 255);
-                    // front face
                     vertex(pose, consumer, p00, 0, 0, ar, ag, ab, a0);
                     vertex(pose, consumer, p10, 1, 0, ar, ag, ab, a0);
                     vertex(pose, consumer, p11, 1, 1, ar, ag, ab, a1);
                     vertex(pose, consumer, p01, 0, 1, ar, ag, ab, a1);
-                    // back face (visible from inside / behind)
                     vertex(pose, consumer, p00, 0, 0, ar, ag, ab, a0);
                     vertex(pose, consumer, p01, 0, 1, ar, ag, ab, a1);
                     vertex(pose, consumer, p11, 1, 1, ar, ag, ab, a1);

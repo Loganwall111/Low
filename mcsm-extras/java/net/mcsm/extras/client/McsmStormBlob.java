@@ -67,7 +67,7 @@ public final class McsmStormBlob {
             1.55F, 1.38F, 1.22F, 1.08F, 1.18F, 1.32F, 1.48F
     };
     private static final float[] SHELL_ALPHA = {
-            0.08F, 0.12F, 0.18F, 0.28F, 0.16F, 0.10F, 0.05F
+            0.00F, 0.00F, 0.00F, 0.00F, 0.00F, 0.00F, 0.00F
     };
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
@@ -325,12 +325,10 @@ public final class McsmStormBlob {
                 float wg = Math.max(wCore, Math.max(wBlue, Math.max(wHard, wViolet)));
                 wg = Math.max(wg, 0.55F * wShell);
                 // blue sheen under the black mass (the "blue under black")
+                // blue sheen only as thin under-stripe (phase6 glossy), not gray outline
                 quad(poseStack, collector, GlowRenderTypes.glow(BLUE4),
-                        at.add(view.scale(-bodyR * 0.08)), view,
-                        baseR * 0.96, 40, 90, 220, (int) (a * wg * 70.0F));
-                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4),
-                        at.add(view.scale(-bodyR * 0.04)), view,
-                        baseR * 0.88, 20, 55, 180, (int) (a * wg * 95.0F));
+                        at.add(view.scale(-bodyR * 0.06)), view,
+                        baseR * 0.90, 12, 30, 90, (int) (a * wg * 35.0F));
                 // black stripe mass over the blue (the "black under/over blue")
                 quad(poseStack, collector, GlowRenderTypes.translucent(BLACK), at, view,
                         baseR * 0.82, 255, 255, 255, (int) (a * wg * 210.0F));

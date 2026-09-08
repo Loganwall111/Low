@@ -28,6 +28,7 @@ public abstract class McsmPresenceFxPatch {
             DabyWSClientConfig.cataclysmHalos = false;
             DabyWSClientConfig.blackGlare = false;
             DabyWSClientConfig.atmospherePulse = false;
+            DabyWSClientConfig.glareEjecta = false;
         } catch (Throwable ignored) {
         }
         ci.cancel();
