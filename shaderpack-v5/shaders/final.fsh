@@ -64,8 +64,8 @@ void main() {
     vec3 col = texture(colortex0, texcoord).rgb;
 
     // 1.9.153: storm gate — purple/magenta OR teal. Never calm blue night.
-    float purpleGate = clamp((min(fogColor.r, fogColor.b) - fogColor.g - 0.04) * 5.0, 0.0, 1.0);
-    float tealGate   = clamp((fogColor.g - max(fogColor.r, fogColor.b) - 0.03) * 5.0, 0.0, 1.0);
+    float purpleGate = clamp((min(fogColor.r, fogColor.b) - fogColor.g - 0.08) * 5.5, 0.0, 1.0);
+    float tealGate   = clamp((fogColor.g - max(fogColor.r, fogColor.b) - 0.05) * 5.5, 0.0, 1.0);
     float flum = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
     float calmBlue = max(
         step(max(fogColor.r, fogColor.g) * 1.25, fogColor.b),

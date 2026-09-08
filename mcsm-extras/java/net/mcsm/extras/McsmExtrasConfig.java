@@ -14,7 +14,7 @@ import java.util.Properties;
  * the counterclockwise spiral pin). Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.170";
+    public static final String BUILD_VERSION = "0.0.0";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;

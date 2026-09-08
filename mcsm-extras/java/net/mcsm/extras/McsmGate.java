@@ -189,6 +189,7 @@ public final class McsmGate {
             changed += floorField(c, null, "sunGlowStrength", 1.0);
             // MCSM: MCSM matte black silhouette — NEVER reverse/model shade
             changed += setBool(c, "reverseShading", false);
+            changed += setBool(c, "purpleSky", false);
             changed += setBool(c, "stormModelShading", false);
             changed += setBool(c, "modelShading", false);
             // blackGlareStrength left alone — the far ring is off

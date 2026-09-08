@@ -20,6 +20,7 @@ public final class McsmTeethPhaseTint {
 
     public static void tick() {
         try {
+            net.mcsm.extras.client.McsmStormAtmosphere.tick();
             Minecraft mc = Minecraft.getInstance();
             if (mc == null || mc.level == null) {
                 return;

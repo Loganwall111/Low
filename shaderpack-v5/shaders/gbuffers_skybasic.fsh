@@ -203,18 +203,19 @@ vec3 storyCalmSky(vec3 dirS) {
     // 1.9.153: day lavender, midnight deep navy (user strips)
     // calm night = DEEP BLUE only (never purple/magenta/lavender)
     // 1.9.168 fit to MCSM stills: soft day blue, deep navy night (never purple calm)
-    vec3 zen = day  * vec3(0.22, 0.34, 0.62)
+    // calm only — deep navy night, soft day (never purple without storm)
+    vec3 zen = day  * vec3(0.24, 0.36, 0.66)
              + dusk * vec3(0.16, 0.22, 0.38)
-             + nite * vec3(0.02, 0.05, 0.22)
-             + midn * vec3(0.005, 0.012, 0.14);
-    vec3 mid = day  * vec3(0.34, 0.46, 0.72)
+             + nite * vec3(0.01, 0.03, 0.18)
+             + midn * vec3(0.003, 0.008, 0.12);
+    vec3 mid = day  * vec3(0.36, 0.48, 0.74)
              + dusk * vec3(0.75, 0.32, 0.18)
-             + nite * vec3(0.04, 0.09, 0.34)
-             + midn * vec3(0.015, 0.04, 0.28);
-    vec3 hor = day  * vec3(0.48, 0.56, 0.74)
+             + nite * vec3(0.03, 0.07, 0.30)
+             + midn * vec3(0.01, 0.03, 0.24);
+    vec3 hor = day  * vec3(0.50, 0.58, 0.76)
              + dusk * vec3(0.90, 0.42, 0.22)
-             + nite * vec3(0.06, 0.14, 0.48)
-             + midn * vec3(0.04, 0.10, 0.42);
+             + nite * vec3(0.05, 0.12, 0.45)
+             + midn * vec3(0.03, 0.08, 0.38);
 
     // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
@@ -406,8 +407,9 @@ void main() {
         float stormK = 0.0;
 #if STORM_SKY
         // purple/magenta OR teal (phase 5). Never calm blue night (b>>r,g).
-        float purpleK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.5, 0.0, 1.0);
-        float tealK   = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.5, 0.0, 1.0);
+        // stricter: calm navy must NEVER trip storm purple
+        float purpleK = clamp((min(fogColor.r, fogColor.b) - fogColor.g - 0.06) * 4.5, 0.0, 1.0);
+        float tealK   = clamp((fogColor.g - max(fogColor.r, fogColor.b) - 0.04) * 4.5, 0.0, 1.0);
         float flum = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
         // calm navy night: B-dominant OR very dark with no purple chroma
         float calmBlue = max(
