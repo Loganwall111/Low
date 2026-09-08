@@ -440,12 +440,25 @@ PYMERGE
 echo "[audit] ---- assembled jar ----"
 AUDIT_FAIL=0
 
-# 1. fresh classes
+# 1. fresh classes — every compiled class must exist in the assembled tree
+# (net/mcsm extras AND net/dabicco overlays/mixins). Count matching paths,
+# not "net/mcsm only vs everything" (that false-failed dabicco client overlays).
 NEW_COUNT=$(cd /tmp/mcsm-build && { find net -name "*.class" 2>/dev/null || true; } | wc -l)
-JAR_COUNT=$(cd "$FX/cls" && { find net/mcsm -name "*.class" 2>/dev/null || true; } | wc -l)
-echo "[audit] mcsm classes: jar=$JAR_COUNT freshly-compiled=$NEW_COUNT"
-if [ "$NEW_COUNT" -eq 0 ] || [ "$JAR_COUNT" -lt "$NEW_COUNT" ]; then
-  echo "::error title=jar audit::fresh classes did not make it into the jar (jar=$JAR_COUNT compiled=$NEW_COUNT)"
+JAR_MATCH=0
+if [ -d /tmp/mcsm-build/net ]; then
+  while IFS= read -r rel; do
+    [ -z "$rel" ] && continue
+    if [ -f "$FX/cls/$rel" ]; then
+      JAR_MATCH=$((JAR_MATCH + 1))
+    else
+      echo "::error title=jar audit::missing fresh class in jar: $rel"
+      AUDIT_FAIL=1
+    fi
+  done < <(cd /tmp/mcsm-build && find net -name "*.class" 2>/dev/null | sort)
+fi
+echo "[audit] fresh classes: matched=$JAR_MATCH compiled=$NEW_COUNT"
+if [ "$NEW_COUNT" -eq 0 ] || [ "$JAR_MATCH" -lt "$NEW_COUNT" ]; then
+  echo "::error title=jar audit::fresh classes did not make it into the jar (matched=$JAR_MATCH compiled=$NEW_COUNT)"
   AUDIT_FAIL=1
 fi
 
