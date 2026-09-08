@@ -1,31 +1,30 @@
-# Devouring Storms 1.9.143 — mega-phase 7: structures land whole, Sky City goes up
+# Devouring Storms 1.9.166 — sky deep-clean + vivid light bake
 
-## The segment bug, root-caused and fixed
-The base mod builds every schematic through a static queue with a 24,000
-blocks/tick budget: towns visibly rise slice by slice (the "spawning in
-segments" report), and because the queue is static it survives world
-loads - leftovers from the previous world keep placing into the new one
-(the "Sky City fragments scattered all over the world" report). Now:
-- the queue is cleared whenever the level instance changes (no cross-world
-  leftovers, ever);
-- the placement budget is raised so each schematic completes in about one
-  tick - structures appear whole.
+Continues 1.9.165 on the permanent 1.9.164 (159 visual) base.
 
-## Sky City altitude
-Sky City and its floating sibling sites (Speakeasy, Jungle Fortress,
-Mushroom Island) are raised from y~296 to y~4200 - inside the 1000-10,000
-order, above the 3500 cloud deck. Jumping off falls you through seven of
-the story cloud decks on the way to the ground.
+## Sky folders — no more fighting
+| Path | Role |
+|------|------|
+| `minecraft/optifine/sky/world0` | Calm day soft blue, sunset, **navy night/midnight** |
+| `dabywitherstormmod/textures/sky` | Calm + **phase-only** refs (teal/purple/pink/twilight) |
+| `fabricskyboxes/textures/sky` | **Calm only** (day/night/sunset). Phase PNGs **deleted** so FSB cannot paint purple ambient |
 
-## The cloud sea below
-Both sky shaders (core storylook AND the built-in Iris pack) now paint the
-same layered decks mirrored into the lower hemisphere: from the ground it
-reads as a far cloud sea past the terrain edge; from Sky City altitude it
-is the layers streaming past as you fall. Decks seen from above show their
-lit tops. Validated: storylook glslang-clean, 30/30 Iris translation units.
+Day avg ~soft MCSM blue (not white/purple). Soft wisps only — **no cube noise**.
 
-Unchanged: 6b warp portals, 6a particle field, 5c Telltale glare, welded
-blob, purple face overlay, built-in shader pack DEFAULT ON.
+## Clouds — no cube vault
+Core + Iris + Story Look cloud passes: softer alpha, translucent mass,
+feathered edges so looking straight up is decks, not MC block stickers.
 
-Install: drop the jar in `mods/`. Existing worlds pick the new Sky City
-altitude on fresh structure placement; already-placed blocks stay put.
+## Vivid light / contrast / shadows (baked, always-on)
+User: colourful light never showed up. Now forced harder in every path:
+- Core `mcsm_visuals` sat 1.38 / contrast 1.22 + deep cloud shadows
+- Core terrain hard block-face key + exaggerated ground cloud occlusion
+- Core + Story Look lightmap: warm day key, deep blue night, deep shade floor
+- Story Look terrain grade sat 1.36 / contrast 1.20
+- Iris pack: CONTRAST 1.32, VIBRANCE 1.35, shade harder on block faces
+- Gate floors storyModeLighting/Sky strength, bloom, storm shadows to 1.0
+
+Works with **or without Iris** (core shaders always bake the look).
+
+## Kept
+159 PhaseSky/Blob/teeth/gray-edge/Formidi path. Debris kill. OptiFine navy night.

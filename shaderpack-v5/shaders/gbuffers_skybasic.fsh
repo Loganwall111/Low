@@ -11,14 +11,14 @@
  *           deep indigo night; layered cloud decks (layer -> void gap ->
  *           layer) with pale-blue shadowed fringes.
  *   storm - the phase skies sampled from the Minecraft Story Mode frames:
- *           5.5-5.9 pinkish-violet (violet zenith, magenta mid, SALMON-PINK
+ *           5.4-5.9 pinkish-violet (violet zenith, magenta mid, SALMON-PINK
  *           horizon - the purple body comes from the storm blob, not the
  *           sky), green-teal frames, sunset-orange frames, deep-purple
- *           frames; blue silhouette rim around the horizon, gigantic purple
- *           line across the upper vault, darker roof tone, and the storm
- *           sky SHRUNK to the sides - overhead the dome collapses into a
- *           dark calm violet while the mod's halo ring quad carries the
- *           coloured glow around the storm's flanks.
+ *           frames; blue silhouette rim around the horizon, big purple glow
+ *           across the upper vault, darker roof tone, and the storm sky
+ *           SHRUNK to the sides - overhead the dome collapses into a
+ *           purple+moon-blue+black atmospheric stack while McsmStormBlob's
+ *           thick welded shell carries the coloured glow on the flanks.
  *
  * The mod cannot feed its per-phase ColorModulator tint through Iris, so the
  * storm gate reads fogColor instead: the Wither Storm pulls the world fog
@@ -137,8 +137,8 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
     }
     vec2 pxz = dirS.xz / dy;
     float H[9];
-    H[0] = 96.0;  H[1] = 146.0; H[2] = 152.0; H[3] = 420.0; H[4] = 430.0;
-    H[5] = 1200.0; H[6] = 3500.0; H[7] = 9000.0; H[8] = 16000.0;
+    H[0] = 90.0;  H[1] = 180.0; H[2] = 280.0; H[3] = 520.0; H[4] = 780.0;
+    H[5] = 1400.0; H[6] = 3200.0; H[7] = 7800.0; H[8] = 16000.0;
     float acc = acc0;
     for (int i = 0; i < 9; i++) {
         int grp = (i < 3) ? 0 : ((i < 6) ? 1 : 2);
@@ -146,10 +146,10 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
         float pres = (grp == 0) ? 1.0
                 : smoothstep(0.30, 0.44, fbm3(vec3(pxz * 0.010 + vec2(float(grp) * 31.7), float(grp) * 13.0)));
         float cov = fbm3(vec3(uv * 0.9, float(i) * 3.1));
-        float gapmask = smoothstep(0.40, 0.54, fbm3(vec3(uv * 0.33, float(i) * 9.0)));
+        float gapmask = smoothstep(0.48, 0.62, fbm3(vec3(uv * 0.33, float(i) * 9.0)));
         float nest = fbm3(vec3(uv * 3.4 + 17.0, float(i) * 5.7));
         float th = (i < 3) ? 0.62 : ((i < 7) ? 0.50 : 0.44);
-        float ceilBonus = (i == 8) ? 0.25 : 0.0;
+        float ceilBonus = 0.0; // no cube ceiling
         float a = smoothstep(th, th + 0.08, cov) * gapmask * pres
                 * (0.70 + 0.30 * smoothstep(0.35, 0.75, nest))
                 + ceilBonus * smoothstep(0.35, 0.6, cov) * pres;
@@ -163,7 +163,7 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
         } else {
             a *= 0.85;
         }
-        a = min(a, 0.92) * (1.0 - acc);
+        a = min(a, 0.22) * (1.0 - acc); // 1.9.168 soft wisps not cube decks
         float core = smoothstep(th - 0.12, th + 0.34, cov);
         vec3 dc = mix(shadeCol, litCol, min(mix(0.55, 0.82, mirror) + 0.45 * core, 1.0));
         dc *= (0.97 + 0.05 * float(i));
@@ -196,15 +196,26 @@ vec3 storyCalmSky(vec3 dirS) {
 
     // vanilla's dawn and dusk both read orange, so the dawn palette carries
     // both ends of the day here - exactly like the core-shader round-5 sky.
-    vec3 zen = day   * vec3(0.216, 0.394, 0.716)
-             + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 mid = day   * vec3(0.394, 0.578, 0.806)
-             + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 hor = day   * vec3(0.870, 0.745, 0.690)
-             + dusk  * vec3(0.890, 0.680, 0.730)
-             + night * vec3(0.019, 0.031, 0.130);
+    // 1.9.152: user storymode_sky_* strips — day/night/midnight/sunset
+    float clumN = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
+    float midn = night * smoothstep(0.12, 0.02, clumN);
+    float nite = night * (1.0 - midn);
+    // 1.9.153: day lavender, midnight deep navy (user strips)
+    // calm night = DEEP BLUE only (never purple/magenta/lavender)
+    // 1.9.168 fit to MCSM stills: soft day blue, deep navy night (never purple calm)
+    // calm only — deep navy night, soft day (never purple without storm)
+    vec3 zen = day  * vec3(0.24, 0.36, 0.66)
+             + dusk * vec3(0.16, 0.22, 0.38)
+             + nite * vec3(0.01, 0.03, 0.18)
+             + midn * vec3(0.003, 0.008, 0.12);
+    vec3 mid = day  * vec3(0.36, 0.48, 0.74)
+             + dusk * vec3(0.75, 0.32, 0.18)
+             + nite * vec3(0.03, 0.07, 0.30)
+             + midn * vec3(0.01, 0.03, 0.24);
+    vec3 hor = day  * vec3(0.50, 0.58, 0.76)
+             + dusk * vec3(0.90, 0.42, 0.22)
+             + nite * vec3(0.05, 0.12, 0.45)
+             + midn * vec3(0.03, 0.08, 0.38);
 
     // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
@@ -225,11 +236,15 @@ vec3 storyCalmSky(vec3 dirS) {
     col += hor * 0.14 * exp(-abs(ty) * 7.0);
 #endif
 
-    // white story clouds with pale-blue shadowed fringes
-    vec3 litC = mix(vec3(0.960, 0.975, 1.000), hor, 0.10);
-    vec3 shadeC = mix(zen, hor, 0.35) * 0.85;
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 0.0);
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 1.0);
+    // volumetric soft cloud decks + overhead sticker (not blocky MC clouds)
+    vec3 litC = mix(vec3(0.980, 0.985, 1.000), hor, 0.08);
+    vec3 shadeC = mix(zen * 0.85, hor, 0.30);
+    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 0.0);
+    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 1.0);
+    float up = smoothstep(0.55, 0.95, ty);
+    // 1.9.168: cube sticker decks wiped — continuous gradient only (MCSM stills)
+    float sticker = 0.0;
+    col = col;
 
     col = mix(col, hor * 0.5, smoothstep(0.0, -0.3, ty));
     float lum = dot(col, vec3(0.299, 0.587, 0.114));
@@ -250,26 +265,30 @@ vec3 storyStormSky(vec3 dirS) {
                   * step(C.g * 1.05, min(C.r, C.b)) * (1.0 - greenK);
     float magK    = clamp((C.r - C.b) * 2.0, 0.0, 1.0) * (1.0 - orangeK) * (1.0 - greenK);
     float wsum = pinkK + greenK + orangeK + magK;
-    if (wsum < 0.02) {
-        magK = 1.0;
-        wsum = 1.0;
+    // 1.9.152: never default to full purple — fall back to calm if unclassified
+    if (wsum < 0.08) {
+        return storyCalmSky(dirS);
     }
-    // 5.5-5.9 pinkish-violet (violet zenith, salmon-pink horizon)
-    vec3 z1 = vec3(0.055, 0.022, 0.130);
-    vec3 m1 = vec3(0.200, 0.060, 0.230);
-    vec3 h1 = vec3(0.640, 0.300, 0.310);
-    // green-teal frames
-    vec3 z2 = vec3(0.050, 0.110, 0.095);
-    vec3 m2 = vec3(0.120, 0.220, 0.180);
-    vec3 h2 = vec3(0.440, 0.560, 0.360);
-    // sunset-orange frames
-    vec3 z3 = vec3(0.120, 0.060, 0.080);
-    vec3 m3 = vec3(0.350, 0.140, 0.110);
-    vec3 h3 = vec3(0.780, 0.280, 0.100);
-    // deep purple / magenta frames
-    vec3 z4 = vec3(0.070, 0.022, 0.120);
-    vec3 m4 = vec3(0.230, 0.055, 0.220);
-    vec3 h4 = vec3(0.560, 0.220, 0.320);
+    float purpleChroma = min(C.r, C.b) - C.g;
+    if (purpleChroma < 0.02 && greenK < 0.05 && orangeK < 0.05) {
+        return storyCalmSky(dirS);
+    }
+    // phase 5.5 pink-magenta
+    vec3 z1 = vec3(0.180, 0.040, 0.220);
+    vec3 m1 = vec3(0.620, 0.120, 0.520);
+    vec3 h1 = vec3(0.920, 0.380, 0.620);
+    // phase 5 turquoise
+    vec3 z2 = vec3(0.020, 0.140, 0.145);
+    vec3 m2 = vec3(0.060, 0.320, 0.300);
+    vec3 h2 = vec3(0.280, 0.520, 0.460);
+    // sunset-orange frames (user storymode_sky_sunset)
+    vec3 z3 = vec3(0.188, 0.329, 0.376);
+    vec3 m3 = vec3(0.863, 0.353, 0.157);
+    vec3 h3 = vec3(0.494, 0.098, 0.165);
+    // phase 5.4 purple + phase 6
+    vec3 z4 = vec3(0.090, 0.035, 0.180);
+    vec3 m4 = vec3(0.320, 0.090, 0.420);
+    vec3 h4 = vec3(0.620, 0.280, 0.480);
     vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
     vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
     vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
@@ -290,17 +309,21 @@ vec3 storyStormSky(vec3 dirS) {
     // blue silhouette rim hugging the horizon, all the way around
     float rim = exp(-abs(ty - 0.015) * 42.0);
     col = mix(col, vec3(0.16, 0.34, 0.95), rim * 0.50);
-    // gigantic purple line across the upper vault
-    float topLine = exp(-abs(ty - 0.72) * 26.0);
-    col = mix(col, vec3(0.40, 0.15, 0.85), topLine * 0.30);
+    // gigantic purple glow band across the upper vault (5.4-5.9 punch)
+    float topLine = exp(-abs(ty - 0.68) * 18.0);
+    col = mix(col, vec3(0.48, 0.14, 0.92), topLine * 0.48);
+    // second, higher purple wash so the roof carries the big glow
+    float topWash = exp(-abs(ty - 0.82) * 10.0);
+    col = mix(col, vec3(0.32, 0.08, 0.70), topWash * 0.35);
     // darker back tone so the roof reads heavier than the sides
-    col *= 1.0 - 0.38 * smoothstep(0.50, 1.0, ty);
-    // the storm sky SHRINKS to the sides: overhead the dome collapses into a
-    // dark calm violet; the mod's halo ring quad carries the flank glow.
-    float over = smoothstep(0.30, 0.70, ty);
+    col *= 1.0 - 0.42 * smoothstep(0.50, 1.0, ty);
+    // overhead collapses into purple+moon-blue+black atmospheric stack;
+    // the thick welded shell on McsmStormBlob carries the flank glow.
+    float over = smoothstep(0.28, 0.72, ty);
     float olum = dot(col, vec3(0.299, 0.587, 0.114));
-    vec3 ocol = mix(vec3(olum) * vec3(0.42, 0.30, 0.52), vec3(0.02, 0.012, 0.03), 0.55);
-    col = mix(col, ocol, over * 0.85);
+    vec3 ocol = mix(vec3(olum) * vec3(0.30, 0.18, 0.48), vec3(0.012, 0.008, 0.022), 0.62);
+    ocol = mix(ocol, vec3(0.05, 0.08, 0.22), 0.18);
+    col = mix(col, ocol, over * 0.90);
 
     // purple-lit storm decks, kept on the sides (sideFade 0.35)
     vec3 litC = mix(vec3(0.52, 0.42, 0.62), hor, 0.35);
@@ -383,8 +406,19 @@ void main() {
         // night is blue (r<g) - so neither false-positives into a storm sky.
         float stormK = 0.0;
 #if STORM_SKY
-        stormK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.0, 0.0, 1.0)
-               * (1.0 - rainStrength * 0.6);
+        // purple/magenta OR teal (phase 5). Never calm blue night (b>>r,g).
+        // stricter: calm navy must NEVER trip storm purple
+        float purpleK = clamp((min(fogColor.r, fogColor.b) - fogColor.g - 0.06) * 4.5, 0.0, 1.0);
+        float tealK   = clamp((fogColor.g - max(fogColor.r, fogColor.b) - 0.04) * 4.5, 0.0, 1.0);
+        float flum = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
+        // calm navy night: B-dominant OR very dark with no purple chroma
+        float calmBlue = max(
+            step(max(fogColor.r, fogColor.g) * 1.25, fogColor.b) * step(min(fogColor.r, fogColor.b) - fogColor.g, 0.03),
+            step(flum, 0.12) * step(min(fogColor.r, fogColor.b) - fogColor.g, 0.04)
+        );
+        stormK = max(purpleK, tealK) * (1.0 - calmBlue) * (1.0 - rainStrength * 0.6);
+        // require real chroma before any storm mix
+        stormK *= step(0.08, max(purpleK, tealK));
 #endif
 
 #if SKY_STORY_MODE

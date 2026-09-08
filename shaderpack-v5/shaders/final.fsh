@@ -23,11 +23,11 @@ uniform float frameTimeCounter;
 uniform vec3 fogColor;
 
 #define BLOOM             1     // [0 1]
-#define BLOOM_STRENGTH    0.35  // [0.00 0.20 0.35 0.60 0.90 1.30]
+#define BLOOM_STRENGTH    0.55  // [0.00 0.20 0.35 0.55 0.60 0.90 1.30]
 #define TONEMAP           1     // [0 1]
-#define EXPOSURE          1.00  // [0.60 0.80 1.00 1.06 1.20 1.50]
-#define CONTRAST          1.00  // [0.80 1.00 1.10 1.12 1.25 1.40]
-#define VIBRANCE          1.00  // [0.50 0.80 1.00 1.20 1.28 1.45 1.70 1.90]
+#define EXPOSURE          1.00  // [0.60 0.80 1.00 1.08 1.20 1.50]
+#define CONTRAST          1.34  // [0.80 1.00 1.10 1.12 1.25 1.40]
+#define VIBRANCE         1.38  // [0.50 0.80 1.00 1.20 1.28 1.45 1.70 1.90]
 #define STORM_PURPLE_ON   1     // [0 1]
 #define STORM_PURPLE      0.40  // [0.00 0.25 0.40 0.55 0.75 1.00]
 #define STORM_VIGNETTE_ON 1     // [0 1]
@@ -63,8 +63,15 @@ float mcsmHash(float n) { return fract(sin(n * 91.7) * 4313.7); }
 void main() {
     vec3 col = texture(colortex0, texcoord).rgb;
 
-    // storm gate: fog pulled toward purple/magenta = the storm owns the sky
-    float gate = clamp((max(fogColor.r, fogColor.b) - fogColor.g - 0.03) * 5.0, 0.0, 1.0);
+    // 1.9.153: storm gate — purple/magenta OR teal. Never calm blue night.
+    float purpleGate = clamp((min(fogColor.r, fogColor.b) - fogColor.g - 0.08) * 5.5, 0.0, 1.0);
+    float tealGate   = clamp((fogColor.g - max(fogColor.r, fogColor.b) - 0.05) * 5.5, 0.0, 1.0);
+    float flum = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
+    float calmBlue = max(
+        step(max(fogColor.r, fogColor.g) * 1.25, fogColor.b),
+        step(flum, 0.12) * step(min(fogColor.r, fogColor.b) - fogColor.g, 0.04)
+    );
+    float gate = max(purpleGate, tealGate) * (1.0 - calmBlue) * step(0.08, max(purpleGate, tealGate));
 
     // lightning before grade, so the flash blooms too
     if (gate > 0.02) {

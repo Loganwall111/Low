@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * MCSM 1.9.71 -- re-enable the mod's own visuals under Iris.
+ * MCSM -- re-enable the mod's own visuals under Iris.
  *
  * Bytecode survey: ShaderPackCompat.active() gates SIX systems, every one with
  * "ifne <skip>" -- i.e. when a shader pack is loaded the mod switches its own
@@ -39,7 +39,7 @@ public abstract class McsmShaderGatePatch {
 
     @Inject(method = "active", at = @At("HEAD"), cancellable = true)
     private static void mcsm$modOwnsTheLook(CallbackInfoReturnable<Boolean> cir) {
-        // MCSM 1.9.111 -- the force is now a player-facing toggle. Dabicco's
+        // MCSM -- the force is now a player-facing toggle. Dabicco's
         // look presets route part of their difference through the shader-pack
         // path this gate closes, so with it forced they appeared to do
         // nothing; turning "Shader Pack Gate" off in MCSM Extras hands the

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MCSM 1.9.100 -- the "it's already written, it's just switched off" gate.
+ * MCSM -- the "it's already written, it's just switched off" gate.
  *
  * A whole-jar invoke scan (glslcheck/whocalls.py) proved the features the user
  * reports as MISSING are not missing at all:
@@ -41,7 +41,7 @@ public final class McsmGate {
     private static boolean worldDone = false;
 
     /**
-     * MCSM 1.9.112 -- memory of every value this gate writes, keyed by field.
+     * MCSM -- memory of every value this gate writes, keyed by field.
      *
      * The gate re-runs whenever the Extras panel is touched (each toggle calls
      * McsmGate.reset()). Until now every re-run re-forced the whole MCSM look,
@@ -106,6 +106,14 @@ public final class McsmGate {
             changed += setBool(c, "distantStorms", true);
             changed += setBool(c, "distantFog", true);
             changed += setBool(c, "customSkyboxes", true);
+            changed += setBool(c, "storyModeSky", true);
+            changed += setBool(c, "storyModeLighting", true);
+            changed += floorField(c, null, "storyModeLightingStrength", 1.0);
+            changed += floorField(c, null, "storyModeSkyStrength", 0.85);
+            changed += setBool(c, "colouredLighting", true);
+            changed += setBool(c, "coloredLighting", true);
+            changed += floorField(c, null, "colouredLightStrength", 1.0);
+            changed += floorField(c, null, "coloredLightStrength", 1.0);
             changed += setBool(c, "cloudDeckLayer", true);
             changed += setBool(c, "regionalBiomeFog", true);
             changed += setBool(c, "phaseAnim", true);
@@ -117,12 +125,25 @@ public final class McsmGate {
             // Obsidian Gloss is the mod's built-in OG/MCSM texture set. The
             // user expects Force MCSM Look to make the body/teeth/command-block
             // textures stop falling back to the Classic orange/plain skin.
+            // MCSM: ogCemModels defaults ON and locks stormSkin to OG.
             changed += floorField(c, null, "stormSkin", 1.0);
+            try {
+                if (McsmExtrasConfig.ogCemModels) {
+                    changed += floorField(c, null, "stormSkin", 1.0);
+                }
+            } catch (Throwable ignored) {
+            }
 
             // ---- the halo / glare the user has been chasing ----------------
+            // mega-phase 7b: blackGlare + cataclysmHalos paint the FAR
+            // three-headed HALO ring the user rejects. Keep them OFF; the
+            // thick welded shell lives in McsmStormBlob. McsmPresenceFxPatch
+            // also forces them off every frame so presets cannot revive them.
             changed += setBool(c, "sunGlow", true);
-            changed += setBool(c, "blackGlare", true);
-            changed += setBool(c, "glareEjecta", true);
+            changed += setBool(c, "blackGlare", false);
+            changed += setBool(c, "cataclysmHalos", false);
+            changed += setBool(c, "atmospherePulse", false); // floating pulse spheres killed
+            changed += setBool(c, "glareEjecta", false); // cube ejecta ring killed
             changed += setBool(c, "headEyeGlow", true);
             changed += setBool(c, "devourerDebrisGlow", true);
 
@@ -153,14 +174,43 @@ public final class McsmGate {
             changed += floorField(c, null, "sicknessVeinIntensity", 0.7);
             changed += floorField(c, null, "screenTremorIntensity", 0.8);
             changed += floorField(c, null, "chromaticGlitchStrength", 0.35);
-            changed += floorField(c, null, "debrisDustParticles", 1.0);
-            changed += floorField(c, null, "debrisAmount", 1.0);
-            changed += floorField(c, null, "volumetricFogDensity", 0.6);
+            changed += setNum(c, null, "debrisDustParticles", 0.0);
+            changed += setNum(c, null, "debrisAmount", 0.0);
+            changed += setNum(c, null, "debrisSize", 0.0);
+            // MCSM: volumetric coloured fog / lighting for the MCSM contrast
+            // read (shafts of coloured light, thick atmospheric depth)
+            changed += floorField(c, null, "volumetricFogDensity", 0.92);
+            changed += setBool(c, "volumetricFog", true);
+            changed += setBool(c, "colouredLighting", true);
+            changed += setBool(c, "coloredLighting", true);
+            changed += floorField(c, null, "colouredLightStrength", 0.85);
+            changed += floorField(c, null, "coloredLightStrength", 0.85);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += floorField(c, null, "sunGlowStrength", 1.0);
-            changed += floorField(c, null, "blackGlareStrength", 1.0);
+            // MCSM: MCSM matte black silhouette — NEVER reverse/model shade
+            changed += setBool(c, "reverseShading", false);
+            changed += setBool(c, "purpleSky", false);
+            changed += setBool(c, "stormModelShading", false);
+            changed += setBool(c, "modelShading", false);
+            // blackGlareStrength left alone — the far ring is off
+            // mega-phase 9: vivid world — push shadows + glow to the ceiling
+            // so trees/mobs cast hard trailer shadows and teeth/eyes burn
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);
+            changed += floorField(c, null, "bloomStrength", 1.0);
+            changed += floorField(c, null, "impactLightStrength", 1.0);
+            // MCSM: MCSM tractor beams = thick purple/blue cones (frames).
+            // Floor opacity + MCSM purple bias; never lower a user's pick.
+            changed += floorField(c, null, "beamOpacity", 0.92);
+            changed += floorField(c, null, "beamColorR", 0.72); // MCSM solid purple
+            changed += floorField(c, null, "beamColorG", 0.08);
+            changed += floorField(c, null, "beamColorB", 0.95);
+            changed += setNum(c, null, "beamColorR", 0.72);
+            changed += setNum(c, null, "beamColorG", 0.08);
+            changed += setNum(c, null, "beamColorB", 0.95);
+            // teeth colours are phase-dynamic (McsmTeethPhaseTint every frame).
+            // Only ensure the glow path is ON; RGB/intensity are driven by phase.
+            changed += setBool(c, "turquoiseTeeth", true);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
@@ -220,6 +270,11 @@ public final class McsmGate {
 
             // ---- the ground itself reacts ----------------------------------
             changed += floorField(c, cfg, "caveRumble", 1.0);
+
+            // ---- story towns get a full cast of named NPCs ----------------
+            // default 10 is fine; floor to at least 8 so every town has a cast
+            changed += floorField(c, cfg, "townNpcPopulation", 10.0);
+
             McsmDiag.say("MCSM world gate opened: " + changed + " world fields raised/enabled");
         } catch (Throwable t) {
             McsmDiag.say("MCSM world gate failed before field loop: " + t);
@@ -254,6 +309,28 @@ public final class McsmGate {
                 return 0;   // changed after us (preset/player): respect it
             }
             double nv = writeNum(f, instance, Math.max(cur, min));
+            LAST_SET.put(key, nv);
+            return 1;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    /**
+     * Force a numeric field to an exact value (still respects player/preset
+     * edits after the gate last wrote). Used when a previous floor left a
+     * value too high for the MCSM frames (e.g. teeth blast brightness).
+     */
+    private static int setNum(Class<?> owner, Object instance, String name, double value) {
+        try {
+            Field f = owner.getField(name);
+            String key = memKey(owner, instance, name);
+            double cur = readNum(f, instance);
+            Object prev = LAST_SET.get(key);
+            if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
+                return 0;   // changed after us (preset/player): respect it
+            }
+            double nv = writeNum(f, instance, value);
             LAST_SET.put(key, nv);
             return 1;
         } catch (Throwable ignored) {

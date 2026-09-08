@@ -14,7 +14,7 @@ import java.util.Properties;
  * the counterclockwise spiral pin). Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.108";
+    public static final String BUILD_VERSION = "0.0.0";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -23,19 +23,20 @@ public final class McsmExtrasConfig {
     public static boolean spiralCounterClockwise = true;
     public static boolean enableBeaconBlock = true;
 
-    // ---- fields that ALSO existed in the 1.9.88-1.9.95 jars ----------------
+    // ---- fields that ALSO existed in the MCSM-MCSM jars ----------------
     // (these live in the shipped jar's bytecode; other jar-side classes read
     // them, so the names/types must NEVER change or those classes crash with
-    // NoSuchFieldError. ogCemModels defaults false: the redone model is the
-    // default look, Tainted's original CEM is opt-in.)
-    /** Use Tainted's original 103-part CEM model for the phase-5 body. */
-    public static boolean ogCemModels = false;
+    // NoSuchFieldError. ogCemModels defaults TRUE as of MCSM: the user
+    // wants the MCSM/OG look (3 heads + command block, Obsidian Gloss) on
+    // by default. The toggle still lets players opt out.)
+    /** Prefer the OG/MCSM body look (Obsidian Gloss + trailer model path). */
+    public static boolean ogCemModels = true;
     /** Apparent size of the smudge/halo quads behind the storm (0.5 = new). */
-    public static double  smudgeScale = 0.5;
+    public static double  smudgeScale = 0.72; // MCSM soft skirt
 
-    // ---- MCSM 1.9.98 batch (phase 29/30 user orders, 2026-09-04) ----------
+    // ---- MCSM batch (phase 29/30 user orders, 2026-09-04) ----------
     /** Storm glare mass scale; read by the blob carrier every frame. */
-    public static double  glareSize = 0.58;
+    public static double  glareSize = 0.92; // MCSM thick volume default
     /** Mod-side aurora borealis at night (cold-biome biased). */
     public static boolean auroraEnabled = true;
     /** Full death cinematic: distortion -> white cracks -> implosion flash ->
@@ -57,7 +58,7 @@ public final class McsmExtrasConfig {
     /** Prank variant: also kicks players. Default OFF (grief-safe). */
     public static boolean obliterateKick = false;
 
-    // ---- MCSM 1.9.100 batch: the gates ------------------------------------
+    // ---- MCSM batch: the gates ------------------------------------
     /** Force the client's Story Mode look on (shadows, glare, smoke screen,
      *  skyboxes, vignette, tremor). Booleans only ever go ON, numeric values
      *  are only raised -- see McsmGate. */
@@ -66,7 +67,7 @@ public final class McsmExtrasConfig {
      *  particles, structure raids, withered mobs, cave rumble. */
     public static boolean forceMcsmWorld = true;
 
-    // MCSM 1.9.111 -- McsmShaderGatePatch forces ShaderPackCompat.active() to
+    // MCSM -- McsmShaderGatePatch forces ShaderPackCompat.active() to
     // false so the mod draws its own visuals under Iris. Dabicco's look presets
     // (Cinematic, Netflix) route part of their difference through that
     // shader-pack path, so with the gate forced they appear to "do nothing".
@@ -78,7 +79,7 @@ public final class McsmExtrasConfig {
     /** Brief a player the first time they get close to a live storm. */
     public static boolean mcsmInstructions = true;
 
-    // ---- MCSM 1.9.137 -- mega-phase 5b ------------------------------------
+    // ---- MCSM -- mega-phase 5b ------------------------------------
     /** Ship + auto-install the Devouring Storms Iris shader pack from inside
      *  the mod jar (user order: merged into the mod, DEFAULT ON). Applies at
      *  launch; see McsmShaderPackInstall. */
@@ -170,10 +171,14 @@ public final class McsmExtrasConfig {
             smudgeScale        = dbl(p, "smudge_scale", smudgeScale);
             glareSize          = dbl(p, "glare_size", glareSize);
             String cv = p.getProperty("config_version");
-            if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
-                // 1.9.106/early-1.9.107 saved the overlarge test value.
-                // Migrate only that exact legacy default; user-picked slider values remain intact.
-                glareSize = 0.58;
+            // Migrate known legacy defaults only; user-picked slider values stay.
+            if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
+                if (Math.abs(glareSize - 1.18) < 0.001 || Math.abs(glareSize - 0.58) < 0.001) {
+                    glareSize = 0.92; // MCSM thick volume
+                }
+                if (Math.abs(smudgeScale - 0.5) < 0.001) {
+                    smudgeScale = 0.72;
+                }
             }
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
             shaderPackGate     = bool(p, "shader_pack_gate", shaderPackGate);

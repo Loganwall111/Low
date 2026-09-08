@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * MCSM 1.9.100 -- the briefing.
+ * MCSM -- the briefing.
  *
  * The user asked for "MCSM instructions" in the mod. The Story Mode game states
  * them as Jesse's narration, and the mod has no place that does, so this adds

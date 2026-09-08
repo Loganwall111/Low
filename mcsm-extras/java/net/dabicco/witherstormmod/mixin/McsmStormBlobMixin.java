@@ -8,14 +8,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.dabicco.witherstormmod.client.StormBackdrop;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
+import net.mcsm.extras.client.McsmPhaseSky;
 import net.mcsm.extras.client.McsmStormBlob;
 
 /**
- * Devouring Storms: mega-phase 2 - hands the storm blob over to the
- * corrected re-submission (pinkish-violet 5.5-5.9, centred dark core,
- * smoothed skybox glide, weaker red ember). Client-only mixin on the base
- * mod's own StormBackdrop; the replacement draws nothing unless the game
- * client is up, and honours every base config toggle.
+ * MCSM: cancel base StormBackdrop.
+ * Order: thick MCSM glare volume first, then teeth + beams on top.
  */
 @Mixin(StormBackdrop.class)
 public abstract class McsmStormBlobMixin {
@@ -23,6 +21,7 @@ public abstract class McsmStormBlobMixin {
     @Inject(method = "submit", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private static void dabyws$correctedBlob(LevelRenderContext ctx, CallbackInfo ci) {
         if (Minecraft.getInstance() != null) {
+            McsmPhaseSky.submit(ctx);
             McsmStormBlob.submit(ctx);
         }
         ci.cancel();

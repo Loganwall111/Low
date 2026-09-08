@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Devouring Storms 1.9.114 -- the town queue, made findable.
+ * Devouring Storms MCSM -- the town queue, made findable.
  *
  * Deep-scan of the base jar (ci/api/scan/) settled the "towns never build"
  * report. Nothing in the builder is broken:
@@ -166,10 +166,10 @@ public abstract class McsmTownCommandPatch {
     }
 
     /**
-     * Devouring Storms 1.9.115 -- the story starts where the story starts:
+     * Devouring Storms MCSM -- the story starts where the story starts:
      * the treehouse in the wilderness outside EnderCon (Episode 1 opening).
      * Builds the three-site opening cluster and stands the player at the
-     * treehouse. Site labels come from the recovered 1.9.100 source
+     * treehouse. Site labels come from the recovered MCSM source
      * (src-recon/.../McsmWorldgen.java layout()).
      */
     private static final String[] DS$EPISODE_ONE = {

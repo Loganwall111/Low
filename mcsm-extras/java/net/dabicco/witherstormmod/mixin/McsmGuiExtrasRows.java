@@ -22,7 +22,7 @@ import net.mcsm.extras.client.McsmExtrasScreen;
 /**
  * MCSM - extras entry inside the mod's own config screen.
  *
- * MCSM 1.9.98 -- ROOT-CAUSED FIX for "clicking [+]/- shows no options"
+ * MCSM -- ROOT-CAUSED FIX for "clicking [+]/- shows no options"
  * (user screenshot 2026-09-04 145751). Their screen folds content by section
  * (collapsed set) and keys rows to tabs; rows we appended at init() TAIL were
  * laid out by repositionRows() BEFORE we added them, so the "MCSM extras"
@@ -37,11 +37,11 @@ import net.mcsm.extras.client.McsmExtrasScreen;
  * (verified from the shipped jar's method table: rebuild() regenerates and
  * would drop us -- never call it).
  *
- * MCSM 1.9.104: also adds a direct fixed-position button via Screen.addWidget
+ * MCSM: also adds a direct fixed-position button via Screen.addWidget
  * reflection. The row API can visually mis-layout at the bottom of this screen
  * on some GUI scales (black off-screen rectangle / no clickable panel). The
  * fixed button does not depend on their tab/row/fold machinery at all.
- * MCSM 1.9.105: render/click are injected directly too, so even if their
+ * MCSM: render/click are injected directly too, so even if their
  * custom screen never draws normal child widgets the bottom-left button is
  * visible and opens from our own mouse handler.
  *
@@ -132,7 +132,7 @@ public abstract class McsmGuiExtrasRows {
             Method mAdd = screen.getDeclaredMethod("addRowWidget", rowCls);
             for (Method m : new Method[]{mHeader, mButton, mAdd}) m.setAccessible(true);
 
-            // MCSM 1.9.109 -- single-sourced version: this header used to be a
+            // MCSM -- single-sourced version: this header used to be a
             // hand-typed literal and lagged the jar by three builds, so the
             // screen always claimed to be an older version than the file the
             // user had just installed.

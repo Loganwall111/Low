@@ -1,7 +1,7 @@
 package net.mcsm.extras;
 
 /**
- * MCSM 1.9.75 -- startup + runtime diagnostics for OUR patches.
+ * MCSM -- startup + runtime diagnostics for OUR patches.
  *
  * Every defect chased so far (invisible storm, dead shadows, missing glare
  * blob) had the same investigative problem: there was no way to tell from the
@@ -44,16 +44,16 @@ public final class McsmDiag {
             return;
         }
         bannerDone = true;
-        // MCSM 1.9.109 -- the version is NO LONGER a literal here. It was
-        // hand-typed and drifted (the jar said 1.9.108, this banner said
-        // 1.9.107, the config-screen header said 1.9.105), so there was no way
+        // MCSM -- the version is NO LONGER a literal here. It was
+        // hand-typed and drifted (the jar said MCSM, this banner said
+        // MCSM, the config-screen header said MCSM), so there was no way
         // to tell from inside the game which build was actually loaded -- the
         // exact confusion that made every fix look like "Minecraft did not
         // recognise the jar". Single source of truth: McsmExtrasConfig
         // .BUILD_VERSION, which ci/build.sh syncs from ./VERSION before javac.
         say("Devouring Storms " + McsmExtrasConfig.BUILD_VERSION + " active. Patches:");
         say("  McsmShaderGatePatch      ShaderPackCompat.active() -> false");
-        say("  McsmStormVisibilityPatch fogless()/reverseShading() -> false");
+        say("  McsmStormVisibilityPatch fogless()/reverseShading()/modelShading() -> false (matte black)");
         say("  McsmBlobCarrierPatch     invertible cloudEnd carrier + death band");
         say("  McsmGradientTickPatch    drives StormSkyGradient.update()");
         say("  McsmStormGrabPatch       die()/addSubGrowth() -> shockwaves");

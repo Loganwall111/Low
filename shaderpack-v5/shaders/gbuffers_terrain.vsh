@@ -12,6 +12,7 @@ out vec2 lmcoord;
 out vec4 glcolor;
 out vec3 mcsmN;
 out float mcsmDay;
+out float mcsmShade;
 
 void main() {
     gl_Position = ftransform();
@@ -24,4 +25,14 @@ void main() {
     float elev = cos(ang);                       // ~+1 at noon, <0 at night
     mcsmDay = clamp(elev * 2.4, 0.0, 1.0);
     mcsmN = gl_Normal;                           // terrain is never rotated
+    // hard-ish sun term so tree canopies and block faces throw real shade
+    // under Iris (the pack previously only graded colour, never shaded)
+    vec3 L = normalize(vec3(0.35, max(elev, 0.05), 0.55));
+    float ndotl = clamp(dot(normalize(mcsmN), L), 0.0, 1.0);
+    // keep a floor so caves/undersides aren't pure black
+    // 1.9.166: harder block-face key so trees/ground throw real MCSM shade
+    // 1.9.167: harder MCSM block-face key (user: vivid light/shadows never showed)
+    float crisp = mix(ndotl, step(0.02, ndotl), 0.72);
+    mcsmShade = mix(0.30, 1.18, crisp) * mix(0.68, 1.0, mcsmDay) + (1.0 - mcsmDay) * 0.48;
+    mcsmShade = clamp(mcsmShade, 0.28, 1.22);
 }

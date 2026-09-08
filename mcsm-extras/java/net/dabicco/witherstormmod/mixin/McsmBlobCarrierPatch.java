@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.lang.reflect.Field;
 
 /**
- * MCSM 1.9.71 -- fixes the missing black glare blob.
+ * MCSM -- fixes the missing black glare blob.
  *
  * The blob never rendered because the storm direction could not survive the
  * trip to the shader. The mod's own McsmFogCarrierMixin packs yaw+pitch into
@@ -45,19 +45,19 @@ import java.lang.reflect.Field;
  * exact-integer range (2^24), so nothing is lost in the uniform upload.
  * Verified exhaustively: 65341 angle pairs, zero round-trip mismatches.
  *
- * MCSM 1.9.98 widened that to (3000 + yawIdx*181 + pitchIdx) * 16 + sizeIdx so
+ * MCSM widened that to (3000 + yawIdx*181 + pitchIdx) * 16 + sizeIdx so
  * the user's glare-size setting rides along in the low nibble. The shader reads
  * both encodings, so an old jar-side writer degrades to the default size.
  *
  * ---------------------------------------------------------------------------
- * MCSM 1.9.109 -- THE DEATH CINEMATIC IS NOW WIRED UP.
+ * MCSM -- THE DEATH CINEMATIC IS NOW WIRED UP.
  *
  * The whole dying sequence (world distortion -> white cracks crawling over the
  * sky -> the mass shaking and shedding layers into a white-hot point with
  * in-rushing motes -> full-screen flash -> six translucent supernova rings in
  * MCSM order purple/pink/blue/orange/green/yellow rolling out across the horizon
  * -> the dust cloud settling -> the sky easing back to normal) has been sitting
- * fully implemented in the shaders since 1.9.98, keyed off the FogSkyEnd band
+ * fully implemented in the shaders since MCSM, keyed off the FogSkyEnd band
  * 1906..2906 -- and nothing ever wrote that band, so it never ran once. That is
  * why "the shockwave" was invisible in every build the user tested: it was not
  * a config default, not a missing feature and not a stale jar. It was a
@@ -221,7 +221,7 @@ public abstract class McsmBlobCarrierPatch {
                 mcsm$dyingCache = false;
                 return false;
             }
-            // MCSM 1.9.110 -- the single-player bridge to the server half.
+            // MCSM -- the single-player bridge to the server half.
             // /kill removes the storm without the client ever observing
             // isDeadOrDying(), so the scan below would find nothing and the
             // sky band would never start. The server stamps this clock when it

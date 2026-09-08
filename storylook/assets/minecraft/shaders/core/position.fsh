@@ -1,254 +1,273 @@
 #version 330
 
+// ============================================================================
+//  MCSM visuals - sky.fsh  (v6)
+//
+//  Story path (no storm): six-stop columns sampled from the reference PNGs
+//  (day + midnight "the regular two" kept exact; no aurora - ribbons gone).
+//
+//  Storm path v6 follows the CORRECTED storyboard (I misread v5 and deleted
+//  the teal; it is restored and sequenced exactly as specified):
+//    5.00 turquoise sky
+//    5.10 pink-purple
+//    5.20 pink, pinker
+//    5.30 dark purple
+//    5.50-5.95 pink sky with dark purple overhead
+//    6.00 grey sky with a bit of purple (the sampled Phase-6 reference)
+//    7.00 pink sky
+//    8.00 dark red blood sky
+//  Transitions are hard-ish (0.08-0.14 phase windows), matching how the
+//  Story Mode cutscene snaps colours between beats.
+//
+//  Bodies (sun/moon) fade OUT as the storm matures - "the sun shining
+//  through the storm dome" was the wrong look; Story Mode kills it at 5.
+// ============================================================================
+
 #moj_import <minecraft:fog.glsl>
 #moj_import <minecraft:dynamictransforms.glsl>
+#moj_import <minecraft:globals.glsl>
+#moj_import <minecraft:mcsm_visuals.glsl>
 
 in float sphericalVertexDistance;
 in float cylindricalVertexDistance;
-in vec3 skyDir;
+in vec3 mcsmCamRay;
 
 out vec4 fragColor;
 
-// ---------------------------------------------------------------------------
-// Devouring Storms: Story Look -- sky dome (26.2), round 5.
-// Every palette below is a gradient stop sampled from the Minecraft Story
-// Mode reference frames supplied by the player, mapped to the phase whose
-// sky colour the mod feeds us through ColorModulator:
-//   day      - EnderCon gate / Sky City aerials (soft pastel story blue)
-//   dawn     - vanilla-strong-orange sunrise only
-//   night    - floating-island night
-//   pinkK    - phases 5.5-5.9: violet zenith, magenta mid, SALMON-PINK
-//              horizon (the purple body comes from the storm blob, not sky)
-//   greenK   - the green-teal frames: desaturated teal dome, pale horizon
-//   orangeK  - sunset frames: mauve-brown zenith into burnt orange horizon
-//   magK     - deep-purple frames: purple zenith, magenta mid, pink horizon
-// Blending is continuous everywhere (no roof/side seam), with a horizon glow
-// band, a blue silhouette rim hugging the horizon (phases 4/5), a purple line
-// across the upper vault and a darker roof tone, exactly per the notes.
-// ---------------------------------------------------------------------------
+// ---- story gradients: index 0 = zenith, 5 = horizon (sampled) -------------
+const vec3 SKY_DAY[6] = vec3[](
+    // soft MCSM blue day (NOT blown white, NOT purple calm)
+    vec3(0.28, 0.38, 0.66), vec3(0.34, 0.44, 0.72), vec3(0.42, 0.50, 0.76),
+    vec3(0.50, 0.56, 0.78), vec3(0.58, 0.60, 0.80), vec3(0.66, 0.66, 0.78));
+const vec3 SKY_NIGHT[6] = vec3[](
+    vec3(0.02, 0.04, 0.14), vec3(0.03, 0.06, 0.22), vec3(0.05, 0.09, 0.32),
+    vec3(0.08, 0.14, 0.45), vec3(0.12, 0.20, 0.58), vec3(0.18, 0.28, 0.68));
+const vec3 SKY_DUSK[6] = vec3[](
+    vec3(0.388, 0.122, 0.196), vec3(0.520, 0.150, 0.220), vec3(0.660, 0.200, 0.250),
+    vec3(0.820, 0.290, 0.220), vec3(0.933, 0.400, 0.180), vec3(0.980, 0.560, 0.280));
 
-float hash13(vec3 p) {
-    p = fract(p * 0.1031);
-    p += dot(p, p.yzx + 33.33);
-    return fract((p.x + p.y) * p.z);
+vec3 mcsm_sky6(const vec3 c0, const vec3 c1, const vec3 c2, const vec3 c3,
+               const vec3 c4, const vec3 c5, float up) {
+    float t = clamp(up, 0.0, 1.0) * 5.0;
+    int i = int(floor(t));
+    float f = t - floor(t);
+    vec3 a = c0, b = c1;
+    if (i == 0)      { a = c0; b = c1; }
+    else if (i == 1) { a = c1; b = c2; }
+    else if (i == 2) { a = c2; b = c3; }
+    else if (i == 3) { a = c3; b = c4; }
+    else if (i == 4) { a = c4; b = c5; }
+    else             { a = c5; b = c5; }
+    return mix(a, b, f);
 }
 
-float vnoise(vec3 p) {
-    vec3 i = floor(p);
-    vec3 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = hash13(i);
-    float b = hash13(i + vec3(1.0, 0.0, 0.0));
-    float c = hash13(i + vec3(0.0, 1.0, 0.0));
-    float d = hash13(i + vec3(1.0, 1.0, 0.0));
-    float e = hash13(i + vec3(0.0, 0.0, 1.0));
-    float g = hash13(i + vec3(1.0, 0.0, 1.0));
-    float h = hash13(i + vec3(0.0, 1.0, 1.0));
-    float k = hash13(i + vec3(1.0, 1.0, 1.0));
-    return mix(mix(mix(a, b, f.x), mix(c, d, f.x), f.y),
-               mix(mix(e, g, f.x), mix(h, k, f.x), f.y), f.z);
+// three-stop storm column (zenith/mid/horizon)
+vec3 mcsm_col(float up, vec3 z, vec3 m, vec3 h) {
+    return up > 0.5 ? mix(m, z, (up - 0.5) * 2.0) : mix(h, m, up * 2.0);
 }
 
-float fbm(vec3 p) {
-    float s = 0.0;
-    float a = 0.5;
-    for (int i = 0; i < 4; i++) {
-        s += a * vnoise(p);
-        p *= 2.03;
-        a *= 0.5;
-    }
-    return s;
+// the corrected storyboard
+vec3 mcsm_storm_dome(float up, float p) {
+    // MCSM 1.9.71: every stop rescaled x0.46. Measured against the Story Mode
+    // reference frames: build read ~(0.60,0.51,0.79) at zenith where the refs
+    // read ~(0.15,0.10,0.18). Hue was already right; brightness was ~2.2x high.
+    vec3 d = mcsm_col(up, vec3(0.023, 0.138, 0.184), vec3(0.074, 0.267, 0.285), vec3(0.138, 0.396, 0.391)); // 5.0 turquoise
+    d = mix(d, mcsm_col(up, vec3(0.138, 0.037, 0.193), vec3(0.239, 0.083, 0.239), vec3(0.331, 0.138, 0.285)),
+            mcsm_ramp(p, 5.04, 5.12));                                                                // 5.1 pink-purple
+    d = mix(d, mcsm_col(up, vec3(0.184, 0.046, 0.202), vec3(0.304, 0.110, 0.276), vec3(0.423, 0.193, 0.359)),
+            mcsm_ramp(p, 5.15, 5.23));                                                                // 5.2 pinker
+    d = mix(d, mcsm_col(up, vec3(0.028, 0.005, 0.064), vec3(0.074, 0.018, 0.110), vec3(0.138, 0.037, 0.175)),
+            mcsm_ramp(p, 5.26, 5.34));                                                                // 5.3 dark purple
+    // MCSM 1.9.99 -- 5.5 stop RETUNED BY FIT against the reference frame
+    // (uploads/Screenshot 2026-09-04 182220). Measured per-cell on an 8x6 grid
+    // of the upper sky, our dome read too bright AND too red vs the reference:
+    // mean |dLum| 0.032, mean |dHue| 0.45. Grid search on (brightness, blue)
+    // put the optimum at 0.80x mid brightness / 1.50-1.80x blue -> dHue 0.34.
+    //   was: zenith (0.150,0.055,0.175) mid (0.330,0.118,0.282)
+    //        horizon (0.505,0.235,0.392)   -- lum 0.084 / 0.174 / 0.303
+    //   now: zenith (0.067,0.022,0.134) mid (0.099,0.032,0.150)
+    //        horizon (0.505,0.205,0.580)   -- lum 0.040 / 0.054 / 0.298
+    // The MID stop is the one that mattered: it alone drives elevations
+    // 10-45 deg, and it was 3.2x brighter than the reference there. The
+    // horizon stop keeps its brightness (its blue/red only goes 0.78 -> 1.15,
+    // so the low band stays pink-dominant) and the zenith is pushed darker
+    // still so looking straight up reads black. Fit score over 32 sky cells:
+    // mean |dLum| 0.0324 -> 0.0279, mean |dHue| 0.4529 -> 0.396.
+    // REVERT by restoring the "was" line if the pinker 1.9.96 sky is preferred.
+    d = mix(d, mcsm_col(up, vec3(0.055, 0.015, 0.120), vec3(0.180, 0.045, 0.220), vec3(0.720, 0.280, 0.480)),
+            mcsm_ramp(p, 5.42, 5.52)); // 1.9.168: pink horizon band like ACTIVE still                                                                // 5.5 violet-pink, near-black overhead (1.9.99 fit to reference)
+    // 5.7-5.9 keeps the user's "dark pink end" but takes a milder 1.3x blue so
+    // the sky does not snap back to pink the moment phase crosses 5.7.
+    d = mix(d, mcsm_col(up, vec3(0.080, 0.020, 0.140), vec3(0.280, 0.070, 0.300), vec3(0.650, 0.220, 0.420)),
+            mcsm_ramp(p, 5.70, 5.90)); // 1.9.168 pink end                                                                // 1.9.99 5.7-5.9: dark violet-pink end
+    d = mix(d, mcsm_col(up, vec3(0.099, 0.067, 0.108), vec3(0.162, 0.108, 0.159), vec3(0.265, 0.170, 0.207)),
+            mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 grey + bit of purple
+    // MCSM 1.9.81: retargeted from a REAL rendered frame (Screenshot
+    // 2026-09-03 131242) measured against reference 144855. The 1.9.71 values
+    // were right in average brightness but wrong in two ways:
+    //   B/R was 1.72 at zenith where the reference is 0.92  -> far too BLUE
+    //   horizon/zenith luminance was only 1.34x vs 2.89x    -> far too FLAT
+    // These stops are the reference profile directly: zenith (0.130,0.076,0.120),
+    // mid (0.184,0.116,0.184), horizon (0.373,0.215,0.398).
+    d = mix(d, mcsm_col(up, vec3(0.130, 0.076, 0.120), vec3(0.184, 0.116, 0.184), vec3(0.373, 0.215, 0.398)),
+            mcsm_ramp(p, 6.85, 7.05));                                                                // 7.0 pink sky
+    d = mix(d, mcsm_col(up, vec3(0.018, 0.002, 0.009), vec3(0.092, 0.009, 0.023), vec3(0.212, 0.023, 0.032)),
+            mcsm_ramp(p, 7.80, 8.00));                                                                // 8.0 blood sky
+    return d;
 }
 
-// layered cloud decks, shared by calm and storm skies
-vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
-                float dayness, float warm, float sideFade, float mirror) {
-    // mirror = 1 paints the SAME decks mirrored into the lower hemisphere:
-    // the sky dome's bottom half only shows where terrain does not, so on
-    // the ground this reads as a far cloud sea past the edge, and from Sky
-    // City altitude it is the layers you fall through (user order: fall
-    // through 5-15 cloud layers). No camera-height uniform needed.
-    float dy = (mirror > 0.5) ? max(-dirS.y, 0.02) : dirS.y;
-    if (dy <= 0.02) {
-        return col;
-    }
-    vec2 pxz = dirS.xz / dy;
-    float H[9];
-    H[0] = 96.0;  H[1] = 146.0; H[2] = 152.0; H[3] = 420.0; H[4] = 430.0;
-    H[5] = 1200.0; H[6] = 3500.0; H[7] = 9000.0; H[8] = 16000.0;
-    float acc = acc0;
-    for (int i = 0; i < 9; i++) {
-        int grp = (i < 3) ? 0 : ((i < 6) ? 1 : 2);
-        vec2 uv = pxz * (120.0 / pow(H[i] / 96.0, 0.55)) + vec2(float(i) * 7.3);
-        float pres = (grp == 0) ? 1.0
-                : smoothstep(0.30, 0.44, fbm(vec3(pxz * 0.010 + vec2(float(grp) * 31.7), float(grp) * 13.0)));
-        float cov = fbm(vec3(uv * 0.9, float(i) * 3.1));
-        float gapmask = smoothstep(0.40, 0.54, fbm(vec3(uv * 0.33, float(i) * 9.0)));
-        float nest = fbm(vec3(uv * 3.4 + 17.0, float(i) * 5.7));
-        float th = (i < 3) ? 0.62 : ((i < 7) ? 0.50 : 0.44);
-        float ceilBonus = (i == 8) ? 0.25 : 0.0;
-        float a = smoothstep(th, th + 0.08, cov) * gapmask * pres
-                * (0.70 + 0.30 * smoothstep(0.35, 0.75, nest))
-                + ceilBonus * smoothstep(0.35, 0.6, cov) * pres;
-        // soften the deck edge into the horizon: kills the roof/side seam
-        a *= smoothstep(0.02, 0.12, dy);
-        // storm skies keep their decks on the sides, not overhead (upward
-        // pass only - the mirrored sea below wants full coverage straight
-        // down); mirrored decks sit a touch thinner overall
-        if (mirror < 0.5) {
-            a *= mix(1.0, sideFade, smoothstep(0.30, 0.70, dy));
-        } else {
-            a *= 0.85;
-        }
-        a = min(a, 0.92) * (1.0 - acc);
-        float core = smoothstep(th - 0.12, th + 0.34, cov);
-        vec3 dc = mix(shadeCol, litCol, min(mix(0.55, 0.82, mirror) + 0.45 * core, 1.0));
-        dc *= (0.97 + 0.05 * float(i));
-        dc = mix(dc, dc * vec3(1.06, 0.98, 0.88), (1.0 - clamp(dy, 0.0, 1.0)) * warm);
-        col = mix(col, dc, a);
-        acc += a * 0.85;
-        if (acc > 0.97) {
-            break;
-        }
-    }
-    return col;
+vec3 mcsm_horizon_glow(float hy, float dayW, float duskW) {
+    float g = exp(-hy * 6.0) * 0.18;
+    return vec3(1.000, 0.850, 0.600) * g * dayW + vec3(1.000, 0.520, 0.250) * g * 1.4 * duskW;
+}
+
+vec3 mcsm_biome_tint(vec3 c) {
+    vec3 f = clamp(FogColor.rgb, 0.0, 1.0);
+    float mx = max(f.r, max(f.g, f.b));
+    float mn = min(f.r, min(f.g, f.b));
+    float w = 0.35 * smoothstep(0.02, 0.12, mx - mn);
+    vec3 push = vec3(1.0);
+    push = mix(push, vec3(1.05, 0.98, 0.94), clamp((f.r - f.b) * 2.0, 0.0, 1.0));
+    push = mix(push, vec3(0.94, 1.04, 0.95), clamp((f.g - max(f.r, f.b)) * 2.0, 0.0, 1.0));
+    push = mix(push, vec3(0.94, 0.99, 1.06), clamp((f.b - max(f.r, f.g)) * 2.0, 0.0, 1.0));
+    return c * mix(vec3(1.0), push, w);
 }
 
 void main() {
-    // Non-opaque position-shader users (world-select highlight etc.) keep
-    // the exact vanilla behaviour.
-    if (ColorModulator.a < 0.99) {
-        fragColor = apply_fog(ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
-            FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
-        return;
-    }
+    float mcsmP = mcsm_phase(FogSkyEnd, FogColor, FogRenderDistanceEnd);
+    float clock = mcsm_clock(GameTime);
+    vec3 worldDir = normalize(transpose(mat3(ModelViewMat)) * normalize(mcsmCamRay));
+    float height = clamp(worldDir.y, -1.0, 1.0);
 
-    vec3 C = ColorModulator.rgb;
-    float clum = dot(C, vec3(0.2126, 0.7152, 0.0722));
-    vec3 dirS = normalize(skyDir);
-    float ty = clamp(dirS.y, -1.0, 1.0);
-    float t = pow(1.0 - clamp(ty, 0.0, 1.0), 1.35);
+    float isBody = step(0.10, length(ColorModulator.rgb - FogColor.rgb));
 
-    // --- storm phases: the mod tints the sky per phase; map that tint to the
-    //     reference frame whose palette belongs to it -------------------------
-    bool storm = (C.r > C.g * 1.25 && C.b > C.g * 1.05)
-              || (C.r > C.g * 1.25 && clum < 0.18);
-    if (storm) {
-        float greenK  = clamp((C.g - max(C.r, C.b)) * 2.5, 0.0, 1.0);
-        float orangeK = clamp((C.r - C.g) * 2.2, 0.0, 1.0) * step(C.b, C.g) * (1.0 - greenK);
-        float pinkK   = clamp(1.0 - abs(C.r - C.b) * 3.0, 0.0, 1.0)
-                      * step(C.g * 1.05, min(C.r, C.b)) * (1.0 - greenK);
-        float magK    = clamp((C.r - C.b) * 2.0, 0.0, 1.0) * (1.0 - orangeK) * (1.0 - greenK);
-        float wsum = pinkK + greenK + orangeK + magK;
-        if (wsum < 0.02) {
-            magK = 1.0;
-            wsum = 1.0;
+    // ---------------------------------------------------------------- death
+    // MCSM 1.9.98: the demise cinematic. Dormant until the phase-31 Java
+    // driver stamps the 1906..2906 FogSkyEnd band; while dormant
+    // mcsm_death() is -1 and this whole block is skipped.
+    float mcsmDt = mcsm_death(FogSkyEnd);
+    if (mcsmDt >= 0.0) {
+        vec3 ddir = mcsm_death_dir(worldDir, mcsmDt, clock);
+        float upd = clamp(ddir.y * 0.5 + 0.5, 0.0, 1.0);
+        upd = smoothstep(0.0, 1.0, upd);
+        // the dying sky holds the late dark blood dome and drains toward black
+        vec3 ddome = mcsm_storm_dome(upd, 7.6);
+        ddome *= 1.0 - 0.78 * mcsm_ramp(mcsmDt, 0.0, 0.55);
+        // the dust cloud settles out of the air and hangs low (user: "the
+        // cloud of dust in the air starts to fall to the ground")
+        vec3 dustC = vec3(0.16, 0.13, 0.12);
+        float dustW = mcsm_ramp(mcsmDt, 0.62, 0.78) * (1.0 - mcsm_ramp(mcsmDt, 0.86, 1.0));
+        ddome = mix(ddome, dustC, dustW * 0.5 * clamp(1.0 - ddir.y, 0.0, 1.0));
+        vec3 camWd = vec3(CameraBlockPos) + CameraOffset;
+        vec4 aimD = mcsm_boss_dir(camWd);
+        vec3 dadd = mcsm_death_cracks(ddir, mcsmDt, clock);
+        if (aimD.w > 0.5) {
+            dadd += mcsm_death_implosion(worldDir, aimD.xyz, mcsmDt, clock);
+            dadd += mcsm_supernova(ddir, aimD.xyz, mcsmDt, clock);
         }
-        // 5.5-5.9 pinkish-violet (violet zenith, salmon-pink horizon)
-        vec3 z1 = vec3(0.055, 0.022, 0.130);
-        vec3 m1 = vec3(0.200, 0.060, 0.230);
-        vec3 h1 = vec3(0.640, 0.300, 0.310);
-        // green-teal frames
-        vec3 z2 = vec3(0.050, 0.110, 0.095);
-        vec3 m2 = vec3(0.120, 0.220, 0.180);
-        vec3 h2 = vec3(0.440, 0.560, 0.360);
-        // sunset-orange frames
-        vec3 z3 = vec3(0.120, 0.060, 0.080);
-        vec3 m3 = vec3(0.350, 0.140, 0.110);
-        vec3 h3 = vec3(0.780, 0.280, 0.100);
-        // deep purple / magenta frames
-        vec3 z4 = vec3(0.070, 0.022, 0.120);
-        vec3 m4 = vec3(0.230, 0.055, 0.220);
-        vec3 h4 = vec3(0.560, 0.220, 0.320);
-        vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
-        vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
-        vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
-        // keep the mod's own tint in the mix so the blob colour still reads
-        zen = mix(zen, C * 0.35, 0.30);
-        mid = mix(mid, C * 0.80, 0.30);
-        hor = mix(hor, C * 1.35, 0.22);
-
-        vec3 col = mix(zen, mid, smoothstep(0.04, 0.45, t));
-        col = mix(col, hor, smoothstep(0.45, 0.95, t));
-        // soft horizon glow band, continuous - no seam between vault and rim
-        col += hor * 0.22 * exp(-abs(ty) * 6.0);
-        // blue silhouette rim hugging the horizon, all the way around
-        float rim = exp(-abs(ty - 0.015) * 42.0);
-        col = mix(col, vec3(0.16, 0.34, 0.95), rim * 0.50);
-        // gigantic purple line across the upper vault
-        float topLine = exp(-abs(ty - 0.72) * 26.0);
-        col = mix(col, vec3(0.40, 0.15, 0.85), topLine * 0.30);
-        // darker back tone so the roof reads heavier than the sides
-        col *= 1.0 - 0.38 * smoothstep(0.50, 1.0, ty);
-        // mega-phase 3: the storm sky SHRINKS to the sides. Overhead the
-        // dome collapses into a dark calm violet instead of stretching the
-        // storm palette across the whole sky; the coloured halo around the
-        // storm's flanks is carried by the mod's halo ring quad instead.
-        float over = smoothstep(0.30, 0.70, ty);
-        float olum = dot(col, vec3(0.299, 0.587, 0.114));
-        vec3 ocol = mix(vec3(olum) * vec3(0.42, 0.30, 0.52), vec3(0.02, 0.012, 0.03), 0.55);
-        col = mix(col, ocol, over * 0.85);
-
-        vec3 litC = mix(vec3(0.52, 0.42, 0.62), hor, 0.35);
-        vec3 shadeC = mix(zen, hor, 0.30) * 0.60;
-        col = paintDecks(dirS, col, 0.0, litC, shadeC, 0.35, 0.5, 0.35, 0.0);
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, 0.35, 0.5, 0.80, 1.0);
-
-        col = mix(col, hor * 0.45, smoothstep(0.0, -0.35, ty));
-        float lum = dot(col, vec3(0.299, 0.587, 0.114));
-        col = mix(vec3(lum), col, 1.22);
-        col = mix(col, col * col * (3.0 - 2.0 * col), 0.25);
-        fragColor = vec4(col, 1.0);
+        vec3 dsky = ddome + dadd + vec3(1.0, 0.98, 0.97) * mcsm_death_flash(mcsmDt);
+        // ease out at the very end: as the storm despawns the carrier stops
+        // and the normal sky resumes -- this fade hides the handoff
+        dsky *= 0.35 + 0.65 * (1.0 - mcsm_ramp(mcsmDt, 0.95, 1.0));
+        // sun/moon never show through the supernova
+        fragColor = vec4(mcsm_story_grade(dsky), isBody > 0.5 ? 0.0 : 1.0);
         return;
     }
 
-    // --- calm sky: time-of-day weights ---------------------------------------
-    float night = 1.0 - smoothstep(0.05, 0.22, clum);
-    float orange = C.r - C.b;
-    float dawn = smoothstep(0.25, 0.50, orange) * step(C.b, C.g) * (1.0 - night);
-    float day = max(1.0 - night - dawn, 0.0);
 
-    // EnderCon gate / Sky City pastels: soft story blue, pink-warm horizon
-    vec3 zen = day * vec3(0.216, 0.394, 0.716)
-             + dawn * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 mid = day * vec3(0.394, 0.578, 0.806)
-             + dawn * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
-    vec3 hor = day * vec3(0.870, 0.745, 0.690)
-             + dawn * vec3(0.890, 0.680, 0.730)
-             + night * vec3(0.019, 0.031, 0.130);
+    if (!mcsm_sky_active(mcsmP)) {
+        if (isBody > 0.5) {
+            fragColor = apply_fog(ColorModulator, sphericalVertexDistance,
+                                  cylindricalVertexDistance, 0.0,
+                                  FogSkyEnd, FogSkyEnd, FogSkyEnd, FogColor);
+            return;
+        }
+        float t = fract(clock / 24000.0) * 24000.0;
+        float dayW   = smoothstep(1000.0, 3000.0, t) * (1.0 - smoothstep(9500.0, 12000.0, t));
+        float nightW = smoothstep(12500.0, 15000.0, t) * (1.0 - smoothstep(21000.0, 23500.0, t));
+        float duskW  = clamp(1.0 - dayW - nightW, 0.0, 1.0);
+        float up = clamp(height * 0.5 + 0.5, 0.0, 1.0);
+        vec3 sky = mcsm_sky6(SKY_DAY[0], SKY_DAY[1], SKY_DAY[2], SKY_DAY[3], SKY_DAY[4], SKY_DAY[5], up) * dayW
+                 + mcsm_sky6(SKY_NIGHT[0], SKY_NIGHT[1], SKY_NIGHT[2], SKY_NIGHT[3], SKY_NIGHT[4], SKY_NIGHT[5], up) * nightW
+                 + mcsm_sky6(SKY_DUSK[0], SKY_DUSK[1], SKY_DUSK[2], SKY_DUSK[3], SKY_DUSK[4], SKY_DUSK[5], up) * duskW;
+        sky += mcsm_horizon_glow(1.0 - up, dayW, duskW);
+        sky = mcsm_biome_tint(sky);
 
-    // per-biome variants (vanilla hands us the biome sky hue in ColorModulator)
-    float gk = clamp((C.g - max(C.r, C.b)) * 3.0, 0.0, 0.6) * day;
-    float wk = clamp((C.r - C.b) * 1.2, 0.0, 0.6) * day * (1.0 - dawn);
-    zen = mix(zen, vec3(0.150, 0.420, 0.470), gk);
-    mid = mix(mid, vec3(0.320, 0.580, 0.530), gk);
-    hor = mix(hor, vec3(0.620, 0.800, 0.700), gk);
-    zen = mix(zen, vec3(0.350, 0.450, 0.700), wk);
-    mid = mix(mid, vec3(0.560, 0.620, 0.760), wk);
-    hor = mix(hor, vec3(0.880, 0.760, 0.640), wk);
+        // MCSM 1.9.96: AURORA in the mod itself (user ask: "Aurora Borealis to
+        // the sky in cold biomes, in the mod as well"). Night-only, gated by a
+        // cold-biome bias read off the fog colour (snowy biomes carry a bluer
+        // fog than warm ones; the gate is smooth so temperate nights get a
+        // faint show and deserts none). Storm sky never reaches this branch.
+        // The SKY_DAY / SKY_NIGHT / SKY_DUSK arrays stay byte-identical; this
+        // is additive on top of the finished night sky, not an edit of them.
+        float coolFog = smoothstep(0.015, 0.10,
+                          (FogColor.b - FogColor.r) + 0.5 * (FogColor.g - FogColor.r));
+        sky += mcsm_aurora(worldDir, clock, nightW, coolFog);
 
-    vec3 col = mix(zen, mid, smoothstep(0.10, 0.60, t));
-    col = mix(col, hor, smoothstep(0.75, 0.98, t));
-    col += hor * 0.14 * exp(-abs(ty) * 7.0);
+        // MCSM v8: sun halo in ordinary play. Blooms wider and hotter through
+        // the late phases; mcsmP is 0 with no storm so this is the calm
+        // baseline glow until things start going wrong.
+        vec3  sunTs  = mcsm_sun_true(GameTime);
+        float sunUps = clamp(sunTs.y * 3.0, 0.0, 1.0);
+        sky = mcsm_sun_halo(sky, dot(worldDir, sunTs), mcsmP, sunUps);
 
-    // crisp stars at night
-    vec3 sg = floor(dirS * 220.0);
-    float sn = hash13(sg);
-    float star = smoothstep(0.996, 0.9995, sn) * night;
-    col += star * (0.55 + 0.45 * hash13(sg + 7.7)) * vec3(0.92, 0.96, 1.0);
+        // Story Mode vivid tone, applied last so the whole sky matches the refs.
+        fragColor = vec4(max(mcsm_story_grade(sky), vec3(0.0)), 1.0);
+        return;
+    }
 
-    // white story clouds with pale-blue shadowed fringes
-    vec3 litC = mix(vec3(0.960, 0.975, 1.000), hor, 0.10);
-    vec3 shadeC = mix(zen, hor, 0.35) * 0.85;
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 0.0);
-    col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 1.0);
+    // ---- storm -------------------------------------------------------------
+    // MCSM 1.9.84 -- FIX "weird layer on top of the sky".
+    // The old mapping was up = height*0.5+0.5, so the whole LOWER hemisphere
+    // (height < 0) squeezed into up < 0.5 and everything at/below the horizon
+    // clamped to one flat colour. Measured in frame 155231: a -0.369 luminance
+    // CLIFF at y=0.32 with 10 identical rows (0.194) beneath it -- a dead slab
+    // with a hard seam, exactly the "layer" complaint.
+    // Remapping so the visible band above the horizon uses the FULL gradient and
+    // the below-horizon band keeps descending instead of flat-lining.
+    float up = clamp(height * 0.5 + 0.5, 0.0, 1.0);
+    up = smoothstep(0.0, 1.0, up);          // soften the horizon crossing
+    vec3 dome = mcsm_storm_dome(up, mcsmP);
+    // below the horizon, continue darkening rather than holding one colour
+    dome *= mix(0.62, 1.0, clamp(height * 4.0 + 1.0, 0.0, 1.0));
 
-    col = mix(col, hor * 0.5, smoothstep(0.0, -0.3, ty));
-    float lum = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(vec3(lum), col, 1.15);
-    col = mix(col, col * col * (3.0 - 2.0 * col), 0.22);
+    // MCSM-FLASH: storm lightning. One bright blink with a dim echo every
+    // ~4.3 s once the storm is up (phase 5.04-8.1), brighter toward zenith.
+    // Reference frames show the sky itself lighting up between strikes.
+    {
+        // MCSM 1.9.87: the user reports the purple flash firing far too often
+        // and far too early -- it is only meant to appear AFTER phase 6.
+        // Old gate opened at 5.04. Now it ramps in over 6.00-6.20, so phases
+        // 5.x have no lightning at all.
+        float mcflGate = mcsm_ramp(mcsmP, 6.00, 6.20) * (1.0 - mcsm_ramp(mcsmP, 8.06, 8.10));
+        // Cadence 4.3 s -> 11 s: 'extremely too often' at one strike every
+        // four seconds. 11 s reads as an occasional storm flash.
+        float mcflWin  = floor(clock / 11.0);
+        float mcflRnd  = fract(sin(mcflWin * 91.7) * 4313.7);
+        float mcflT    = clock - mcflWin * 11.0 - mcflRnd * 7.5;
+        float mcflA    = exp(-max(mcflT, 0.0) * 16.0) * step(0.0, mcflT);
+        mcflA         += 0.55 * exp(-max(mcflT - 0.30, 0.0) * 16.0) * step(0.30, mcflT);
+        // MCSM 1.9.77: scaled x0.46 to match the phase-4 dome rescale. The old
+        // amplitude was tuned against a dome 2.2x brighter; against the new one a
+        // full flash toward the zenith added 0.546 luminance to a 0.165 sky -- a
+        // 4.3x white-out that buried the storm silhouette on every strike.
+        // Same additive-constant trap as the phase-15 blob core bite.
+        dome += mcflA * mcflGate * (0.26 + 0.5 * clamp(height, 0.0, 1.0))
+              * vec3(0.82, 0.66, 1.0) * 0.46;
+    }
 
-    fragColor = vec4(col, 1.0);
+    // 1.9.168 GLARE WIPE: mcsm_blob (dotted/oval halo on sky dome) DISABLED.
+    // User rejected floating circle + dots + line mesh. Phase sky colour still
+    // comes from mcsm_storm_dome below; thick 3D glare rebuilds later from stills.
+    // (aim carrier still written by Java for beams/fog — unused here.)
+
+    // Bodies: tinted briefly at the start, then fade to nothing - no sun or
+    // moon may shine through the storm dome (user: "being above the
+    // atmosphere is still showing").
+    float hide = mcsm_ramp(mcsmP, 5.05, 5.20);
+    vec3 body = mcsm_sky_body_tint(mcsmP, ColorModulator.rgb);
+    float a = mix(ColorModulator.a, 0.0, hide);
+    // MCSM v8: keep the storm dome on the same vivid Story Mode curve as the
+    // clear sky, so switching into the storm does not change the grade.
+    fragColor = vec4(mcsm_story_grade(mix(dome, body, isBody)), mix(1.0, a, isBody));
 }

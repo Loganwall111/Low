@@ -6,17 +6,17 @@ import java.lang.reflect.Modifier;
 import java.util.Optional;
 
 /**
- * Devouring Storms: the Story Look pack ships INSIDE the mod jar
- * (resourcepacks/storylook/) and turns itself on via Fabric's resource-loader
- * registerBuiltinResourcePack with DEFAULT_ENABLED - no separate download, no
- * pack-screen step, and still user-disableable like any pack.
+ * Devouring Storms: built-in resource packs ship INSIDE the mod jar under
+ * resourcepacks/&lt;name&gt;/ and turn themselves on via Fabric's resource-loader
+ * registerBuiltinResourcePack with DEFAULT_ENABLED.
  *
- * Everything is invoked reflectively on purpose: the fabric-api generation
- * shipped for MC 26.2 changed the overload (older builds take
- * (ResourceLocation, ModContainer, predicate); newer ones take a leading
- * ResourcePackType). Reflection binds whichever signature actually exists at
- * runtime, and any failure degrades to a log line instead of a crash - the
- * game simply behaves as if the pack were a normal optional download.
+ * Packs registered here:
+ *   storylook — MCSM pastel skies, cloud decks, soft lavender shadows
+ *   ogs-cem   — Totally Accurate / MCSM OG CEM models + textures (MCSM+)
+ *
+ * Everything is invoked reflectively: fabric-api for MC 26.2 changed the
+ * overload (older: (ResourceLocation, ModContainer, predicate); newer: leading
+ * ResourcePackType). Failure degrades to a log line, never a crash.
  */
 public final class McsmBuiltinPack {
 
@@ -30,8 +30,6 @@ public final class McsmBuiltinPack {
             return;
         }
         attempted = true;
-        // mega-phase 5b: the Iris shader pack that ships inside this jar
-        // installs itself here, before Iris reads its config on the client.
         McsmShaderPackInstall.install();
         try {
             Class<?> loaderCls = Class.forName("net.fabricmc.loader.api.FabricLoader");
@@ -44,7 +42,6 @@ public final class McsmBuiltinPack {
             }
             Object modContainer = ((Optional<?>) opt).get();
 
-            // 26.2 renamed ResourceLocation -> Identifier; support both
             Class<?> rlCls = null;
             for (String n : new String[] {
                     "net.minecraft.resources.Identifier",
@@ -53,23 +50,23 @@ public final class McsmBuiltinPack {
                     rlCls = Class.forName(n);
                     break;
                 } catch (ClassNotFoundException ignored) {
-                    // try the next name
                 }
             }
             if (rlCls == null) {
                 warn("no Identifier/ResourceLocation class on this minecraft version");
                 return;
             }
-            Object id = null;
+
+            Method idFactory = null;
             for (Method m : rlCls.getMethods()) {
                 Class<?>[] ps = m.getParameterTypes();
                 if (Modifier.isStatic(m.getModifiers()) && m.getReturnType() == rlCls
                         && ps.length == 2 && ps[0] == String.class && ps[1] == String.class) {
-                    id = m.invoke(null, "dabywitherstormmod", "storylook");
+                    idFactory = m;
                     break;
                 }
             }
-            if (id == null) {
+            if (idFactory == null) {
                 warn("no ResourceLocation(String,String) factory on this minecraft version");
                 return;
             }
@@ -81,9 +78,8 @@ public final class McsmBuiltinPack {
                 Field f = predCls.getField("DEFAULT_ENABLED");
                 predicate = f.get(null);
             } catch (NoSuchFieldException ignored) {
-                // fall through to the enum scan below
             }
-            if (predicate == null) {
+            if (predicate == null && predCls.getEnumConstants() != null) {
                 for (Object c : predCls.getEnumConstants()) {
                     if ("DEFAULT_ENABLED".equals(String.valueOf(c))) {
                         predicate = c;
@@ -106,7 +102,7 @@ public final class McsmBuiltinPack {
                 if (ps.length == 3 && ps[0] == rlCls) {
                     target = m;
                     packType = null;
-                    break; // legacy signature wins outright
+                    break;
                 }
                 if (ps.length == 4 && ps[1] == rlCls && target == null) {
                     for (Object c : ps[0].getEnumConstants()) {
@@ -125,19 +121,28 @@ public final class McsmBuiltinPack {
                 warn("no registerBuiltinResourcePack overload recognized");
                 return;
             }
-            if (target.getParameterCount() == 3) {
-                target.invoke(null, id, modContainer, predicate);
-            } else {
-                target.invoke(null, packType, id, modContainer, predicate);
+
+            // MCSM: register BOTH built-ins (storylook + Totally Accurate CEM)
+            for (String packId : new String[] { "storylook", "ogs-cem" }) {
+                try {
+                    Object id = idFactory.invoke(null, "dabywitherstormmod", packId);
+                    if (target.getParameterCount() == 3) {
+                        target.invoke(null, id, modContainer, predicate);
+                    } else {
+                        target.invoke(null, packType, id, modContainer, predicate);
+                    }
+                    System.out.println("[ds] built-in resource pack registered (default ON): " + packId);
+                } catch (Throwable t) {
+                    warn("failed to register " + packId + ": " + t);
+                }
             }
-            System.out.println("[ds] Story Look built-in resource pack registered (default enabled)");
         } catch (Throwable t) {
             warn("unavailable: " + t);
         }
     }
 
     private static void warn(String msg) {
-        System.err.println("[ds] Story Look built-in pack " + msg
-                + " - install the storylook zip manually if the world looks vanilla");
+        System.err.println("[ds] built-in pack " + msg
+                + " - install the storylook / ogs-cem zip manually if needed");
     }
 }
