@@ -187,10 +187,10 @@ public final class McsmGate {
             changed += floorField(c, null, "coloredLightStrength", 0.85);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += floorField(c, null, "sunGlowStrength", 1.0);
-            // reverseShading is the OG glossy body look, but on 26.2 it also
-            // selects the broken FoglessRenderTypes.bodyCutout path
-            // (McsmStormVisibilityPatch). Glossy blue-under-black is painted
-            // by McsmStormBlob instead — do NOT force reverseShading true.
+            // 1.9.170: MCSM matte black silhouette — NEVER reverse/model shade
+            changed += setBool(c, "reverseShading", false);
+            changed += setBool(c, "stormModelShading", false);
+            changed += setBool(c, "modelShading", false);
             // blackGlareStrength left alone — the far ring is off
             // mega-phase 9: vivid world — push shadows + glow to the ceiling
             // so trees/mobs cast hard trailer shadows and teeth/eyes burn
@@ -201,9 +201,12 @@ public final class McsmGate {
             // 1.9.149: MCSM tractor beams = thick purple/blue cones (frames).
             // Floor opacity + MCSM purple bias; never lower a user's pick.
             changed += floorField(c, null, "beamOpacity", 0.92);
-            changed += floorField(c, null, "beamColorR", 0.42);
-            changed += floorField(c, null, "beamColorG", 0.12); // OG pack colors.json green=31
-            changed += floorField(c, null, "beamColorB", 0.98);
+            changed += floorField(c, null, "beamColorR", 0.72); // 1.9.170 solid purple
+            changed += floorField(c, null, "beamColorG", 0.08);
+            changed += floorField(c, null, "beamColorB", 0.95);
+            changed += setNum(c, null, "beamColorR", 0.72);
+            changed += setNum(c, null, "beamColorG", 0.08);
+            changed += setNum(c, null, "beamColorB", 0.95);
             // teeth colours are phase-dynamic (McsmTeethPhaseTint every frame).
             // Only ensure the glow path is ON; RGB/intensity are driven by phase.
             changed += setBool(c, "turquoiseTeeth", true);

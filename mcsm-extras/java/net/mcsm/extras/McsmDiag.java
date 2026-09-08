@@ -53,7 +53,7 @@ public final class McsmDiag {
         // .BUILD_VERSION, which ci/build.sh syncs from ./VERSION before javac.
         say("Devouring Storms " + McsmExtrasConfig.BUILD_VERSION + " active. Patches:");
         say("  McsmShaderGatePatch      ShaderPackCompat.active() -> false");
-        say("  McsmStormVisibilityPatch fogless()/reverseShading() -> false");
+        say("  McsmStormVisibilityPatch fogless()/reverseShading()/modelShading() -> false (matte black)");
         say("  McsmBlobCarrierPatch     invertible cloudEnd carrier + death band");
         say("  McsmGradientTickPatch    drives StormSkyGradient.update()");
         say("  McsmStormGrabPatch       die()/addSubGrowth() -> shockwaves");

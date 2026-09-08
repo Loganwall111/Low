@@ -54,7 +54,7 @@ public final class McsmPhaseSky {
     };
     /** Alpha weight per slice (centre denser, outer skirt thin). */
     private static final float[] ALPHA = {
-            0.07F, 0.11F, 0.16F, 0.22F, 0.28F, 0.20F, 0.14F, 0.09F, 0.05F
+            0.05F, 0.08F, 0.12F, 0.16F, 0.20F, 0.14F, 0.10F, 0.06F, 0.035F
     };
 
     private McsmPhaseSky() {
@@ -177,7 +177,7 @@ public final class McsmPhaseSky {
             float amp = presence * distFade;
 
             // ---- dark core wrap (silhouette mass, still #2 black body in purple) ----
-            float coreA = amp * (0.35F + 0.45F * (wPink + wSix + wPurp * 0.6F));
+            float coreA = amp * (0.18F + 0.25F * (wPink + wSix + wPurp * 0.6F)); // 1.9.170 keep body black
             if (coreA > 0.02F) {
                 // slightly smaller than mid glow so colour rim peeks around the body
                 quad(poseStack, collector, GlowRenderTypes.glow(BLACK),

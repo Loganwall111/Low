@@ -91,20 +91,21 @@ public final class McsmStormBlob {
      *   phase 6+      extremely dark blue
      */
     private static int[] teethRgb(float phase) {
+        // 1.9.170 MCSM stills: intense neon cyan-white square pixels
         if (phase >= 6.0F) {
-            return new int[] { 18, 40, 95 };          // extremely dark blue
+            return new int[] { 12, 28, 80 };          // extremely dark blue
         }
         if (phase >= 5.5F) {
-            return new int[] { 250, 252, 255 };       // glowing white
+            return new int[] { 255, 255, 255 };       // glowing white
         }
         if (phase >= 5.1F) {
-            return new int[] { 235, 245, 255 };       // white + slight blue
+            return new int[] { 220, 250, 255 };       // white + cyan
         }
         if (phase >= 5.0F) {
             return new int[] { 255, 255, 255 };       // pure white
         }
-        // phase 4.x — very light blue
-        return new int[] { 195, 225, 255 };
+        // phase 4.x — neon cyan-white (stills)
+        return new int[] { 180, 245, 255 };
     }
 
     private static int[] teethRimRgb(float phase) {
@@ -280,11 +281,13 @@ public final class McsmStormBlob {
                             float y = MOUTH_Y[m] + (gy - MOUTH_Y[m]) * tp;
                             Vec3 pq = billboardOffset(atF, viewF, bR * x, bR * y);
                             float coneR = bR * (0.035F + 0.14F * tp);
-                            // MCSM beams: clear blue core (refs), soft violet rim only
-                            quadVerts(pose, consumer, pq, viewF, coneR,
-                                    70, 90, 255, (int) (aa * wg * 48.0F * (1.0F - tp * 0.50F)));
-                            quadVerts(pose, consumer, pq, viewF, coneR * 0.50F,
-                                    120, 170, 255, (int) (aa * wg * 90.0F * (1.0F - tp * 0.30F)));
+                            // 1.9.170 MCSM stills: solid-fill vibrant purple searchlights
+                            quadVerts(pose, consumer, pq, viewF, coneR * 1.15,
+                                    160, 40, 255, (int) (aa * wg * 70.0F * (1.0F - tp * 0.35F)));
+                            quadVerts(pose, consumer, pq, viewF, coneR * 0.70,
+                                    200, 70, 255, (int) (aa * wg * 110.0F * (1.0F - tp * 0.25F)));
+                            quadVerts(pose, consumer, pq, viewF, coneR * 0.35,
+                                    230, 140, 255, (int) (aa * wg * 140.0F * (1.0F - tp * 0.20F)));
                         }
                     }
                 });
@@ -321,10 +324,9 @@ public final class McsmStormBlob {
                     // hot-magenta eye cube ABOVE the mouth (MCSM)
                     Vec3 cp = billboardOffset(at, view, baseR * MOUTH_X[m],
                             baseR * (MOUTH_Y[m] + 0.18F));
+                    // tiny magenta emitter (stills) — NOT an ear/earring blob
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,
-                            baseR * 0.038, 255, 40, 210, (int) (a * wMouth * 250.0F));
-                    quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,
-                            baseR * 0.058, 255, 80, 230, (int) (a * wMouth * 55.0F));
+                            baseR * 0.022, 255, 50, 220, (int) (a * wMouth * 240.0F));
                 }
             }
         }
