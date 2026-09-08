@@ -105,7 +105,7 @@ public final class McsmPhaseSky {
         Vec3 stormPos = null;
         double best = Double.MAX_VALUE;
         for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
-            if (d.phase < 4.95F) {
+            if (d.phase < 4.85F) {
                 continue;
             }
             Vec3 c = new Vec3(d.dispX, d.dispY, d.dispZ);
@@ -121,7 +121,7 @@ public final class McsmPhaseSky {
         }
 
         // phase weights — match user glare frames
-        float wTeal = ramp(phase, 4.95F, 5.10F) * (1.0F - ramp(phase, 5.25F, 5.38F));
+        float wTeal = ramp(phase, 4.85F, 5.05F) * (1.0F - ramp(phase, 5.28F, 5.42F)); // phase 5 GREEN
         float wPurp = ramp(phase, 5.20F, 5.38F) * (1.0F - ramp(phase, 5.48F, 5.58F));
         float wPink = ramp(phase, 5.48F, 5.60F) * (1.0F - ramp(phase, 5.95F, 6.12F)); // 5.5-5.9
         float wSix  = ramp(phase, 5.95F, 6.20F);
@@ -138,32 +138,32 @@ public final class McsmPhaseSky {
         // CORE = dark centre of the halo (black / deep purple-black)
         // User: "the colour of the Halo in the night time" for 5.5+ is the
         // deep purple-black core — NOT flooding the whole calm night sky.
+        // 1.9.162 glare decks rebuilt from user strips:
+        //   5.0 green/teal body, 5.4 purple, 5.5 purple→pink twilight strip, 6+ black-blue
         float[] core = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.02F, 0.06F, 0.06F},   // teal black-green
-                new float[]{0.05F, 0.01F, 0.10F},   // purple black
-                new float[]{0.04F, 0.01F, 0.08F},   // 5.5 dark purple-black core
-                new float[]{0.02F, 0.02F, 0.05F});  // phase6 near-black
-        // MID = coloured body of the glare ball
+                new float[]{0.02F, 0.12F, 0.08F},   // teal black-green core
+                new float[]{0.08F, 0.02F, 0.16F},   // purple black
+                new float[]{0.06F, 0.01F, 0.12F},   // 5.5 dark purple-black core
+                new float[]{0.02F, 0.02F, 0.06F});  // phase6 near-black
         float[] mid = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.06F, 0.28F, 0.26F},
-                new float[]{0.32F, 0.08F, 0.48F},
-                new float[]{0.28F, 0.06F, 0.42F},   // purple mid for 5.5 halo
-                new float[]{0.12F, 0.06F, 0.22F});  // phase6 cooler
-        // OUT / RIM = soft fade into the world (pink-lavender for 5.5, not solid magenta sky)
+                new float[]{0.08F, 0.42F, 0.32F},   // PHASE 5 GREEN body (was missing)
+                new float[]{0.42F, 0.10F, 0.58F},   // 5.4 purple body
+                new float[]{0.48F, 0.08F, 0.55F},   // 5.5 purple mid
+                new float[]{0.10F, 0.08F, 0.28F});  // phase6 blue-black
         float[] out = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.14F, 0.40F, 0.38F},
-                new float[]{0.48F, 0.18F, 0.62F},
-                new float[]{0.85F, 0.45F, 0.72F},   // 5.5 soft pink-magenta rim (user sky ref)
-                new float[]{0.28F, 0.18F, 0.42F});  // phase6 cooler
+                new float[]{0.18F, 0.55F, 0.42F},   // green outer
+                new float[]{0.55F, 0.18F, 0.70F},   // purple outer
+                new float[]{0.90F, 0.35F, 0.70F},   // 5.5 pink-magenta (user twilight strip)
+                new float[]{0.25F, 0.18F, 0.48F});
         float[] rim = mixPhase(wTeal, wPurp, wPink, wSix,
-                new float[]{0.10F, 0.26F, 0.38F},
-                new float[]{0.30F, 0.14F, 0.50F},
-                new float[]{0.70F, 0.40F, 0.68F},   // soft pink edge, not full-sky flood
-                new float[]{0.18F, 0.14F, 0.35F});
+                new float[]{0.12F, 0.38F, 0.45F},
+                new float[]{0.40F, 0.16F, 0.58F},
+                new float[]{0.95F, 0.42F, 0.62F},   // pink edge matching sky_twilight.png
+                new float[]{0.16F, 0.14F, 0.40F});
 
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
-        float amp = sky;
+        float amp = Math.min(1.0F, sky * 1.35F); // 1.9.162: glare must READ
 
         // outer shells first
         for (int s = SHELL_R.length - 1; s >= 0; s--) {
@@ -178,14 +178,13 @@ public final class McsmPhaseSky {
             }
             double radius = bodyR * SHELL_R[s];
             float alpha = amp * SHELL_A[s];
-            // 5.5+ rim is softer so it doesn't paint the whole sky magenta
-            if (wPink > 0.3F && t > 0.55F) {
-                alpha *= 0.70F;
+            // 5.5 rim keeps colour on the volume (not full calm-sky flood — shells stop at 4.5x body)
+            if (wPink > 0.3F && t > 0.75F) {
+                alpha *= 0.85F;
             }
-            // phase 6 glare is more restrained
-            if (wSix > 0.3F) {
-                alpha *= 0.75F;
-                radius *= 0.92;
+            // phase 6 keeps dense black core, outer still visible
+            if (wSix > 0.3F && t < 0.35F) {
+                alpha *= 1.10F;
             }
             radius *= 1.0 + 0.015 * Math.sin(nowSec * 0.28 + s * 0.35);
             boolean glow = s >= 4 && t < 0.85F;

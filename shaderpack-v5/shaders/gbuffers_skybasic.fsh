@@ -202,15 +202,15 @@ vec3 storyCalmSky(vec3 dirS) {
     float nite = night * (1.0 - midn);
     // 1.9.153: day lavender, midnight deep navy (user strips)
     // calm night = DEEP BLUE only (never purple/magenta/lavender)
-    vec3 zen = day  * vec3(0.55, 0.58, 0.92)
+    vec3 zen = day  * vec3(0.40, 0.46, 0.72)
              + dusk * vec3(0.188, 0.329, 0.376)
              + nite * vec3(0.04, 0.08, 0.28)
              + midn * vec3(0.010, 0.025, 0.200);
-    vec3 mid = day  * vec3(0.68, 0.66, 0.94)
+    vec3 mid = day  * vec3(0.48, 0.52, 0.78)
              + dusk * vec3(0.863, 0.353, 0.157)
              + nite * vec3(0.08, 0.14, 0.42)
              + midn * vec3(0.03, 0.07, 0.38);
-    vec3 hor = day  * vec3(0.78, 0.72, 0.95)
+    vec3 hor = day  * vec3(0.55, 0.58, 0.80)
              + dusk * vec3(0.494, 0.098, 0.165)
              + nite * vec3(0.12, 0.22, 0.55)
              + midn * vec3(0.08, 0.18, 0.62);

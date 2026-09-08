@@ -11,11 +11,11 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class StormSkyDome {
    // phase 5 teal
-   private static final float[] TEAL = new float[]{0.060F, 0.280F, 0.270F};
+   private static final float[] TEAL = new float[]{0.040F, 0.420F, 0.320F}; // phase 5 green stronger
    // phase 5.4 purple
-   private static final float[] PURP = new float[]{0.280F, 0.080F, 0.380F};
+   private static final float[] PURP = new float[]{0.380F, 0.080F, 0.520F};
    // phase 5.5 pink-magenta
-   private static final float[] PINK = new float[]{0.620F, 0.160F, 0.480F};
+   private static final float[] PINK = new float[]{0.780F, 0.180F, 0.520F}; // 5.5 twilight strip
    // phase 6+ deep purple / rose
    private static final float[] SIX = new float[]{0.420F, 0.100F, 0.360F};
    private static final double RANGE = 900.0;
@@ -33,7 +33,7 @@ public final class StormSkyDome {
 
       for (ClientDistantStormManager.StormData var5 : ClientDistantStormManager.all()) {
          // only phase 5+ owns the fog/sky tint
-         if (!(var5.phase < 4.95F)) {
+         if (!(var5.phase < 4.85F)) {
             double var6 = var5.dispX - var0.x;
             double var8 = var5.dispY - var0.y;
             double var10 = var5.dispZ - var0.z;
@@ -41,7 +41,7 @@ public final class StormSkyDome {
             if (!(var12 > RANGE)) {
                double var14 = var12 / RANGE;
                float var16 = var14 <= 0.55 ? 1.0F : smooth((float)(1.0 - (var14 - 0.55) / 0.45));
-               float var17 = ramp(var5.phase, 4.95F, 5.15F);
+               float var17 = ramp(var5.phase, 4.85F, 5.10F);
                float var18 = var16 * var17;
                if (var18 > var1) {
                   var1 = var18;
@@ -76,10 +76,10 @@ public final class StormSkyDome {
       if (!DabyWSClientConfig.stormBackdrop) {
          return 0.0F;
       }
-      if (phaseSeen < 4.95F) {
+      if (phaseSeen < 4.85F) {
          return 0.0F;
       }
-      return Mth.clamp(displayed * (float)DabyWSClientConfig.stormBackdropStrength * 0.55F, 0.0F, 0.55F);
+      return Mth.clamp(displayed * (float)DabyWSClientConfig.stormBackdropStrength * 0.85F, 0.0F, 0.82F);
    }
 
    public static float coreStrength() {

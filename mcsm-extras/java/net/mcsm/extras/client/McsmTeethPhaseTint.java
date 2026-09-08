@@ -30,20 +30,19 @@ public final class McsmTeethPhaseTint {
                     phase = d.phase;
                 }
             }
-            if (phase < 0.5F) {
-                return;
-            }
+            // Always drive colours. Phase 0-3.9 still gets light-blue teeth so
+            // stage-0 / early never render as pure black mouths.
             float r, g, b, inten;
             if (phase >= 6.0F) {
-                r = 0.08F; g = 0.16F; b = 0.38F; inten = 1.0F;   // extremely dark blue
+                r = 0.12F; g = 0.28F; b = 0.70F; inten = 1.25F;  // dark blue (readable, not black)
             } else if (phase >= 5.5F) {
-                r = 0.98F; g = 0.99F; b = 1.00F; inten = 1.35F;  // glowing white
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.55F;  // glowing white
             } else if (phase >= 5.1F) {
-                r = 0.92F; g = 0.96F; b = 1.00F; inten = 1.15F;  // white + slight blue
+                r = 0.90F; g = 0.96F; b = 1.00F; inten = 1.35F;  // white + slight blue
             } else if (phase >= 5.0F) {
-                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.20F;  // pure white
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.40F;  // pure white
             } else {
-                r = 0.76F; g = 0.88F; b = 1.00F; inten = 1.10F;  // phase 4 light blue
+                r = 0.70F; g = 0.88F; b = 1.00F; inten = 1.45F;  // phase 4 / early light blue
             }
             DabyWSClientConfig.eyeColorR = r;
             DabyWSClientConfig.eyeColorG = g;

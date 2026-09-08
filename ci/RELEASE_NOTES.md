@@ -1,24 +1,39 @@
-# Devouring Storms 1.9.161 — phase 6 mega black rings + phase 7 sky field
+# Devouring Storms 1.9.162 — emergency repair (broken look)
 
-## Phase 6 — four gigantic black orbital rings
-When the storm reaches phase 6 size, **four huge black rings** flank the body:
-- staggered elevations around the sides
-- each drifts horizontally (slow X/Z sway)
-- spin direction **reverses** over time (sine flip)
-- thick near-black torus bands locked to the storm centre
+**Not normal.** 1.9.160/161 left several systems broken. This build repairs them.
 
-## Phase 7 — sky swallowed by rings
-Phase 7+ stacks **dozens of black rings** from below the body to far above the
-vault so the top of the sky disappears under the ring field, plus outer wash
-discs.
+## Kill ALL 2D body billboards
+McsmStormBlob no longer paints face plates, silhouette quads, glossy stripe
+plates, or any flat backdrop behind the storm. Those read as broken 2D cards.
 
-## Body scale
-Phase 6/7 body radius raised so the rings read at MCSM giant scale.
+## Glare rebuilt from scratch (3D only)
+McsmPhaseSky owns the glare exclusively as nested world-space spheres:
+- **Phase 5** — green/teal volume (was missing)
+- **Phase 5.4** — purple volume
+- **Phase 5.5** — purple→pink twilight strip (user sky_twilight.png)
+- **Phase 6+** — black-blue core + orbital rings (from 161)
+Amp raised; shell layers denser so the volume actually reads.
 
-## Rain beams (from your frames)
-Rain/thunder beams pushed hotter pink-white to match the MCSM rain tractor
-beam stills. Clear stays blue; phase 6 clear stays deep blue-violet.
+## Day sky no longer blown white
+StoryModeSkyTint + sky shaders + OptiFine sky1 dimmed. Muted lavender day,
+not empty white.
+
+## Phase fog restored
+StormSkyDome teal/purple/pink decks stronger so phase 5 green and 5.5 purple
+actually wash the air around the storm.
+
+## Teeth fixed (were black)
+- All phase emissive atlases regenerated with real bright teeth/eyes
+- TeethPhaseTint always drives colour (even early phases → light blue)
+- Gate floors turquoiseTeethIntensity + eyeColor
+
+## Stage 0 Formidi fixed
+64×96 rebuilt from MCSM maxresdefault: 3 black heads with white eyes +
+command-block body with coloured button grid (not the glitched gray mass).
+
+## Still on HUD
+If HUD says 1.9.160 you are still on the old jar — install **1.9.162**.
 
 ## Kept
-OptiFine navy sky overrides (160), debris ring, stage0 Formidi, weather mote
-sync, teeth ladder, gray-edge 4–5.9 skins.
+OptiFine navy night, weather beams, phase6/7 mega rings, debris ring,
+StormDebris kill, gray-edge 4–5.9 skins.
