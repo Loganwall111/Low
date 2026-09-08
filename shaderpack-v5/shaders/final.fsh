@@ -63,8 +63,11 @@ float mcsmHash(float n) { return fract(sin(n * 91.7) * 4313.7); }
 void main() {
     vec3 col = texture(colortex0, texcoord).rgb;
 
-    // storm gate: fog pulled toward purple/magenta = the storm owns the sky
-    float gate = clamp((max(fogColor.r, fogColor.b) - fogColor.g - 0.03) * 5.0, 0.0, 1.0);
+    // 1.9.153: storm gate — purple/magenta OR teal. Never calm blue night.
+    float purpleGate = clamp((min(fogColor.r, fogColor.b) - fogColor.g - 0.03) * 5.0, 0.0, 1.0);
+    float tealGate   = clamp((fogColor.g - max(fogColor.r, fogColor.b) - 0.02) * 5.0, 0.0, 1.0);
+    float calmBlue   = step(fogColor.r * 1.8, fogColor.b) * step(fogColor.g * 1.4, fogColor.b);
+    float gate = max(purpleGate, tealGate) * (1.0 - calmBlue);
 
     // lightning before grade, so the flash blooms too
     if (gate > 0.02) {

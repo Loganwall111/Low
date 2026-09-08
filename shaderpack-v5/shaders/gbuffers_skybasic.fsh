@@ -200,18 +200,19 @@ vec3 storyCalmSky(vec3 dirS) {
     float clumN = dot(fogColor, vec3(0.2126, 0.7152, 0.0722));
     float midn = night * smoothstep(0.12, 0.02, clumN);
     float nite = night * (1.0 - midn);
-    vec3 zen = day  * vec3(0.353, 0.627, 0.863)
+    // 1.9.153: day lavender, midnight deep navy (user strips)
+    vec3 zen = day  * vec3(0.55, 0.58, 0.92)
              + dusk * vec3(0.188, 0.329, 0.376)
-             + nite * vec3(0.420, 0.480, 0.780)
-             + midn * vec3(0.031, 0.051, 0.310);
-    vec3 mid = day  * vec3(0.706, 0.773, 0.902)
+             + nite * vec3(0.48, 0.52, 0.88)
+             + midn * vec3(0.02, 0.04, 0.28);
+    vec3 mid = day  * vec3(0.68, 0.66, 0.94)
              + dusk * vec3(0.863, 0.353, 0.157)
-             + nite * vec3(0.620, 0.600, 0.860)
-             + midn * vec3(0.059, 0.118, 0.549);
-    vec3 hor = day  * vec3(0.651, 0.616, 0.741)
+             + nite * vec3(0.62, 0.58, 0.90)
+             + midn * vec3(0.05, 0.10, 0.48);
+    vec3 hor = day  * vec3(0.78, 0.72, 0.95)
              + dusk * vec3(0.494, 0.098, 0.165)
-             + nite * vec3(0.780, 0.720, 0.900)
-             + midn * vec3(0.220, 0.392, 0.933);
+             + nite * vec3(0.80, 0.74, 0.92)
+             + midn * vec3(0.18, 0.32, 0.88);
 
     // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
@@ -269,22 +270,22 @@ vec3 storyStormSky(vec3 dirS) {
     if (purpleChroma < 0.02 && greenK < 0.05 && orangeK < 0.05) {
         return storyCalmSky(dirS);
     }
-    // 5.4-5.9 phase fog/sky: violet zenith, magenta mid, SALMON-PINK horizon
-    vec3 z1 = vec3(0.035, 0.010, 0.120);
-    vec3 m1 = vec3(0.320, 0.060, 0.380);
-    vec3 h1 = vec3(0.920, 0.360, 0.480);
-    // green-teal frames
-    vec3 z2 = vec3(0.030, 0.100, 0.095);
-    vec3 m2 = vec3(0.080, 0.260, 0.220);
-    vec3 h2 = vec3(0.380, 0.620, 0.480);
+    // phase 5.5 pink-magenta
+    vec3 z1 = vec3(0.180, 0.040, 0.220);
+    vec3 m1 = vec3(0.620, 0.120, 0.520);
+    vec3 h1 = vec3(0.920, 0.380, 0.620);
+    // phase 5 turquoise
+    vec3 z2 = vec3(0.020, 0.140, 0.145);
+    vec3 m2 = vec3(0.060, 0.320, 0.300);
+    vec3 h2 = vec3(0.280, 0.520, 0.460);
     // sunset-orange frames (user storymode_sky_sunset)
     vec3 z3 = vec3(0.188, 0.329, 0.376);
     vec3 m3 = vec3(0.863, 0.353, 0.157);
     vec3 h3 = vec3(0.494, 0.098, 0.165);
-    // deep purple / magenta frames (phase ~5 punch + post-6 light pink)
-    vec3 z4 = vec3(0.040, 0.012, 0.110);
-    vec3 m4 = vec3(0.340, 0.050, 0.320);
-    vec3 h4 = vec3(0.860, 0.320, 0.480);
+    // phase 5.4 purple + phase 6
+    vec3 z4 = vec3(0.090, 0.035, 0.180);
+    vec3 m4 = vec3(0.320, 0.090, 0.420);
+    vec3 h4 = vec3(0.620, 0.280, 0.480);
     vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
     vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
     vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
@@ -402,8 +403,12 @@ void main() {
         // night is blue (r<g) - so neither false-positives into a storm sky.
         float stormK = 0.0;
 #if STORM_SKY
-        stormK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.0, 0.0, 1.0)
-               * (1.0 - rainStrength * 0.6);
+        // purple/magenta OR teal (phase 5). Never calm blue night (b>>r,g).
+        float purpleK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.0, 0.0, 1.0);
+        float tealK   = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 1.0);
+        float calmBlue = step(fogColor.r * 1.8, fogColor.b) * step(fogColor.g * 1.4, fogColor.b)
+                       * step(min(fogColor.r, fogColor.b) - fogColor.g, 0.02);
+        stormK = max(purpleK, tealK) * (1.0 - calmBlue) * (1.0 - rainStrength * 0.6);
 #endif
 
 #if SKY_STORY_MODE

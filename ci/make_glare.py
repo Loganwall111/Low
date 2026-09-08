@@ -1,29 +1,19 @@
 #!/usr/bin/env python3
-"""make_glare.py — the Telltale-exposed glare textures (mega-phase 5c).
+"""make_glare.py — soft fade-gradient glare (1.9.153).
 
-The reference frames exposed how the original game builds the storm glare:
-  * a plain SOFT GRADIENT quad hung BEHIND the silhouette (the wide purple /
-    blue aura) - not a bloom pass, not a hard ring;
-  * flat EMISSIVE squares for the mouth details (white dashed teeth, magenta
-    emitter cube, cyan-white inner mouth), whose softness comes only from
-    distance.
-
-This generator writes both ingredients:
-    storm_glare.png - 256x256 white radial gradient, alpha falling off
-                      smoothly to zero (tinted per phase at draw time);
-    storm_white.png - 8x8 flat white, the emissive square primitive.
-
-Usage: python3 ci/make_glare.py <glare_out.png> <white_out.png>
+User order: the backdrop has a FADE gradient, not an opaque ball.
+  storm_glare.png - 512x512 white radial gradient, long soft skirt to zero
+  storm_white.png - 8x8 flat white emissive square
 """
 import math
 import sys
 
 sys.path.insert(0, 'ci')
-from make_branding import write_png  # noqa: E402  (same helper as make_halo)
+from make_branding import write_png  # noqa: E402
 
 
 def glare():
-    n = 256
+    n = 512
     px = []
     for y in range(n):
         for x in range(n):
@@ -31,10 +21,15 @@ def glare():
             dy = (y + 0.5) / n * 2.0 - 1.0
             r = math.sqrt(dx * dx + dy * dy)
             t = min(r, 1.0)
-            # smooth filled falloff: bright core, long soft skirt, zero edge
-            a = (1.0 - t) ** 2.1
+            # longer soft skirt: bright tiny core, long fade, zero edge
+            # power 2.8 + smoothstep gives the fade-gradient the frames show
+            a = max(0.0, 1.0 - t)
+            a = a ** 2.8
             a = a * a * (3.0 - 2.0 * a)
-            v = int(round(255.0 * a))
+            # crush the hard core so it never reads as a solid disc
+            core = max(0.0, 1.0 - t / 0.22)
+            a = a * (0.55 + 0.45 * (1.0 - core * 0.5))
+            v = int(round(255.0 * min(a, 1.0)))
             px.append((255, 255, 255, v))
     return n, px
 
@@ -53,7 +48,7 @@ def main():
     write_png(sys.argv[1], n, n, px)
     n, px = white()
     write_png(sys.argv[2], n, n, px)
-    print('[glare] wrote %s and %s' % (sys.argv[1], sys.argv[2]))
+    print('[glare] wrote soft fade %s and %s' % (sys.argv[1], sys.argv[2]))
     return 0
 
 

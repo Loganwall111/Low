@@ -142,27 +142,29 @@ void main() {
                   * step(C.g * 1.05, min(C.r, C.b)) * (1.0 - greenK);
     float magK    = clamp((C.r - C.b) * 2.0, 0.0, 1.0) * (1.0 - orangeK) * (1.0 - greenK);
     float wsum = pinkK + greenK + orangeK + magK;
-    bool storm = wsum > 0.08
-              && ((purpleChroma > 0.04 && min(C.r, C.b) > 0.08)
-               || (tealChroma > 0.06 && C.g > 0.12)
-               || (emberChroma > 0.10 && C.r > 0.25 && clum > 0.12));
+    // 1.9.153: never treat calm blue night (B-heavy, low R) as storm
+    bool calmBlue = (C.b > C.r * 1.8 && C.b > C.g * 1.4 && purpleChroma < 0.02);
+    bool storm = !calmBlue && wsum > 0.10
+              && ((purpleChroma > 0.05 && min(C.r, C.b) > 0.10)
+               || (tealChroma > 0.08 && C.g > 0.14)
+               || (emberChroma > 0.12 && C.r > 0.28 && clum > 0.14));
     if (storm) {
-        // 5.4-5.9: violet zenith, magenta mid, SALMON-PINK horizon
-        vec3 z1 = vec3(0.035, 0.010, 0.120);
-        vec3 m1 = vec3(0.320, 0.060, 0.380);
-        vec3 h1 = vec3(0.920, 0.360, 0.480);
-        // green-teal frames
-        vec3 z2 = vec3(0.030, 0.100, 0.095);
-        vec3 m2 = vec3(0.080, 0.260, 0.220);
-        vec3 h2 = vec3(0.380, 0.620, 0.480);
+        // phase 5.5 pink-magenta (user) — pinkK path
+        vec3 z1 = vec3(0.180, 0.040, 0.220);
+        vec3 m1 = vec3(0.620, 0.120, 0.520);
+        vec3 h1 = vec3(0.920, 0.380, 0.620);
+        // phase 5 turquoise (user strip)
+        vec3 z2 = vec3(0.020, 0.140, 0.145);
+        vec3 m2 = vec3(0.060, 0.320, 0.300);
+        vec3 h2 = vec3(0.280, 0.520, 0.460);
         // sunset-orange frames (user storymode_sky_sunset strip)
         vec3 z3 = vec3(0.188, 0.329, 0.376);
         vec3 m3 = vec3(0.863, 0.353, 0.157);
         vec3 h3 = vec3(0.494, 0.098, 0.165);
-        // deep purple / magenta frames
-        vec3 z4 = vec3(0.040, 0.012, 0.110);
-        vec3 m4 = vec3(0.340, 0.050, 0.320);
-        vec3 h4 = vec3(0.860, 0.320, 0.480);
+        // phase 5.4 purple + phase 6 deep (user strips)
+        vec3 z4 = vec3(0.090, 0.035, 0.180);
+        vec3 m4 = vec3(0.320, 0.090, 0.420);
+        vec3 h4 = vec3(0.620, 0.280, 0.480);
         vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
         vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
         vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
@@ -203,7 +205,10 @@ void main() {
     // --- calm sky: time-of-day weights ---------------------------------------
     float night = 1.0 - smoothstep(0.05, 0.22, clum);
     float orange = C.r - C.b;
-    float dawn = smoothstep(0.25, 0.50, orange) * step(C.b, C.g) * (1.0 - night);
+    // 1.9.153: dusk/dawn ONLY when orange is strong AND lum is mid.
+    // Full-day warm fog must NOT paint the vault sunset-orange — day is lavender.
+    float duskBand = smoothstep(0.12, 0.28, clum) * (1.0 - smoothstep(0.45, 0.70, clum));
+    float dawn = smoothstep(0.35, 0.60, orange) * step(C.b, C.g) * (1.0 - night) * duskBand;
     float day = max(1.0 - night - dawn, 0.0);
 
     // 1.9.152: palettes sampled from user storymode_sky_* strips
@@ -212,18 +217,19 @@ void main() {
     // dusk/sunset: teal vault -> orange belly -> crimson rim
     float midn = night * smoothstep(0.12, 0.02, clum); // darkest = midnight strip
     float nite = night * (1.0 - midn);
-    vec3 zen = day  * vec3(0.353, 0.627, 0.863)
+    // 1.9.153: day = lavender (skyday strip), NOT orange. Midnight = deep navy.
+    vec3 zen = day  * vec3(0.55, 0.58, 0.92)
              + dawn * vec3(0.188, 0.329, 0.376)
-             + nite * vec3(0.420, 0.480, 0.780)
-             + midn * vec3(0.031, 0.051, 0.310);
-    vec3 mid = day  * vec3(0.706, 0.773, 0.902)
+             + nite * vec3(0.48, 0.52, 0.88)
+             + midn * vec3(0.02, 0.04, 0.28);
+    vec3 mid = day  * vec3(0.68, 0.66, 0.94)
              + dawn * vec3(0.863, 0.353, 0.157)
-             + nite * vec3(0.620, 0.600, 0.860)
-             + midn * vec3(0.059, 0.118, 0.549);
-    vec3 hor = day  * vec3(0.651, 0.616, 0.741)
+             + nite * vec3(0.62, 0.58, 0.90)
+             + midn * vec3(0.05, 0.10, 0.48);
+    vec3 hor = day  * vec3(0.78, 0.72, 0.95)
              + dawn * vec3(0.494, 0.098, 0.165)
-             + nite * vec3(0.780, 0.720, 0.900)
-             + midn * vec3(0.220, 0.392, 0.933);
+             + nite * vec3(0.80, 0.74, 0.92)
+             + midn * vec3(0.18, 0.32, 0.88);
 
     // per-biome variants (vanilla hands us the biome sky hue in ColorModulator)
     float gk = clamp((C.g - max(C.r, C.b)) * 3.0, 0.0, 0.6) * day;

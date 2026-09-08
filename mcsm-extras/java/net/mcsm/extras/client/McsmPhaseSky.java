@@ -16,34 +16,22 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Devouring Storms: mega-phase 8 - the PHASE SKY and the sky-glued HALO.
+ * Devouring Storms 1.9.153 — phase sky + soft glare glued to storm + sky.
  *
- * Two orders from the reference frames are answered here.
+ * Calm night/day NEVER live here. Purple/pink/teal vaults are PHASE ONLY:
+ *   phase 5.0–5.35  teal / turquoise sky  (user "phase 5 turquoise sky")
+ *   phase 5.35–5.55 purple vault          (user "phase5sky purple")
+ *   phase 5.55–5.95 pink-magenta-black    (user phase 5.5 — was SKIPPED)
+ *   phase 5.95+     deep purple + rose    (user "phase6sky") — red/orange notes
  *
- * 1. THE PHASE SKY. The big glowing purple sky is not "night" - it is
- *    phases 5.4 to 5.9, and nothing else. The night and midnight gradients
- *    have been handed back to a true deep blue in both sky shaders; the
- *    purple vault and its fog now live here, on a dome the mod paints only
- *    while the storm is in that window. Past 5.9 the purple leaves and the
- *    vault turns LIGHT PINK, exactly as the frames end.
+ * Backdrops (only these, NO face/heads/symbol):
+ *   black soft blur core
+ *   green/teal wash for phase 5
+ *   purple wash for phase 5.4
+ *   pink/magenta/black stack for phase 5.5+
  *
- * 2. THE HALO. The old halo hung far off the storm and carried three heads
- *    and a symbol - that texture is gone. This one is pure colour palette:
- *    soft gradient geometry, no face, drawn in sky space at the storm's own
- *    bearing so it rides with both the sky and the storm, always facing the
- *    camera so it still reads when the player walks around behind it, and
- *    small enough that the ordinary sky stays visible around its rim.
- *
- *    Riding on it, for 5.5 to 5.9, is the silhouette stack the frames show:
- *    the mod's dark-blue over-storm light, a dark purple layer laid on top
- *    of it and wrapped around the back, then purple -> dark moon-blue ->
- *    a black glow capping the storm that takes the top of the ATMOSPHERE
- *    (not the storm) out of the picture entirely.
- *
- * Everything is drawn at a greater sky radius than McsmStormBlob's 220, so
- * the dome and the halo sit behind the silhouette, and the whole class is
- * wrapped in a catch so an unexpected surface degrades to no sky, never a
- * crash.
+ * The glare is a SOFT FADE GRADIENT (not an opaque ball), multi-depth, glued
+ * to the storm bearing and the sky so it moves with both.
  */
 public final class McsmPhaseSky {
 
@@ -52,19 +40,16 @@ public final class McsmPhaseSky {
     private static final Identifier GLARE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_glare.png");
 
-    /** Sky radius for the dome. The halo is a thick multi-depth shell that
-     *  sits just behind the body shell (McsmStormBlob placeDist ≤ ~280), so
-     *  it reads as glued to the storm rather than a far disc. */
-    private static final double DOME_R = 480.0;
-    private static final double HALO_R = 260.0;
-    /** Depth slices (along the view axis, in world units) that give the halo
-     *  real thickness — visible from behind, moves with the storm. */
-    private static final double[] HALO_DEPTH = { -40.0, -18.0, 0.0, 16.0, 32.0 };
-    private static final float[] HALO_SCALE = { 1.28F, 1.14F, 1.00F, 1.10F, 1.22F };
-    private static final float[] HALO_ALPHA = { 0.55F, 0.75F, 1.00F, 0.70F, 0.45F };
+    /** Full-sky dome radius. Halo sits just behind the body shell. */
+    private static final double DOME_R = 520.0;
+    private static final double HALO_R = 240.0;
+    /** Soft multi-depth slices — fade gradient, not a hard disc. */
+    private static final double[] HALO_DEPTH = { -55.0, -28.0, -10.0, 0.0, 14.0, 28.0, 48.0 };
+    private static final float[] HALO_SCALE = { 1.55F, 1.35F, 1.18F, 1.00F, 1.12F, 1.28F, 1.48F };
+    private static final float[] HALO_ALPHA = { 0.22F, 0.38F, 0.55F, 0.72F, 0.50F, 0.32F, 0.18F };
 
-    private static final int LON = 28;
-    private static final int LAT = 14;
+    private static final int LON = 32;
+    private static final int LAT = 16;
 
     private McsmPhaseSky() {
     }
@@ -92,12 +77,12 @@ public final class McsmPhaseSky {
         }
         Vec3 cam = ctx.levelState().cameraRenderState.pos;
 
-        // the nearest storm owns the sky and the halo
         float phase = 0.0F;
         Vec3 bearing = null;
         double best = Double.MAX_VALUE;
         for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
-            if (d.phase < 5.2F) {
+            // phase sky starts at 5.0 (teal). Below that: no purple dome.
+            if (d.phase < 4.95F) {
                 continue;
             }
             Vec3 c = new Vec3(d.dispX, d.dispY, d.dispZ);
@@ -112,52 +97,66 @@ public final class McsmPhaseSky {
             return;
         }
 
-        // the window: purple from 5.4, gone by 6.05, light pink after
-        float wPurple = ramp(phase, 5.32F, 5.45F) * (1.0F - ramp(phase, 5.90F, 6.05F));
-        float wPink = ramp(phase, 5.90F, 6.20F);
-        float sky = Mth.clamp(wPurple + wPink, 0.0F, 1.0F);
-        // the storm sits far enough away that the sky calms back down
-        float near = 1.0F - Mth.clamp((float) ((best - 1400.0) / 900.0), 0.0F, 1.0F);
+        // ---- phase weights (user strip order) -----------------------------
+        // 1 = phase 5 teal, 2 = 5.4 purple, 3 = 5.5 pink-magenta, 4 = 6+ deep
+        float wTeal = ramp(phase, 4.95F, 5.10F) * (1.0F - ramp(phase, 5.30F, 5.42F));
+        float wPurp = ramp(phase, 5.30F, 5.42F) * (1.0F - ramp(phase, 5.52F, 5.65F));
+        float wPink = ramp(phase, 5.52F, 5.65F) * (1.0F - ramp(phase, 5.92F, 6.10F));
+        float wSix  = ramp(phase, 5.92F, 6.15F);
+        float sky = Mth.clamp(wTeal + wPurp + wPink + wSix, 0.0F, 1.0F);
+        // fall off with distance so far storms don't repaint the whole night
+        float near = 1.0F - Mth.clamp((float) ((best - 900.0) / 1100.0), 0.0F, 1.0F);
         sky *= near;
-        if (sky <= 0.006F) {
+        if (sky <= 0.008F) {
             return;
         }
 
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
 
-        dome(poseStack, collector, cam, bearing, wPurple * near, wPink * near, sky);
-        halo(poseStack, collector, cam, bearing, phase, near);
+        dome(poseStack, collector, cam, bearing, wTeal * near, wPurp * near, wPink * near, wSix * near, sky);
+        glare(poseStack, collector, cam, bearing, phase, near, wTeal, wPurp, wPink, wSix);
     }
 
-    /* ---- the phase vault ------------------------------------------------- */
+    /* ---- the phase vault (soft gradient dome, NOT an opaque ball) -------- */
 
     /**
-     * Glowing purple sky for 5.4-5.9, light pink past 5.9. The gradient runs
-     * zenith -> mid -> horizon and brightens toward the storm's bearing, so
-     * the vault is lit FROM the creature rather than uniformly washed.
+     * Palettes sampled from user strips:
+     *   phase 5 turquoise: deep teal zenith → mint mid → pale aqua horizon
+     *   phase 5.4 purple:  deep indigo zenith → violet mid → mauve horizon
+     *   phase 5.5 pink:    deep magenta zenith → hot pink mid → light pink hor
+     *   phase 6+:          deep purple zenith → magenta mid → rose/dust hor
+     *                      (6+ may carry a faint red/orange belly; 5.5 does NOT)
      */
     private static void dome(PoseStack poseStack, SubmitNodeCollector collector, Vec3 cam,
-            Vec3 bearing, float wPurple, float wPink, float sky) {
-        // purple window (5.4-5.9) — sampled from user phase strips:
-        //   near-black / deep indigo zenith → magenta mid → salmon-pink horizon
-        final float[] pz = { 0.055F, 0.018F, 0.145F };
-        final float[] pm = { 0.420F, 0.090F, 0.520F };
-        final float[] ph = { 0.920F, 0.380F, 0.520F };
-        // past 5.9: light pink / hot-magenta dusk wash from the frames
-        final float[] kz = { 0.380F, 0.160F, 0.360F };
-        final float[] km = { 0.780F, 0.340F, 0.560F };
-        final float[] kh = { 0.980F, 0.620F, 0.700F };
+            Vec3 bearing, float wTeal, float wPurp, float wPink, float wSix, float sky) {
+        // phase 5 — turquoise / teal (glare pase 5 + phase 5 turquoise sky)
+        final float[] tZ = { 0.020F, 0.140F, 0.145F };
+        final float[] tM = { 0.060F, 0.320F, 0.300F };
+        final float[] tH = { 0.280F, 0.520F, 0.460F };
+        // phase 5.4 — purple (phase5sky purple)
+        final float[] pZ = { 0.090F, 0.035F, 0.180F };
+        final float[] pM = { 0.320F, 0.090F, 0.420F };
+        final float[] pH = { 0.620F, 0.280F, 0.480F };
+        // phase 5.5 — pink / magenta / black stack (NO red/orange)
+        final float[] kZ = { 0.180F, 0.040F, 0.220F };
+        final float[] kM = { 0.620F, 0.120F, 0.520F };
+        final float[] kH = { 0.920F, 0.380F, 0.620F };
+        // phase 6+ — deep purple with rose + faint ember belly
+        final float[] sZ = { 0.120F, 0.030F, 0.200F };
+        final float[] sM = { 0.480F, 0.100F, 0.400F };
+        final float[] sH = { 0.780F, 0.320F, 0.380F }; // slight warm/rose, not pure pink
 
-        final float pw = wPurple;
-        final float kw = wPink;
-        final float tot = Math.max(pw + kw, 1.0E-4F);
-        final float[] zen = mix3(pz, kz, pw / tot, kw / tot);
-        final float[] mid = mix3(pm, km, pw / tot, kw / tot);
-        final float[] hor = mix3(ph, kh, pw / tot, kw / tot);
+        final float tw = wTeal, pw = wPurp, kw = wPink, sw = wSix;
+        final float tot = Math.max(tw + pw + kw + sw, 1.0E-4F);
+        final float[] zen = mix4(tZ, pZ, kZ, sZ, tw / tot, pw / tot, kw / tot, sw / tot);
+        final float[] mid = mix4(tM, pM, kM, sM, tw / tot, pw / tot, kw / tot, sw / tot);
+        final float[] hor = mix4(tH, pH, kH, sH, tw / tot, pw / tot, kw / tot, sw / tot);
         final Vec3 bear = bearing;
         final float amp = sky;
 
+        // translucent soft dome — alpha falls off so it FADE-gradients into
+        // the calm sky instead of reading as an opaque ball
         collector.submitCustomGeometry(poseStack, GlowRenderTypes.translucent(WHITE),
                 (pose, consumer) -> {
             for (int j = 0; j < LAT; j++) {
@@ -180,7 +179,6 @@ public final class McsmPhaseSky {
     }
 
     private static double latY(int j) {
-        // -0.35 (below the horizon, so the fog band closes) up to the zenith
         double t = (double) j / LAT;
         return -0.35 + 1.35 * t;
     }
@@ -197,19 +195,21 @@ public final class McsmPhaseSky {
         float[] c = lerp3(zen, mid, smooth(t, 0.05F, 0.55F));
         c = lerp3(c, hor, smooth(t, 0.55F, 0.96F));
 
-        // lit from the storm: the vault glows where the creature stands
+        // lit from the storm bearing — soft, not a hard disc
         float toward = (float) (dir.x * bearing.x + dir.y * bearing.y + dir.z * bearing.z);
-        float glow = Mth.clamp((toward - 0.10F) / 0.90F, 0.0F, 1.0F);
-        glow = glow * glow * 0.55F;
-        c = new float[] { c[0] * (1.0F + glow * 0.9F), c[1] * (1.0F + glow * 0.55F),
-                c[2] * (1.0F + glow * 0.85F) };
+        float glow = Mth.clamp((toward - 0.05F) / 0.95F, 0.0F, 1.0F);
+        glow = glow * glow * 0.45F;
+        c = new float[] { c[0] * (1.0F + glow * 0.85F), c[1] * (1.0F + glow * 0.50F),
+                c[2] * (1.0F + glow * 0.80F) };
 
-        // the PHASE FOG: thickest at the horizon, thinning toward the roof, so
-        // the vault swallows the distance and leaves the zenith readable
-        float fog = 0.62F + 0.38F * smooth(t, 0.20F, 1.00F);
-        float alpha = amp * fog * 250.0F;
-        // fade out below the horizon rather than cutting off
+        // FADE gradient alpha: thickest near horizon + toward storm, soft at
+        // zenith edges so it never reads as an opaque ball
+        float fog = 0.38F + 0.50F * smooth(t, 0.15F, 1.00F);
+        float edge = Mth.clamp((toward + 0.35F) / 1.20F, 0.15F, 1.0F);
+        float alpha = amp * fog * edge * 210.0F;
         alpha *= Mth.clamp((y + 0.34F) / 0.30F, 0.0F, 1.0F);
+        // soften the roof so the dome dissolves into calm sky
+        alpha *= 1.0F - 0.35F * Mth.clamp((y - 0.55F) / 0.45F, 0.0F, 1.0F);
 
         vertex(pose, consumer, cam.add(dir.scale(DOME_R)), u, v,
                 (int) Mth.clamp(c[0] * 255.0F, 0.0F, 255.0F),
@@ -218,77 +218,96 @@ public final class McsmPhaseSky {
                 (int) Mth.clamp(alpha, 0.0F, 255.0F));
     }
 
-    /* ---- the halo and the silhouette stack -------------------------------- */
+    /* ---- soft glare + backdrops glued to storm + sky --------------------- */
 
     /**
-     * Pure colour palette, no heads. Three soft gradient discs in the phase's
-     * own tones, sized to leave ordinary sky around the rim, then the 5.5-5.9
-     * silhouette stack: dark blue over the storm, dark purple laid on top and
-     * wrapped round the back, purple, dark moon-blue, and a black cap that
-     * erases the top of the atmosphere.
+     * Soft fade-gradient glare (user glare pase 5 / glarephase6plus).
+     * NO face, NO three-heads, NO symbol. Only:
+     *   black soft blur core
+     *   teal wash (phase 5)
+     *   purple wash (phase 5.4)
+     *   pink/magenta/black stack (phase 5.5+)
      */
-    private static void halo(PoseStack poseStack, SubmitNodeCollector collector, Vec3 cam,
-            Vec3 bearing, float phase, float near) {
+    private static void glare(PoseStack poseStack, SubmitNodeCollector collector, Vec3 cam,
+            Vec3 bearing, float phase, float near,
+            float wTeal, float wPurp, float wPink, float wSix) {
         Vec3 at = cam.add(bearing.scale(HALO_R));
-
-        float wTeal = ramp(phase, 5.20F, 5.35F) * (1.0F - ramp(phase, 5.38F, 5.50F));
-        float wLav = ramp(phase, 5.32F, 5.45F) * (1.0F - ramp(phase, 5.50F, 5.62F));
-        float wDeep = ramp(phase, 5.48F, 5.60F) * (1.0F - ramp(phase, 5.92F, 6.10F));
-        float wRose = ramp(phase, 5.92F, 6.20F);
-        float wsum = wTeal + wLav + wDeep + wRose;
-        if (wsum < 0.004F) {
+        float a = near * Mth.clamp(wTeal + wPurp + wPink + wSix, 0.0F, 1.0F);
+        if (a <= 0.008F) {
             return;
         }
-        // sampled straight off the frames: 5.2 desaturated teal-grey, 5.4
-        // lavender/periwinkle grey, 5.5-5.9 deep purple-magenta, 6+ rose mauve
-        float hr = (0.451F * wTeal + 0.612F * wLav + 0.596F * wDeep + 0.831F * wRose) / wsum;
-        float hg = (0.573F * wTeal + 0.588F * wLav + 0.239F * wDeep + 0.478F * wRose) / wsum;
-        float hb = (0.588F * wTeal + 0.769F * wLav + 0.741F * wDeep + 0.635F * wRose) / wsum;
 
-        float a = near * Mth.clamp(wsum, 0.0F, 1.0F);
+        // outer soft aura colour from the active phase
+        float hr, hg, hb;
+        float wsum = Math.max(wTeal + wPurp + wPink + wSix, 1.0E-4F);
+        // teal glow, purple glow, pink glow, six glow — from user glare strips
+        hr = (0.18F * wTeal + 0.55F * wPurp + 0.78F * wPink + 0.62F * wSix) / wsum;
+        hg = (0.55F * wTeal + 0.18F * wPurp + 0.22F * wPink + 0.14F * wSix) / wsum;
+        hb = (0.62F * wTeal + 0.82F * wPurp + 0.72F * wPink + 0.70F * wSix) / wsum;
         int r = (int) (hr * 255.0F);
         int g = (int) (hg * 255.0F);
         int b = (int) (hb * 255.0F);
 
-        // thick multi-depth halo: concentric discs at several depths along the
-        // storm ray so the aura has real thickness, still reads from behind,
-        // and leaves ordinary sky around the rim (no heads, pure palette)
+        // multi-depth SOFT gradient discs — long falloff, never opaque ball
         for (int s = 0; s < HALO_DEPTH.length; s++) {
             Vec3 slice = cam.add(bearing.scale(HALO_R + HALO_DEPTH[s]));
             float sc = HALO_SCALE[s];
             float aa = HALO_ALPHA[s];
+            // very wide soft skirt
             disc(poseStack, collector, GlowRenderTypes.glow(GLARE), slice, bearing, 0.0, 0.0,
-                    168.0 * sc, r, g, b, (int) (a * aa * 42.0F));
+                    210.0 * sc, r, g, b, (int) (a * aa * 28.0F));
             disc(poseStack, collector, GlowRenderTypes.glow(GLARE), slice, bearing, 0.0, 0.0,
-                    112.0 * sc, r, g, b, (int) (a * aa * 62.0F));
+                    140.0 * sc, r, g, b, (int) (a * aa * 42.0F));
             disc(poseStack, collector, GlowRenderTypes.glow(GLARE), slice, bearing, 0.0, 0.0,
-                    68.0 * sc, r, g, b, (int) (a * aa * 78.0F));
+                    78.0 * sc, r, g, b, (int) (a * aa * 55.0F));
         }
 
-        // ---- silhouette stack, 5.5 to 5.9 --------------------------------
-        float sil = ramp(phase, 5.46F, 5.58F) * (1.0F - ramp(phase, 5.90F, 6.10F)) * near;
-        if (sil <= 0.006F) {
-            return;
+        // ---- black soft blur core (always, once phase sky is on) ----------
+        disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 0.0,
+                95.0, 4, 3, 8, (int) (a * 160.0F));
+        disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 0.0,
+                55.0, 2, 1, 4, (int) (a * 200.0F));
+
+        // ---- phase 5 teal/green wash --------------------------------------
+        if (wTeal > 0.01F) {
+            float tw = wTeal * near;
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
+                    175.0, 40, 160, 150, (int) (tw * 70.0F));
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
+                    110.0, 30, 200, 180, (int) (tw * 90.0F));
         }
-        // 1. the mod's dark-blue light over the storm, replicated
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
-                132.0, 28, 54, 128, (int) (sil * 96.0F));
-        // 2. a dark purple layer on top of it, carried round the back
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 14.0,
-                122.0, 74, 26, 112, (int) (sil * 104.0F));
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, -8.0,
-                150.0, 62, 20, 96, (int) (sil * 62.0F));
-        // 3. the second pair: purple over, then a dark moon-blue beneath it
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 26.0,
-                96.0, 122, 44, 168, (int) (sil * 92.0F));
-        disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 40.0,
-                104.0, 34, 46, 104, (int) (sil * 88.0F));
-        // 4. the black glow capping the storm - the top of the ATMOSPHERE goes
-        //    out completely, which is why this one is alpha-blended, not additive
-        disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 92.0,
-                190.0, 3, 2, 7, (int) (sil * 225.0F));
-        disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 148.0,
-                240.0, 2, 1, 5, (int) (sil * 185.0F));
+
+        // ---- phase 5.4 purple wash ----------------------------------------
+        if (wPurp > 0.01F) {
+            float pw = wPurp * near;
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
+                    185.0, 140, 40, 210, (int) (pw * 75.0F));
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
+                    120.0, 100, 30, 190, (int) (pw * 95.0F));
+        }
+
+        // ---- phase 5.5 pink / magenta / black stack -----------------------
+        // (also carries into 6 as the silhouette stack)
+        float sil = (wPink + wSix * 0.85F) * near;
+        if (sil > 0.01F) {
+            // dark-blue over storm
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
+                    150.0, 28, 54, 128, (int) (sil * 80.0F));
+            // dark purple wrap
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 12.0,
+                    135.0, 90, 28, 130, (int) (sil * 95.0F));
+            // hot pink / magenta mid
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
+                    100.0, 220, 60, 180, (int) (sil * 70.0F));
+            // moon-blue fringe
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 30.0,
+                    115.0, 34, 46, 120, (int) (sil * 75.0F));
+            // black atmospheric top (soft fade, not a hard disc)
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 70.0,
+                    200.0, 3, 2, 7, (int) (sil * 140.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 120.0,
+                    260.0, 2, 1, 5, (int) (sil * 100.0F));
+        }
     }
 
     /* ---- primitives ------------------------------------------------------- */
@@ -323,8 +342,13 @@ public final class McsmPhaseSky {
                 a[2] + (b[2] - a[2]) * t };
     }
 
-    private static float[] mix3(float[] a, float[] b, float wa, float wb) {
-        return new float[] { a[0] * wa + b[0] * wb, a[1] * wa + b[1] * wb, a[2] * wa + b[2] * wb };
+    private static float[] mix4(float[] a, float[] b, float[] c, float[] d,
+            float wa, float wb, float wc, float wd) {
+        return new float[] {
+                a[0] * wa + b[0] * wb + c[0] * wc + d[0] * wd,
+                a[1] * wa + b[1] * wb + c[1] * wc + d[1] * wd,
+                a[2] * wa + b[2] * wb + c[2] * wc + d[2] * wd
+        };
     }
 
     private static void vertex(Pose pose, VertexConsumer consumer, Vec3 at,

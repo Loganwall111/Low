@@ -78,7 +78,7 @@ public final class McsmStormBlob {
             1.55F, 1.38F, 1.22F, 1.08F, 1.18F, 1.32F, 1.48F
     };
     private static final float[] SHELL_ALPHA = {
-            0.55F, 0.70F, 0.85F, 1.00F, 0.80F, 0.60F, 0.40F
+            0.28F, 0.40F, 0.55F, 0.70F, 0.52F, 0.35F, 0.20F
     };
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
@@ -195,18 +195,18 @@ public final class McsmStormBlob {
 
             float a = distFade;
 
-            // phase colour weights — match the frame decks
-            float wBlue = ramp(phase, 3.95F, 4.2F) * (1.0F - ramp(phase, 4.7F, 5.15F));
-            float wTurq = ramp(phase, 4.5F, 4.95F) * (1.0F - ramp(phase, 5.25F, 5.45F));
-            // 5.0 soft violet → 5.4 hard purple → 5.5–5.9 pinkish-violet peak
-            float wViolet = ramp(phase, 5.0F, 5.35F) * (1.0F - ramp(phase, 5.95F, 6.25F));
-            float wHard = ramp(phase, 5.35F, 5.55F) * (1.0F - ramp(phase, 5.95F, 6.25F)); // 5.4–5.9 punch
-            float wPurp = ramp(phase, 5.95F, 6.3F);
-            float wPink = ramp(phase, 6.25F, 6.9F); // post-cataclysm light pink
+            // 1.9.153 phase colour weights — user strips:
+            //   5.0 teal/green, 5.4 purple, 5.5 pink-magenta (was SKIPPED),
+            //   6+ deep purple. NO face backdrop. Black blur core always.
+            float wBlue = ramp(phase, 3.95F, 4.2F) * (1.0F - ramp(phase, 4.7F, 5.05F));
+            float wTurq = ramp(phase, 4.85F, 5.10F) * (1.0F - ramp(phase, 5.30F, 5.42F)); // phase 5 green
+            float wViolet = ramp(phase, 5.30F, 5.42F) * (1.0F - ramp(phase, 5.52F, 5.65F)); // 5.4 purple
+            float wHard = ramp(phase, 5.52F, 5.65F) * (1.0F - ramp(phase, 5.92F, 6.10F)); // 5.5 pink
+            float wPurp = ramp(phase, 5.92F, 6.15F); // 6+ deep purple
+            float wPink = ramp(phase, 6.20F, 6.9F); // post light pink
             float wCore = ramp(phase, 4.0F, 4.3F);
-            // body fringe 5.5+ (plain palette, no face — the wide halo +
-            // silhouette stack live sky-glued in McsmPhaseSky)
-            float wFace = ramp(phase, 5.45F, 5.75F);
+            // NO face overlay — user killed the face-painted backdrop
+            float wFace = 0.0F;
             float wShell = ramp(phase, 3.95F, 4.25F);
             float wMouth = ramp(phase, 3.9F, 4.3F);
 
@@ -243,7 +243,7 @@ public final class McsmStormBlob {
                     // at the front face, closer to cam when looking from behind)
                     Vec3 slice = at.add(view.scale(depth));
                     double r = baseR * SHELL_SCALE[s];
-                    int alpha = (int) (a * wShell * SHELL_ALPHA[s] * 125.0F);
+                    int alpha = (int) (a * wShell * SHELL_ALPHA[s] * 85.0F);
                     // outer slices use the soft glare gradient; mid slices
                     // use the phase backdrop so the body colour bleeds through
                     Identifier tex = (s == 0 || s == SHELL_DEPTH.length - 1) ? GLARE
@@ -296,16 +296,8 @@ public final class McsmStormBlob {
                         baseR * 0.72, 255, 255, 255, (int) (a * wCore * 240.0F));
             }
 
-            // body palette fringe 5.5+ — dark-blue then dark-purple over it,
-            // plain soft gradient, NO face/heads. The wide sky-glued halo and
-            // the full silhouette stack (purple + moon-blue + black roof) are
-            // drawn by McsmPhaseSky behind this shell.
-            if (key == mainKey && wFace > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
-                        baseR * 1.14, 26, 52, 124, (int) (a * wFace * 92.0F));
-                quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
-                        baseR * 1.02, 78, 28, 118, (int) (a * wFace * 76.0F));
-            }
+            // 1.9.153: face-painted backdrop REMOVED. Silhouette stack + phase
+            // glare live only in McsmPhaseSky (sky-glued, moves with storm).
             if (wBlue > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.glow(BLUE4), at, view,
                         baseR * 0.90, 190, 215, 255, (int) (a * wBlue * 230.0F));
