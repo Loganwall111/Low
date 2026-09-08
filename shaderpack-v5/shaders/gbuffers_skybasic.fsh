@@ -149,7 +149,7 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
         float gapmask = smoothstep(0.48, 0.62, fbm3(vec3(uv * 0.33, float(i) * 9.0)));
         float nest = fbm3(vec3(uv * 3.4 + 17.0, float(i) * 5.7));
         float th = (i < 3) ? 0.62 : ((i < 7) ? 0.50 : 0.44);
-        float ceilBonus = (i == 8) ? 0.25 : 0.0;
+        float ceilBonus = 0.0; // no cube ceiling
         float a = smoothstep(th, th + 0.08, cov) * gapmask * pres
                 * (0.70 + 0.30 * smoothstep(0.35, 0.75, nest))
                 + ceilBonus * smoothstep(0.35, 0.6, cov) * pres;
@@ -163,7 +163,7 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
         } else {
             a *= 0.85;
         }
-        a = min(a, 0.92) * (1.0 - acc);
+        a = min(a, 0.22) * (1.0 - acc); // 1.9.168 soft wisps not cube decks
         float core = smoothstep(th - 0.12, th + 0.34, cov);
         vec3 dc = mix(shadeCol, litCol, min(mix(0.55, 0.82, mirror) + 0.45 * core, 1.0));
         dc *= (0.97 + 0.05 * float(i));
@@ -202,18 +202,19 @@ vec3 storyCalmSky(vec3 dirS) {
     float nite = night * (1.0 - midn);
     // 1.9.153: day lavender, midnight deep navy (user strips)
     // calm night = DEEP BLUE only (never purple/magenta/lavender)
-    vec3 zen = day  * vec3(0.32, 0.42, 0.70)
-             + dusk * vec3(0.188, 0.329, 0.376)
-             + nite * vec3(0.04, 0.08, 0.28)
-             + midn * vec3(0.010, 0.025, 0.200);
-    vec3 mid = day  * vec3(0.42, 0.50, 0.74)
-             + dusk * vec3(0.863, 0.353, 0.157)
-             + nite * vec3(0.08, 0.14, 0.42)
-             + midn * vec3(0.03, 0.07, 0.38);
-    vec3 hor = day  * vec3(0.52, 0.56, 0.76)
-             + dusk * vec3(0.494, 0.098, 0.165)
-             + nite * vec3(0.12, 0.22, 0.55)
-             + midn * vec3(0.08, 0.18, 0.62);
+    // 1.9.168 fit to MCSM stills: soft day blue, deep navy night (never purple calm)
+    vec3 zen = day  * vec3(0.22, 0.34, 0.62)
+             + dusk * vec3(0.16, 0.22, 0.38)
+             + nite * vec3(0.02, 0.05, 0.22)
+             + midn * vec3(0.005, 0.012, 0.14);
+    vec3 mid = day  * vec3(0.34, 0.46, 0.72)
+             + dusk * vec3(0.75, 0.32, 0.18)
+             + nite * vec3(0.04, 0.09, 0.34)
+             + midn * vec3(0.015, 0.04, 0.28);
+    vec3 hor = day  * vec3(0.48, 0.56, 0.74)
+             + dusk * vec3(0.90, 0.42, 0.22)
+             + nite * vec3(0.06, 0.14, 0.48)
+             + midn * vec3(0.04, 0.10, 0.42);
 
     // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
@@ -240,9 +241,9 @@ vec3 storyCalmSky(vec3 dirS) {
     col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 0.0);
     col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.35, 1.0, 1.0);
     float up = smoothstep(0.55, 0.95, ty);
-    float sticker = fbm3(vec3(dirS.xz * 3.5, 0.7)) * fbm3(vec3(dirS.xz * 7.0 + 4.1, 1.3));
-    sticker = smoothstep(0.48, 0.78, sticker) * up * (0.28 * day + 0.18 * night); // softer, less cube-like
-    col = mix(col, mix(litC, shadeC, 0.35), sticker * 0.85);
+    // 1.9.168: cube sticker decks wiped — continuous gradient only (MCSM stills)
+    float sticker = 0.0;
+    col = col;
 
     col = mix(col, hor * 0.5, smoothstep(0.0, -0.3, ty));
     float lum = dot(col, vec3(0.299, 0.587, 0.114));

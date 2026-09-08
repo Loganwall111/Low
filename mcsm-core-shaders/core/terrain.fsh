@@ -163,29 +163,7 @@ void main() {
         return;
     }
 
-    // ---- MCSM faked moving shadows (spec §4, no depth map) ----
-    // 26.2 terrain carries no Normal attribute, so reconstruct the face
-    // normal per pixel from the world-position derivatives: constant on each
-    // axis-aligned block face => crisp, blocky shading by construction.
-    // (base sun/moon key + cloud shadows already applied above for every
-    //  frame; the storm pass only adds its own occlusion on top.)
-    vec3 n = nrm;
-    vec3 camWorld = camW;
-
-    // ---- MCSM storm occlusion: the ground under the storm column goes
-    // dark, ringed by a faint rim of its glare colour (the pack's "shadow on
-    // the ground", no depth map). Strongest on up-facing faces.
-    vec4 mcsmAim = mcsm_boss_dir(camWorld);
-    if (mcsmAim.w > 0.5) {
-        vec3 toStorm = mcsmWorldPos - mcsmAim.xyz;
-        toStorm.y = 0.0;
-        float sdist = length(toStorm);
-        float column = 1.0 - 0.48 * exp(-pow(sdist / 95.0, 2.0));
-        float rim = 0.18 * exp(-pow(max(sdist - 130.0, 0.0) / 45.0, 2.0)) * n.y;
-        float upf = clamp(0.4 + 0.6 * n.y, 0.0, 1.0);
-        color.rgb *= mix(1.0, column, upf);
-        color.rgb += mcsm_blob_color(mcsmP, mcsm_clock(GameTime)) * rim * 0.35;
-    }
+    // 1.9.168: ground glare rim wiped with halo system
 
     // ---- multi-phase fog: colour blend + "denser teal" density layer ----
     vec3 fogRGB = mcsm_fog_color(mcsmP, FogColor.rgb);

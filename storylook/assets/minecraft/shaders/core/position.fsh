@@ -94,12 +94,12 @@ vec3 mcsm_storm_dome(float up, float p) {
     // still so looking straight up reads black. Fit score over 32 sky cells:
     // mean |dLum| 0.0324 -> 0.0279, mean |dHue| 0.4529 -> 0.396.
     // REVERT by restoring the "was" line if the pinker 1.9.96 sky is preferred.
-    d = mix(d, mcsm_col(up, vec3(0.067, 0.022, 0.134), vec3(0.099, 0.032, 0.150), vec3(0.505, 0.205, 0.580)),
-            mcsm_ramp(p, 5.42, 5.52));                                                                // 5.5 violet-pink, near-black overhead (1.9.99 fit to reference)
+    d = mix(d, mcsm_col(up, vec3(0.055, 0.015, 0.120), vec3(0.180, 0.045, 0.220), vec3(0.720, 0.280, 0.480)),
+            mcsm_ramp(p, 5.42, 5.52)); // 1.9.168: pink horizon band like ACTIVE still                                                                // 5.5 violet-pink, near-black overhead (1.9.99 fit to reference)
     // 5.7-5.9 keeps the user's "dark pink end" but takes a milder 1.3x blue so
     // the sky does not snap back to pink the moment phase crosses 5.7.
-    d = mix(d, mcsm_col(up, vec3(0.108, 0.032, 0.151), vec3(0.238, 0.076, 0.270), vec3(0.428, 0.152, 0.452)),
-            mcsm_ramp(p, 5.70, 5.90));                                                                // 1.9.99 5.7-5.9: dark violet-pink end
+    d = mix(d, mcsm_col(up, vec3(0.080, 0.020, 0.140), vec3(0.280, 0.070, 0.300), vec3(0.650, 0.220, 0.420)),
+            mcsm_ramp(p, 5.70, 5.90)); // 1.9.168 pink end                                                                // 1.9.99 5.7-5.9: dark violet-pink end
     d = mix(d, mcsm_col(up, vec3(0.099, 0.067, 0.108), vec3(0.162, 0.108, 0.159), vec3(0.265, 0.170, 0.207)),
             mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 grey + bit of purple
     // MCSM 1.9.81: retargeted from a REAL rendered frame (Screenshot
@@ -256,23 +256,10 @@ void main() {
               * vec3(0.82, 0.66, 1.0) * 0.46;
     }
 
-    // The glare blob: follows the storm, punches a dark core, rims it.
-    vec3 camWorld = vec3(CameraBlockPos) + CameraOffset;
-    vec4 aim = mcsm_boss_dir(camWorld);
-    // MCSM 1.9.90: the sky-dome blob now lives ONLY in its r1 window,
-    // 5.10-5.90 (INSTRUCTIONS.md phase table: "giant colour-shifting centre
-    // blob, 5.1-5.9"). Below that the phase-4 light-blue halo quad and the
-    // turquoise sky carry the look; above it the purple/crimson rear-fog
-    // quads and the storm dome do. The storm-attached backdrop quads
-    // (McsmStormBackdropPatch) own the mass now -- a dome-wide blob at every
-    // phase was reading as "a fog in the sky", the user's standing complaint.
-    if (aim.w > 0.5 && mcsmP >= 5.10 && mcsmP <= 5.90) {
-        vec4 blob = mcsm_blob(worldDir, aim.xyz, mcsmP, clock, dome);
-        // 1.9.76: blob.w is now a full occlusion factor (already includes its
-        // own strength curve), so it multiplies the dome directly. The extra
-        // 0.85 that used to be applied here is folded into mcsm_blob().
-        dome = dome * (1.0 - blob.w) + blob.rgb;
-    }
+    // 1.9.168 GLARE WIPE: mcsm_blob (dotted/oval halo on sky dome) DISABLED.
+    // User rejected floating circle + dots + line mesh. Phase sky colour still
+    // comes from mcsm_storm_dome below; thick 3D glare rebuilds later from stills.
+    // (aim carrier still written by Java for beams/fog — unused here.)
 
     // Bodies: tinted briefly at the start, then fade to nothing - no sun or
     // moon may shine through the storm dome (user: "being above the

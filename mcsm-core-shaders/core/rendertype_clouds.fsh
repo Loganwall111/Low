@@ -51,7 +51,7 @@ void main() {
             vec4 aimC = mcsm_boss_dir(vec3(CameraBlockPos) + CameraOffset);
             if (aimC.w > 0.5) {
                 vec3 wdC = normalize(transpose(mat3(ModelViewMat)) * normalize(mcsmCloudRay));
-                float cover = mcsm_mass_cover(wdC, aimC.xyz, mcsmP);
+                float cover = 0.0; // 1.9.168 glare wipe — no mass punch
                 color.rgb *= (1.0 - cover);
                 color.a   *= (1.0 - cover * 0.94);
             }

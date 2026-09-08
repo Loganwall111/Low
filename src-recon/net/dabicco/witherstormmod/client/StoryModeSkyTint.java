@@ -9,9 +9,9 @@ import net.minecraft.util.Mth;
  */
 public final class StoryModeSkyTint {
    // skyday strip: soft lavender-blue (NOT orange daytime)
-   private static final float[] SKY_DAY = new float[]{0.30F, 0.38F, 0.66F}; // MCSM soft blue day
+   private static final float[] SKY_DAY = new float[]{0.26F, 0.36F, 0.64F}; // MCSM soft day blue // MCSM soft blue day
    // midnight strip: deep navy
-   private static final float[] SKY_NIGHT = new float[]{0.010F, 0.025F, 0.220F}; // deep navy midnight
+   private static final float[] SKY_NIGHT = new float[]{0.008F, 0.018F, 0.160F}; // deep navy still // deep navy midnight
    // sunset strip only at dusk
    private static final float[] SKY_DUSK = new float[]{0.494F, 0.220F, 0.180F};
    private static final float[] SKY_DAWN = new float[]{0.620F, 0.420F, 0.380F};
@@ -21,7 +21,7 @@ public final class StoryModeSkyTint {
    private static final float[] LIGHT_DAWN = new float[]{1.0F, 0.86F, 0.82F};
    private static final float[] HORIZON_DAY = new float[]{0.48F, 0.53F, 0.70F};
    private static final float[] HORIZON_DUSK = new float[]{0.494F, 0.098F, 0.165F};
-   private static final float[] HORIZON_NIGHT = new float[]{0.06F, 0.18F, 0.70F};
+   private static final float[] HORIZON_NIGHT = new float[]{0.04F, 0.12F, 0.52F};
    private static final float[] HORIZON_DAWN = new float[]{0.860F, 0.560F, 0.480F};
 
    private StoryModeSkyTint() {
