@@ -14,7 +14,7 @@ import java.util.Properties;
  * the counterclockwise spiral pin). Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.108";
+    public static final String BUILD_VERSION = "1.9.169";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -32,11 +32,11 @@ public final class McsmExtrasConfig {
     /** Prefer the OG/MCSM body look (Obsidian Gloss + trailer model path). */
     public static boolean ogCemModels = true;
     /** Apparent size of the smudge/halo quads behind the storm (0.5 = new). */
-    public static double  smudgeScale = 0.5;
+    public static double  smudgeScale = 0.72; // 1.9.169 soft skirt
 
     // ---- MCSM 1.9.98 batch (phase 29/30 user orders, 2026-09-04) ----------
     /** Storm glare mass scale; read by the blob carrier every frame. */
-    public static double  glareSize = 0.58;
+    public static double  glareSize = 0.92; // 1.9.169 MCSM thick volume default
     /** Mod-side aurora borealis at night (cold-biome biased). */
     public static boolean auroraEnabled = true;
     /** Full death cinematic: distortion -> white cracks -> implosion flash ->
@@ -171,10 +171,14 @@ public final class McsmExtrasConfig {
             smudgeScale        = dbl(p, "smudge_scale", smudgeScale);
             glareSize          = dbl(p, "glare_size", glareSize);
             String cv = p.getProperty("config_version");
-            if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
-                // 1.9.106/early-1.9.107 saved the overlarge test value.
-                // Migrate only that exact legacy default; user-picked slider values remain intact.
-                glareSize = 0.58;
+            // Migrate known legacy defaults only; user-picked slider values stay.
+            if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
+                if (Math.abs(glareSize - 1.18) < 0.001 || Math.abs(glareSize - 0.58) < 0.001) {
+                    glareSize = 0.92; // 1.9.169 MCSM thick volume
+                }
+                if (Math.abs(smudgeScale - 0.5) < 0.001) {
+                    smudgeScale = 0.72;
+                }
             }
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
             shaderPackGate     = bool(p, "shader_pack_gate", shaderPackGate);

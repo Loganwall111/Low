@@ -24,7 +24,7 @@ import net.minecraft.world.phys.Vec3;
  *
  * 1.9.168 glare wipe: NO shell plates, NO halo quads, NO nested spheres.
  * Only MCSM mouth teeth (dashed U) + clear blue tractor beams remain.
- * Glare volume will be rebuilt from stills later.
+ * Thick MCSM glare volume lives in McsmPhaseSky (soft billboard stack, no mesh).
  *
  * Phase-only left/right sway is shared with McsmPhaseSky.swayOffset so
  * the body detail never slides off the volume.
