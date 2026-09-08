@@ -16,7 +16,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Devouring Storms 1.9.153 — phase sky + soft glare glued to storm + sky.
+ * Devouring Storms 1.9.154 — phase sky + soft glare glued to storm + sky.
  *
  * Calm night/day NEVER live here. Purple/pink/teal vaults are PHASE ONLY:
  *   phase 5.0–5.35  teal / turquoise sky  (user "phase 5 turquoise sky")
@@ -29,6 +29,8 @@ import net.minecraft.world.phys.Vec3;
  *   green/teal wash for phase 5
  *   purple wash for phase 5.4
  *   pink/magenta/black stack for phase 5.5+
+ *   1.9.154: extremely dark blueish-black silhouette wraps bottom → sides →
+ *            corner → entire upper body, layered OVER purple + blue halos
  *
  * The glare is a SOFT FADE GRADIENT (not an opaque ball), multi-depth, glued
  * to the storm bearing and the sky so it moves with both.
@@ -288,25 +290,75 @@ public final class McsmPhaseSky {
 
         // ---- phase 5.5 pink / magenta / black stack -----------------------
         // (also carries into 6 as the silhouette stack)
+        // Layer order (bottom → top): purple/magenta → blue silhouette →
+        // extremely dark blue-black body silhouette wrapping sides + upper body.
         float sil = (wPink + wSix * 0.85F) * near;
         if (sil > 0.01F) {
-            // dark-blue over storm
-            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
-                    150.0, 28, 54, 128, (int) (sil * 80.0F));
-            // dark purple wrap
-            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 12.0,
-                    135.0, 90, 28, 130, (int) (sil * 95.0F));
-            // hot pink / magenta mid
+            // 1) purple / magenta halo (under the silhouettes)
             disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
                     100.0, 220, 60, 180, (int) (sil * 70.0F));
-            // moon-blue fringe
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 12.0,
+                    135.0, 90, 28, 130, (int) (sil * 95.0F));
+
+            // 2) blue silhouette next to the purple
+            disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 0.0,
+                    150.0, 28, 54, 128, (int) (sil * 80.0F));
             disc(poseStack, collector, GlowRenderTypes.glow(GLARE), at, bearing, 0.0, 30.0,
                     115.0, 34, 46, 120, (int) (sil * 75.0F));
-            // black atmospheric top (soft fade, not a hard disc)
+
+            // 3) EXTREMELY dark blueish-black silhouette — layered OVER purple
+            //    and blue. Wraps the BOTTOM of the halo, up the SIDES, around
+            //    the CORNER, and covers the entire UPPER BODY so the storm
+            //    reads as a black silhouette next to the purple + blue stack.
+            //    Colour: near-black with a cold blue cast (not pure #000).
+            final int dbR = 2, dbG = 4, dbB = 14;   // extreme dark blue-black
+            final int nbR = 1, nbG = 2, nbB = 8;    // near-black core
+            final int mbR = 4, mbG = 8, mbB = 22;   // deep moon-black rim
+
+            // bottom of the halo (under the body)
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, -55.0,
+                    175.0, dbR, dbG, dbB, (int) (sil * 210.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, -95.0,
+                    210.0, nbR, nbG, nbB, (int) (sil * 185.0F));
+
+            // left + right flanks (the "other side" of the purple/magenta halo)
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, -95.0, 10.0,
+                    145.0, dbR, dbG, dbB, (int) (sil * 200.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 95.0, 10.0,
+                    145.0, dbR, dbG, dbB, (int) (sil * 200.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, -130.0, 40.0,
+                    125.0, nbR, nbG, nbB, (int) (sil * 170.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 130.0, 40.0,
+                    125.0, nbR, nbG, nbB, (int) (sil * 170.0F));
+
+            // corner wrap — bottom-side into upper body
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, -70.0, -35.0,
+                    120.0, dbR, dbG, dbB, (int) (sil * 195.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 70.0, -35.0,
+                    120.0, dbR, dbG, dbB, (int) (sil * 195.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, -55.0, 55.0,
+                    110.0, mbR, mbG, mbB, (int) (sil * 180.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 55.0, 55.0,
+                    110.0, mbR, mbG, mbB, (int) (sil * 180.0F));
+
+            // entire UPPER BODY black silhouette (centred, layered on top)
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 45.0,
+                    160.0, dbR, dbG, dbB, (int) (sil * 230.0F));
             disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 70.0,
-                    200.0, 3, 2, 7, (int) (sil * 140.0F));
-            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 120.0,
-                    260.0, 2, 1, 5, (int) (sil * 100.0F));
+                    135.0, nbR, nbG, nbB, (int) (sil * 245.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 95.0,
+                    115.0, nbR, nbG, nbB, (int) (sil * 235.0F));
+
+            // atmospheric black roof (eats the top of the sky around the body)
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 130.0,
+                    220.0, 1, 1, 5, (int) (sil * 200.0F));
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 175.0,
+                    280.0, 1, 1, 4, (int) (sil * 155.0F));
+
+            // soft blue-black outer skirt so the silhouette dissolves into
+            // the purple/blue layers instead of cutting a hard edge
+            disc(poseStack, collector, GlowRenderTypes.translucent(GLARE), at, bearing, 0.0, 20.0,
+                    195.0, mbR, mbG, mbB, (int) (sil * 95.0F));
         }
     }
 

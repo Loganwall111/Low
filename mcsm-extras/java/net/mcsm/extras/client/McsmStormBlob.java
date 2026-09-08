@@ -296,8 +296,28 @@ public final class McsmStormBlob {
                         baseR * 0.72, 255, 255, 255, (int) (a * wCore * 240.0F));
             }
 
-            // 1.9.153: face-painted backdrop REMOVED. Silhouette stack + phase
-            // glare live only in McsmPhaseSky (sky-glued, moves with storm).
+            // 1.9.154: body-local extremely dark blue-black silhouette for phase
+            // 5.5+ — layered over purple/blue plates so the upper body reads as
+            // a black silhouette next to the purple + blue stack (matches the
+            // sky-glued wrap in McsmPhaseSky). Face backdrop stays removed.
+            if (key == mainKey && wHard > 0.004F) {
+                float ws = a * wHard;
+                // outer dark-blue-black wrap (sides + bottom of body)
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.05)), view,
+                        baseR * 1.12, 6, 10, 24, (int) (ws * 195.0F));
+                // dense upper-body black silhouette mass
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.08)), view,
+                        baseR * 0.95, 3, 5, 14, (int) (ws * 235.0F));
+                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK),
+                        at.add(view.scale(bodyR * 0.12)), view,
+                        baseR * 0.78, 2, 3, 10, (int) (ws * 245.0F));
+                // cold blue-black fringe so it sits "next to" the blue silhouette
+                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4),
+                        at.add(view.scale(bodyR * 0.02)), view,
+                        baseR * 1.05, 8, 16, 40, (int) (ws * 55.0F));
+            }
             if (wBlue > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.glow(BLUE4), at, view,
                         baseR * 0.90, 190, 215, 255, (int) (a * wBlue * 230.0F));
