@@ -10,14 +10,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Beam motes: denser, larger, and synchronized upward climb so the whole
- * beam feels like one rising flow (user request) rather than staggered dots.
+ * Beam motes: fine translucent sparkles inside the tractor beam (MCSM ref).
+ * Small size, soft alpha, synchronized upward climb. NOT chunky cubes.
  */
 public final class BeamMoteSpawner {
-    private static final float SPAWN_CHANCE = 0.92F;
-    private static final int SPAWNS_PER_TICK = 14;
-    /** Shared climb so every mote in a beam rises at the same rate. */
-    private static final double SYNC_CLIMB = 0.0145;
+    private static final float SPAWN_CHANCE = 0.78F;
+    private static final int SPAWNS_PER_TICK = 8;
+    /** Shared climb so sparkles rise as one flow. */
+    private static final double SYNC_CLIMB = 0.011;
 
     private BeamMoteSpawner() {
     }
@@ -57,7 +57,7 @@ public final class BeamMoteSpawner {
                 BeamMoteParticle.pendingAxisT = axisT;
                 BeamMoteParticle.pendingClimbPerTick = SYNC_CLIMB; // synchronized
                 BeamMoteParticle.pendingBaseRadius = radius;
-                BeamMoteParticle.pendingBeamScale = beamScale * 1.55F; // larger dots
+                BeamMoteParticle.pendingBeamScale = beamScale; // natural size, no inflate
                 BeamMoteParticle.pendingR = br;
                 BeamMoteParticle.pendingG = bg;
                 BeamMoteParticle.pendingB = bb;

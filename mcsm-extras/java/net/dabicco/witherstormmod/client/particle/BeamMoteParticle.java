@@ -58,8 +58,8 @@ public class BeamMoteParticle extends SingleQuadParticle {
       this.gravity = 0.0F;
       this.hasPhysics = false;
       this.lifetime = 400;
-      // larger motes (user: resize dots bigger + denser)
-      this.baseSize = (0.12F + this.random.nextFloat() * 0.10F) * Math.max(this.beamScale, 0.35F);
+      // MCSM ref: fine translucent sparkles inside the beam (NOT chunky cubes)
+      this.baseSize = (0.032F + this.random.nextFloat() * 0.028F) * Math.max(this.beamScale, 0.22F);
       this.quadSize = this.baseSize;
       this.rCol = pr;
       this.gCol = pg;
@@ -118,7 +118,7 @@ public class BeamMoteParticle extends SingleQuadParticle {
                   this.setPos(p.x, p.y, p.z);
                   float in = Math.min(this.age / 5.0F, 1.0F);
                   float out = this.axisT < 0.62 ? 1.0F : (float)(1.0 - (this.axisT - 0.62) / 0.3);
-                  this.alpha = 0.9F * in * Math.max(out, 0.0F);
+                  this.alpha = 0.42F * in * Math.max(out, 0.0F); // translucent sparkle, not solid cubes
                   this.quadSize = this.baseSize * (1.0F - 0.3F * (float)this.axisT);
                }
             }

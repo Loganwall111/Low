@@ -23,9 +23,9 @@ public final class TractorBeamRenderer {
    private static final float EXTEND_BELOW = 6.0F;
    private static final Vector3f EYE_IN_PART = new Vector3f(-0.3125F, -0.125F, -0.753125F);
    private static final Map<Integer, Vec3> EYE_WORLD = new HashMap<>();
-   private static final int MOTE_COUNT = 72;
-   private static final float MOTE_CLIMB = 0.0145F;
-   private static final float MOTE_SIZE = 0.28F;
+   private static final int MOTE_COUNT = 40;
+   private static final float MOTE_CLIMB = 0.0095F;
+   private static final float MOTE_SIZE = 0.07F; // fine sparkle
    private static final float[] MOTE_COLOUR = new float[]{0.62F, 0.28F, 0.95F};
 
    private static int beamR() {
@@ -178,7 +178,7 @@ public final class TractorBeamRenderer {
                   float fade = Math.min(1.0F, t * 12.0F) * Math.min(1.0F, (1.0F - t) * 6.0F);
                   int a = (int)(alpha * fade * 230.0F);
                   if (a > 2) {
-                     float s = 0.16F * beamScale * (1.0F - 0.3F * t);
+                     float s = 0.055F * beamScale * (1.0F - 0.3F * t); // fine sparkle
                      moteCube(pose, consumer, (float)px, (float)py, (float)pz, s, a);
                   }
                }
