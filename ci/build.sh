@@ -331,6 +331,11 @@ FX=/tmp/mcsm-fx
 rm -rf "$FX" && mkdir -p "$FX/cls"
 ( cd "$FX/cls" && unzip -o -q "$BASE" )
 cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
+# 1.9.167: 26.2 loads position/block, not sky/terrain. Alias so vivid grade+shadows actually bind.
+CS="$FX/cls/assets/minecraft/shaders/core"
+if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f "$CS/terrain.vsh" "$CS/block.vsh"; fi
+if [ -f "$CS/sky.fsh" ]; then cp -f "$CS/sky.fsh" "$CS/position.fsh"; cp -f "$CS/sky.vsh" "$CS/position.vsh"; fi
+echo "[build] 26.2 shader aliases: block<-terrain position<-sky"
 cp -r jar-overrides/* "$FX/cls/"
 # nullglob guard: on a failed javac the class dir is empty and a bare
 # `cp -r /tmp/mcsm-build/*` would die under set -e (that bug ate the jar).
@@ -604,6 +609,10 @@ python3 ci/make_glare.py "$FX/cls/assets/dabywitherstormmod/textures/misc/storm_
 python3 ci/make_stormface.py "$FX/cls/assets/dabywitherstormmod/textures/misc/storm_face.png" \
   || echo "::warning title=build::storm face overlay texture generation failed"
 
+if [ ! -f "$FX/cls/assets/minecraft/shaders/core/position.fsh" ] || [ ! -f "$FX/cls/assets/minecraft/shaders/core/block.fsh" ]; then
+  echo "::error title=jar audit::26.2 shader aliases missing (position/block) — vivid light would never load"
+  AUDIT_FAIL=1
+fi
 if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/shaders/core/position.fsh" ]; then
   echo "::error title=jar audit::built-in Story Look pack missing from the jar"
   AUDIT_FAIL=1

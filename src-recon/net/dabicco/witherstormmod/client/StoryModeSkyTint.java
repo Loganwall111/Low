@@ -9,19 +9,19 @@ import net.minecraft.util.Mth;
  */
 public final class StoryModeSkyTint {
    // skyday strip: soft lavender-blue (NOT orange daytime)
-   private static final float[] SKY_DAY = new float[]{0.55F, 0.58F, 0.92F};
+   private static final float[] SKY_DAY = new float[]{0.30F, 0.38F, 0.66F}; // MCSM soft blue day
    // midnight strip: deep navy
-   private static final float[] SKY_NIGHT = new float[]{0.015F, 0.030F, 0.220F}; // deep navy, never purple
+   private static final float[] SKY_NIGHT = new float[]{0.010F, 0.025F, 0.220F}; // deep navy midnight
    // sunset strip only at dusk
    private static final float[] SKY_DUSK = new float[]{0.494F, 0.220F, 0.180F};
    private static final float[] SKY_DAWN = new float[]{0.620F, 0.420F, 0.380F};
-   private static final float[] LIGHT_DAY = new float[]{1.0F, 0.98F, 1.0F};
-   private static final float[] LIGHT_NIGHT = new float[]{0.42F, 0.52F, 0.95F};
+   private static final float[] LIGHT_DAY = new float[]{0.92F, 0.90F, 0.85F}; // warm key, not white blast
+   private static final float[] LIGHT_NIGHT = new float[]{0.25F, 0.38F, 0.90F};
    private static final float[] LIGHT_DUSK = new float[]{1.0F, 0.72F, 0.52F};
    private static final float[] LIGHT_DAWN = new float[]{1.0F, 0.86F, 0.82F};
-   private static final float[] HORIZON_DAY = new float[]{0.78F, 0.72F, 0.95F};
+   private static final float[] HORIZON_DAY = new float[]{0.48F, 0.53F, 0.70F};
    private static final float[] HORIZON_DUSK = new float[]{0.494F, 0.098F, 0.165F};
-   private static final float[] HORIZON_NIGHT = new float[]{0.12F, 0.28F, 0.82F};
+   private static final float[] HORIZON_NIGHT = new float[]{0.06F, 0.18F, 0.70F};
    private static final float[] HORIZON_DAWN = new float[]{0.860F, 0.560F, 0.480F};
 
    private StoryModeSkyTint() {
@@ -72,7 +72,7 @@ public final class StoryModeSkyTint {
    }
 
    public static float fogStrength() {
-      return DabyWSClientConfig.storyModeSky ? Mth.clamp((float)DabyWSClientConfig.storyModeFogStrength * 0.55F, 0.0F, 0.55F) : 0.0F;
+      return DabyWSClientConfig.storyModeSky ? Mth.clamp((float)DabyWSClientConfig.storyModeFogStrength * 0.48F, 0.0F, 0.48F) : 0.0F;
    }
 
    public static float strength() {

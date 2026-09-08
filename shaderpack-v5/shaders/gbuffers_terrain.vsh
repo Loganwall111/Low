@@ -31,7 +31,8 @@ void main() {
     float ndotl = clamp(dot(normalize(mcsmN), L), 0.0, 1.0);
     // keep a floor so caves/undersides aren't pure black
     // 1.9.166: harder block-face key so trees/ground throw real MCSM shade
-    float crisp = mix(ndotl, step(0.05, ndotl), 0.55);
-    mcsmShade = mix(0.38, 1.12, crisp) * mix(0.72, 1.0, mcsmDay) + (1.0 - mcsmDay) * 0.52;
-    mcsmShade = clamp(mcsmShade, 0.32, 1.20);
+    // 1.9.167: harder MCSM block-face key (user: vivid light/shadows never showed)
+    float crisp = mix(ndotl, step(0.02, ndotl), 0.72);
+    mcsmShade = mix(0.30, 1.18, crisp) * mix(0.68, 1.0, mcsmDay) + (1.0 - mcsmDay) * 0.48;
+    mcsmShade = clamp(mcsmShade, 0.28, 1.22);
 }
