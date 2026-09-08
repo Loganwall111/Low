@@ -474,6 +474,53 @@ public final class McsmStormBlob {
                             baseR * 0.095, 230, 60, 210, (int) (a * wMouth * 70.0F));
                 }
             }
+
+            // ---------- DEBRIS RING (phase 4+, NOT StormDebris cube swarm) --
+            // MCSM refs: loose dark mass chunks orbiting the lower body / waist,
+            // pulled upward into the storm. Soft dark slabs + phase-tinted edges.
+            // Distinct from the killed StormDebris particle cube field.
+            if (key == mainKey && phase >= 3.9F && baseR > 12.0) {
+                float ringA = a * ramp(phase, 3.9F, 4.4F);
+                float spin = nowSec * 0.18F;
+                int pieces = phase >= 5.5F ? 28 : (phase >= 5.0F ? 22 : 16);
+                for (int i = 0; i < pieces; i++) {
+                    float ang = spin + (float) (i * Math.PI * 2.0 / pieces);
+                    float wobble = 0.08F * Mth.sin(nowSec * 0.55F + i * 1.7F);
+                    float radMul = 0.95F + 0.35F * ((i % 5) / 4.0F) + wobble;
+                    float elev = -0.55F + 0.18F * Mth.sin(ang * 2.0F + nowSec * 0.3F)
+                            + 0.08F * ((i % 3) - 1);
+                    // orbit in a plane roughly under the body, slightly tilted
+                    float ox = (float) Math.cos(ang) * radMul;
+                    float oz = (float) Math.sin(ang) * radMul * 0.55F; // depth via view
+                    float oy = elev;
+                    Vec3 piece = billboardOffset(at, view,
+                            baseR * ox * 1.15F,
+                            baseR * oy);
+                    // push along view for depth variety
+                    piece = piece.add(view.scale(baseR * oz * 0.35F));
+                    double pr = baseR * (0.055 + 0.04 * ((i % 4) / 3.0));
+                    // dark mass chunk
+                    int da = (int) (ringA * (160.0F + 40.0F * ((i % 3) / 2.0F)));
+                    quadAt(poseStack, collector, GlowRenderTypes.translucent(BLACK), piece, view,
+                            pr, 8, 8, 12, da);
+                    // gray edge lines on pre-6 chunks (match flesh gray edges)
+                    if (phase < 6.0F) {
+                        quadAt(poseStack, collector, GlowRenderTypes.translucent(WHITE), piece, view,
+                                pr * 1.12, 55, 58, 65, (int) (ringA * 35.0F));
+                    } else {
+                        // phase 6+ blue sheen edge
+                        quadAt(poseStack, collector, GlowRenderTypes.glow(BLUE4), piece, view,
+                                pr * 1.08, 20, 50, 120, (int) (ringA * 40.0F));
+                    }
+                    // occasional pulled-up trail chunk
+                    if ((i % 4) == 0) {
+                        Vec3 trail = piece.add(view.scale(-baseR * 0.08F))
+                                .add(0.0, baseR * 0.12F, 0.0);
+                        quadAt(poseStack, collector, GlowRenderTypes.translucent(BLACK), trail, view,
+                                pr * 0.55, 10, 10, 14, (int) (ringA * 90.0F));
+                    }
+                }
+            }
         }
     }
 

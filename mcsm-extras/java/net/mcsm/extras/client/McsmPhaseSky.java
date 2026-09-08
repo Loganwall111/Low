@@ -39,10 +39,10 @@ public final class McsmPhaseSky {
 
     /** Nested shell radii as multiples of body radius. Outer = soft fade. */
     private static final float[] SHELL_R = {
-            0.45F, 0.70F, 0.95F, 1.25F, 1.65F, 2.15F, 2.80F, 3.60F
+            0.40F, 0.65F, 0.90F, 1.20F, 1.55F, 2.00F, 2.55F, 3.20F
     };
     private static final float[] SHELL_A = {
-            0.82F, 0.64F, 0.48F, 0.32F, 0.20F, 0.12F, 0.06F, 0.025F
+            0.85F, 0.68F, 0.50F, 0.34F, 0.20F, 0.11F, 0.05F, 0.018F
     };
 
     private McsmPhaseSky() {
@@ -146,13 +146,13 @@ public final class McsmPhaseSky {
         float[] out = mixPhase(wTeal, wPurp, wPink, wSix,
                 new float[]{0.14F, 0.40F, 0.38F},
                 new float[]{0.48F, 0.18F, 0.62F},
-                new float[]{0.72F, 0.42F, 0.78F},   // soft pink-lavender rim (5.5 frame)
-                new float[]{0.35F, 0.22F, 0.48F});  // phase6 blue-purple rim
+                new float[]{0.85F, 0.45F, 0.72F},   // 5.5 soft pink-magenta rim (user sky ref)
+                new float[]{0.28F, 0.18F, 0.42F});  // phase6 cooler
         float[] rim = mixPhase(wTeal, wPurp, wPink, wSix,
                 new float[]{0.10F, 0.26F, 0.38F},
                 new float[]{0.30F, 0.14F, 0.50F},
-                new float[]{0.55F, 0.35F, 0.70F},   // soft lavender edge
-                new float[]{0.22F, 0.18F, 0.40F});
+                new float[]{0.70F, 0.40F, 0.68F},   // soft pink edge, not full-sky flood
+                new float[]{0.18F, 0.14F, 0.35F});
 
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();

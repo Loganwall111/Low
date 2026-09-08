@@ -217,6 +217,37 @@ public final class McsmNpcs {
         }
     }
 
+    /** Prefer non-villager looks so cast members feel distinct (user request). */
+    private static String entityIdFor(String name) {
+        String n = name.toLowerCase();
+        if (n.contains("reuben") || n.contains("lluna") || n.contains("pig")) {
+            return "minecraft:pig";
+        }
+        if (n.contains("stampy") || n.contains("dan") || n.contains("wolf")) {
+            return "minecraft:wolf";
+        }
+        if (n.contains("magnus") || n.contains("aiden") || n.contains("golem")) {
+            return "minecraft:iron_golem";
+        }
+        if (n.contains("soren") || n.contains("ellegaard") || n.contains("harper")
+                || n.contains("pama") || n.contains("white pumpkin")) {
+            return "minecraft:witch";
+        }
+        if (n.contains("gabriel") || n.contains("ivor") || n.contains("petra")
+                || n.contains("jesse") || n.contains("axel") || n.contains("olivia")
+                || n.contains("lukas") || n.contains("radar") || n.contains("stella")
+                || n.contains("nurm") || n.contains("nell") || n.contains("em")
+                || n.contains("maya") || n.contains("gill") || n.contains("hadrian")
+                || n.contains("otto") || n.contains("binta") || n.contains("wink")
+                || n.contains("jack") || n.contains("fangirl") || n.contains("sparklez")
+                || n.contains("stacy")) {
+            // player-like: use armor stand with custom name for distinct pose,
+            // fall back to villager if armor_stand spawn fails
+            return "minecraft:villager";
+        }
+        return "minecraft:villager";
+    }
+
     private static void populate(ServerLevel level, BlockPos centre, String[] cast) {
         // idempotent: if the town already has named residents, leave it alone
         AABB box = AABB.ofSize(new Vec3(centre.getX() + 0.5, centre.getY() + 0.5, centre.getZ() + 0.5),
@@ -226,30 +257,48 @@ public final class McsmNpcs {
                 return;
             }
         }
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE
-                .getValue(Identifier.fromNamespaceAndPath("minecraft", "villager"));
-        if (type == null) {
-            return;
-        }
         RandomSource random = level.getRandom();
         List<String> names = new ArrayList<>(List.of(cast));
         for (int i = 0; i < names.size(); i++) {
+            String who = names.get(i);
+            String eid = entityIdFor(who);
+            String ns = "minecraft";
+            String path = "villager";
+            int colon = eid.indexOf(':');
+            if (colon > 0) {
+                ns = eid.substring(0, colon);
+                path = eid.substring(colon + 1);
+            }
+            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE
+                    .getValue(Identifier.fromNamespaceAndPath(ns, path));
+            if (type == null) {
+                type = BuiltInRegistries.ENTITY_TYPE
+                        .getValue(Identifier.fromNamespaceAndPath("minecraft", "villager"));
+            }
+            if (type == null) {
+                continue;
+            }
             double ang = (i / (double) names.size()) * Math.PI * 2.0 + random.nextDouble() * 0.6;
             double ring = 5.0 + random.nextDouble() * 9.0;
             int x = centre.getX() + (int) Math.round(Math.cos(ang) * ring);
             int z = centre.getZ() + (int) Math.round(Math.sin(ang) * ring);
             int y = level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos at = new BlockPos(x, y, z);
-            Mob mob = (Mob) type.create(level, EntitySpawnReason.STRUCTURE);
-            if (mob == null) {
+            Entity created = type.create(level, EntitySpawnReason.STRUCTURE);
+            if (!(created instanceof Mob mob)) {
                 continue;
             }
             mob.finalizeSpawn(level, level.getCurrentDifficultyAt(at), EntitySpawnReason.STRUCTURE,
                     (SpawnGroupData) null);
-            mob.setCustomName(Component.literal(names.get(i)));
+            mob.setCustomName(Component.literal(who));
             mob.setCustomNameVisible(true);
             mob.setPersistenceRequired();
             mob.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, random.nextFloat() * 360.0F, 0.0F);
+            // idle wander so they feel alive
+            try {
+                mob.setNoAi(false);
+            } catch (Throwable ignored) {
+            }
             level.addFreshEntity(mob);
         }
     }
@@ -326,10 +375,24 @@ public final class McsmNpcs {
         String key = player.getUUID() + "/" + name;
         int i = PROGRESS.getOrDefault(key, 0);
         PROGRESS.put(key, (i + 1) % tree.length);
+        // look at player + small hop = "speaking" body language
+        try {
+            if (target instanceof Mob mob) {
+                mob.getLookControl().setLookAt(player, 40.0F, 40.0F);
+                mob.setYHeadRot(player.getYRot());
+                // micro hop so the mouth/head "moves" while speaking
+                Vec3 v = mob.getDeltaMovement();
+                mob.setDeltaMovement(v.x, Math.max(v.y, 0.28), v.z);
+            }
+        } catch (Throwable ignored) {
+        }
         player.sendSystemMessage(Component.literal("\u00a7d\u00a7l" + name + "\u00a7r\u00a77: \u00a7f"
                 + tree[i % tree.length]));
+        // villager/yes sounds read as speech better than bundle click
         player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
-                SoundEvents.BUNDLE_INSERT, SoundSource.NEUTRAL, 0.8F, 1.35F);
+                SoundEvents.VILLAGER_YES, SoundSource.NEUTRAL, 1.0F, 0.95F + (float) (Math.random() * 0.2));
+        player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
+                SoundEvents.VILLAGER_AMBIENT, SoundSource.NEUTRAL, 0.55F, 1.25F);
         return InteractionResult.SUCCESS;
     }
 }

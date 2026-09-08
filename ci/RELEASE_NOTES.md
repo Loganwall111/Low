@@ -1,32 +1,41 @@
-# Devouring Storms 1.9.155 — kill face halo, body-glued glare, calm blue night, toned body
+# Devouring Storms 1.9.160 — OptiFine purple sky kill, beams, debris ring, stage0, NPCs
 
-## Floating face / three-head halo — GONE
-`StormPresenceFX` is fully cancelled every frame (not just knobs off). That kills:
-- the three-head / face halo texture (`halo_ring.png`)
-- floating atmosphere-pulse spheres
-- black-glare symbol far behind the storm
+## Purple sky folder — FIXED
+OptiFine `assets/minecraft/optifine/sky/world0/sky1–4.png` now ships as jar
+overrides. **sky4 was the purple/magenta calm-night culprit** from extracted
+1.9.158 jars. All four skies rewritten:
+- sky1 day lavender-blue
+- sky2 sunset
+- sky3 / sky4 **deep navy midnight** (never purple)
 
-`storm_face.png` stays fully transparent. Gate forces `cataclysmHalos`,
-`blackGlare`, and `atmospherePulse` OFF permanently.
+Phase purple stays on the storm halo / McsmPhaseSky only (≥5.4 / 5.5).
+FabricSkyBoxes + dabywitherstormmod night textures re-stamped navy.
 
-## Glare attached to the storm (not floating mid-air)
-Phase glare is multi-depth soft-fade plates placed **on the storm centre**
-(body radius), not a fixed far sky disc. It moves with the body. Soft long
-falloff so edges fade into the sky — **no giant opaque sphere**.
+## Tractor beams — weather + density rewrite
+- **Clear** → blue beam; **rain/thunder** → pink/magenta (hot pink at 5.5+)
+- `McsmBeamWeatherTint` drives `beamColor*` every frame
+- Motes denser (14/tick), **larger**, **synchronized upward climb** (shared SYNC_CLIMB)
+- Preview motes denser/larger; colours follow live beam config
+- Ground crumbs boosted: denser `BLOCK` particles matching actual floor blocks
+  (phase 4+ pulled dirt/stone/grass — not glacier cards)
 
-Phase vault alpha only brightens toward the storm bearing and dissolves at
-the rim so gradients blend instead of reading as a hard ball.
+## Debris ring — new (StormDebris cube swarm stays KILLED)
+Orbiting dark mass chunks around the lower body from phase 4+, gray-edge on
+pre-6, blue sheen edge on 6+. Not the StormDebris cube halo.
 
-## Calm night is deep navy (not phase-5.5 purple)
-Purple/pink vault is **phase-locked** (5.0 teal → 5.4 purple → 5.5 pink → 6+).
-Calm midnight/night uses the deep navy strip. Fog + shader storm gates ignore
-calm blue night so residual phase fog cannot purple-wash the vault.
+## Halo / phase volume
+Shell radii + alphas tightened so the 3D gradient stays a body-glued volume,
+not a sky flood. 5.5 pink-magenta rim retuned from user sky refs.
 
-## Body textures toned
-OG wither_storm skins pushed toward reference: blacker mass, cooler blue sheen,
-less brown midtone. Early Formidi command-block path still uses base
-`WitherCommandBlock` + CEM ladder (phase 0–4.5 → jem model 1).
+## Stage 0 Formidi atlas
+64×96 rebuilt: three black heads with white eye slots + command-block body
+with coloured button grid (MCSM Formidi CB wither look).
 
-## Also
-- Phase 5.5 dark blue-black upper-body silhouette (from 1.9.154) kept, body-glued
-- Shell alpha softened further
+## Characters (first pass)
+- Distinct entity types per cast member (not every face a plain villager)
+- Speak anim: look-at player + hop + villager yes/ambient
+- Dialogue trees unchanged
+
+## Kept from 1.9.159
+Phase 4–5.9 gray-edge black skins, phase-6 black+blue, phase-dynamic teeth
+ladder, baked Story Look (Iris optional), StormDebris kill.
