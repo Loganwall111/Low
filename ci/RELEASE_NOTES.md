@@ -1,34 +1,30 @@
-# Devouring Storms 1.9.165 — deep clean: sky, light, no cube vault
+# Devouring Storms 1.9.166 — sky deep-clean + vivid light bake
 
-Built on the permanent 1.9.164 (159 visual) base. Accuracy pass only.
+Continues 1.9.165 on the permanent 1.9.164 (159 visual) base.
 
-## Sky deep-clean (duplicate folders fixed)
-Three calm-sky sources were fighting each other and day was bright purple-white:
+## Sky folders — no more fighting
+| Path | Role |
+|------|------|
+| `minecraft/optifine/sky/world0` | Calm day soft blue, sunset, **navy night/midnight** |
+| `dabywitherstormmod/textures/sky` | Calm + **phase-only** refs (teal/purple/pink/twilight) |
+| `fabricskyboxes/textures/sky` | **Calm only** (day/night/sunset). Phase PNGs **deleted** so FSB cannot paint purple ambient |
 
-| Folder | Role after clean |
-|--------|------------------|
-| `minecraft/optifine/sky/world0` | Day soft blue, sunset, **navy night/midnight** (sky4 NOT purple) |
-| `dabywitherstormmod/textures/sky` | Same calm day/night/sunset + phase-only refs |
-| `fabricskyboxes/textures/sky` | **Calm only** (day/night/sunset). Phase PNGs **removed** so FSB cannot load purple/pink as ambient world sky |
+Day avg ~soft MCSM blue (not white/purple). Soft wisps only — **no cube noise**.
 
-Day average ~ (121,137,185) soft blue — was (164,162,230) bright purple. Soft wisps only (no blocky cube noise).
+## Clouds — no cube vault
+Core + Iris + Story Look cloud passes: softer alpha, translucent mass,
+feathered edges so looking straight up is decks, not MC block stickers.
 
-## Calm shader skies dimmed
-- Core `sky.fsh` + Iris `gbuffers_skybasic` + Story Look `position.fsh`
-- Soft MCSM blue day, deep navy night (not lavender night)
-- Overhead cloud sticker softened (less cube-like looking up)
+## Vivid light / contrast / shadows (baked, always-on)
+User: colourful light never showed up. Now forced harder in every path:
+- Core `mcsm_visuals` sat 1.38 / contrast 1.22 + deep cloud shadows
+- Core terrain hard block-face key + exaggerated ground cloud occlusion
+- Core + Story Look lightmap: warm day key, deep blue night, deep shade floor
+- Story Look terrain grade sat 1.36 / contrast 1.20
+- Iris pack: CONTRAST 1.32, VIBRANCE 1.35, shade harder on block faces
+- Gate floors storyModeLighting/Sky strength, bloom, storm shadows to 1.0
 
-## Vivid light / contrast / shadows (user: never showed up)
-Baked stronger into always-on core shaders (works without Iris):
-- Story grade sat 1.38 / contrast 1.22
-- Harder block-face sun key + deeper shade side
-- Stronger moving cloud shadows on ground
-- Lightmap: warm day key, deep blue night fill, hotter torches, deeper shade floor
-- Gate floors `storyModeLightingStrength` / coloured light to 1.0
-- Iris pack final: more contrast/vibrance, less exposure blowout
+Works with **or without Iris** (core shaders always bake the look).
 
-## Clouds
-Vanilla cloud pass more translucent soft mass (not MC cube stickers).
-
-## Not touched (159 base kept)
-PhaseSky / Blob / Formidi / gray-edge skins / teeth ladder / Debris kill.
+## Kept
+159 PhaseSky/Blob/teeth/gray-edge/Formidi path. Debris kill. OptiFine navy night.

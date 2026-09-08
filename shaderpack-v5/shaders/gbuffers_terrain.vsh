@@ -30,6 +30,8 @@ void main() {
     vec3 L = normalize(vec3(0.35, max(elev, 0.05), 0.55));
     float ndotl = clamp(dot(normalize(mcsmN), L), 0.0, 1.0);
     // keep a floor so caves/undersides aren't pure black
-    mcsmShade = mix(0.42, 1.0, ndotl) * mix(0.70, 1.0, mcsmDay) + (1.0 - mcsmDay) * 0.55;
-    mcsmShade = clamp(mcsmShade, 0.35, 1.15);
+    // 1.9.166: harder block-face key so trees/ground throw real MCSM shade
+    float crisp = mix(ndotl, step(0.05, ndotl), 0.55);
+    mcsmShade = mix(0.38, 1.12, crisp) * mix(0.72, 1.0, mcsmDay) + (1.0 - mcsmDay) * 0.52;
+    mcsmShade = clamp(mcsmShade, 0.32, 1.20);
 }

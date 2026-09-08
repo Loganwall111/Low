@@ -35,10 +35,12 @@ void main() {
     float shade = 1.0 - smoothstep(0.0, 0.32, l);
     c = mix(c, c * vec3(0.94, 0.93, 1.07) + vec3(0.010, 0.008, 0.018), shade * 0.85);
 
-    // Saturation and filmic-ish contrast from the reference grading.
+    // 1.9.166: MCSM trailer vivid grade (user: colourful light never showed up)
     l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-    c = mix(vec3(l), c, 1.08);
-    c = mix(c, c * c * (3.0 - 2.0 * c), 0.30);
+    c = mix(vec3(l), c, 1.36);                        // saturation
+    c = (c - 0.5) * 1.20 + 0.5;                       // contrast about mid
+    c = mix(c, c * c * (3.0 - 2.0 * c), 0.22);        // soft S-curve
+    c = max(c, vec3(0.0));
 
     // Exact fog: blend the game's fog toward the sampled horizon haze of
     // the current time of day (world clock; hue key only as AMD fallback).

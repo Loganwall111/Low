@@ -1,5 +1,14 @@
 #version 330
 
+// MCSM_visuals lightmap override. In 26.2 this program BAKES the 16x16
+// lightmap texture on the GPU from the LightmapInfo UBO alone (no sampler);
+// terrain then samples the result. So the override keeps vanilla's exact
+// contract (same UBO instance, texCoord mapping, notGamma/parabolic maths)
+// and changes one thing only: the SKY channel gets the Story Mode time-of-day
+// cast - cool blue at night, warm at dusk/dawn - mixed by SkyFactor. Block
+// light is untouched, so torches stay vanilla. Under Sodium this program is
+// not used; no crash, just vanilla light.
+
 layout(std140) uniform LightmapInfo {
     float SkyFactor;
     float BlockFactor;
@@ -32,42 +41,28 @@ float parabolicMixFactor(float level) {
     return (2.0 * level - 1.0) * (2.0 * level - 1.0);
 }
 
-// ---------------------------------------------------------------------------
-// Story Look lighting: vanilla 26.2 lightmap, plus (a) a soft ambient floor
-// on sky-lit surfaces so outdoor shade keeps the reference's readable,
-// never-black shadows (fully unlit caves stay dark), and (b) a cool
-// lavender tilt in sky shadow, matching the screenshots' shadow colour.
-// The LightmapInfo UBO layout is copied verbatim from vanilla.
-// ---------------------------------------------------------------------------
+const vec3 LIGHT_DAY   = vec3(1.08, 0.98, 0.88);   // warm MCSM key (1.9.165)
+const vec3 LIGHT_NIGHT = vec3(0.32, 0.48, 1.10);   // deep blue nights
+const vec3 LIGHT_DUSK  = vec3(1.12, 0.68, 0.42);   // warmer dusk/dawn cast
 
 void main() {
-    // Calculate block and sky brightness levels based on texture coordinates
-    float block_level = floor(texCoord.x * 16) / 15;
-    float sky_level = floor(texCoord.y * 16) / 15;
+    float block_level = floor(texCoord.x * 16.0) / 15.0;
+    float sky_level = floor(texCoord.y * 16.0) / 15.0;
 
     float block_brightness = get_brightness(block_level) * lightmapInfo.BlockFactor;
-    // Story Mode torches throw real light: wider, hotter falloff so a torch
-    // reads as a source, not a decal.
-    block_brightness *= 1.0 + 0.85 * smoothstep(0.10, 0.85, block_level); // hotter torches
     float sky_brightness = get_brightness(sky_level) * lightmapInfo.SkyFactor;
 
-    // Story Look: soft shadow floor, scaled by day strength and gated so
-    // sky_level 0 (caves, interiors) keeps vanilla darkness.
-    sky_brightness += 0.18 * lightmapInfo.SkyFactor
-                    * smoothstep(0.0, 0.35, sky_level)
-                    * (1.0 - sky_brightness);
-
-    // Calculate ambient color with or without night vision
     vec3 nightVisionColor = lightmapInfo.NightVisionColor * lightmapInfo.NightVisionFactor;
-    vec3 color = max(lightmapInfo.AmbientColor, nightVisionColor);
+    vec3 color = max(lightmapInfo.AmbientColor * 0.82, nightVisionColor); // 1.9.165 deeper shade floor
 
-    // Add sky light, with the cool shadow tint at low sky levels
-    vec3 skyTint = mix(vec3(1.0), vec3(0.78, 0.82, 1.18), (1.0 - sky_level) * 0.75);
-    color += lightmapInfo.SkyLightColor * skyTint * sky_brightness;
+    // Add sky light - MCSM: Story tint rides the sky channel only.
+    float sf = clamp(lightmapInfo.SkyFactor, 0.0, 1.0);
+    float duskW = pow(1.0 - abs(2.0 * sf - 1.0), 1.4) * 1.0;
+    vec3 skyTint = mix(mix(LIGHT_NIGHT, LIGHT_DAY, sf), LIGHT_DUSK, duskW);
+    color += lightmapInfo.SkyLightColor * sky_brightness * skyTint * 1.12;
 
-    // Add block light
+    // Add block light (vanilla, untouched)
     vec3 BlockLightColor = mix(lightmapInfo.BlockLightTint, vec3(1.0), 0.9 * parabolicMixFactor(block_level));
-    BlockLightColor *= vec3(1.18, 0.92, 0.72);  // MCSM warm torch key
     color += BlockLightColor * block_brightness;
 
     // Apply boss overlay darkening effect
@@ -77,13 +72,9 @@ void main() {
     color = color - vec3(lightmapInfo.DarknessScale);
 
     // Apply brightness
-    // MCSM contrast lift + vibrance (vanilla-embedded vivid style, no Iris needed)
-    float lum = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    color = mix(vec3(lum), color, 1.22);
-    color = (color - 0.5) * 1.12 + 0.5;
     color = clamp(color, 0.0, 1.0);
-    vec3 notGamma = notGamma(color);
-    color = mix(color, notGamma, lightmapInfo.BrightnessFactor);
+    vec3 linearColor = notGamma(color);
+    color = mix(color, linearColor, lightmapInfo.BrightnessFactor);
 
     fragColor = vec4(color, 1.0);
 }

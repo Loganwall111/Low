@@ -9,8 +9,8 @@ uniform sampler2D gtexture;
 void main() {
     vec4 color = texture(gtexture, texcoord) * glcolor;
     if (color.a <= 0.01) discard;
-    vec3 soft = mix(vec3(0.90, 0.93, 0.98), color.rgb, 0.08); // almost pure soft mass
+    vec3 soft = mix(vec3(0.86, 0.90, 0.98), color.rgb, 0.05); // almost pure soft mass
     color.rgb = soft;
-    color.a *= 0.72; // more translucent decks
+    color.a *= 0.55; // softer decks, less cube read
     gl_FragData[0] = color;
 }

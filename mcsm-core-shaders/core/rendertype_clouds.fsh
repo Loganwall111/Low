@@ -29,9 +29,13 @@ out vec4 fragColor;
 void main() {
     vec4 color = vertexColor;
 
-    if (color.a < 0.1) {
+    // 1.9.166: soft mass, not blocky MC cube stickers (user: no cubes in sky)
+    if (color.a < 0.04) {
         discard;
     }
+    // feather hard cube faces into soft decks
+    color.a *= 0.55;
+    color.rgb = mix(vec3(0.88, 0.92, 0.98), color.rgb, 0.35);
 
     float mcsmP = mcsm_phase(FogSkyEnd, FogColor, FogRenderDistanceEnd);
 

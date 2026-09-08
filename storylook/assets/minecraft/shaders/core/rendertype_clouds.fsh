@@ -15,10 +15,10 @@ void main() {
     vec4 color = vertexColor;
     // pull toward soft story-mode white with a cool fringe
     vec3 soft = mix(vec3(0.92, 0.94, 1.00), vec3(0.78, 0.84, 0.96), 0.18);
-    color.rgb = mix(color.rgb, soft, 0.92);
+    color.rgb = mix(color.rgb, soft, 0.96);
     // feather alpha so the plane reads as a soft deck, not a glued sticker
     float fade = 1.0 - linear_fog_value(vertexDistance, 0, FogCloudsEnd);
-    color.a *= fade * 0.88;
+    color.a *= fade * 0.55; // soft decks
     if (color.a < 0.02) discard;
     fragColor = color;
 }
