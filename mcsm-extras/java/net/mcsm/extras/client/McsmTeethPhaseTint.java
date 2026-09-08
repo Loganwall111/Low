@@ -37,7 +37,7 @@ public final class McsmTeethPhaseTint {
             if (phase >= 6.0F) {
                 r = 0.06F; g = 0.12F; b = 0.35F; inten = 1.0F;   // extremely dark blue
             } else if (phase >= 5.5F) {
-                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.55F; // 1.9.170 neon white  // glowing white
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.55F; // MCSM neon white  // glowing white
             } else if (phase >= 5.1F) {
                 r = 0.85F; g = 0.98F; b = 1.00F; inten = 1.40F;  // white + slight blue
             } else if (phase >= 5.0F) {

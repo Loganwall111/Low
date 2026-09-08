@@ -22,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Body-local mouth / teeth / beam detail + glossy stripe.
  *
- * 1.9.168 glare wipe: NO shell plates, NO halo quads, NO nested spheres.
+ * MCSM glare wipe: NO shell plates, NO halo quads, NO nested spheres.
  * Only MCSM mouth teeth (dashed U) + clear blue tractor beams remain.
  * Thick MCSM glare volume lives in McsmPhaseSky (soft billboard stack, no mesh).
  *
@@ -91,7 +91,7 @@ public final class McsmStormBlob {
      *   phase 6+      extremely dark blue
      */
     private static int[] teethRgb(float phase) {
-        // 1.9.170 MCSM stills: intense neon cyan-white square pixels
+        // MCSM stills: intense neon cyan-white square pixels
         if (phase >= 6.0F) {
             return new int[] { 12, 28, 80 };          // extremely dark blue
         }
@@ -255,7 +255,7 @@ public final class McsmStormBlob {
             float wShell = ramp(phase, 3.95F, 4.25F);
             float wMouth = ramp(phase, 3.9F, 4.3F);
 
-            // ---------- GLARE / SHELL PLATES WIPED (1.9.168) ----------------
+            // ---------- GLARE / SHELL PLATES WIPED (MCSM) ----------------
             // Nested sphere glare + colour plates + GLARE quads removed.
             // User: floating dotted circle, cube vaults, halo rings — all gone.
             // Rebuild later from MCSM stills only. Keep beams + teeth below.
@@ -281,7 +281,7 @@ public final class McsmStormBlob {
                             float y = MOUTH_Y[m] + (gy - MOUTH_Y[m]) * tp;
                             Vec3 pq = billboardOffset(atF, viewF, bR * x, bR * y);
                             float coneR = bR * (0.035F + 0.14F * tp);
-                            // 1.9.170 MCSM stills: solid-fill vibrant purple searchlights
+                            // MCSM stills: solid-fill vibrant purple searchlights
                             quadVerts(pose, consumer, pq, viewF, coneR * 1.15,
                                     160, 40, 255, (int) (aa * wg * 70.0F * (1.0F - tp * 0.35F)));
                             quadVerts(pose, consumer, pq, viewF, coneR * 0.70,

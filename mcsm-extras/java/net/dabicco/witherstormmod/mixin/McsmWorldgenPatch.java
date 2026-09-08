@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerLevel;
  * Mega-phase 7 / 7b / 9 / 12: structures land WHOLE, Sky City goes up among
  * the cloud decks, and towns get their cast (McsmNpcs).
  *
- * 1.9.150 CRASH FIX: McsmWorldgen.tick(ServerLevel) returns int. Mixin
+ * MCSM CRASH FIX: McsmWorldgen.tick(ServerLevel) returns int. Mixin
  * injects on a returning method MUST take CallbackInfoReturnable, not plain
  * CallbackInfo — otherwise APPLY fails with InvalidInjectionException and
  * the whole world tick dies the moment McsmWorldgen is first classloaded.
@@ -41,7 +41,7 @@ public abstract class McsmWorldgenPatch {
     private static ServerLevel lastLevel;
     private static final ThreadLocal<Boolean> RAISING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-    /** tick(ServerLevel) -> int. CIR required (1.9.150 crash fix). */
+    /** tick(ServerLevel) -> int. CIR required (MCSM crash fix). */
     @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 0)
     private static void dabyws$wholeStructures(ServerLevel level, CallbackInfoReturnable<Integer> cir) {
         try {

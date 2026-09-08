@@ -12,7 +12,7 @@ import java.util.Optional;
  *
  * Packs registered here:
  *   storylook — MCSM pastel skies, cloud decks, soft lavender shadows
- *   ogs-cem   — Totally Accurate / MCSM OG CEM models + textures (1.9.151+)
+ *   ogs-cem   — Totally Accurate / MCSM OG CEM models + textures (MCSM+)
  *
  * Everything is invoked reflectively: fabric-api for MC 26.2 changed the
  * overload (older: (ResourceLocation, ModContainer, predicate); newer: leading
@@ -122,7 +122,7 @@ public final class McsmBuiltinPack {
                 return;
             }
 
-            // 1.9.151: register BOTH built-ins (storylook + Totally Accurate CEM)
+            // MCSM: register BOTH built-ins (storylook + Totally Accurate CEM)
             for (String packId : new String[] { "storylook", "ogs-cem" }) {
                 try {
                     Object id = idFactory.invoke(null, "dabywitherstormmod", packId);

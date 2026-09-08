@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MCSM 1.9.100 -- the "it's already written, it's just switched off" gate.
+ * MCSM -- the "it's already written, it's just switched off" gate.
  *
  * A whole-jar invoke scan (glslcheck/whocalls.py) proved the features the user
  * reports as MISSING are not missing at all:
@@ -41,7 +41,7 @@ public final class McsmGate {
     private static boolean worldDone = false;
 
     /**
-     * MCSM 1.9.112 -- memory of every value this gate writes, keyed by field.
+     * MCSM -- memory of every value this gate writes, keyed by field.
      *
      * The gate re-runs whenever the Extras panel is touched (each toggle calls
      * McsmGate.reset()). Until now every re-run re-forced the whole MCSM look,
@@ -125,7 +125,7 @@ public final class McsmGate {
             // Obsidian Gloss is the mod's built-in OG/MCSM texture set. The
             // user expects Force MCSM Look to make the body/teeth/command-block
             // textures stop falling back to the Classic orange/plain skin.
-            // 1.9.146: ogCemModels defaults ON and locks stormSkin to OG.
+            // MCSM: ogCemModels defaults ON and locks stormSkin to OG.
             changed += floorField(c, null, "stormSkin", 1.0);
             try {
                 if (McsmExtrasConfig.ogCemModels) {
@@ -177,7 +177,7 @@ public final class McsmGate {
             changed += setNum(c, null, "debrisDustParticles", 0.0);
             changed += setNum(c, null, "debrisAmount", 0.0);
             changed += setNum(c, null, "debrisSize", 0.0);
-            // 1.9.150: volumetric coloured fog / lighting for the MCSM contrast
+            // MCSM: volumetric coloured fog / lighting for the MCSM contrast
             // read (shafts of coloured light, thick atmospheric depth)
             changed += floorField(c, null, "volumetricFogDensity", 0.92);
             changed += setBool(c, "volumetricFog", true);
@@ -187,7 +187,7 @@ public final class McsmGate {
             changed += floorField(c, null, "coloredLightStrength", 0.85);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += floorField(c, null, "sunGlowStrength", 1.0);
-            // 1.9.170: MCSM matte black silhouette — NEVER reverse/model shade
+            // MCSM: MCSM matte black silhouette — NEVER reverse/model shade
             changed += setBool(c, "reverseShading", false);
             changed += setBool(c, "stormModelShading", false);
             changed += setBool(c, "modelShading", false);
@@ -198,10 +198,10 @@ public final class McsmGate {
             changed += floorField(c, null, "glowStrength", 1.0);
             changed += floorField(c, null, "bloomStrength", 1.0);
             changed += floorField(c, null, "impactLightStrength", 1.0);
-            // 1.9.149: MCSM tractor beams = thick purple/blue cones (frames).
+            // MCSM: MCSM tractor beams = thick purple/blue cones (frames).
             // Floor opacity + MCSM purple bias; never lower a user's pick.
             changed += floorField(c, null, "beamOpacity", 0.92);
-            changed += floorField(c, null, "beamColorR", 0.72); // 1.9.170 solid purple
+            changed += floorField(c, null, "beamColorR", 0.72); // MCSM solid purple
             changed += floorField(c, null, "beamColorG", 0.08);
             changed += floorField(c, null, "beamColorB", 0.95);
             changed += setNum(c, null, "beamColorR", 0.72);

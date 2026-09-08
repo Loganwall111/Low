@@ -20,7 +20,7 @@ import java.util.List;
  */
 public final class McsmStormFx {
 
-    // MCSM 1.9.101 -- 26.2 spelling of the particle call: options, not types.
+    // MCSM -- 26.2 spelling of the particle call: options, not types.
     private static DustParticleOptions dust(int rgb, float scale) {
         return new DustParticleOptions(rgb, scale);
     }

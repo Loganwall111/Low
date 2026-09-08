@@ -6,7 +6,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 
 /**
- * MCSM 1.9.110 -- the build announces itself IN CHAT.
+ * MCSM -- the build announces itself IN CHAT.
  *
  * Four rounds of "I see none of the changes" ended the same way: the evidence
  * that would have settled it lived in latest.log and in the mods list, i.e. in

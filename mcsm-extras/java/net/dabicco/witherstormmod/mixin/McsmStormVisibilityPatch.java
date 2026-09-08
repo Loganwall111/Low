@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * 1.9.170 — MCSM matte silhouette.
+ * MCSM — MCSM matte silhouette.
  *
  * bodyCutout / reverseShading / modelShading (STORM_SHADING hemisphere) all
  * paint grey cube faces, blue under-glow and "earring" edge highlights on the

@@ -71,7 +71,7 @@ public final class McsmExtrasScreen extends Screen {
         int top = 34;
         final int fColW = colW;
 
-        // MCSM 1.9.111 -- the drawn header at y=12 never appeared in the
+        // MCSM -- the drawn header at y=12 never appeared in the
         // player's screenshots, so the build number also rides as a widget
         // row: widgets demonstrably render, and "which build is this panel?"
         // becomes answerable at a glance, spanning both columns.
@@ -105,7 +105,7 @@ public final class McsmExtrasScreen extends Screen {
                 () -> McsmExtrasConfig.ogCemModels, v -> McsmExtrasConfig.ogCemModels = v);
         addSlider(0, 10, fColW, gap, left, top, rowH, "Smudge Scale", "%.2fx",
                 0.10, 2.00, () -> McsmExtrasConfig.smudgeScale, v -> McsmExtrasConfig.smudgeScale = v);
-        // MCSM 1.9.137 -- the shader pack now ships inside the mod and picks
+        // MCSM -- the shader pack now ships inside the mod and picks
         // itself in Iris at launch; this is the on/off the user asked for.
         addToggle(0, 11, fColW, gap, left, top, rowH, "Built-in Shader Pack",
                 () -> McsmExtrasConfig.embeddedShaderPack, v -> McsmExtrasConfig.embeddedShaderPack = v);
@@ -137,11 +137,11 @@ public final class McsmExtrasScreen extends Screen {
                 () -> McsmExtrasConfig.commandWire, v -> McsmExtrasConfig.commandWire = v);
         addToggle(1, 12, fColW, gap, left, top, rowH, "MCSM Instructions",
                 () -> McsmExtrasConfig.mcsmInstructions, v -> McsmExtrasConfig.mcsmInstructions = v);
-        // MCSM 1.9.111 -- hands the shader-pack answer back to the mod so the
+        // MCSM -- hands the shader-pack answer back to the mod so the
         // look presets can be A/B tested; see McsmShaderGatePatch.
         addToggle(1, 13, fColW, gap, left, top, rowH, "Shader Pack Gate",
                 () -> McsmExtrasConfig.shaderPackGate, v -> McsmExtrasConfig.shaderPackGate = v);
-        // MCSM 1.9.112 -- the gate now respects anything changed after its
+        // MCSM -- the gate now respects anything changed after its
         // first pass, so look presets applied in the mod's own screen survive
         // this panel being opened and clicked. Forcing the full MCSM look
         // again mid-session is therefore an explicit act: this button.

@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * MCSM 1.9.74 -- the real reason the glare blob never appeared.
+ * MCSM -- the real reason the glare blob never appeared.
  *
  * StormSkyGradient.update(Vec3) is the ONLY writer of yawDeg, pitchDeg, phase
  * and active. A whole-jar bytecode scan for callers of that method returns
@@ -36,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * first guard. The direction never reaches the shader, mcsm_boss_dir() returns
  * w=0, and mcsm_blob() is never invoked.
  *
- * This sat underneath the aliasing bug fixed in 1.9.72: even with a perfectly
+ * This sat underneath the aliasing bug fixed in MCSM: even with a perfectly
  * invertible encoding there was nothing to encode.
  *
  * Fix: drive update() once per frame from LevelRenderer.render, at HEAD so the
@@ -76,7 +76,7 @@ public abstract class McsmGradientTickPatch {
         try {
             McsmGate.openClient();
             McsmDiag.banner();
-            // MCSM 1.9.110 -- speak the build number in chat once per world
+            // MCSM -- speak the build number in chat once per world
             // load. Chat is the one place the player is guaranteed to look, so
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
@@ -107,7 +107,7 @@ public abstract class McsmGradientTickPatch {
                               DabyWSClientConfig.bloomStrength > 0.0,
                               StormSkins.og(),
                               DabyWSClientConfig.stormSkin);
-            // MCSM 1.9.109 -- advance the expanding blasts. Driven from here
+            // MCSM -- advance the expanding blasts. Driven from here
             // rather than from the storm's tick because the death blast has to
             // keep expanding for its full five seconds AFTER the storm entity
             // has been removed, and this hook runs for as long as the world is

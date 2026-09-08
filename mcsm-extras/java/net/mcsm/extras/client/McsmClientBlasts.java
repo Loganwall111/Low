@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 
 /**
- * MCSM 1.9.109 -- the client half of the expanding blasts.
+ * MCSM -- the client half of the expanding blasts.
  *
  * McsmFxDriver arms a blast from the storm's own tick (the die() and
  * addSubGrowth() hooks), and that tick stops being called the moment the storm

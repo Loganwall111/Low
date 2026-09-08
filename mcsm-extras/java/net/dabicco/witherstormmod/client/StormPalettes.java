@@ -3,7 +3,7 @@ package net.dabicco.witherstormmod.client;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.util.Mth;
 
-/** 1.9.153: phase fog palettes from user strips (teal / purple / pink / six). */
+/** MCSM: phase fog palettes from user strips (teal / purple / pink / six). */
 public final class StormPalettes {
    private static final float[] FOG_TEAL = new float[]{0.060F, 0.280F, 0.270F};
    private static final float[] FOG_PURPLE = new float[]{0.280F, 0.080F, 0.380F};

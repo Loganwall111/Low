@@ -16,7 +16,7 @@ import net.mcsm.extras.McsmExtrasConfig;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * MCSM thick storm glare — body-glued soft volume (1.9.169).
+ * MCSM thick storm glare — body-glued soft volume (MCSM).
  *
  * Ground truth from user stills:
  *   - Soft purple/teal/pink GLOW wrapped around the black mass (not a separate
@@ -177,7 +177,7 @@ public final class McsmPhaseSky {
             float amp = presence * distFade;
 
             // ---- dark core wrap (silhouette mass, still #2 black body in purple) ----
-            float coreA = amp * (0.18F + 0.25F * (wPink + wSix + wPurp * 0.6F)); // 1.9.170 keep body black
+            float coreA = amp * (0.18F + 0.25F * (wPink + wSix + wPurp * 0.6F)); // MCSM keep body black
             if (coreA > 0.02F) {
                 // slightly smaller than mid glow so colour rim peeks around the body
                 quad(poseStack, collector, GlowRenderTypes.glow(BLACK),

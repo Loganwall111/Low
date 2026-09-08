@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MCSM 1.9.100 -- the visible half of the Story Mode sequence.
+ * MCSM -- the visible half of the Story Mode sequence.
  *
  * The mod's own shockwave and death blast DO fire (whocalls.py shows
  * die() -> deathBlast and addSubGrowth() -> phaseUpShockwave), so this does not
@@ -108,14 +108,14 @@ public final class McsmFxDriver {
                 briefNearby(srv, self);
             }
 
-            // ---- MCSM 1.9.109: advance any expanding blast in flight ------
+            // ---- MCSM: advance any expanding blast in flight ------
             tickBlasts(srv, self);
         } catch (Throwable ignored) {
             // Never let a particle break a tick.
         }
     }
 
-    // MCSM 1.9.101 -- 26.2's ServerLevel.sendParticles takes PARTICLE OPTIONS,
+    // MCSM -- 26.2's ServerLevel.sendParticles takes PARTICLE OPTIONS,
     // not ParticleTypes, and DustParticleOptions is (int packed RGB, float
     // scale), not (Vector3f, float). Every effect here is therefore plain
     // dust with a colour: the closest deterministic spelling of the same
@@ -135,7 +135,7 @@ public final class McsmFxDriver {
     /**
      * Sends one particle batch with delivery FORCED.
      *
-     * MCSM 1.9.109 -- this is why the shockwaves were never seen. All nineteen
+     * MCSM -- this is why the shockwaves were never seen. All nineteen
      * call sites in this driver used the
      * sendParticles(options, x, y, z, count, dx, dy, dz, speed) overload, which
      * forwards force = false. The server then drops the packet for any player
@@ -163,7 +163,7 @@ public final class McsmFxDriver {
     }
 
     // ---------------------------------------------------------------------
-    // MCSM 1.9.109 -- EXPANDING BLASTS
+    // MCSM -- EXPANDING BLASTS
     //
     // riseShockwave() and supernova() each emitted their whole geometry in a
     // single tick and stopped: three static rings, six static rings, gone. A
@@ -245,7 +245,7 @@ public final class McsmFxDriver {
         double x = self.getX(), y = self.getY(), z = self.getZ();
         double floorY = self.getBoundingBox().minY;
         long gt = srv.getGameTime();
-        // MCSM 1.9.112 -- dedupe rise arming: one front per phase jump, even
+        // MCSM -- dedupe rise arming: one front per phase jump, even
         // if more than one hook reports the transition. Phase 4 -> phase 7
         // rises are minutes apart, so a 5-second window cannot swallow a
         // legitimate second rise. Death keeps its own guard in deathCinematic.
@@ -258,7 +258,7 @@ public final class McsmFxDriver {
         }
         BLASTS.put(self.getUUID(), new double[]{
                 gt, kind, x, y, z, floorY, y - floorY});
-        // MCSM 1.9.110 -- say so in chat. These are two rare events per storm
+        // MCSM -- say so in chat. These are two rare events per storm
         // life, and the line is the proof that the hook fired at all when the
         // report is "no shockwave happened".
         String msg = kind == KIND_DEATH
@@ -359,7 +359,7 @@ public final class McsmFxDriver {
         int k = Math.min(RINGS.length - 1, (int) (t * RINGS.length));
         float[] c = RINGS[k];
         float[] n = RINGS[Math.min(RINGS.length - 1, k + 1)];
-        // MCSM 1.9.111 -- motes twice as fat as before. At three hundred blocks
+        // MCSM -- motes twice as fat as before. At three hundred blocks
         // a 2-scale dust particle is sub-pixel: the death WAS rendering (the
         // chat lines proved the arming) and still read as nothing happening.
         float scale = (float) (5.0D + fade * 5.0D);
@@ -384,7 +384,7 @@ public final class McsmFxDriver {
             }
         }
 
-        // MCSM 1.9.111 -- the distance legibility pass, deaths only: a third
+        // MCSM -- the distance legibility pass, deaths only: a third
         // altitude layer, a white column from the storm's floor to the sky for
         // the first half (the "beam out of the sky" at the moment of death),
         // and pink embers raining out of the front as it dies.
@@ -437,7 +437,7 @@ public final class McsmFxDriver {
         if (self == null || level == null || level.isClientSide()) return;
         if (!(level instanceof ServerLevel srv)) return;
         try {
-            // MCSM 1.9.110 -- die() AND remove() both lead here now, because
+            // MCSM -- die() AND remove() both lead here now, because
             // /kill never calls die(); the second arrival must not restart the
             // blast or fire the one-shot rings twice.
             double[] st = STATE.computeIfAbsent(self.getUUID(),
@@ -479,7 +479,7 @@ public final class McsmFxDriver {
             }
         }
         spawn(srv, dust(0xd8e6ff, 0.7f), x, y + 2.0, z, 60, 6.0, 3.0, 6.0, 0.3);
-        // MCSM 1.9.109 -- the one-shot rings above are the detonation; this
+        // MCSM -- the one-shot rings above are the detonation; this
         // arms the front that actually travels outward over the next 3 s.
         startBlast(srv, self, KIND_RISE);
     }
@@ -501,7 +501,7 @@ public final class McsmFxDriver {
         spawn(srv, dust(0xffffff, 4.0f), x, y + 3.0, z, 2, 0.0, 0.0, 0.0, 0.0);
         spawn(srv, dust(0xd8e6ff, 0.7f), x, y + 3.0, z, 120, 8.0, 5.0, 8.0, 0.4);
         spawn(srv, dust(0x9aa0a6, 2.2f), x, y + 2.0, z, 80, 7.0, 4.0, 7.0, 0.12);
-        // MCSM 1.9.109 -- and the death front, expanding for 5 s. This is the
+        // MCSM -- and the death front, expanding for 5 s. This is the
         // particle half of the death sequence; the sky half (cracks, implosion,
         // ring flare) is driven into the FogSkyEnd band 1906..2900 by
         // McsmBlobCarrierPatch and drawn by mcsm_death() in core/sky.fsh.
@@ -573,7 +573,7 @@ public final class McsmFxDriver {
         if (gt % 2L != 0L) {
             return;   // halve the rate: three strands now cost triple
         }
-        // MCSM 1.9.110 -- three strands and a brighter core. A single 0.9-scale
+        // MCSM -- three strands and a brighter core. A single 0.9-scale
         // dust line at two hundred blocks read as nothing at all; "there are no
         // beams coming out of the sky" was a visibility failure, not a missing
         // feature. The beam also runs UP from the core, so it reads as a beam
@@ -618,7 +618,7 @@ public final class McsmFxDriver {
     /** Forget a storm (entity removed) so the map cannot grow without bound. */
     public static void forget(UUID id) {
         STATE.remove(id);
-        BLASTS.remove(id);   // MCSM 1.9.109 -- an in-flight blast dies with it
+        BLASTS.remove(id);   // MCSM -- an in-flight blast dies with it
     }
 
     private McsmFxDriver() {}

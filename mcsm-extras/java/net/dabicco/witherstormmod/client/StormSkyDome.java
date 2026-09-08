@@ -5,7 +5,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.153: fog tint that drives the shader storm gate — ONLY while a real
+ * MCSM: fog tint that drives the shader storm gate — ONLY while a real
  * phase-5+ storm is nearby. Calm night stays deep blue; purple/pink/teal fog
  * is phase-locked to the user strips.
  */
@@ -71,7 +71,7 @@ public final class StormSkyDome {
    }
 
    public static float strength() {
-      // 1.9.155: fog tint only while a real phase-5+ storm is nearby AND displayed.
+      // MCSM: fog tint only while a real phase-5+ storm is nearby AND displayed.
       // Cap at 0.72 so residual fog cannot purple-wash the calm night vault.
       if (!DabyWSClientConfig.stormBackdrop) {
          return 0.0F;

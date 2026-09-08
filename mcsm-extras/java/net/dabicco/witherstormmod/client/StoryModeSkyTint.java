@@ -4,7 +4,7 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.util.Mth;
 
 /**
- * Calm day/night/dusk fog + sky. 1.9.153: day = lavender (skyday strip),
+ * Calm day/night/dusk fog + sky. MCSM: day = lavender (skyday strip),
  * night/midnight = deep navy. Purple NEVER lives here — only McsmPhaseSky.
  */
 public final class StoryModeSkyTint {

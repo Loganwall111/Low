@@ -40,7 +40,7 @@ public abstract class McsmStormGrabPatch extends net.minecraft.world.entity.boss
 
     private McsmStormGrabPatch() { super(null, null); }
 
-    // MCSM 1.9.101 -- 26.2 spelling of the particle call: options, not types.
+    // MCSM -- 26.2 spelling of the particle call: options, not types.
     private static DustParticleOptions dust(int rgb, float scale) {
         return new DustParticleOptions(rgb, scale);
     }
@@ -53,7 +53,7 @@ public abstract class McsmStormGrabPatch extends net.minecraft.world.entity.boss
         McsmFxDriver.deathCinematic(self, level);
     }
 
-    // MCSM 1.9.110 -- /kill (and any command-based removal) never calls die():
+    // MCSM -- /kill (and any command-based removal) never calls die():
     // it removes the entity outright, so the death sequence silently never
     // began. From the player's seat that is exactly "nothing happens when the
     // storm dies, no shockwave, no rings". remove() is on every removal path,
@@ -75,7 +75,7 @@ public abstract class McsmStormGrabPatch extends net.minecraft.world.entity.boss
         }
     }
 
-    // MCSM 1.9.112 -- the addSubGrowth TAIL hook that used to live here armed
+    // MCSM -- the addSubGrowth TAIL hook that used to live here armed
     // the phase 4/7 rise shockwave a SECOND time for the same phase jump:
     // McsmFxDriver.tick() already watches for the transition, and both paths
     // called startBlast, so the player saw two identical

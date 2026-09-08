@@ -12,7 +12,7 @@ import net.mcsm.extras.client.McsmPhaseSky;
 import net.mcsm.extras.client.McsmStormBlob;
 
 /**
- * 1.9.169: cancel base StormBackdrop.
+ * MCSM: cancel base StormBackdrop.
  * Order: thick MCSM glare volume first, then teeth + beams on top.
  */
 @Mixin(StormBackdrop.class)
