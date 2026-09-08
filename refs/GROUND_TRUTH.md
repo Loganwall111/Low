@@ -51,3 +51,11 @@ Close-up of multi-mouth black mass against purple/pink sky:
 - cyan-white **dotted U-arc teeth** (individual glowing cubes)
 - hot **magenta square emitters** above mouths
 - thick **purple tractor beam** cones with black debris cubes peeling off
+
+## F. Post-155 corrections (1.9.156 targets)
+
+1. Glare = giant **3D world-space gradient volume** (nested spheres on storm centre), not 2D billboard plates. Traversable / visible from behind; storm locked; no player-opposite parallax.
+2. **No** halo-side/under dots, black cubes, orbiting motes, debris field.
+3. Calm night = deep **blue** fabric skybox + navy fog (never purple/magenta).
+4. Stage 0 = 64×96 atlas with black 3-head + Formidi command-block belly UV at texOffs(0,64).
+5. Phase-only left/right sway shared by volume + body detail.

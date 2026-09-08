@@ -10,7 +10,7 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 
 /**
- * 1.9.155: CANCEL the entire StormPresenceFX pass.
+ * CANCEL the entire StormPresenceFX pass.
  *
  * That pass paints the far three-headed HALO ring (halo_ring.png), the
  * black-glare symbol, and the floating atmosphere-pulse spheres the user

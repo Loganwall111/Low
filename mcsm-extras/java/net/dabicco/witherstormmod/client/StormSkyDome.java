@@ -99,9 +99,9 @@ public final class StormSkyDome {
       float tot = wTeal + wPurp + wPink + wSix;
       if (tot <= 1.0E-4F || p < 4.9F) {
          // no phase tint — leave fog alone (calm blue night)
-         var0[0] = 0.031F;
-         var0[1] = 0.051F;
-         var0[2] = 0.310F;
+         var0[0] = 0.018F;
+         var0[1] = 0.040F;
+         var0[2] = 0.340F;
       } else {
          var0[0] = (TEAL[0] * wTeal + PURP[0] * wPurp + PINK[0] * wPink + SIX[0] * wSix) / tot;
          var0[1] = (TEAL[1] * wTeal + PURP[1] * wPurp + PINK[1] * wPink + SIX[1] * wSix) / tot;
