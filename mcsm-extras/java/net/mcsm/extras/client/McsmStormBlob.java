@@ -83,6 +83,58 @@ public final class McsmStormBlob {
         return t * t * (3.0F - 2.0F * t);
     }
 
+
+    /**
+     * Phase-dynamic tooth colours (user frames):
+     *   phase 4.x     very light blue / icy white-blue
+     *   phase 5.0     pure white (no blue)
+     *   phase 5.1-5.4 mostly white, slight blue
+     *   phase 5.5-5.9 glowing white
+     *   phase 6+      extremely dark blue
+     */
+    private static int[] teethRgb(float phase) {
+        if (phase >= 6.0F) {
+            return new int[] { 18, 40, 95 };          // extremely dark blue
+        }
+        if (phase >= 5.5F) {
+            return new int[] { 250, 252, 255 };       // glowing white
+        }
+        if (phase >= 5.1F) {
+            return new int[] { 235, 245, 255 };       // white + slight blue
+        }
+        if (phase >= 5.0F) {
+            return new int[] { 255, 255, 255 };       // pure white
+        }
+        // phase 4.x — very light blue
+        return new int[] { 195, 225, 255 };
+    }
+
+    private static int[] teethRimRgb(float phase) {
+        if (phase >= 6.0F) {
+            return new int[] { 10, 28, 70 };
+        }
+        if (phase >= 5.5F) {
+            return new int[] { 220, 235, 255 };
+        }
+        if (phase >= 5.0F) {
+            return new int[] { 210, 230, 255 };
+        }
+        return new int[] { 150, 195, 245 };
+    }
+
+    private static float teethAlphaMul(float phase) {
+        if (phase >= 6.0F) {
+            return 0.85F;   // dark blue still visible but not blast
+        }
+        if (phase >= 5.5F) {
+            return 1.0F;    // glowing white
+        }
+        if (phase >= 5.0F) {
+            return 0.95F;
+        }
+        return 0.90F;
+    }
+
     private static double bodyRadius(float phase) {
         if (phase < 4.0F) {
             return 4.0F + 1.5F * phase;
@@ -377,43 +429,43 @@ public final class McsmStormBlob {
             // (dotted ring / dashed smile), with a hot-magenta cube above.
             // Not a solid bar, not a glare decal — chunky emissive cubes.
             if (key == mainKey && wMouth > 0.004F && baseR > 10.0) {
+                int[] trgb = teethRgb(phase);
+                int[] rrgb = teethRimRgb(phase);
+                float tam = teethAlphaMul(phase);
                 for (int m = 0; m < 3; m++) {
                     Vec3 mo = billboardOffset(at, view, baseR * MOUTH_X[m], baseR * MOUTH_Y[m]);
-                    // dark cavity behind the teeth so the white blocks pop
+                    // dark cavity behind the teeth so the blocks pop
                     quadAt(poseStack, collector, GlowRenderTypes.translucent(BLACK), mo, view,
                             baseR * 0.16, 8, 6, 14, (int) (a * wMouth * 200.0F));
-                    // cyan-white inner mouth wash (frames: soft teal cavity)
+                    // mouth wash tinted toward the phase tooth colour
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), mo, view,
-                            baseR * 0.12, 110, 200, 210, (int) (a * wMouth * 70.0F));
-                    // outer U-arc: 11 chunky blocks, alternating size + stagger
-                    // for the dotted/zigzag read from the close-ups
+                            baseR * 0.12, trgb[0], trgb[1], trgb[2], (int) (a * wMouth * tam * 55.0F));
+                    // outer U-arc: 11 chunky blocks
                     for (int i = 0; i < 11; i++) {
-                        float t = i / 10.0F;
-                        float ang = (float) (Math.PI * (1.05 + 0.90 * t));
+                        float tt = i / 10.0F;
+                        float ang = (float) (Math.PI * (1.05 + 0.90 * tt));
                         float zig = ((i & 1) == 1) ? 0.028F : -0.010F;
                         float rad = 0.155F + (((i & 1) == 1) ? 0.012F : 0.0F);
                         float tx = MOUTH_X[m] + (float) Math.cos(ang) * rad;
                         float ty = MOUTH_Y[m] + (float) Math.sin(ang) * (rad * 0.88F) + zig;
                         Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
                         double toothR = baseR * (0.048 + (((i & 1) == 1) ? 0.016 : 0.0));
-                        // pure white block
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                toothR, 200, 235, 245, (int) (a * wMouth * 210.0F));
-                        // cyan rim so the cube reads as glowing, not flat
+                                toothR, trgb[0], trgb[1], trgb[2], (int) (a * wMouth * tam * 220.0F));
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                toothR * 1.35, 130, 210, 230, (int) (a * wMouth * 50.0F));
+                                toothR * 1.35, rrgb[0], rrgb[1], rrgb[2], (int) (a * wMouth * tam * 45.0F));
                     }
-                    // secondary inner dotted arc (the tight "dotted U")
+                    // secondary inner dotted arc
                     for (int i = 0; i < 7; i++) {
-                        float t = i / 6.0F;
-                        float ang = (float) (Math.PI * (1.18 + 0.64 * t));
+                        float tt = i / 6.0F;
+                        float ang = (float) (Math.PI * (1.18 + 0.64 * tt));
                         float tx = MOUTH_X[m] + (float) Math.cos(ang) * 0.095F;
                         float ty = MOUTH_Y[m] + (float) Math.sin(ang) * 0.078F;
                         Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                baseR * 0.026, 180, 225, 235, (int) (a * wMouth * 175.0F));
+                                baseR * 0.026, trgb[0], trgb[1], trgb[2], (int) (a * wMouth * tam * 180.0F));
                     }
-                    // hot-magenta emitter cube ABOVE the mouth (frames)
+                    // hot-magenta emitter cube ABOVE the mouth
                     Vec3 cp = billboardOffset(at, view, baseR * MOUTH_X[m],
                             baseR * (MOUTH_Y[m] + 0.20F));
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,

@@ -106,6 +106,8 @@ public final class McsmGate {
             changed += setBool(c, "distantStorms", true);
             changed += setBool(c, "distantFog", true);
             changed += setBool(c, "customSkyboxes", true);
+            changed += setBool(c, "storyModeSky", true);
+            changed += setBool(c, "storyModeLighting", true);
             changed += setBool(c, "cloudDeckLayer", true);
             changed += setBool(c, "regionalBiomeFog", true);
             changed += setBool(c, "phaseAnim", true);
@@ -196,12 +198,8 @@ public final class McsmGate {
             changed += floorField(c, null, "beamColorR", 0.42);
             changed += floorField(c, null, "beamColorG", 0.12); // OG pack colors.json green=31
             changed += floorField(c, null, "beamColorB", 0.98);
-            // teeth: soft cyan-white dotted U-arcs (MCSM frames) — NOT pure-white blast.
-            // Force intensity DOWN from the old 2.4 floor so teeth match refs.
-            changed += setNum(c, null, "eyeColorR", 0.72);
-            changed += setNum(c, null, "eyeColorG", 0.88);
-            changed += setNum(c, null, "eyeColorB", 0.95);
-            changed += setNum(c, null, "turquoiseTeethIntensity", 1.15);
+            // teeth colours are phase-dynamic (McsmTeethPhaseTint every frame).
+            // Only ensure the glow path is ON; RGB/intensity are driven by phase.
             changed += setBool(c, "turquoiseTeeth", true);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);

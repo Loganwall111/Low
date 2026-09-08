@@ -9,6 +9,7 @@ import net.mcsm.extras.McsmDiag;
 import net.mcsm.extras.McsmGate;
 import net.mcsm.extras.client.McsmClientBlasts;
 import net.mcsm.extras.client.McsmClientChat;
+import net.mcsm.extras.client.McsmTeethPhaseTint;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -80,6 +81,7 @@ public abstract class McsmGradientTickPatch {
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
             StormSkyGradient.update(cameraState.pos);
+            McsmTeethPhaseTint.tick();
             // Report what update() produced. This is the value the glare blob
             // depends on -- if it never reports ACTIVE, the blob cannot draw
             // and the problem is upstream of the carrier, not in the shader.
