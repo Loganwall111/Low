@@ -231,13 +231,13 @@ public final class McsmExtrasConfig {
             enableRiseFx       = bool(p, "enable_rise_fx", enableRiseFx);
             spiralCounterClockwise = bool(p, "spiral_counter_clockwise", spiralCounterClockwise);
             enableBeaconBlock = bool(p, "enable_beacon_block", enableBeaconBlock);
+            String cv = p.getProperty("config_version");
             ogCemModels        = bool(p, "og_cem_models", ogCemModels);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
                 ogCemModels = true;
             }
             smudgeScale        = dbl(p, "smudge_scale", smudgeScale);
             glareSize          = dbl(p, "glare_size", glareSize);
-            String cv = p.getProperty("config_version");
             if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
                 glareSize = 0.58;
             }
