@@ -11,6 +11,8 @@
 // 0.0 = clear sky, 1.0 = deepest navy
 // Note: Actual value read from McsmExtrasConfig.nightSkyOpacity
 uniform float nightSkyOpacity = 1.0;
+    uniform float cloudAlpha = 1.0;
+    uniform float cloudSpeed = 1.0;
 
 // Phase 5.5 transition point
 // Exact phase where purple-pink horizon begins

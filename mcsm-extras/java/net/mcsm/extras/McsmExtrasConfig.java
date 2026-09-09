@@ -14,7 +14,7 @@ import java.util.Properties;
  * the counterclockwise spiral pin). Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.108";
+    public static final String BUILD_VERSION = "1.9.171";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -86,6 +86,12 @@ public final class McsmExtrasConfig {
     public static double phase55Threshold = 5.5;
     /** Salmon-pink intensity in phase 5.5-5.9 range. 1.0 = standard, >1.0 = stronger pink. */
     public static double phase5_9PinkIntensity = 1.0;
+    /** Cloud alpha: 0.0 = fully transparent (disabled), 1.0 = normal cloud opacity. */
+    public static double cloudAlpha = 1.0;
+    /** Cloud speed multiplier: 0.5 = half speed, 1.0 = normal, 2.0 = double speed. */
+    public static double cloudSpeed = 1.0;
+    /** Rain/snow intensity: 0.0 = no precipitation, 1.0 = normal precipitation. */
+    public static double precipitationIntensity = 1.0;
     /** Storm glare animation phase (0 = static, 1 = flowing, -1 = reverse). Affects disc rotation. */
     public static double glareAnimPhase = 0.0;
     /** Storm body animation pulse: makes phase-1 eye/jaw throb rhythmically. */
@@ -123,6 +129,9 @@ public final class McsmExtrasConfig {
             p.setProperty("glare_anim_phase", String.valueOf(glareAnimPhase));
             p.setProperty("body_anim_pulse", String.valueOf(bodyAnimPulse));
             p.setProperty("glare_anim_intensity", String.valueOf(glareAnimIntensity));
+            p.setProperty("cloud_alpha", String.valueOf(cloudAlpha));
+            p.setProperty("cloud_speed", String.valueOf(cloudSpeed));
+            p.setProperty("precipitation_intensity", String.valueOf(precipitationIntensity));
             p.setProperty("enable_rise_fx", String.valueOf(enableRiseFx));
             p.setProperty("spiral_counter_clockwise", String.valueOf(spiralCounterClockwise));
             p.setProperty("enable_beacon_block", String.valueOf(enableBeaconBlock));
@@ -206,6 +215,9 @@ public final class McsmExtrasConfig {
             glareAnimPhase = dbl(p, "glare_anim_phase", glareAnimPhase);
             bodyAnimPulse = dbl(p, "body_anim_pulse", bodyAnimPulse);
             glareAnimIntensity = dbl(p, "glare_anim_intensity", glareAnimIntensity);
+            cloudAlpha = dbl(p, "cloud_alpha", cloudAlpha);
+            cloudSpeed = dbl(p, "cloud_speed", cloudSpeed);
+            precipitationIntensity = dbl(p, "precipitation_intensity", precipitationIntensity);
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
                 glareSize = 0.58;
             }

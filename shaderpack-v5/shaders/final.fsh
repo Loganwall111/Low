@@ -9,6 +9,12 @@
 // Emissive intensity multiplier for particles and lighting
 // 0.0 = no emissive, 1.0 = standard, >1.0 = enhanced
 uniform float emissiveIntensity = 1.0;
+    uniform float ssaoStrength = 0.0;
+    uniform float cloudAlpha = 1.0;
+    uniform float waterRefraction = 1.0;
+    uniform float objectEmissive = 1.0;
+    uniform float auroraIntensity = 0.0;
+    uniform float stormGlowIntensity = 1.0;
 
 // Screen-space ambient occlusion strength
 // 0.0 = no SSAO, 1.0 = full SSAO
