@@ -21,17 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MCSM 1.9.172 -- Visual FX Driver, Atmospheric VFX & Enhanced Storm AI.
- *
- * Drives:
- *   - Phase 4/7 rise shockwaves, supernova rings, death blast, recovery
- *   - Purple sky motes, dust waves, smoke screen, command wire
- *   - Magical colored sparkles (white/pink/purple)
- *   - Nether & End portal lights & ambient aura
- *   - Beacon luminous glow corona
- *   - Nether lava sparks & fireflies
- *   - Shooting comets across night skies
- *   - Enhanced aggressive Wither Storm AI & intelligent targeting
+ * MCSM 1.9.172 -- Visual FX Driver, Atmospheric VFX, Blasts & Enhanced Storm AI.
  */
 public final class McsmFxDriver {
 
@@ -47,6 +37,33 @@ public final class McsmFxDriver {
         {0.36f, 0.95f, 0.42f},   // green
         {1.00f, 0.92f, 0.35f},   // yellow
     };
+
+    /** Blast kinds: a phase rise, or the death supernova. */
+    private static final int KIND_RISE  = 4;
+    private static final int KIND_DEATH = 99;
+
+    /** Expansion durations in ticks: 3 s for a rise, 5 s for the death blast. */
+    private static final int RISE_TICKS  = 60;
+    private static final int DEATH_TICKS = 100;
+
+    /**
+     * Where one frame of a blast goes: server broadcast, or local client spawn.
+     */
+    public interface Sink {
+        void send(DustParticleOptions options, double x, double y, double z,
+                  int count, double dx, double dy, double dz, double speed);
+    }
+
+    private static volatile long lastDeathArmMs = 0L;
+
+    public static long lastDeathArmMs() {
+        return lastDeathArmMs;
+    }
+
+    private static final Map<UUID, double[]> BLASTS = new ConcurrentHashMap<>();
+    private static final Map<UUID, Long> RISE_ARMED = new ConcurrentHashMap<>();
+    private static long lastClientGameTime = -1L;
+    private static long lastClientStepMs = 0L;
 
     public static void tick(WitherStormEntity self, Level level, long gt) {
         if (self == null || level == null || level.isClientSide()) {
@@ -72,6 +89,7 @@ public final class McsmFxDriver {
             // ---- death: supernova rings -> flash -> recovery ---------------
             if (st[1] == 0.0 && self.isDeadOrDying()) {
                 st[1] = 1.0;
+                lastDeathArmMs = System.currentTimeMillis();
                 if (McsmExtrasConfig.deathCinematic) {
                     supernova(srv, self, gt);
                 }
@@ -123,8 +141,11 @@ public final class McsmFxDriver {
                 environmentalPlayerVfx(srv, gt);
             }
 
-            // ---- advance expanding blast in flight ------------------------
-            tickBlasts(srv, self);
+            // Server-side fallback step for dedicated servers
+            if (System.currentTimeMillis() - lastClientStepMs > 250L) {
+                stepBlasts((options, x, y, z, count, dx, dy, dz, speed) ->
+                    spawn(srv, options, x, y, z, count, dx, dy, dz, speed), gt);
+            }
         } catch (Throwable ignored) {
             // Never let a particle break a tick.
         }
@@ -150,15 +171,6 @@ public final class McsmFxDriver {
         }
     }
 
-    // ---------------------------------------------------------------------
-    // Expanding Blasts Machine
-    // ---------------------------------------------------------------------
-    private static final Map<UUID, double[]> BLASTS = new ConcurrentHashMap<>();
-    private static final Map<UUID, Long> RISE_ARMED = new ConcurrentHashMap<>();
-    private static final int KIND_RISE  = 4;
-    private static final int KIND_DEATH = 7;
-    private static long lastDeathArmMs = 0L;
-
     private static void startBlast(ServerLevel srv, WitherStormEntity self, int kind) {
         long gt = srv.getGameTime();
         UUID id = self.getUUID();
@@ -173,40 +185,55 @@ public final class McsmFxDriver {
         BLASTS.put(id, new double[]{ (double) gt, (double) kind, x, y, z, floorY, bodyH });
     }
 
-    private static void tickBlasts(ServerLevel srv, WitherStormEntity self) {
-        if (BLASTS.isEmpty()) return;
-        long gt = srv.getGameTime();
-        Iterator<Map.Entry<UUID, double[]>> it = BLASTS.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<UUID, double[]> e = it.next();
-            double[] d = e.getValue();
-            long start = (long) d[0];
-            int kind = (int) d[1];
-            double x = d[2], y = d[3], z = d[4], floorY = d[5], bodyH = d[6];
-            long age = gt - start;
-            long maxAge = (kind == KIND_DEATH) ? 100L : 60L;
-            if (age < 0 || age > maxAge) {
+    public static boolean stepBlasts(Sink sink, long gameTime) {
+        if (sink == null || BLASTS.isEmpty()) {
+            return false;
+        }
+        if (gameTime == lastClientGameTime) {
+            return false;
+        }
+        lastClientGameTime = gameTime;
+        lastClientStepMs = System.currentTimeMillis();
+
+        boolean stepped = false;
+        for (Iterator<Map.Entry<UUID, double[]>> it = BLASTS.entrySet().iterator(); it.hasNext();) {
+            double[] d = it.next().getValue();
+            int duration = d[1] == KIND_DEATH ? DEATH_TICKS : RISE_TICKS;
+            double t = (gameTime - d[0]) / (double) duration;
+            if (t > 1.0D) {
                 it.remove();
                 continue;
             }
-            double progress = age / (double) maxAge;
-            double ease = 1.0 - Math.pow(1.0 - progress, 2.5);
-            double maxR = (kind == KIND_DEATH) ? 140.0 : 85.0;
-            double r = 4.0 + ease * maxR;
-
-            int segs = 16;
-            int ringIdx = (int) ((progress * (RINGS.length * 2)) % RINGS.length);
-            float[] col = (kind == KIND_DEATH) ? RINGS[ringIdx] : ((d[1] >= 7) ? RINGS[1] : RINGS[0]);
-            float scale = (float) Math.max(0.8, 3.2 * (1.0 - progress * 0.7));
-            DustParticleOptions frontPuff = dust(pack(col[0], col[1], col[2]), scale);
-
-            for (int i = 0; i < segs; i++) {
-                double a = (i / (double) segs) * Math.PI * 2.0 + (age * 0.04);
-                double px = x + Math.cos(a) * r;
-                double pz = z + Math.sin(a) * r;
-                spawn(srv, frontPuff, px, floorY + 0.5, pz, 1, 0.0, 0.2, 0.0, 0.0);
-                spawn(srv, frontPuff, px, floorY + bodyH * 0.45, pz, 1, 0.0, 0.3, 0.0, 0.0);
+            if (t < 0.0D) {
+                t = 0.0D;
             }
+            try {
+                expandRing(sink, d, t, d[1] == KIND_DEATH);
+                stepped = true;
+            } catch (Throwable ignored) {
+            }
+        }
+        return stepped;
+    }
+
+    private static void expandRing(Sink sink, double[] d, double t, boolean death) {
+        double x = d[2], y = d[3], z = d[4], floorY = d[5], bodyH = d[6];
+        double ease = 1.0D - (1.0D - t) * (1.0D - t);
+        double maxR = death ? 320.0D : 200.0D;
+        double r = 6.0D + ease * maxR;
+
+        double lift = (death ? bodyH * 0.45D : bodyH * 0.12D) * (1.0D - t * 0.35D);
+        double baseY = floorY + lift + 1.0D;
+
+        int k = Math.min(RINGS.length - 1, (int) (t * RINGS.length));
+        float[] c = RINGS[k];
+        DustParticleOptions puff = dust(pack(c[0], c[1], c[2]), (float) Math.max(0.8, 3.2 * (1.0 - t * 0.6)));
+
+        int segs = 18;
+        for (int i = 0; i < segs; i++) {
+            double a = (i / (double) segs) * Math.PI * 2.0;
+            sink.send(puff, x + Math.cos(a) * r, baseY, z + Math.sin(a) * r, 1, 0.0, 0.2, 0.0, 0.0);
+            sink.send(puff, x + Math.cos(a) * r, baseY + bodyH * 0.35D, z + Math.sin(a) * r, 1, 0.0, 0.3, 0.0, 0.0);
         }
     }
 
@@ -374,7 +401,7 @@ public final class McsmFxDriver {
 
             if (priorityTarget != null) {
                 self.setUltimateTarget(priorityTarget);
-                if (priorityTarget.distanceTo(self) < 64.0 && srv.random.nextFloat() < 0.25F) {
+                if (priorityTarget.distanceTo(self) < 64.0 && srv.getRandom().nextFloat() < 0.25F) {
                     self.forceTentacleSlam();
                 }
             }
@@ -414,20 +441,20 @@ public final class McsmFxDriver {
 
                 // 2. Nether Lava Sparks
                 if (McsmExtrasConfig.netherRedFog && srv.dimension() == Level.NETHER) {
-                    if (srv.random.nextFloat() < 0.6F) {
-                        double ox = (srv.random.nextDouble() - 0.5) * 24.0;
-                        double oz = (srv.random.nextDouble() - 0.5) * 24.0;
-                        spawn(srv, dust(0xFF4500, 1.3f), px + ox, py + srv.random.nextDouble() * 6.0, pz + oz, 3, 0.2, 0.8, 0.2, 0.05);
-                        spawn(srv, dust(0xFFD700, 1.0f), px + ox, py + srv.random.nextDouble() * 8.0, pz + oz, 2, 0.1, 0.6, 0.1, 0.04);
+                    if (srv.getRandom().nextFloat() < 0.6F) {
+                        double ox = (srv.getRandom().nextDouble() - 0.5) * 24.0;
+                        double oz = (srv.getRandom().nextDouble() - 0.5) * 24.0;
+                        spawn(srv, dust(0xFF4500, 1.3f), px + ox, py + srv.getRandom().nextDouble() * 6.0, pz + oz, 3, 0.2, 0.8, 0.2, 0.05);
+                        spawn(srv, dust(0xFFD700, 1.0f), px + ox, py + srv.getRandom().nextDouble() * 8.0, pz + oz, 2, 0.1, 0.6, 0.1, 0.04);
                     }
                 }
 
                 // 3. Night Sky Comets / Shooting Stars
                 if (McsmExtrasConfig.comets && srv.dimension() == Level.OVERWORLD && srv.isNight()) {
-                    if (srv.random.nextFloat() < 0.12F) {
-                        double cx = px + (srv.random.nextDouble() - 0.5) * 80.0;
-                        double cy = py + 45.0 + srv.random.nextDouble() * 20.0;
-                        double cz = pz + (srv.random.nextDouble() - 0.5) * 80.0;
+                    if (srv.getRandom().nextFloat() < 0.12F) {
+                        double cx = px + (srv.getRandom().nextDouble() - 0.5) * 80.0;
+                        double cy = py + 45.0 + srv.getRandom().nextDouble() * 20.0;
+                        double cz = pz + (srv.getRandom().nextDouble() - 0.5) * 80.0;
                         for (int k = 0; k < 6; k++) {
                             spawn(srv, dust(0xD8E6FF, 1.8f), cx + k * 1.5, cy - k * 0.8, cz + k * 1.5, 1, 0.05, 0.05, 0.05, 0.0);
                             spawn(srv, dust(0x80D8FF, 1.2f), cx + k * 1.5, cy - k * 0.8, cz + k * 1.5, 1, 0.05, 0.05, 0.05, 0.0);
@@ -437,10 +464,10 @@ public final class McsmFxDriver {
 
                 // 4. Overworld Fireflies at night
                 if (McsmExtrasConfig.biomeAtmospherics && srv.dimension() == Level.OVERWORLD && srv.isNight()) {
-                    if (srv.random.nextFloat() < 0.4F) {
-                        double fx = px + (srv.random.nextDouble() - 0.5) * 16.0;
-                        double fy = py + 0.5 + srv.random.nextDouble() * 2.5;
-                        double fz = pz + (srv.random.nextDouble() - 0.5) * 16.0;
+                    if (srv.getRandom().nextFloat() < 0.4F) {
+                        double fx = px + (srv.getRandom().nextDouble() - 0.5) * 16.0;
+                        double fy = py + 0.5 + srv.getRandom().nextDouble() * 2.5;
+                        double fz = pz + (srv.getRandom().nextDouble() - 0.5) * 16.0;
                         spawn(srv, dust(0xCCFF33, 0.9f), fx, fy, fz, 1, 0.05, 0.05, 0.05, 0.01);
                     }
                 }
