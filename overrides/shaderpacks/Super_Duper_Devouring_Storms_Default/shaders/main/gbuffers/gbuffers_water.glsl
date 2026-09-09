@@ -277,6 +277,17 @@
                     material.albedo.rgb *= waterNoise;
                 #endif
 
+                #ifdef MCSM_DARK_OPAQUE_WATER
+                    // Minecraft: Story Mode water: not mirror glass. Keep the
+                    // shader shadowing, but force a dark, opaque blue albedo
+                    // and rough material data so reflection passes cannot shine.
+                    float shallow = clamp(blockDepth * 0.060, 0.0, 1.0);
+                    material.albedo.rgb = mix(vec3(0.020, 0.045, 0.135), vec3(0.035, 0.085, 0.235), shallow);
+                    material.albedo.a = max(material.albedo.a, 0.96);
+                    material.metallic = 0.0;
+                    material.smoothness = 0.0;
+                #endif
+
                 #ifdef WATER_FOAM
                     material.albedo = min(vec4(1), material.albedo + edgeBrightness);
                 #endif

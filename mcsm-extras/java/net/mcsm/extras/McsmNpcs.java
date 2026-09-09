@@ -51,6 +51,11 @@ public final class McsmNpcs {
     private static final Map<String, Integer> PROGRESS = new HashMap<>();
     private static final Set<String> ROSTER = new HashSet<>();
     private static final Set<String> STORY_TOWNS = new HashSet<>();
+    private static final String[] SPAWN_EGG_CAST = {
+            "Jesse", "Petra", "Axel", "Olivia", "Lukas", "Radar", "Ivor", "Gabriel",
+            "Ellegaard", "Magnus", "Soren", "Harper", "Stella", "Nurm", "Jack", "Binta",
+            "Otto", "Hadrian", "Maya", "Stampy"
+    };
     private static final int TOWN_RADIUS = 86;
 
     private static boolean hooked;
@@ -211,6 +216,54 @@ public final class McsmNpcs {
         }
     }
 
+    public static String[] storyCharacterNames() {
+        return SPAWN_EGG_CAST.clone();
+    }
+
+    public static Mob spawnStoryCharacter(ServerLevel level, BlockPos at, String who, boolean manual) {
+        if (level == null || at == null || who == null || who.isBlank()) {
+            return null;
+        }
+        try {
+            String eid = entityIdFor(who);
+            String ns = "minecraft";
+            String path = "villager";
+            int colon = eid.indexOf(':');
+            if (colon > 0) {
+                ns = eid.substring(0, colon);
+                path = eid.substring(colon + 1);
+            }
+            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE
+                    .getValue(Identifier.fromNamespaceAndPath(ns, path));
+            if (type == null) {
+                type = BuiltInRegistries.ENTITY_TYPE
+                        .getValue(Identifier.fromNamespaceAndPath("minecraft", "villager"));
+            }
+            if (type == null) {
+                return null;
+            }
+            Entity created = type.create(level, manual ? EntitySpawnReason.COMMAND : EntitySpawnReason.STRUCTURE);
+            if (!(created instanceof Mob mob)) {
+                return null;
+            }
+            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(at),
+                    manual ? EntitySpawnReason.COMMAND : EntitySpawnReason.STRUCTURE, (SpawnGroupData) null);
+            applyHumanVariant(mob, who, Math.floorMod(who.hashCode(), 16));
+            mob.setCustomName(Component.literal(who));
+            mob.setCustomNameVisible(true);
+            mob.setPersistenceRequired();
+            mob.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, level.getRandom().nextFloat() * 360.0F, 0.0F);
+            try {
+                mob.setNoAi(false);
+            } catch (Throwable ignored) {
+            }
+            level.addFreshEntity(mob);
+            return mob;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     /** Prefer non-villager looks so cast members feel distinct. */
     private static String entityIdFor(String name) {
         String n = name.toLowerCase();
@@ -315,45 +368,12 @@ public final class McsmNpcs {
         List<String> names = new ArrayList<>(List.of(cast));
         for (int i = 0; i < names.size(); i++) {
             String who = names.get(i);
-            String eid = entityIdFor(who);
-            String ns = "minecraft";
-            String path = "villager";
-            int colon = eid.indexOf(':');
-            if (colon > 0) {
-                ns = eid.substring(0, colon);
-                path = eid.substring(colon + 1);
-            }
-            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE
-                    .getValue(Identifier.fromNamespaceAndPath(ns, path));
-            if (type == null) {
-                type = BuiltInRegistries.ENTITY_TYPE
-                        .getValue(Identifier.fromNamespaceAndPath("minecraft", "villager"));
-            }
-            if (type == null) {
-                continue;
-            }
             double ang = (i / (double) names.size()) * Math.PI * 2.0 + random.nextDouble() * 0.6;
             double ring = 5.0 + random.nextDouble() * 9.0;
             int x = centre.getX() + (int) Math.round(Math.cos(ang) * ring);
             int z = centre.getZ() + (int) Math.round(Math.sin(ang) * ring);
             int y = level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-            BlockPos at = new BlockPos(x, y, z);
-            Entity created = type.create(level, EntitySpawnReason.STRUCTURE);
-            if (!(created instanceof Mob mob)) {
-                continue;
-            }
-            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(at), EntitySpawnReason.STRUCTURE,
-                    (SpawnGroupData) null);
-            applyHumanVariant(mob, who, i);
-            mob.setCustomName(Component.literal(who));
-            mob.setCustomNameVisible(true);
-            mob.setPersistenceRequired();
-            mob.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, random.nextFloat() * 360.0F, 0.0F);
-            try {
-                mob.setNoAi(false);
-            } catch (Throwable ignored) {
-            }
-            level.addFreshEntity(mob);
+            spawnStoryCharacter(level, new BlockPos(x, y, z), who, false);
         }
     }
 

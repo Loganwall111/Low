@@ -7,11 +7,12 @@ import net.minecraft.client.Minecraft;
 /**
  * Drives model teeth/eye glow colours from the nearest storm phase so the
  * base-mod teethBoost pass matches the MCSM frames without Iris:
- *   4.x     light blue
- *   5.0     pure white
- *   5.1-5.4 white + slight blue
- *   5.5-5.9 glowing white
- *   6+      extremely dark blue
+ *   phase 3          no teeth glow
+ *   phase 4          small cool-white/cyan glow on the three heads
+ *   phase 5          flat white teeth, no big glow
+ *   phase 5.5        white teeth with glow
+ *   phase 6          blue/cyan glowing teeth after the split
+ *   phase 7+         green-blue glowing teeth
  */
 public final class McsmTeethPhaseTint {
 
@@ -35,22 +36,35 @@ public final class McsmTeethPhaseTint {
                 return;
             }
             float r, g, b, inten;
-            if (phase >= 6.0F) {
-                r = 0.62F; g = 1.00F; b = 1.00F; inten = 1.85F;   // cyan split-phase teeth
+            boolean glow;
+            if (phase >= 7.0F) {
+                r = 0.52F; g = 1.00F; b = 0.88F; inten = 2.10F; glow = true;   // green-blue late storm
+            } else if (phase >= 6.0F) {
+                r = 0.34F; g = 0.78F; b = 1.00F; inten = 2.00F; glow = true;   // blue/cyan split teeth
             } else if (phase >= 5.5F) {
-                r = 0.86F; g = 1.00F; b = 1.00F; inten = 1.75F; // white-cyan phase 5.5 mouth
-            } else if (phase >= 5.1F) {
-                r = 0.85F; g = 0.98F; b = 1.00F; inten = 1.40F;  // white + slight blue
+                r = 0.96F; g = 1.00F; b = 1.00F; inten = 1.85F; glow = true;   // white teeth, glowing
             } else if (phase >= 5.0F) {
-                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.45F;  // pure white
+                r = 1.00F; g = 1.00F; b = 0.88F; inten = 0.85F; glow = false;  // flat white, no glow
+            } else if (phase >= 4.0F) {
+                r = 0.82F; g = 0.98F; b = 1.00F; inten = 1.10F; glow = true;   // slight phase-4 glow
             } else {
-                r = 0.70F; g = 0.96F; b = 1.00F; inten = 1.40F; // neon cyan  // phase 4 light blue
+                r = 0.98F; g = 0.98F; b = 0.86F; inten = 0.0F; glow = false;  // phase 3: no glowing teeth
             }
             DabyWSClientConfig.eyeColorR = r;
             DabyWSClientConfig.eyeColorG = g;
             DabyWSClientConfig.eyeColorB = b;
             DabyWSClientConfig.turquoiseTeethIntensity = inten;
-            DabyWSClientConfig.turquoiseTeeth = true;
+            DabyWSClientConfig.turquoiseTeeth = glow;
+
+            // Tractor beams should follow the same sky/storm family instead of
+            // staying solid pink-purple all day. Keep them soft but phase-aware.
+            float day = 0.55F + 0.45F * (float)Math.sin((mc.level.getGameTime() % 24000L) / 24000.0D * Math.PI * 2.0D);
+            float br = phase >= 7.0F ? 0.42F : (phase >= 6.0F ? 0.30F : (phase >= 5.5F ? 0.78F : 0.62F));
+            float bg = phase >= 7.0F ? 0.96F : (phase >= 6.0F ? 0.64F : (phase >= 5.5F ? 0.52F : 0.30F));
+            float bb = phase >= 7.0F ? 0.86F : (phase >= 6.0F ? 1.00F : (phase >= 5.5F ? 1.00F : 0.95F));
+            DabyWSClientConfig.beamColorR = br * (0.82F + 0.18F * day);
+            DabyWSClientConfig.beamColorG = bg * (0.82F + 0.18F * day);
+            DabyWSClientConfig.beamColorB = bb;
         } catch (Throwable ignored) {
         }
     }

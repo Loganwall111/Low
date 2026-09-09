@@ -173,8 +173,12 @@ public final class McsmStormBlob {
             float wCore = ramp(phase, 4.0F, 4.3F);
             float wFace = ramp(phase, 5.5F, 5.8F);
             float wGlare = ramp(phase, 3.95F, 4.3F);
-            float wMouth = ramp(phase, 3.9F, 4.3F);
-            float mouthBoost = phase >= 6.0F ? 1.65F : (phase >= 5.5F ? 1.45F : 1.0F);
+            float wMouth = phase < 4.0F ? 0.0F : ramp(phase, 4.0F, 4.25F);
+            float mouthBoost = phase >= 7.0F ? 1.85F : (phase >= 6.0F ? 1.70F : (phase >= 5.5F ? 1.45F : 0.82F));
+            float mouthAlphaScale = phase >= 7.0F ? 1.18F : (phase >= 6.0F ? 1.12F : (phase >= 5.5F ? 1.0F : (phase >= 5.0F ? 0.36F : 0.48F)));
+            int mouthR = phase >= 7.0F ? 132 : (phase >= 6.0F ? 88 : (phase >= 5.5F ? 245 : 225));
+            int mouthG = phase >= 7.0F ? 255 : (phase >= 6.0F ? 210 : 255);
+            int mouthB = phase >= 7.0F ? 224 : (phase >= 6.0F ? 255 : 245);
 
             // THE GLARE, FIRST: one soft gradient billboard hung behind the
             // silhouette, exactly as the original frames expose it - wide
@@ -308,6 +312,29 @@ public final class McsmStormBlob {
                 });
             }
 
+            // Optional experimental infinite rear/back growth: OFF by default.
+            // This is a light visual-only first pass so it cannot engulf saves
+            // or destroy worlds until the player explicitly enables it.
+            if (key == mainKey && phase >= 4.0F) {
+                McsmExtrasConfig.load();
+                if (McsmExtrasConfig.infiniteBackGrowth) {
+                    float speed = (float)Mth.clamp(McsmExtrasConfig.infiniteBackGrowthSpeed, 0.01, 12.0);
+                    float grow = Mth.clamp((nowSec * speed) / 900.0F, 0.0F, 1.0F);
+                    final float bR2 = (float)baseR;
+                    collector.submitCustomGeometry(poseStack, GlowRenderTypes.translucent(WHITE), (pose, consumer) -> {
+                        for (int i = 0; i < 44; i++) {
+                            float q = i / 43.0F;
+                            float width = (0.08F + q * 0.34F + grow * 0.22F) * bR2;
+                            float yy = (0.35F + q * (2.8F + grow * 9.0F)) * bR2;
+                            float xx = (fract(i * 0.618F) - 0.5F) * width;
+                            Vec3 bp = billboardOffset(at, view, xx, yy);
+                            float sz = (0.032F + 0.038F * fract(i * 0.371F)) * bR2;
+                            quadVerts(pose, consumer, bp, view, sz, 7, 8, 18, (int)(a * (1.0F - q * 0.35F) * 185.0F));
+                        }
+                    });
+                }
+            }
+
             // MOUTH DETAILS, LAST (over the body): the original frames show
             // each emitter as a cyan-white inner-mouth square, a U-arc of
             // tiny white dashed teeth (zigzagged), and one small magenta
@@ -318,7 +345,7 @@ public final class McsmStormBlob {
                     Vec3 mo = billboardOffset(at, view, baseR * MOUTH_X[m], baseR * MOUTH_Y[m]);
                     // inner mouth: cyan-white emissive square
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), mo, view,
-                            baseR * 0.135 * mouthBoost, 160, 255, 250, (int) (a * wMouth * 210.0F));
+                            baseR * 0.135 * mouthBoost, mouthR, mouthG, mouthB, (int) (a * wMouth * 210.0F * mouthAlphaScale));
                     // dashed teeth: 7 tiny squares on a downward U-arc
                     for (int i = 0; i < 7; i++) {
                         float ang = (float) (Math.PI * (1.12 + 0.76 * i / 6.0));
@@ -327,7 +354,7 @@ public final class McsmStormBlob {
                                 + ((i & 1) == 1 ? 0.014F : 0.0F);
                         Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                baseR * 0.036 * mouthBoost, 210, 255, 255, (int) (a * wMouth * 255.0F));
+                                baseR * 0.036 * mouthBoost, mouthR, mouthG, mouthB, (int) (a * wMouth * 255.0F * mouthAlphaScale));
                     }
                     // the magenta emitter cube above the mouth
                     Vec3 cp = billboardOffset(at, view, baseR * MOUTH_X[m],

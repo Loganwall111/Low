@@ -46,11 +46,32 @@ public final class McsmStormAtmosphere {
                     best = d.phase;
                 }
             }
-            // only within ~1200 blocks does storm sky own the dome
-            if (bestD > 1200.0 * 1200.0) {
+            // beyond this range the sky/fog is vanilla Story Mode calm again
+            if (bestD > 1700.0 * 1700.0) {
                 return 0.0F;
             }
             return best;
+        } catch (Throwable t) {
+            return 0.0F;
+        }
+    }
+
+    public static float distanceInfluence() {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.level == null || mc.player == null) return 0.0F;
+            double bestD = Double.MAX_VALUE;
+            var pos = mc.player.position();
+            for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
+                if (d.phase < 4.0F) continue;
+                double dx = d.dispX - pos.x;
+                double dy = d.dispY - pos.y;
+                double dz = d.dispZ - pos.z;
+                bestD = Math.min(bestD, dx * dx + dy * dy + dz * dz);
+            }
+            if (bestD == Double.MAX_VALUE) return 0.0F;
+            double dist = Math.sqrt(bestD);
+            return 1.0F - Mth.clamp((float)((dist - 900.0D) / 800.0D), 0.0F, 1.0F);
         } catch (Throwable t) {
             return 0.0F;
         }
@@ -82,8 +103,10 @@ public final class McsmStormAtmosphere {
         out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + six[0] * wSix) / tot;
         out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + six[1] * wSix) / tot;
         out[2] = (teal[2] * wTeal + purp[2] * wPurp + pink[2] * wPink + six[2] * wSix) / tot;
-        // presence scales with phase weight; 5.5 is strongest purple-pink
-        float blend = Mth.clamp(tot, 0.0F, 1.0F);
+        // presence scales with phase weight; 5.5 is strongest purple-pink, and
+        // fades back to calm/vanilla Story Mode sky when the player gets far
+        // away from the storm.
+        float blend = Mth.clamp(tot, 0.0F, 1.0F) * distanceInfluence();
         // near-storm boost
         return blend * 0.92F;
     }

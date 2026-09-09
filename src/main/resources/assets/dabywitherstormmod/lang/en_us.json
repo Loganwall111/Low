@@ -129,5 +129,6 @@
   "advancements.dabywitherstormmod.another_begins.title": "When one story ends, another one begins",
   "advancements.dabywitherstormmod.another_begins.description": "Take the withered nether star from what is left of the storm",
   "advancements.dabywitherstormmod.withered_beacon.title": "Something Still Burning",
-  "advancements.dabywitherstormmod.withered_beacon.description": "Drive a withered nether star into a beacon"
+  "advancements.dabywitherstormmod.withered_beacon.description": "Drive a withered nether star into a beacon",
+  "item.dabywitherstormmod.story_character_spawn_egg": "Story Mode Character Spawn Egg"
 }

@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.189";
+    public static final String BUILD_VERSION = "1.9.190";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -118,6 +118,12 @@ public final class McsmExtrasConfig {
     public static boolean witherStormEnhancedAi = true;
     /** NPC natural walking and speaking animations. */
     public static boolean npcWalkAnimations = true;
+    /** Early Wither Storm MCSM sway/tilt and quick summon look-down snap. */
+    public static boolean stormBodySway = true;
+    /** Endless rear cube/back growth is experimental and grief-heavy; default OFF. */
+    public static boolean infiniteBackGrowth = false;
+    /** Growth speed multiplier for the optional infinite back growth. */
+    public static double infiniteBackGrowthSpeed = 0.10;
 
     // ---- Iris Shader Pack -------------------------------------------------
     /** Ship + auto-install the Devouring Storms Iris shader pack. */
@@ -185,6 +191,9 @@ public final class McsmExtrasConfig {
             p.setProperty("global_shadows", String.valueOf(globalShadows));
             p.setProperty("wither_storm_enhanced_ai", String.valueOf(witherStormEnhancedAi));
             p.setProperty("npc_walk_animations", String.valueOf(npcWalkAnimations));
+            p.setProperty("storm_body_sway", String.valueOf(stormBodySway));
+            p.setProperty("infinite_back_growth", String.valueOf(infiniteBackGrowth));
+            p.setProperty("infinite_back_growth_speed", String.valueOf(infiniteBackGrowthSpeed));
             p.setProperty("embedded_shader_pack", String.valueOf(embeddedShaderPack));
             try (OutputStream out = new FileOutputStream(f)) {
                 p.store(out, "MCSM - storm gameplay patches + visuals + gates. config_version below is the build that wrote this file.");
@@ -265,6 +274,9 @@ public final class McsmExtrasConfig {
             globalShadows      = bool(p, "global_shadows", globalShadows);
             witherStormEnhancedAi = bool(p, "wither_storm_enhanced_ai", witherStormEnhancedAi);
             npcWalkAnimations  = bool(p, "npc_walk_animations", npcWalkAnimations);
+            stormBodySway      = bool(p, "storm_body_sway", stormBodySway);
+            infiniteBackGrowth = bool(p, "infinite_back_growth", infiniteBackGrowth);
+            infiniteBackGrowthSpeed = dbl(p, "infinite_back_growth_speed", infiniteBackGrowthSpeed);
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
         } catch (Throwable t) {
             // stay on defaults; never crash the game over a config file

@@ -6,11 +6,12 @@ import net.minecraft.resources.Identifier;
 /**
  * Storm body + teeth emissive atlas selection.
  * Teeth glow is phase-dynamic (user frames):
- *   4.x     light blue
- *   5.0     pure white
- *   5.1-5.4 white + slight blue
- *   5.5-5.9 glowing white
- *   6+      extremely dark blue
+ *   phase 3          no glow
+ *   phase 4          slight light-cyan glow
+ *   phase 5          flat white, low/non-glowing
+ *   phase 5.5        glowing white
+ *   phase 6          blue glowing split-phase teeth
+ *   phase 7+         green-blue glowing teeth
  */
 public final class StormSkins {
     private static final Identifier LEGACY_CLASSIC = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/wither_storm.png");
@@ -42,7 +43,9 @@ public final class StormSkins {
     public static Identifier teethGlow(double phase) {
         boolean ogSkin = DabyWSClientConfig.stormSkin >= 0.5;
         String path;
-        if (phase >= 6.0) {
+        if (phase >= 7.0) {
+            path = ogSkin ? "textures/entity/wither_storm_og_p7_e.png" : "textures/entity/wither_storm_p7_e.png";
+        } else if (phase >= 6.0) {
             path = ogSkin ? "textures/entity/wither_storm_og_p6_e.png" : "textures/entity/wither_storm_p6_e.png";
         } else if (phase >= 5.5) {
             path = ogSkin ? "textures/entity/wither_storm_og_p55_e.png" : "textures/entity/wither_storm_p55_e.png";
@@ -50,8 +53,10 @@ public final class StormSkins {
             path = ogSkin ? "textures/entity/wither_storm_og_p51_e.png" : "textures/entity/wither_storm_p51_e.png";
         } else if (phase >= 5.0) {
             path = ogSkin ? "textures/entity/wither_storm_og_p5_e.png" : "textures/entity/wither_storm_p5_e.png";
-        } else {
+        } else if (phase >= 4.0) {
             path = ogSkin ? "textures/entity/wither_storm_og_e.png" : "textures/entity/wither_storm_e.png";
+        } else {
+            path = "textures/entity/wither_storm_no_teeth_glow_e.png";
         }
         return Identifier.fromNamespaceAndPath("dabywitherstormmod", path);
     }

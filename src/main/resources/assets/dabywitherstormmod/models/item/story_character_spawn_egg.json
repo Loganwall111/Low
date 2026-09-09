@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "dabywitherstormmod:item/story_character_spawn_egg"
+  }
+}

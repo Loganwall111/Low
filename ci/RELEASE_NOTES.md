@@ -1,4 +1,22 @@
+# Devouring Storms 1.9.190 — Story Mode water, phase-dynamic teeth/beams, NPC spawn egg, and storm sway
+
+This build starts the next larger pass from your reference frames.
+
+* **Blue-black Wither Storm body skin pass**: normal/OG body atlases and phase/devourer atlases are pushed toward the dark bluish-black Story Mode look, while preserving the charcoal body shape.
+* **Phase-specific teeth behavior**: phase 3 has no teeth glow, phase 4 glows only slightly, phase 5 stays flat white, phase 5.5 glows white, phase 6 glows blue/cyan, and phase 7+ shifts to green-blue glow.
+* **New phase-7 emissive teeth textures** plus a transparent no-glow emissive texture for pre-glow phases.
+* **Tractor beams now recolor with storm phase/day-night atmosphere** instead of staying one solid pink/purple all the time.
+* **Standalone Story Mode Character Spawn Egg** registered as `dabywitherstormmod:story_character_spawn_egg`; it spawns named Story Mode cast NPCs without waiting for town population.
+* **Dark opaque Story Mode water shader defaults**: water is deep blue, mostly opaque, non-reflective, with caustics/rays/reflection shine disabled by default.
+* **Light rays/flaring reduced hard** in the bundled Super Duper shaderpack: lens flare off, volumetric strength near zero, underwater caustics off.
+* **Storm sky/fog fades back out with distance** so going far from the storm returns toward the calm vanilla/Story Mode sky instead of keeping the storm palette forever.
+* **Wither Storm body sway/summon animation pass**: early phases subtly tilt left/right; summon animation starts with a quick look-down/dipped pose then snaps upward.
+* **Ground block-fragment particles** now lift off blocks near the storm, matching the little cubed debris feel from the references.
+* **Death shockwave extended** from a few seconds to about 26 seconds so the purple/supernova pulse remains visible instead of disappearing immediately.
+* Added an **experimental visual infinite back-growth option**, off by default: `/ds storm backgrowth true` and `/ds storm backgrowth_speed <0.01..12>`.
+
 # Devouring Storms 1.9.189 — cyan storm teeth, slimmer HUD rail, and lower-reflection shader defaults
+
 
 This build reacts to the 1.9.188 test: Story Look now loads, the dark storm body looks good, but the phase 5.5/6 teeth need the cyan Story Mode glow and the Intel/Iris/Sodium setup is still running out of native memory.
 

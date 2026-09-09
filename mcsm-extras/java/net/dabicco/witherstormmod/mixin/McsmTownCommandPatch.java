@@ -1,6 +1,8 @@
 package net.dabicco.witherstormmod.mixin;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -14,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.mcsm.extras.McsmExtrasConfig;
 import net.mcsm.extras.McsmTemplateSummoner;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -105,7 +108,17 @@ public abstract class McsmTownCommandPatch {
                                     StringArgumentType.getString(ctx, "blueprint")))));
             towns.then(Commands.literal("start")
                     .executes(ctx -> ds$start(ctx.getSource())));
-            dispatcher.register(Commands.literal("ds").then(towns));
+
+            LiteralArgumentBuilder<CommandSourceStack> storm = Commands.literal("storm");
+            storm.then(Commands.literal("backgrowth")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                            .executes(ctx -> ds$backGrowth(ctx.getSource(),
+                                    BoolArgumentType.getBool(ctx, "enabled")))));
+            storm.then(Commands.literal("backgrowth_speed")
+                    .then(Commands.argument("speed", DoubleArgumentType.doubleArg(0.01D, 12.0D))
+                            .executes(ctx -> ds$backGrowthSpeed(ctx.getSource(),
+                                    DoubleArgumentType.getDouble(ctx, "speed")))));
+            dispatcher.register(Commands.literal("ds").then(towns).then(storm));
         } catch (Throwable ignored) {
             // our extension failing must never take down their /mcsm command
         }
@@ -237,6 +250,24 @@ public abstract class McsmTownCommandPatch {
                     + t2.x() + ", " + t2.y() + ", " + t2.z() + ")."), false);
         }
         return queued;
+    }
+
+    private static int ds$backGrowth(CommandSourceStack src, boolean enabled) {
+        McsmExtrasConfig.load();
+        McsmExtrasConfig.infiniteBackGrowth = enabled;
+        McsmExtrasConfig.save();
+        src.sendSuccess(() -> Component.literal("[ds] infinite visual back growth is now "
+                + (enabled ? "ON" : "OFF") + ". It is intentionally off by default."), false);
+        return enabled ? 1 : 0;
+    }
+
+    private static int ds$backGrowthSpeed(CommandSourceStack src, double speed) {
+        McsmExtrasConfig.load();
+        McsmExtrasConfig.infiniteBackGrowthSpeed = speed;
+        McsmExtrasConfig.save();
+        src.sendSuccess(() -> Component.literal("[ds] infinite visual back growth speed set to " + speed
+                + ". Use /ds storm backgrowth true to enable it."), false);
+        return (int)Math.round(speed * 100.0D);
     }
 
     private static int ds$summon(CommandSourceStack src, String key) {

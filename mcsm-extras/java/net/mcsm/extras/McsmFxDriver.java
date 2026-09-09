@@ -2,17 +2,21 @@ package net.mcsm.extras;
 
 import net.dabicco.witherstormmod.entity.WitherStormEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap.Types;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,9 +46,9 @@ public final class McsmFxDriver {
     private static final int KIND_RISE  = 4;
     private static final int KIND_DEATH = 99;
 
-    /** Expansion durations in ticks: 3 s for a rise, 5 s for the death blast. */
+    /** Expansion durations in ticks: 3 s for a rise, 26 s for the death blast. */
     private static final int RISE_TICKS  = 60;
-    private static final int DEATH_TICKS = 100;
+    private static final int DEATH_TICKS = 520;
 
     /**
      * Where one frame of a blast goes: server broadcast, or local client spawn.
@@ -106,9 +110,10 @@ public final class McsmFxDriver {
                 purpleMotes(srv, self, gt);
             }
 
-            // ---- dust waves while it sweeps the ground ---------------------
+            // ---- dust waves / cubed block motes while it sweeps the ground -
             if (McsmExtrasConfig.dustWaves && gt % 6L == 0L) {
                 dustWave(srv, self);
+                blockPeel(srv, self);
             }
 
             // ---- smoke screen: heavy smoke pooled under the body -----------
@@ -328,6 +333,33 @@ public final class McsmFxDriver {
         for (int i = 0; i < 8; i++) {
             double a = (i / 8.0) * Math.PI * 2.0;
             spawn(srv, dust(0x9aa0a6, 2.2f), x + Math.cos(a) * r, py, z + Math.sin(a) * r, 3, 1.6, 0.7, 1.6, 0.05);
+        }
+    }
+
+    private static void blockPeel(ServerLevel srv, WitherStormEntity self) {
+        double x = self.getX(), z = self.getZ();
+        double r = self.getBoundingBox().getXsize() * 0.45 + 10.0;
+        RandomSource rnd = srv.getRandom();
+        for (int i = 0; i < 6; i++) {
+            double a = rnd.nextDouble() * Math.PI * 2.0;
+            double rr = r * (0.35 + rnd.nextDouble() * 0.75);
+            int bx = (int)Math.floor(x + Math.cos(a) * rr);
+            int bz = (int)Math.floor(z + Math.sin(a) * rr);
+            int by = srv.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, bx, bz) - 1;
+            BlockPos bp = new BlockPos(bx, by, bz);
+            BlockState state = srv.getBlockState(bp);
+            if (state.isAir() || state.is(Blocks.WATER) || state.is(Blocks.LAVA)) {
+                continue;
+            }
+            // block particle options are actual Minecraft block fragments: the
+            // little square/cube pieces seen lifting off the ground in MCSM.
+            srv.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state),
+                    bx + 0.5, by + 1.05, bz + 0.5, 8,
+                    0.25, 0.35 + rnd.nextDouble() * 0.35, 0.25, 0.12);
+            if (self.getPhase() >= 5.5 && rnd.nextBoolean()) {
+                spawn(srv, dust(0xff78d8, 1.0F), bx + 0.5, by + 1.2, bz + 0.5,
+                        3, 0.15, 0.35, 0.15, 0.05);
+            }
         }
     }
 
