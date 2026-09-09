@@ -131,7 +131,7 @@ public final class McsmGate {
             changed += setBool(c, "stormShadow", true);
             changed += setBool(c, "stormShadowTerrain", true);
             changed += setBool(c, "stormShadowSoftEdge", true);
-            changed += setBool(c, "stormShadowHeightmap", true);
+            changed += setBool(c, "stormShadowHeightmap", false);
 
             // ---- screen: smoke screen, tremor, sickness, glitch -----------
             changed += setBool(c, "stormProximityVignette", true);
@@ -153,12 +153,12 @@ public final class McsmGate {
             changed += floorField(c, null, "sicknessVeinIntensity", 0.7);
             changed += floorField(c, null, "screenTremorIntensity", 0.8);
             changed += floorField(c, null, "chromaticGlitchStrength", 0.35);
-            changed += floorField(c, null, "debrisDustParticles", 1.0);
-            changed += floorField(c, null, "debrisAmount", 1.0);
+            changed += ceilingField(c, null, "debrisDustParticles", 0.55);
+            changed += ceilingField(c, null, "debrisAmount", 1.0);
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
-            changed += floorField(c, null, "sunGlowStrength", 1.0);
-            changed += floorField(c, null, "blackGlareStrength", 1.0);
+            changed += ceilingField(c, null, "sunGlowStrength", 0.45);
+            changed += ceilingField(c, null, "blackGlareStrength", 0.65);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);
             // Full-res HDR storm bloom is the native-memory pressure point in

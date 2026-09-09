@@ -3,6 +3,7 @@ package net.dabicco.witherstormmod.mixin;
 import net.dabicco.witherstormmod.entity.WitherStormEntity;
 import net.dabicco.witherstormmod.entity.renderer.WitherStormRenderer;
 import net.dabicco.witherstormmod.entity.state.WitherStormRenderState;
+import net.dabicco.witherstormmod.client.StormSkins;
 import net.minecraft.util.Mth;
 import net.mcsm.extras.McsmExtrasConfig;
 
@@ -22,6 +23,7 @@ public abstract class McsmStormSwayMixin {
     private void mcsm$swayAndSummonLookDown(WitherStormEntity entity, WitherStormRenderState state,
                                             float partialTick, CallbackInfo ci) {
         try {
+            StormSkins.setPhaseHint(state.phase);
             McsmExtrasConfig.load();
             if (!McsmExtrasConfig.stormBodySway) {
                 return;

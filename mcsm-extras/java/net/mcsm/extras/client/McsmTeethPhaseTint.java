@@ -32,6 +32,7 @@ public final class McsmTeethPhaseTint {
                     phase = d.phase;
                 }
             }
+            net.dabicco.witherstormmod.client.StormSkins.setPhaseHint(phase);
             if (phase < 0.5F) {
                 return;
             }

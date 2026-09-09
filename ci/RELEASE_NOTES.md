@@ -1,4 +1,17 @@
+# Devouring Storms 1.9.191 — corrected phase-6 texture atlases and crash-safe shader defaults
+
+This build fixes the 1.9.190 texture miss: the body atlas was pushed too blue everywhere, and the head glow path was still not guaranteed to see the current phase before choosing the phase-6 atlas.
+
+* **Reverted the over-blue body flood** and replaced it with a more faithful phase-6 style: mostly black/blue-black silhouette with sparse deep sapphire rectangular scratches/panels.
+* **Added phase-specific phase-4/head/body atlases** (`phase_4_assets_p55/p6/p7` and OG variants) so phase 5.5, 6 and 7 can use different body/teeth palettes instead of one shared texture.
+* **Added phase-specific devourer atlases** (`devourer_assets_p55/p6/p7` and OG variants) for the split storm body.
+* **Rebuilt emissive teeth maps from only the bright teeth/mouth pixels**, instead of tinting the whole lower half cyan. This should stop the “whole thing blue” look and make the teeth colour stand out.
+* **Forced storm/head renderers to publish the current phase before texture selection**, so detached heads and body parts choose the correct phase-6/phase-7 texture path.
+* **Crash pressure reduced again**: bundled Super Duper bloom is now off by default, volumetric strength is zero by default, lens flare remains off, underwater caustics remain off, storm shadow heightmap is off, and debris particle/default pressure is capped lower.
+* I also generated a reference texture concept with image generation, but kept the in-game atlas UV-safe instead of directly pasting the generated sheet over the model UVs.
+
 # Devouring Storms 1.9.190 — Story Mode water, phase-dynamic teeth/beams, NPC spawn egg, and storm sway
+
 
 This build starts the next larger pass from your reference frames.
 
