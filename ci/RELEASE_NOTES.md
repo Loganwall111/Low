@@ -1,3 +1,12 @@
+# Devouring Storms 1.9.196 — no-shader stability and readable dark storm body
+
+This build reacts to the no-shader test: the game can play without shaders, but the storm body became too black/silhouette-like and the remaining crash path is native/GL memory rather than Java code.
+
+* **OGS CEM is no longer default-enabled.** It is still extracted and available in Resource Packs, but the stable default keeps only Story Look auto-enabled. This avoids EMF/CEM loading the heaviest storm model pack automatically on Sodium/Iris/Nuit.
+* **Removes already-selected built-in OGS CEM from `options.txt` once**, so old profiles do not keep the heavy model pack selected after updating.
+* **Lifted the phase/body atlas brightness back up** to readable MCSM black/blue-black. It should no longer be a pure black silhouette, while still avoiding the rejected full-purple/full-blue body.
+* Keeps shaders default-off and the config preview default-off from 1.9.195.
+
 # Devouring Storms 1.9.195 — emergency GL/native-memory safe mode
 
 This build targets the new `GL_OUT_OF_MEMORY` / `Native memory allocation ... AllocateHeap` screenshots. The crash is coming from OpenGL/native buffers, so lowering Java heap alone is not enough.

@@ -53,7 +53,11 @@ public final class McsmBuiltinPack {
         // zips are installed to resourcepacks/ and registered built-in; the
         // player can select Story Look/OGS manually while we keep startup safe.
         registerPack("storylook", "Story Look");
-        registerPack("ogs-cem", "OGS CEM models");
+        // 1.9.196 stability: OGS CEM is still extracted/available, but it is
+        // no longer default-enabled. EMF+CEM on the enormous phase-5 storm can
+        // allocate huge dynamic transform buffers and trigger GL/native OOM on
+        // the user's 26.2 + Sodium/Iris stack. Enable it manually after a stable
+        // no-shader run if you want to test the full OG model pack.
     }
 
     private static void installResourcePack(String resource, String fileName) {
@@ -108,7 +112,9 @@ public final class McsmBuiltinPack {
                         .replace(",\"file/DevouringStorms-StoryLook.zip\"", "")
                         .replace("\"file/DevouringStorms-StoryLook.zip\",", "")
                         .replace(",\"file/DevouringStorms-OGS-CEM.zip\"", "")
-                        .replace("\"file/DevouringStorms-OGS-CEM.zip\",", "");
+                        .replace("\"file/DevouringStorms-OGS-CEM.zip\",", "")
+                        .replace(",\"dabywitherstormmod/ogs-cem\"", "")
+                        .replace("\"dabywitherstormmod/ogs-cem\",", "");
                 if (!nv.equals(v)) {
                     lines.set(i, "resourcePacks:" + nv);
                     changed = true;

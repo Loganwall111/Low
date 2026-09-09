@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.195";
+    public static final String BUILD_VERSION = "1.9.196";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -281,7 +281,7 @@ public final class McsmExtrasConfig {
             infiniteBackGrowthSpeed = dbl(p, "infinite_back_growth_speed", infiniteBackGrowthSpeed);
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
-                // 1.9.195 migration: old configs wrote embedded_shader_pack=true,
+                // 1.9.196 migration: old configs wrote embedded_shader_pack=true,
                 // which kept auto-selecting the heavy Iris pack and caused
                 // GL_OUT_OF_MEMORY/native AllocateHeap crashes. Flip only on
                 // version migration; the player can opt back in afterwards.
