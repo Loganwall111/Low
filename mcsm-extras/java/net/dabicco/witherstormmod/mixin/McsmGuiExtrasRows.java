@@ -82,41 +82,9 @@ public abstract class McsmGuiExtrasRows {
     }
 
     private static void mcsm$addDirectButton(Object self) {
-        try {
-            Screen sc = (Screen) self;
-            Button direct = Button.builder(
-                    Component.literal("Devouring Storms " + McsmExtrasConfig.BUILD_VERSION),
-                    b -> mcsm$openPanel(self))
-                .bounds(mcsm$buttonX(), mcsm$buttonY(sc), mcsm$buttonW(), mcsm$buttonH())
-                .build();
-
-            // 26.2 keeps addWidget protected/non-public. Search by shape so a
-            // descriptor change from AbstractWidget to GuiEventListener does not
-            // break compilation or runtime discovery.
-            Method add = null;
-            Class<?> k = Screen.class;
-            while (k != null && add == null) {
-                for (Method m : k.getDeclaredMethods()) {
-                    if (!m.getName().equals("addWidget") || m.getParameterCount() != 1) continue;
-                    Class<?> pt = m.getParameterTypes()[0];
-                    if (pt.isAssignableFrom(Button.class) || pt.isAssignableFrom(direct.getClass())
-                            || pt.getName().contains("GuiEventListener") || pt == Object.class) {
-                        add = m;
-                        break;
-                    }
-                }
-                k = k.getSuperclass();
-            }
-            if (add != null) {
-                add.setAccessible(true);
-                add.invoke(sc, direct);
-                System.err.println("[MCSM] direct MCSM Extras button added");
-            } else {
-                System.err.println("[MCSM] direct MCSM Extras button skipped: Screen.addWidget not found");
-            }
-        } catch (Throwable t) {
-            System.err.println("[MCSM] direct MCSM Extras button failed: " + t);
-        }
+        // 1.9.183: no fixed overlay button. It covered the base screen's
+        // own bottom controls at several GUI scales. Access is through the
+        // single row button below or Shift+C.
     }
 
     @Inject(method = {"init"}, at = @At("TAIL"))
@@ -127,20 +95,16 @@ public abstract class McsmGuiExtrasRows {
             mcsm$addDirectButton(self);
             Class<?> screen = WitherStormConfigScreen.class;
             Class<?> rowCls = Class.forName("net.dabicco.witherstormmod.client.gui.WitherStormConfigScreen$Row");
-            Method mHeader = rowCls.getDeclaredMethod("header", String.class, int.class);
             Method mButton = rowCls.getDeclaredMethod("button", String.class, String.class, Runnable.class);
             Method mAdd = screen.getDeclaredMethod("addRowWidget", rowCls);
-            for (Method m : new Method[]{mHeader, mButton, mAdd}) m.setAccessible(true);
+            for (Method m : new Method[]{mButton, mAdd}) m.setAccessible(true);
 
-            // MCSM 1.9.109 -- single-sourced version: this header used to be a
-            // hand-typed literal and lagged the jar by three builds, so the
-            // screen always claimed to be an older version than the file the
-            // user had just installed.
-            mAdd.invoke(self, mHeader.invoke(null,
-                    "Devouring Storms " + McsmExtrasConfig.BUILD_VERSION, 0));
+            // 1.9.183: one clean entry only. The previous header + button
+            // looked like duplicate Devouring Storms rows and made the base
+            // config screen feel broken.
             mAdd.invoke(self, mButton.invoke(null,
-                    "Open the MCSM Control Panel",
-                    "Glare size, aurora, death cinematic, supernova rings, smoke screen, purple sky, dust waves, reality tear, obliterate flash, and the gameplay patches.",
+                    "Open Devouring Storms " + McsmExtrasConfig.BUILD_VERSION,
+                    "Full Story Mode control panel: atmosphere, shaders, NPCs, storm VFX, world/story toggles.",
                     (Runnable) () -> mcsm$openPanel(self)));
 
             // exact-name relayout (see class doc for why repositionRows, not rebuild)
@@ -164,21 +128,8 @@ public abstract class McsmGuiExtrasRows {
     )
     private void mcsm$renderDirectButton(GuiGraphicsExtractor g, int mouseX, int mouseY,
                                          float partialTick, CallbackInfo ci) {
-        try {
-            Screen sc = (Screen) (Object) this;
-            this.mcsm$lastMouseX = mouseX;
-            this.mcsm$lastMouseY = mouseY;
-            int x = mcsm$buttonX();
-            int y = mcsm$buttonY(sc);
-            int w = mcsm$buttonW();
-            int h = mcsm$buttonH();
-            boolean hover = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
-            g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFFB0A0C8);
-            g.fill(x, y, x + w, y + h, hover ? 0xFF6E5A86 : 0xFF4E425E);
-            g.centeredText(sc.getFont(), "Devouring Storms " + McsmExtrasConfig.BUILD_VERSION, x + w / 2, y + 6, hover ? 0xFFFFE680 : 0xFFFFFFFF);
-        } catch (Throwable t) {
-            System.err.println("[MCSM] direct MCSM Extras render failed: " + t);
-        }
+        // Fixed overlay button removed in 1.9.183; keep the mixin method as a
+        // harmless no-op so older configs do not get an overlapping button.
     }
 
     @Inject(
@@ -188,19 +139,7 @@ public abstract class McsmGuiExtrasRows {
     )
     private void mcsm$clickDirectButton(MouseButtonEvent event, boolean doubleClick,
                                         CallbackInfoReturnable<Boolean> cir) {
-        try {
-            Screen sc = (Screen) (Object) this;
-            int x = mcsm$buttonX();
-            int y = mcsm$buttonY(sc);
-            int mx = this.mcsm$lastMouseX;
-            int my = this.mcsm$lastMouseY;
-            if (mx >= x && mx < x + mcsm$buttonW() && my >= y && my < y + mcsm$buttonH()) {
-                mcsm$openPanel(this);
-                cir.setReturnValue(Boolean.TRUE);
-            }
-        } catch (Throwable t) {
-            System.err.println("[MCSM] direct MCSM Extras click failed: " + t);
-        }
+        // Fixed overlay button removed in 1.9.183.
     }
 
 }

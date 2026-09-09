@@ -69,19 +69,12 @@ public abstract class McsmTitleOverhaulMixin extends Screen {
         int h = this.height;
         Font font = Minecraft.getInstance().font;
 
-        // --- top logo strip (covers the base mod's old left-aligned banner) --
-        g.fill(0, 0, w, 50, 0xF20A0612);
-        g.fillGradient(0, 50, w, 52, 0xFF6A8FF7, 0xFF3F255A);
-
-        float scale = Math.min(2.4F, w / 150.0F);
-        Matrix3x2fStack pose = g.pose();
-        pose.pushMatrix();
-        pose.translate(w / 2.0F, 8.0F);
-        pose.scale(scale);
-        g.centeredText(font, "\u00a7b\u00a7lDEVOURING \u00a79\u00a7lSTORMS", 0, 0, 0xFFDCE9FF);
-        pose.popMatrix();
-        g.centeredText(font, "\u00a78T H E   P O I N T   O F   N O   R E T U R N",
-                w / 2, 38, 0xFF8FA3C8);
+        // 1.9.183: do not draw a second Devouring Storms logo over the
+        // base/title resources. Keep cinematic borders only; one logo is
+        // enough and avoids the doubled-title look from the screenshots.
+        g.fillGradient(0, 0, w, 3, 0xFF6A8FF7, 0xFF3F255A);
+        g.fillGradient(0, 0, 4, h, 0xAA6A8FF7, 0x223F255A);
+        g.fillGradient(w - 4, 0, w, h, 0x223F255A, 0xAA6A8FF7);
 
         // --- bottom cinematic bar -------------------------------------------
         g.fill(0, h - 34, w, h, 0xF20A0612);

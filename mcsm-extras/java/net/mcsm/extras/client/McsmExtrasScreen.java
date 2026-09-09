@@ -49,17 +49,15 @@ public final class McsmExtrasScreen extends Screen {
 
         int rowH = 22;
         int gap = 10;
-        int colW = Math.min(240, (this.width - 24 - gap) / 2);
-        if (colW < 100) { colW = 100; }
-        int left = (this.width - (colW * 2 + gap)) / 2;
-        int top = 34;
+        int colW = Math.min(250, Math.max(120, (this.width - 54 - gap) / 2));
+        int left = 26;
+        int top = 36;
         final int fColW = colW;
 
         // Build header
         Button ver = Button.builder(
-                Component.literal("Devouring Storms " + McsmExtrasConfig.BUILD_VERSION
-                                  + " -- Settings & Visuals (Shift+C Quick Menu)"), b -> { })
-                .bounds(left, top, fColW * 2 + gap, 20).build();
+                Component.literal("Story Mode Controls " + McsmExtrasConfig.BUILD_VERSION), b -> { })
+                .bounds(left, top, fColW, 20).build();
         ver.active = false;
         this.addWidget(ver);
         this.chrome.add(ver);
@@ -186,8 +184,8 @@ public final class McsmExtrasScreen extends Screen {
 
     private void addToggle(int col, int row, int colW, int gap, int left, int top, int rowH,
                            String label, BooleanSupplier get, Consumer<Boolean> set) {
-        int x = left + col * (colW + gap);
-        int y = top + row * rowH;
+        int x = left + col * (colW + gap) + col * 18;
+        int y = top + row * rowH + col * 14;
         Button b = Button.builder(toggleLabel(label, get.getAsBoolean()), btn -> {
             set.accept(!get.getAsBoolean());
             McsmExtrasConfig.save();
@@ -203,8 +201,8 @@ public final class McsmExtrasScreen extends Screen {
     private void addSlider(int col, int row, int colW, int gap, int left, int top, int rowH,
                            String label, String fmt, double lo, double hi,
                            DoubleSupplier get, Consumer<Double> set) {
-        int x = left + col * (colW + gap);
-        int y = top + row * rowH;
+        int x = left + col * (colW + gap) + col * 18;
+        int y = top + row * rowH + col * 14;
         Slider s = new Slider(x, y, colW, label, fmt, lo, hi, get, set);
         this.addWidget(s);
         this.chrome.add(s);
@@ -277,10 +275,14 @@ public final class McsmExtrasScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, 0xB0101010);
+        g.fillGradient(0, 0, this.width, this.height, 0xF0120A1E, 0xF005030A);
+        g.fillGradient(0, 0, 18, this.height, 0xCC6A8FF7, 0x223F255A);
+        g.fillGradient(this.width - 18, 0, this.width, this.height, 0x223F255A, 0xCC6A8FF7);
+        g.fillGradient(0, 0, this.width, 3, 0xFF6A8FF7, 0xFF3F255A);
+        g.fillGradient(0, this.height - 3, this.width, this.height, 0xFF3F255A, 0xFF6A8FF7);
         applyScrollLayout();
-        g.centeredText(this.font, "Devouring Storms  --  The Point of No Return  " + McsmExtrasConfig.BUILD_VERSION, this.width / 2, 12, 0xFFFFFF);
-        g.centeredText(this.font, "Scroll wheel moves panel. Shift+C in-game opens quickly.", this.width / 2, 23, 0xA0A0A0);
+        g.text(this.font, "§bStory Mode Controls §8· §7" + McsmExtrasConfig.BUILD_VERSION, 26, 12, 0xFFEAF2FF, false);
+        g.text(this.font, "§8Scroll wheel moves panel. Shift+C opens this anywhere.", 26, 24, 0xFFA0A0A0, false);
         if (this.contentBottom > this.height - 36) {
             g.centeredText(this.font, "scroll " + this.scrollPx + "/" + Math.max(0, this.contentBottom - (this.height - 36)), this.width - 62, 12, 0xA0A0A0);
         }

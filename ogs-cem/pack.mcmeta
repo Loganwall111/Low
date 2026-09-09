@@ -1,7 +1,6 @@
 {
   "pack": {
-    "description": "Devouring Storms: Totally Accurate MCSM OG models (CEM) + textures — default ON",
-    "min_format": [84, 0],
-    "max_format": [999, 0]
+    "pack_format": 84,
+    "description": "Devouring Storms: Totally Accurate MCSM OG models (CEM) + textures \u2014 default ON"
   }
 }
