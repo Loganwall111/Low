@@ -694,6 +694,25 @@ if [ ! -f "$FX/cls/resourcepacks/ogs-cem/pack.mcmeta" ] \
   AUDIT_FAIL=1
 fi
 
+# 1.9.181: prove the restored OGS assets and live labels survived assembly.
+for need in \
+  assets/dabywitherstormmod/textures/entity/wither_storm.png \
+  assets/dabywitherstormmod/textures/entity/wither_storm/wither_storm.png \
+  assets/witherstormmod/textures/entity/wither_storm/wither_storm.png \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm_phase5.jem \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/witherstormmod/wither_storm_phase5.jem; do
+  if [ ! -s "$FX/cls/$need" ]; then
+    echo "::error title=jar audit::restored OGS asset missing from jar: $need"
+    AUDIT_FAIL=1
+  fi
+done
+if grep -R -a -q 'MCSM extras 1\.9\.95' "$FX/cls" 2>/dev/null; then
+  echo "::error title=jar audit::stale visible config label MCSM extras 1.9.95 survived assembly"
+  AUDIT_FAIL=1
+else
+  echo "[audit] stale 1.9.95 config label purged"
+fi
+
 if find "$FX/cls/assets/dabywitherstormmod" -path '*/schematics/*' -name '*.schematic' 2>/dev/null | grep -q .; then
   echo "::error title=jar audit::legacy .schematic files survived purge"
   AUDIT_FAIL=1

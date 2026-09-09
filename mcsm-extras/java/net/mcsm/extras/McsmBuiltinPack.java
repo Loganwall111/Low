@@ -6,17 +6,18 @@ import java.lang.reflect.Modifier;
 import java.util.Optional;
 
 /**
- * Devouring Storms: the Story Look pack ships INSIDE the mod jar
- * (resourcepacks/storylook/) and turns itself on via Fabric's resource-loader
- * registerBuiltinResourcePack with DEFAULT_ENABLED - no separate download, no
- * pack-screen step, and still user-disableable like any pack.
+ * Devouring Storms: built-in visual resource packs ship INSIDE the mod jar and
+ * are registered DEFAULT_ENABLED through Fabric resource-loader.
+ *
+ * Registered packs:
+ *   - resourcepacks/storylook : Story Mode sky/light/cloud core-shader look
+ *   - resourcepacks/ogs-cem   : restored OGS Wither Storm CEM/model assets
  *
  * Everything is invoked reflectively on purpose: the fabric-api generation
  * shipped for MC 26.2 changed the overload (older builds take
  * (ResourceLocation, ModContainer, predicate); newer ones take a leading
  * ResourcePackType). Reflection binds whichever signature actually exists at
- * runtime, and any failure degrades to a log line instead of a crash - the
- * game simply behaves as if the pack were a normal optional download.
+ * runtime, and any failure degrades to a log line instead of a crash.
  */
 public final class McsmBuiltinPack {
 
@@ -33,13 +34,18 @@ public final class McsmBuiltinPack {
         // mega-phase 5b: the Iris shader pack that ships inside this jar
         // installs itself here, before Iris reads its config on the client.
         McsmShaderPackInstall.install();
+        registerPack("storylook", "Story Look");
+        registerPack("ogs-cem", "OGS CEM models");
+    }
+
+    private static void registerPack(String packPath, String label) {
         try {
             Class<?> loaderCls = Class.forName("net.fabricmc.loader.api.FabricLoader");
             Object loader = loaderCls.getMethod("getInstance").invoke(null);
             Object opt = loaderCls.getMethod("getModContainer", String.class)
                     .invoke(loader, "dabywitherstormmod");
             if (!(opt instanceof Optional<?>) || ((Optional<?>) opt).isEmpty()) {
-                warn("mod container not found");
+                warn(label, "mod container not found");
                 return;
             }
             Object modContainer = ((Optional<?>) opt).get();
@@ -57,7 +63,7 @@ public final class McsmBuiltinPack {
                 }
             }
             if (rlCls == null) {
-                warn("no Identifier/ResourceLocation class on this minecraft version");
+                warn(label, "no Identifier/ResourceLocation class on this minecraft version");
                 return;
             }
             Object id = null;
@@ -65,12 +71,12 @@ public final class McsmBuiltinPack {
                 Class<?>[] ps = m.getParameterTypes();
                 if (Modifier.isStatic(m.getModifiers()) && m.getReturnType() == rlCls
                         && ps.length == 2 && ps[0] == String.class && ps[1] == String.class) {
-                    id = m.invoke(null, "dabywitherstormmod", "storylook");
+                    id = m.invoke(null, "dabywitherstormmod", packPath);
                     break;
                 }
             }
             if (id == null) {
-                warn("no ResourceLocation(String,String) factory on this minecraft version");
+                warn(label, "no ResourceLocation(String,String) factory on this minecraft version");
                 return;
             }
 
@@ -92,7 +98,7 @@ public final class McsmBuiltinPack {
                 }
             }
             if (predicate == null) {
-                warn("no DEFAULT_ENABLED activation predicate in this fabric-api");
+                warn(label, "no DEFAULT_ENABLED activation predicate in this fabric-api");
                 return;
             }
 
@@ -122,7 +128,7 @@ public final class McsmBuiltinPack {
                 }
             }
             if (target == null) {
-                warn("no registerBuiltinResourcePack overload recognized");
+                warn(label, "no registerBuiltinResourcePack overload recognized");
                 return;
             }
             if (target.getParameterCount() == 3) {
@@ -130,14 +136,14 @@ public final class McsmBuiltinPack {
             } else {
                 target.invoke(null, packType, id, modContainer, predicate);
             }
-            System.out.println("[ds] Story Look built-in resource pack registered (default enabled)");
+            System.out.println("[ds] " + label + " built-in resource pack registered (default enabled): " + packPath);
         } catch (Throwable t) {
-            warn("unavailable: " + t);
+            warn(label, "unavailable: " + t);
         }
     }
 
-    private static void warn(String msg) {
-        System.err.println("[ds] Story Look built-in pack " + msg
-                + " - install the storylook zip manually if the world looks vanilla");
+    private static void warn(String label, String msg) {
+        System.err.println("[ds] " + label + " built-in pack " + msg
+                + " - install the release resource pack manually if the world looks vanilla");
     }
 }

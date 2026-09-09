@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.181 — built-in OGS pack auto-enabled and audited
+
+## Conflict checks
+
+* **Registers the built-in OGS CEM resource pack as default-enabled** alongside Story Look, instead of merely embedding it in the jar. This is the piece that can make the restored model/resource-pack assets visible when compatible model/resource-pack loaders are present.
+* **Adds hard jar audits for the exact conflict symptoms:** required OGS texture/model paths must exist in the assembled jar, and the stale `MCSM extras 1.9.95` visible label must not survive assembly.
+* Keeps the 1.9.180 live build-number button and the 1.9.179 restored OGS assets.
+
+---
+
 # Devouring Storms 1.9.180 — stale config label patched
 
 ## UI / install diagnostics
