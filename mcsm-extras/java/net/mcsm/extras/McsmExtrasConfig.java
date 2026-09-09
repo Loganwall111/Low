@@ -78,6 +78,21 @@ public final class McsmExtrasConfig {
     /** Brief a player the first time they get close to a live storm. */
     public static boolean mcsmInstructions = true;
 
+    // ---- MCSM 1.9.171 -- Atmosphere Parameters -
+
+    /** Night sky opacity: 0.0 = clear, 1.0 = deepest navy (affects calm night intensity). */
+    public static double nightSkyOpacity = 1.0;
+    /** Phase 5.5 transition point: exact phase where purple-pink horizon begins. */
+    public static double phase55Threshold = 5.5;
+    /** Salmon-pink intensity in phase 5.5-5.9 range. 1.0 = standard, >1.0 = stronger pink. */
+    public static double phase5_9PinkIntensity = 1.0;
+    /** Storm glare animation phase (0 = static, 1 = flowing, -1 = reverse). Affects disc rotation. */
+    public static double glareAnimPhase = 0.0;
+    /** Storm body animation pulse: makes phase-1 eye/jaw throb rhythmically. */
+    public static double bodyAnimPulse = 0.0;
+    /** Glare animation intensity multiplier. */
+    public static double glareAnimIntensity = 0.0;
+
     // ---- MCSM 1.9.137 -- mega-phase 5b ------------------------------------
     /** Ship + auto-install the Devouring Storms Iris shader pack from inside
      *  the mod jar (user order: merged into the mod, DEFAULT ON). Applies at
@@ -102,6 +117,12 @@ public final class McsmExtrasConfig {
             p.setProperty("grab_interval_seconds", String.valueOf(grabIntervalSeconds));
             p.setProperty("enable_beacon_storm", String.valueOf(enableBeaconStorm));
             p.setProperty("beacon_cooldown_seconds", String.valueOf(beaconCooldownSeconds));
+            p.setProperty("night_sky_opacity", String.valueOf(nightSkyOpacity));
+            p.setProperty("phase_55_threshold", String.valueOf(phase55Threshold));
+            p.setProperty("phase_5_9_pink_intensity", String.valueOf(phase5_9PinkIntensity));
+            p.setProperty("glare_anim_phase", String.valueOf(glareAnimPhase));
+            p.setProperty("body_anim_pulse", String.valueOf(bodyAnimPulse));
+            p.setProperty("glare_anim_intensity", String.valueOf(glareAnimIntensity));
             p.setProperty("enable_rise_fx", String.valueOf(enableRiseFx));
             p.setProperty("spiral_counter_clockwise", String.valueOf(spiralCounterClockwise));
             p.setProperty("enable_beacon_block", String.valueOf(enableBeaconBlock));
@@ -173,6 +194,19 @@ public final class McsmExtrasConfig {
             if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
                 // 1.9.106/early-1.9.107 saved the overlarge test value.
                 // Migrate only that exact legacy default; user-picked slider values remain intact.
+            String cv = p.getProperty("config_version");
+            if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
+                // 1.9.106/early-1.9.107 saved the overlarge test value.
+                // Migrate only that exact legacy default; user-picked slider values remain intact.
+                glareSize = 0.58;
+            }
+            nightSkyOpacity = dbl(p, "night_sky_opacity", nightSkyOpacity);
+            phase55Threshold = dbl(p, "phase_55_threshold", phase55Threshold);
+            phase5_9PinkIntensity = dbl(p, "phase_5_9_pink_intensity", phase5_9PinkIntensity);
+            glareAnimPhase = dbl(p, "glare_anim_phase", glareAnimPhase);
+            bodyAnimPulse = dbl(p, "body_anim_pulse", bodyAnimPulse);
+            glareAnimIntensity = dbl(p, "glare_anim_intensity", glareAnimIntensity);
+            auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
                 glareSize = 0.58;
             }
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
