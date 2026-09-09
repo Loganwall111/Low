@@ -1,3 +1,17 @@
+# Devouring Storms 1.9.177 — broken schematics purged, NBT world summon path
+
+## Structures
+
+* **Old broken `.schematic` assets are purged from the assembled mod jar** during CI packaging. The legacy MCEdit schematic folder from the base jar is removed before release so the mod cannot silently keep using bad structures.
+* **Added `ci/convert_story_worlds.py`**, an NBT automation converter using Python `nbtlib`/nbttag-style parsing. It targets `world_data_temp/MC105/` and `world_data_temp/MC201/`, crops the standalone structural bounds, and writes `sky_city.nbt` plus `beacontown.nbt`.
+* **Writes both requested and runtime locations**: `src/main/resources/assets/dabywitherstormmod/structures/` for the requested asset path and `src/main/resources/data/dabywitherstormmod/structure/` for Minecraft `StructureTemplateManager` runtime loading.
+* **Added Java StructureTemplateManager summoning code**: `McsmTemplateSummoner` places the converted templates, and `/ds towns summon [world|beacontown|sky_city|all]` summons them at the player/spawn location.
+* **Added an item implementation template**: `McsmStructureSummonerItemTemplate` shows the clean custom Item hook for a future registered story-world summoner item.
+
+Note: this workspace did not currently contain `world_data_temp/MC105/` or `world_data_temp/MC201/`, so the converter was executed and reported those folders missing. Add/upload those folders and rerun `python3 ci/convert_story_worlds.py --require` to generate the final `.nbt` blueprints.
+
+---
+
 # Devouring Storms 1.9.176 — Super Duper shaderpack embedded as managed default
 
 ## Merge

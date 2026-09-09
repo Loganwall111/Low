@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.mcsm.extras.McsmTemplateSummoner;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -70,6 +71,14 @@ public abstract class McsmTownCommandPatch {
                 return CompletableFuture.completedFuture(builder.build());
             };
 
+    private static final SuggestionProvider<CommandSourceStack> DS$BLUEPRINTS =
+            (ctx, builder) -> {
+                for (String key : McsmTemplateSummoner.keys()) {
+                    builder.suggest(key);
+                }
+                return CompletableFuture.completedFuture(builder.build());
+            };
+
     @Inject(method = "register(Lcom/mojang/brigadier/CommandDispatcher;)V", at = @At("TAIL"))
     private static void ds$towns(CommandDispatcher<CommandSourceStack> dispatcher, CallbackInfo ci) {
         try {
@@ -88,6 +97,12 @@ public abstract class McsmTownCommandPatch {
                                     StringArgumentType.getString(ctx, "site")))));
             towns.then(Commands.literal("status")
                     .executes(ctx -> ds$status(ctx.getSource())));
+            towns.then(Commands.literal("summon")
+                    .executes(ctx -> ds$summon(ctx.getSource(), "world"))
+                    .then(Commands.argument("blueprint", StringArgumentType.word())
+                            .suggests(DS$BLUEPRINTS)
+                            .executes(ctx -> ds$summon(ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "blueprint")))));
             towns.then(Commands.literal("start")
                     .executes(ctx -> ds$start(ctx.getSource())));
             dispatcher.register(Commands.literal("ds").then(towns));
@@ -222,6 +237,23 @@ public abstract class McsmTownCommandPatch {
                     + t2.x() + ", " + t2.y() + ", " + t2.z() + ")."), false);
         }
         return queued;
+    }
+
+    private static int ds$summon(CommandSourceStack src, String key) {
+        ServerPlayer p = src.getPlayer();
+        if (p == null) {
+            src.sendFailure(Component.literal("/ds towns summon must be run by a player."));
+            return 0;
+        }
+        int placed = McsmTemplateSummoner.summon(p, key);
+        if (placed <= 0) {
+            src.sendFailure(Component.literal("[ds] no converted NBT blueprint loaded for '" + key
+                    + "'. Run ci/convert_story_worlds.py after adding world_data_temp/MC105 and MC201."));
+            return 0;
+        }
+        src.sendSuccess(() -> Component.literal("[ds] summoned " + placed
+                + " converted Story Mode blueprint(s) at your spawn/current position."), false);
+        return placed;
     }
 
     private static int ds$status(CommandSourceStack src) {

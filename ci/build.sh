@@ -330,6 +330,12 @@ echo "[assemble] overlay onto base"
 FX=/tmp/mcsm-fx
 rm -rf "$FX" && mkdir -p "$FX/cls"
 ( cd "$FX/cls" && unzip -o -q "$BASE" )
+# Devouring Storms 1.9.177 -- purge every old MCEdit .schematic from the
+# assembled jar. Those legacy schematic assets are broken for the current world
+# summon path; new sites must be converted to vanilla NBT templates with
+# ci/convert_story_worlds.py and loaded through StructureTemplateManager.
+rm -rf "$FX/cls/assets/dabywitherstormmod/schematics"
+find "$FX/cls" -path '*/schematics/*' -name '*.schematic' -delete 2>/dev/null || true
 cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
 # 1.9.167: 26.2 loads position/block, not sky/terrain. Alias so vivid grade+shadows actually bind.
 CS="$FX/cls/assets/minecraft/shaders/core"
@@ -623,6 +629,13 @@ if [ ! -f "$FX/cls/resourcepacks/ogs-cem/pack.mcmeta" ] \
    || [ ! -f "$FX/cls/resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm.jem" ]; then
   echo "::error title=jar audit::built-in OG CEM pack missing from the jar"
   AUDIT_FAIL=1
+fi
+
+if find "$FX/cls/assets/dabywitherstormmod" -path '*/schematics/*' -name '*.schematic' 2>/dev/null | grep -q .; then
+  echo "::error title=jar audit::legacy .schematic files survived purge"
+  AUDIT_FAIL=1
+else
+  echo "[audit] legacy .schematic assets purged"
 fi
 
 # mega-phase 5b: the embedded Iris pack must actually be in the jar, and its
