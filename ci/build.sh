@@ -585,17 +585,18 @@ else
   echo "::warning title=build::ogs-cem pack missing — Totally Accurate models will not ship"
 fi
 
-# Mega-phase 5b: the Devouring Storms Iris pack rides inside the mod jar;
-# McsmShaderPackInstall extracts it into shaderpacks/ and selects it in Iris
-# on launch (MCSM Control Panel toggle, DEFAULT ON).
+# Mega-phase 5b / 1.9.176: the managed Iris/Oculus pack rides inside the mod jar.
+# The default managed pack is now the user-supplied Super Duper Vanilla shader
+# source from shaderpack-superduper/, while shaderpack-v5 remains the lighter
+# Devouring Storms standalone release asset.
 mkdir -p "$FX/cls/assets/dabywitherstormmod/shaderpacks"
 rm -f "$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip"
 # $FX is absolute (/tmp/mcsm-fx): NO $OLDPWD prefix here - prepending it to an
 # absolute path re-anchors the zip under the repo and zip dies with exit 15
 # (run 34050631385). The repo-relative cd source is resolved before the cd.
-V5_ROOT="$(pwd)/shaderpack-v5"
-( cd "$V5_ROOT" && zip -q -r -X "$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip" shaders )
-echo "[build] iris shader pack v5 embedded at assets/dabywitherstormmod/shaderpacks/devouringstorms.zip"
+MANAGED_SHADER_ROOT="$(pwd)/shaderpack-superduper"
+( cd "$MANAGED_SHADER_ROOT" && zip -q -r -X "$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip" shaders DEVOURING_STORMS_MERGE.md )
+echo "[build] managed Super Duper default shader pack embedded at assets/dabywitherstormmod/shaderpacks/devouringstorms.zip"
 
 # mega-phase 3: the phase-6 halo ring texture, generated at build time and
 # shipped inside the mod jar under the base mod's namespace
@@ -628,8 +629,8 @@ fi
 # zip must contain the v5 sky pass - an installer with nothing to install is
 # the same silent no-op the audit exists to catch.
 EMBED_PACK="$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip"
-if [ ! -s "$EMBED_PACK" ] || ! unzip -Z1 "$EMBED_PACK" 2>/dev/null | grep -q "shaders/gbuffers_skybasic.fsh"; then
-  echo "::error title=jar audit::embedded Iris shader pack missing or incomplete"
+if [ ! -s "$EMBED_PACK" ] || ! unzip -Z1 "$EMBED_PACK" 2>/dev/null | grep -Eq "shaders/(gbuffers_skybasic|world0/gbuffers_skybasic)\.fsh"; then
+  echo "::error title=jar audit::embedded managed Iris shader pack missing or incomplete"
   AUDIT_FAIL=1
 else
   echo "[audit] embedded shader pack: $(unzip -Z1 "$EMBED_PACK" | wc -l) entries"

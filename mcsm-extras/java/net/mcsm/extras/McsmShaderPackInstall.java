@@ -10,7 +10,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Properties;
 
 /**
- * Mega-phase 5b: the Devouring Storms shader pack ships INSIDE the mod jar
+ * Mega-phase 5b/1.9.176: the managed Super Duper + Devouring Storms shader pack ships INSIDE the mod jar
  * (assets/dabywitherstormmod/shaderpacks/devouringstorms.zip) and installs
  * itself on launch - user order: "shader pack merged into the mod, on/off
  * toggle, DEFAULT ON".
@@ -36,7 +36,7 @@ import java.util.Properties;
 public final class McsmShaderPackInstall {
 
     private static final String PACK_RES  = "/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip";
-    private static final String PACK_NAME = "DevouringStorms.zip";
+    private static final String PACK_NAME = "DevouringStorms-SuperDuperDefault.zip";
     private static final String MARKER    = "DevouringStorms.version";
 
     private static boolean attempted = false;
