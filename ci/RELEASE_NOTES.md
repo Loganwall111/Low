@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.185 — Minecraft 26.2 resource-pack format fix
+
+## Resource packs
+
+* **Changed Story Look and OGS CEM resource packs to `pack_format: 88`**, the Minecraft 26.2 resource-pack format, so the Resource Packs screen should stop showing the broken/unknown-version confirmation prompt.
+* **Removed the broad `supported_formats` range** from those generated packs. The pack screen now receives one exact 26.2 format number instead of ambiguous compatibility metadata.
+* Because the build version changed, the mod will regenerate fresh `DevouringStorms-StoryLook.zip` and `DevouringStorms-OGS-CEM.zip` copies in your instance `resourcepacks/` folder.
+
+---
+
 # Devouring Storms 1.9.184 — resource-pack recovery and visible storm texture fallback
 
 ## Fixes
