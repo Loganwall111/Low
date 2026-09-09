@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.195 — emergency GL/native-memory safe mode
+
+This build targets the new `GL_OUT_OF_MEMORY` / `Native memory allocation ... AllocateHeap` screenshots. The crash is coming from OpenGL/native buffers, so lowering Java heap alone is not enough.
+
+* **Managed Iris/Super Duper shaderpack is no longer auto-enabled by default.** The mod still ships it, but the stable default is now the resource-pack/core look; players can turn the shader back on from Shift+C after confirming the world is stable.
+* **Migrates older Devouring Storms configs to disable `embedded_shader_pack` once**, because old config files kept forcing the heavy shader back on even after installing a safer jar.
+* **If Iris is currently using `DevouringStorms-SuperDuperDefault.zip`, the installer switches Iris back to internal/no shader** when safe mode is active.
+* **The config screen’s live Wither Storm model preview now starts OFF** to avoid a huge dynamic-buffer spike just from opening the settings menu. The `Model` button can still turn it back on manually.
+* Keeps 1.9.194’s first-spawn/structure pacing and debris reductions.
+
 # Devouring Storms 1.9.194 — native-memory crash guard for first-spawn/chunk loading
 
 This build targets the new HotSpot fatal error: `Native memory allocation (malloc) failed ... Chunk::new`. That is not a normal Java exception; it means the JVM/native renderer ran out of native memory while chunks/models were being built.

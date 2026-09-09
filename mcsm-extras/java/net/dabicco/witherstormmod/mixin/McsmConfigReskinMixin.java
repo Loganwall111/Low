@@ -1,6 +1,7 @@
 package net.dabicco.witherstormmod.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,6 +18,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  */
 @Mixin(WitherStormConfigScreen.class)
 public abstract class McsmConfigReskinMixin {
+
+    @Shadow private boolean previewShown;
+
+    @Inject(method = "<init>(Lnet/minecraft/client/gui/screens/Screen;Z)V", at = @At("RETURN"), remap = false, require = 0)
+    private void dabyws$previewOffByDefault(CallbackInfo ci) {
+        // The live Wither Storm model preview can allocate a burst of dynamic
+        // GL buffers before the game world has settled. Keep the button, but
+        // start it OFF so opening the config cannot trigger GL_OUT_OF_MEMORY.
+        this.previewShown = false;
+    }
 
     @Inject(method = "extractRenderState", at = @At("HEAD"), remap = false)
     private void dabyws$mcsPlate(GuiGraphicsExtractor g, int mouseX, int mouseY,

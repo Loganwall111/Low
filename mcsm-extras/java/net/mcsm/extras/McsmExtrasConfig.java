@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.194";
+    public static final String BUILD_VERSION = "1.9.195";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -126,8 +126,10 @@ public final class McsmExtrasConfig {
     public static double infiniteBackGrowthSpeed = 0.10;
 
     // ---- Iris Shader Pack -------------------------------------------------
-    /** Ship + auto-install the Devouring Storms Iris shader pack. */
-    public static boolean embeddedShaderPack = true;
+    /** Ship + auto-install the Devouring Storms Iris shader pack.
+     *  Default OFF after native/GL out-of-memory reports; players can turn it
+     *  back on from Shift+C once the world is stable. */
+    public static boolean embeddedShaderPack = false;
 
     private static boolean loaded = false;
     private static long stamp = -1L;
@@ -278,6 +280,14 @@ public final class McsmExtrasConfig {
             infiniteBackGrowth = bool(p, "infinite_back_growth", infiniteBackGrowth);
             infiniteBackGrowthSpeed = dbl(p, "infinite_back_growth_speed", infiniteBackGrowthSpeed);
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
+            if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
+                // 1.9.195 migration: old configs wrote embedded_shader_pack=true,
+                // which kept auto-selecting the heavy Iris pack and caused
+                // GL_OUT_OF_MEMORY/native AllocateHeap crashes. Flip only on
+                // version migration; the player can opt back in afterwards.
+                embeddedShaderPack = false;
+                save();
+            }
         } catch (Throwable t) {
             // stay on defaults; never crash the game over a config file
         }
