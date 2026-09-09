@@ -27,6 +27,13 @@ public class McsmExtrasConfigScreen extends ConfigScreen<McsmExtrasConfig> {
     protected void init() {
         super.init();
         // Add config controls here
+        // Add Witherstorm settings button
+        this.addButton(new Button(this.width / 2 - 100, 20, 200, 20, 
+            Component.literal("Witherstorm settings"), press -> {
+                // Open sub-menu or toggle config
+            })
+        )
+        // Shift+C hint: open holographic config
         // Sliders for: nightSkyOpacity, phase55Threshold, phase5_9PinkIntensity
         // Toggles for: glareAnimPhase, bodyAnimPulse, glareAnimIntensity
         // cloudAlpha, cloudSpeed, precipitationIntensity
@@ -39,6 +46,9 @@ public class McsmExtrasConfigScreen extends ConfigScreen<McsmExtrasConfig> {
     
     @Override
     protected void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        // Render Shift+C hint
+        this.font.draw(this.getMinecraft().font, "Shift + C: Holographic config", 4, this.height - 12, 16777215);
+    } {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
     }
     
