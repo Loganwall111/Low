@@ -440,7 +440,7 @@ public final class McsmFxDriver {
                 }
 
                 // 2. Nether Lava Sparks
-                if (McsmExtrasConfig.netherRedFog && srv.dimension() == Level.NETHER) {
+                if (McsmExtrasConfig.netherRedFog && Level.NETHER.equals(srv.dimension())) {
                     if (srv.getRandom().nextFloat() < 0.6F) {
                         double ox = (srv.getRandom().nextDouble() - 0.5) * 24.0;
                         double oz = (srv.getRandom().nextDouble() - 0.5) * 24.0;
@@ -450,7 +450,8 @@ public final class McsmFxDriver {
                 }
 
                 // 3. Night Sky Comets / Shooting Stars
-                if (McsmExtrasConfig.comets && srv.dimension() == Level.OVERWORLD && srv.isNight()) {
+                boolean isNightTime = !srv.isDay();
+                if (McsmExtrasConfig.comets && Level.OVERWORLD.equals(srv.dimension()) && isNightTime) {
                     if (srv.getRandom().nextFloat() < 0.12F) {
                         double cx = px + (srv.getRandom().nextDouble() - 0.5) * 80.0;
                         double cy = py + 45.0 + srv.getRandom().nextDouble() * 20.0;
@@ -463,7 +464,7 @@ public final class McsmFxDriver {
                 }
 
                 // 4. Overworld Fireflies at night
-                if (McsmExtrasConfig.biomeAtmospherics && srv.dimension() == Level.OVERWORLD && srv.isNight()) {
+                if (McsmExtrasConfig.biomeAtmospherics && Level.OVERWORLD.equals(srv.dimension()) && isNightTime) {
                     if (srv.getRandom().nextFloat() < 0.4F) {
                         double fx = px + (srv.getRandom().nextDouble() - 0.5) * 16.0;
                         double fy = py + 0.5 + srv.getRandom().nextDouble() * 2.5;

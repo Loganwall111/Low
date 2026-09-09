@@ -1,59 +1,83 @@
 package net.dabicco.witherstormmod.mixin;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyReturnValue;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import net.dabicco.witherstormmod.structures.McsmSchematic;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
+import net.mcsm.extras.McsmNpcs;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * Mega-phase 7: structures land WHOLE, and Sky City goes up among the
- * cloud decks (user orders: "structures never in segments", "no scattered
- * Sky City fragments", "Sky City ~1000-10,000 blocks up, fall through
- * 5-15 cloud layers").
+ * Mega-phase 7 / 7b / 9 / 12: structures land WHOLE, Sky City goes up among
+ * the cloud decks, and towns get their cast (McsmNpcs).
  *
- * The base mod places every schematic through a static queue with a 24k
- * blocks/tick budget, slicing towns upward over many ticks (the visible
- * "segments"), and that static queue survives world loads, so leftovers
- * from the previous world keep placing into the new one (the "scattered
- * fragments"). Both are fixed here: the queue is cleared whenever the
- * level instance changes, and the budget is raised so each schematic
- * completes in about a tick.
+ * MCSM CRASH FIX: McsmWorldgen.tick(ServerLevel) returns int. Mixin
+ * injects on a returning method MUST take CallbackInfoReturnable, not plain
+ * CallbackInfo — otherwise APPLY fails with InvalidInjectionException and
+ * the whole world tick dies the moment McsmWorldgen is first classloaded.
  *
- * The floating sites (Sky City y=296 and siblings) are raised +3904:
- * Sky City ends at y=4200, above the 3500 cloud deck - jumping off falls
- * through seven of the story decks on the way down.
+ * The base places every schematic through a static queue with a 24k
+ * blocks/tick budget (visible "segments"), and that static queue survives
+ * world loads so leftovers from the previous world keep placing into the
+ * new one ("scattered fragments"). Both are fixed here: the queue is
+ * cleared whenever the level instance changes, and the budget is raised so
+ * each schematic completes in about a tick.
+ *
+ * The floating sites (Sky City y=296 and siblings) are raised +3904 via an
+ * enqueue HEAD intercept: the shipped mixin jar has no ModifyReturnValue,
+ * so we cancel the original enqueue and re-enqueue with the raised origin.
+ * Floating y values sit at 276-308; ground sites sit at 34-64, so the
+ * (200, 1000) window isolates them cleanly. The re-entered call sees
+ * y~4200 and passes through untouched (ThreadLocal re-entry guard).
  */
 @Mixin(McsmWorldgen.class)
 public abstract class McsmWorldgenPatch {
 
     private static ServerLevel lastLevel;
+    private static final ThreadLocal<Boolean> RAISING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
+    /** tick(ServerLevel) -> int. CIR required (MCSM crash fix). */
     @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 0)
-    private static void dabyws$wholeStructures(ServerLevel level, CallbackInfo ci) {
-        if (lastLevel != level) {
-            lastLevel = level;
-            McsmWorldgen.clear();
+    private static void dabyws$wholeStructures(ServerLevel level, CallbackInfoReturnable<Integer> cir) {
+        try {
+            if (lastLevel != level) {
+                lastLevel = level;
+                McsmWorldgen.clear();
+            }
+            McsmWorldgen.setBudget(900000);
+            // mega-phase 9: the towns get their cast, and their dialogue hook
+            try {
+                McsmNpcs.tick(level);
+            } catch (Throwable ignored) {
+            }
+        } catch (Throwable ignored) {
+            // never take the world tick down — budget/NPC fail soft
         }
-        McsmWorldgen.setBudget(900000);
     }
 
-    @ModifyReturnValue(method = "layout", at = @At("RETURN"), remap = false, require = 0)
-    private static List<McsmWorldgen.Site> dabyws$skyCityAltitude(List<McsmWorldgen.Site> in) {
-        List<McsmWorldgen.Site> out = new ArrayList<>(in.size());
-        for (McsmWorldgen.Site s : in) {
-            if (s.floating() && s.y() < 1000) {
-                out.add(new McsmWorldgen.Site(s.path(), s.x(), s.y() + 3904, s.z(), s.label(), true));
-            } else {
-                out.add(s);
-            }
+    @Inject(method = "enqueue", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private static void dabyws$skyCityAltitude(McsmSchematic sch, BlockPos origin, String label,
+            CallbackInfo ci) {
+        if (Boolean.TRUE.equals(RAISING.get())) {
+            return;
         }
-        return out;
+        int y = origin.getY();
+        // floating sites only (Sky City 296, Speakeasy 284, Jungle Fortress
+        // 276, Mushroom Island 308) - ground towns live below y=100
+        if (y > 200 && y < 1000) {
+            RAISING.set(Boolean.TRUE);
+            try {
+                McsmWorldgen.enqueue(sch,
+                        new BlockPos(origin.getX(), y + 3904, origin.getZ()), label);
+            } finally {
+                RAISING.set(Boolean.FALSE);
+            }
+            ci.cancel();
+        }
     }
 }
