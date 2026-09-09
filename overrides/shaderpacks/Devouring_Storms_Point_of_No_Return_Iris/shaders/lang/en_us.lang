@@ -1,0 +1,49 @@
+# Devouring Storms v5 - the Story Look sky, clouds, storm grade and aurora,
+# shipped inside the mod. Everything below is ON by default.
+
+screen.Sky=Story Mode Sky
+screen.Aurora=Aurora Borealis
+screen.Lighting=Colourful Lighting
+screen.Extra=Frame Grading
+
+option.SKY_STORY_MODE=Story Mode Sky
+option.SKY_STORY_MODE.comment=The round-5 Story Look sky: pastel EnderCon days, warm violet dawns, indigo nights, layered cloud decks with pale-blue fringes. OFF falls back to the vanilla sky colour.
+option.STORM_SKY=Storm Phase Skies
+option.STORM_SKY.comment=When the Wither Storm pulls the world fog purple, the sky switches to the phase palettes from the reference frames: pinkish-violet at 5.5-5.9, blue horizon rim, purple vault line, and the storm dome shrunken to the sides.
+option.SKY_SATURATION=Sky Saturation
+option.HORIZON_GLOW=Horizon Glow
+option.BIOME_SKIES=Biome Skies
+option.BIOME_SKIES.comment=Tints the calm sky per biome (desert, snow, swamp, nether) using the biome fog hue. The storm always owns the hue when it is near.
+option.BIOME_STRENGTH=Biome Tint Strength
+
+option.AURORA=Aurora Borealis
+option.AURORA.comment=Animated aurora curtains after dark.
+option.AURORA_STRENGTH=Aurora Strength
+option.AURORA_SPEED=Aurora Speed
+option.AURORA_HEIGHT=Aurora Height
+option.AURORA_COVERAGE=Aurora Coverage
+option.AURORA_R=Aurora Core Red
+option.AURORA_G=Aurora Core Green
+option.AURORA_B=Aurora Core Blue
+option.AURORA_TIP_R=Aurora Tip Red
+option.AURORA_TIP_G=Aurora Tip Green
+option.AURORA_TIP_B=Aurora Tip Blue
+
+option.COLORED_LIGHT=Colourful Lighting
+option.COLORED_LIGHT.comment=Warm amber key by day, blue-violet by night.
+option.COLORED_LIGHT_AMT=Colourful Lighting Strength
+
+option.BLOOM=Bloom
+option.BLOOM.comment=Turquoise teeth and purple beams bleed light.
+option.BLOOM_STRENGTH=Bloom Strength
+option.VIBRANCE=Vibrance
+option.EXPOSURE=Exposure
+option.CONTRAST=Contrast
+option.TONEMAP=ACES Tonemap
+option.TONEMAP.comment=The Story Mode filmic tone curve.
+option.STORM_PURPLE_ON=Storm Purple Grade
+option.STORM_PURPLE_ON.comment=Pushes the whole frame toward the storm's purple while the storm fog owns the world.
+option.STORM_PURPLE=Storm Purple Strength
+option.STORM_VIGNETTE_ON=Vignette
+option.STORM_VIGNETTE_ON.comment=The dark corners are the standing Story Mode look, day and night alike.
+option.STORM_VIGNETTE=Vignette Strength
