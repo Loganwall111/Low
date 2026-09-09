@@ -48,7 +48,11 @@ public final class McsmBuiltinPack {
                 "DevouringStorms-StoryLook.zip");
         installResourcePack("/assets/dabywitherstormmod/resourcepacks/ogs-cem.zip",
                 "DevouringStorms-OGS-CEM.zip");
-        selectResourcePacks();
+        deselectManagedVisualPacks();
+        // Do not force-edit options.txt anymore: if a core-shader pack fails,
+        // forcing it selected makes the whole resource reload fail. The fixed
+        // zips are installed to resourcepacks/ and registered built-in; the
+        // player can select Story Look/OGS manually while we keep startup safe.
         registerPack("storylook", "Story Look");
         registerPack("ogs-cem", "OGS CEM models");
     }
@@ -80,6 +84,43 @@ public final class McsmBuiltinPack {
             System.out.println("[ds] installed built-in resource pack: " + fileName);
         } catch (Throwable t) {
             warn(fileName, "resource-pack extraction failed: " + t);
+        }
+    }
+
+    private static void deselectManagedVisualPacks() {
+        try {
+            File gameDir = gameDir();
+            if (gameDir == null) {
+                return;
+            }
+            File options = new File(gameDir, "options.txt");
+            if (!options.isFile()) {
+                return;
+            }
+            List<String> lines = Files.readAllLines(options.toPath(), java.nio.charset.StandardCharsets.UTF_8);
+            boolean changed = false;
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i);
+                if (!line.startsWith("resourcePacks:")) {
+                    continue;
+                }
+                String v = line.substring("resourcePacks:".length());
+                String nv = v
+                        .replace(",\"file/DevouringStorms-StoryLook.zip\"", "")
+                        .replace("\"file/DevouringStorms-StoryLook.zip\",", "")
+                        .replace(",\"file/DevouringStorms-OGS-CEM.zip\"", "")
+                        .replace("\"file/DevouringStorms-OGS-CEM.zip\",", "");
+                if (!nv.equals(v)) {
+                    lines.set(i, "resourcePacks:" + nv);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                Files.write(options.toPath(), lines, java.nio.charset.StandardCharsets.UTF_8);
+                System.out.println("[ds] deselected managed visual packs after previous failed reload; enable them manually to test");
+            }
+        } catch (Throwable t) {
+            warn("resource pack selection", "options.txt cleanup failed: " + t);
         }
     }
 
