@@ -331,6 +331,11 @@ FX=/tmp/mcsm-fx
 rm -rf "$FX" && mkdir -p "$FX/cls"
 ( cd "$FX/cls" && unzip -o -q "$BASE" )
 cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
+# 1.9.167: 26.2 loads position/block, not sky/terrain. Alias so vivid grade+shadows actually bind.
+CS="$FX/cls/assets/minecraft/shaders/core"
+if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f "$CS/terrain.vsh" "$CS/block.vsh"; fi
+if [ -f "$CS/sky.fsh" ]; then cp -f "$CS/sky.fsh" "$CS/position.fsh"; cp -f "$CS/sky.vsh" "$CS/position.vsh"; fi
+echo "[build] 26.2 shader aliases: block<-terrain position<-sky"
 cp -r jar-overrides/* "$FX/cls/"
 # nullglob guard: on a failed javac the class dir is empty and a bare
 # `cp -r /tmp/mcsm-build/*` would die under set -e (that bug ate the jar).
@@ -440,12 +445,25 @@ PYMERGE
 echo "[audit] ---- assembled jar ----"
 AUDIT_FAIL=0
 
-# 1. fresh classes
+# 1. fresh classes — every compiled class must exist in the assembled tree
+# (net/mcsm extras AND net/dabicco overlays/mixins). Count matching paths,
+# not "net/mcsm only vs everything" (that false-failed dabicco client overlays).
 NEW_COUNT=$(cd /tmp/mcsm-build && { find net -name "*.class" 2>/dev/null || true; } | wc -l)
-JAR_COUNT=$(cd "$FX/cls" && { find net/mcsm -name "*.class" 2>/dev/null || true; } | wc -l)
-echo "[audit] mcsm classes: jar=$JAR_COUNT freshly-compiled=$NEW_COUNT"
-if [ "$NEW_COUNT" -eq 0 ] || [ "$JAR_COUNT" -lt "$NEW_COUNT" ]; then
-  echo "::error title=jar audit::fresh classes did not make it into the jar (jar=$JAR_COUNT compiled=$NEW_COUNT)"
+JAR_MATCH=0
+if [ -d /tmp/mcsm-build/net ]; then
+  while IFS= read -r rel; do
+    [ -z "$rel" ] && continue
+    if [ -f "$FX/cls/$rel" ]; then
+      JAR_MATCH=$((JAR_MATCH + 1))
+    else
+      echo "::error title=jar audit::missing fresh class in jar: $rel"
+      AUDIT_FAIL=1
+    fi
+  done < <(cd /tmp/mcsm-build && find net -name "*.class" 2>/dev/null | sort)
+fi
+echo "[audit] fresh classes: matched=$JAR_MATCH compiled=$NEW_COUNT"
+if [ "$NEW_COUNT" -eq 0 ] || [ "$JAR_MATCH" -lt "$NEW_COUNT" ]; then
+  echo "::error title=jar audit::fresh classes did not make it into the jar (matched=$JAR_MATCH compiled=$NEW_COUNT)"
   AUDIT_FAIL=1
 fi
 
@@ -554,6 +572,19 @@ cp -r storylook/pack.mcmeta storylook/pack.png "$FX/cls/resourcepacks/storylook/
 cp -r storylook/assets "$FX/cls/resourcepacks/storylook/"
 echo "[build] built-in story look pack embedded at resourcepacks/storylook"
 
+# 1.9.151: Totally Accurate / MCSM OG CEM models (from Loganwall111/ogs-stuff)
+# ship as a second DEFAULT_ENABLED built-in pack. EMF / OptiFine CEM reads
+# assets/minecraft/optifine/cem/dabywitherstormmod/*.jem with Phase NBT ladder.
+if [ -d ogs-cem/assets ] && [ -f ogs-cem/pack.mcmeta ]; then
+  mkdir -p "$FX/cls/resourcepacks/ogs-cem"
+  cp -f ogs-cem/pack.mcmeta "$FX/cls/resourcepacks/ogs-cem/"
+  [ -f ogs-cem/pack.png ] && cp -f ogs-cem/pack.png "$FX/cls/resourcepacks/ogs-cem/"
+  cp -r ogs-cem/assets "$FX/cls/resourcepacks/ogs-cem/"
+  echo "[build] built-in OG CEM pack embedded at resourcepacks/ogs-cem ($(du -sh ogs-cem | cut -f1))"
+else
+  echo "::warning title=build::ogs-cem pack missing — Totally Accurate models will not ship"
+fi
+
 # Mega-phase 5b: the Devouring Storms Iris pack rides inside the mod jar;
 # McsmShaderPackInstall extracts it into shaderpacks/ and selects it in Iris
 # on launch (MCSM Control Panel toggle, DEFAULT ON).
@@ -578,8 +609,18 @@ python3 ci/make_glare.py "$FX/cls/assets/dabywitherstormmod/textures/misc/storm_
 python3 ci/make_stormface.py "$FX/cls/assets/dabywitherstormmod/textures/misc/storm_face.png" \
   || echo "::warning title=build::storm face overlay texture generation failed"
 
+if [ ! -f "$FX/cls/assets/minecraft/shaders/core/position.fsh" ] || [ ! -f "$FX/cls/assets/minecraft/shaders/core/block.fsh" ]; then
+  echo "::error title=jar audit::26.2 shader aliases missing (position/block) — vivid light would never load"
+  AUDIT_FAIL=1
+fi
 if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/shaders/core/position.fsh" ]; then
   echo "::error title=jar audit::built-in Story Look pack missing from the jar"
+  AUDIT_FAIL=1
+fi
+
+if [ ! -f "$FX/cls/resourcepacks/ogs-cem/pack.mcmeta" ] \
+   || [ ! -f "$FX/cls/resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm.jem" ]; then
+  echo "::error title=jar audit::built-in OG CEM pack missing from the jar"
   AUDIT_FAIL=1
 fi
 

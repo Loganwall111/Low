@@ -1,31 +1,40 @@
-# Devouring Storms 1.9.143 — mega-phase 7: structures land whole, Sky City goes up
+# Devouring Storms 1.9.172 — The Point of No Return
 
-## The segment bug, root-caused and fixed
-The base mod builds every schematic through a static queue with a 24,000
-blocks/tick budget: towns visibly rise slice by slice (the "spawning in
-segments" report), and because the queue is static it survives world
-loads - leftovers from the previous world keep placing into the new one
-(the "Sky City fragments scattered all over the world" report). Now:
-- the queue is cleared whenever the level instance changes (no cross-world
-  leftovers, ever);
-- the placement budget is raised so each schematic completes in about one
-  tick - structures appear whole.
+## Atmospheric VFX, Enhanced AI, Speaking Cast & Shaders Overhaul
 
-## Sky City altitude
-Sky City and its floating sibling sites (Speakeasy, Jungle Fortress,
-Mushroom Island) are raised from y~296 to y~4200 - inside the 1000-10,000
-order, above the 3500 cloud deck. Jumping off falls you through seven of
-the story cloud decks on the way to the ground.
+### 🌟 Atmosphere & Multi-Color Glare
+* **Multi-Color Radial Glare**: Replaced solid single-hue glare discs with rich multi-color radial gradients:
+  - Phase 4: Electric icy-cyan core with deep indigo falloff
+  - Phase 5: Vibrant blue center blending into cosmic purple with soft magenta highlights
+  - Phase 5.4: Smooth indigo-to-purple transition
+  - Phase 5.5: Dark outer perimeter, rich blue interior, dark purple halo matching ground truth frames
+  - Phase 6: Deep cosmic purple to dark violet cataclysmic aura
+* **Non-Euclidean Storm Glare**: Glare disc can now be world-anchored in the storm's local frame (`glareNonEuclidean`), allowing players to traverse behind the storm with true 3D spatial depth.
+* **Smooth Glare & Body Animations**: Config-driven pulsation, orbital sway, and phase-1 eye/jaw rhythmic throbbing.
 
-## The cloud sea below
-Both sky shaders (core storylook AND the built-in Iris pack) now paint the
-same layered decks mirrored into the lower hemisphere: from the ground it
-reads as a far cloud sea past the terrain edge; from Sky City altitude it
-is the layers streaming past as you fall. Decks seen from above show their
-lit tops. Validated: storylook glslang-clean, 30/30 Iris translation units.
+### 👥 Story Mode Inhabited Towns & Speaking Cast
+* **Town Populations**: Ground structures and towns now spawn the canonical Story Mode cast (Jesse, Petra, Axel, Olivia, Lukas, Gabriel, Ivor, Soren, Ellegaard, Magnus, Radar, Stella, Harper, etc.).
+* **Dialogue Progression**: Right-clicking NPCs advances story dialogue trees per player with ambient voice tones.
+* **Animations**: Natural walking, wandering, head tracking towards players, and speaking particle bursts.
 
-Unchanged: 6b warp portals, 6a particle field, 5c Telltale glare, welded
-blob, purple face overlay, built-in shader pack DEFAULT ON.
+### 🌌 Sky & Dimension Overhauls
+* **Aurora Borealis Ribbons**: 4-color shimmering curtains (Blue, Pink, Purple, Orange) rippling across night skies.
+* **Snow Biome Celestial Band**: Gigantic icy-blue atmospheric arch encircling the sky dome in cold/snow biomes.
+* **Twinkling Multi-Colored Stars**: Dynamic twinkling star field with varied cosmic hues.
+* **Night Shooting Comets**: Periodic luminous shooting star streaks across the night dome.
+* **End Sky Cosmic Vortex**: Deep void black sky with a gigantic swirling purple vortex and dimensional reality rips along the horizon.
 
-Install: drop the jar in `mods/`. Existing worlds pick the new Sky City
-altitude on fresh structure placement; already-placed blocks stay put.
+### 🔮 Lighting & Particle VFX
+* **Portal Illumination**: Nether portals emit purple atmospheric glow and swirl motes; End portals emit dark void particles.
+* **Beacon Corona**: Radiant cyan light halo around active beacons.
+* **Nether Atmosphere**: Deep crimson fog and rising sparks/embers over lava lakes.
+* **Underwater Ambience**: Subtle crepuscular god rays and deep blue haze.
+* **Magical Sparkles**: Shimmering white, pink, and purple particles around storm bodies and magical anchors.
+
+### ⚡ Enhanced Wither Storm AI
+* **Menacing Threat Tracking**: Prioritizes players holding beacons, formidibombs, or nether stars.
+* **Combat Aggression**: Predictive tentacle slams, roar cues, and aggressive pursuit.
+
+### 🎛 Control Panel & Settings
+* **MCSM Control Panel**: Complete scrollable in-game menu covering all visual, atmospheric, gameplay, and AI parameters.
+* **Quick Access**: Accessible via Wither Storm settings or Shift+C shortcut.

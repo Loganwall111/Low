@@ -21,23 +21,10 @@ import java.util.function.DoubleSupplier;
 
 /**
  * The MCSM Control Panel — our OWN screen so we never fight the mod config
- * screen's section-fold/tab machinery again (2026-09-04 bug: inline rows never
- * saw a relayout; the header showed [-] with an empty body).
+ * screen's section-fold/tab machinery again.
  *
- * 26.2 NOTE (2026-09-05 compile audit): the 26.2 GUI refactor replaced the old
- * render() widget pipeline with extractRenderState(GuiGraphicsExtractor,...)
- * and exposes screen switching through Minecraft.setScreenAndShow(...). Every API used
- * below is the EXACT shape the mod's own (compiling) WitherStormConfigScreen
- * uses: Screen(Component), protected init(), clearWidgets(), addWidget(),
- * Button.builder(...).bounds(...).build(), b.setMessage(...), an
- * AbstractSliderButton subclass reading this.value with updateMessage()/
- * applyValue(), and a chrome list rendered via
- * widget.extractRenderState(g, mouseX, mouseY, partialTick). No
- * addRenderableWidget / CycleButton / isPauseScreen / this.minecraft — those
- * could not be verified against 26.2 and two of them are known-moved.
- *
- * Runtime-safe: on any failure the extras button in the mod's own screen
- * simply does nothing further.
+ * 26.2 GUI refactor uses extractRenderState(GuiGraphicsExtractor,...)
+ * and exposes screen switching through Minecraft.setScreenAndShow(...).
  */
 public final class McsmExtrasScreen extends Screen {
 
@@ -60,9 +47,6 @@ public final class McsmExtrasScreen extends Screen {
         this.contentBottom = 0;
         McsmExtrasConfig.load();
 
-        // two columns, scrollable. The previous fixed layout let lower rows
-        // disappear behind Done on normal GUI scales, which made sliders feel
-        // like +/- only controls with no way to reach the rest of the menu.
         int rowH = 22;
         int gap = 10;
         int colW = Math.min(240, (this.width - 24 - gap) / 2);
@@ -71,89 +55,123 @@ public final class McsmExtrasScreen extends Screen {
         int top = 34;
         final int fColW = colW;
 
-        // MCSM 1.9.111 -- the drawn header at y=12 never appeared in the
-        // player's screenshots, so the build number also rides as a widget
-        // row: widgets demonstrably render, and "which build is this panel?"
-        // becomes answerable at a glance, spanning both columns.
+        // Build header
         Button ver = Button.builder(
                 Component.literal("Devouring Storms " + McsmExtrasConfig.BUILD_VERSION
-                                  + "  -- this build"), b -> { })
+                                  + " -- Settings & Visuals (Shift+C Quick Menu)"), b -> { })
                 .bounds(left, top, fColW * 2 + gap, 20).build();
         ver.active = false;
         this.addWidget(ver);
         this.chrome.add(ver);
         this.baseY.put(ver, top);
 
-        // ---- column 1: visuals ----------------------------------------------
-        addSlider(0, 1, fColW, gap, left, top, rowH, "Glare Size", "%.2fx",
+        // ---- Column 1: Visuals, Atmosphere & Shaders ------------------------
+        int r1 = 1;
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Glare Size", "%.2fx",
                 0.25, 3.05, () -> McsmExtrasConfig.glareSize, v -> McsmExtrasConfig.glareSize = v);
-        addToggle(0, 2, fColW, gap, left, top, rowH, "In-Mod Aurora",
-                () -> McsmExtrasConfig.auroraEnabled, v -> McsmExtrasConfig.auroraEnabled = v);
-        addToggle(0, 3, fColW, gap, left, top, rowH, "Death Cinematic",
-                () -> McsmExtrasConfig.deathCinematic, v -> McsmExtrasConfig.deathCinematic = v);
-        addToggle(0, 4, fColW, gap, left, top, rowH, "Supernova Rings",
-                () -> McsmExtrasConfig.supernovaRings, v -> McsmExtrasConfig.supernovaRings = v);
-        addToggle(0, 5, fColW, gap, left, top, rowH, "Smoke Screen + Sparks",
-                () -> McsmExtrasConfig.smokeScreen, v -> McsmExtrasConfig.smokeScreen = v);
-        addToggle(0, 6, fColW, gap, left, top, rowH, "Purple Sky (5.5+)",
-                () -> McsmExtrasConfig.purpleSky, v -> McsmExtrasConfig.purpleSky = v);
-        addToggle(0, 7, fColW, gap, left, top, rowH, "Dust Waves",
-                () -> McsmExtrasConfig.dustWaves, v -> McsmExtrasConfig.dustWaves = v);
-        addToggle(0, 8, fColW, gap, left, top, rowH, "Reality Tear",
-                () -> McsmExtrasConfig.realityTear, v -> McsmExtrasConfig.realityTear = v);
-        addToggle(0, 9, fColW, gap, left, top, rowH, "OG CEM Models",
-                () -> McsmExtrasConfig.ogCemModels, v -> McsmExtrasConfig.ogCemModels = v);
-        addSlider(0, 10, fColW, gap, left, top, rowH, "Smudge Scale", "%.2fx",
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Smudge Scale", "%.2fx",
                 0.10, 2.00, () -> McsmExtrasConfig.smudgeScale, v -> McsmExtrasConfig.smudgeScale = v);
-        // MCSM 1.9.137 -- the shader pack now ships inside the mod and picks
-        // itself in Iris at launch; this is the on/off the user asked for.
-        addToggle(0, 11, fColW, gap, left, top, rowH, "Built-in Shader Pack",
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Non-Euclidean Glare",
+                () -> McsmExtrasConfig.glareNonEuclidean, v -> McsmExtrasConfig.glareNonEuclidean = v);
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Night Navy Opacity", "%.2f",
+                0.0, 1.0, () -> McsmExtrasConfig.nightSkyOpacity, v -> McsmExtrasConfig.nightSkyOpacity = v);
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Phase 5.5 Threshold", "%.2f",
+                5.0, 6.0, () -> McsmExtrasConfig.phase55Threshold, v -> McsmExtrasConfig.phase55Threshold = v);
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Phase 5.9 Pink Mult", "%.2fx",
+                0.2, 3.0, () -> McsmExtrasConfig.phase5_9PinkIntensity, v -> McsmExtrasConfig.phase5_9PinkIntensity = v);
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Cloud Opacity", "%.2f",
+                0.0, 1.0, () -> McsmExtrasConfig.cloudAlpha, v -> McsmExtrasConfig.cloudAlpha = v);
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Cloud Speed", "%.2fx",
+                0.0, 3.0, () -> McsmExtrasConfig.cloudSpeed, v -> McsmExtrasConfig.cloudSpeed = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "In-Mod Aurora",
+                () -> McsmExtrasConfig.auroraEnabled, v -> McsmExtrasConfig.auroraEnabled = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Aurora Ribbons (4-Color)",
+                () -> McsmExtrasConfig.auroraRibbons, v -> McsmExtrasConfig.auroraRibbons = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Snow Biome Blue Band",
+                () -> McsmExtrasConfig.snowSkyBand, v -> McsmExtrasConfig.snowSkyBand = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Twinkling Multi Stars",
+                () -> McsmExtrasConfig.twinklingStars, v -> McsmExtrasConfig.twinklingStars = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Night Comets / Streaks",
+                () -> McsmExtrasConfig.comets, v -> McsmExtrasConfig.comets = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Magical Sparkles (W/P/P)",
+                () -> McsmExtrasConfig.coloredSparkles, v -> McsmExtrasConfig.coloredSparkles = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Biome Mist & Fog VFX",
+                () -> McsmExtrasConfig.biomeAtmospherics, v -> McsmExtrasConfig.biomeAtmospherics = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Nether Crimson Fog+Sparks",
+                () -> McsmExtrasConfig.netherRedFog, v -> McsmExtrasConfig.netherRedFog = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Underwater God Rays & Haze",
+                () -> McsmExtrasConfig.waterGodRays, v -> McsmExtrasConfig.waterGodRays = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "End Sky Vortex & Rip",
+                () -> McsmExtrasConfig.endSkyVortex, v -> McsmExtrasConfig.endSkyVortex = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Beacon Luminous Glow",
+                () -> McsmExtrasConfig.beaconGlow, v -> McsmExtrasConfig.beaconGlow = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Nether & End Portal Lights",
+                () -> McsmExtrasConfig.portalLights, v -> McsmExtrasConfig.portalLights = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Global Shadows & Contrast",
+                () -> McsmExtrasConfig.globalShadows, v -> McsmExtrasConfig.globalShadows = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "OG CEM Models",
+                () -> McsmExtrasConfig.ogCemModels, v -> McsmExtrasConfig.ogCemModels = v);
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Built-in Shader Pack",
                 () -> McsmExtrasConfig.embeddedShaderPack, v -> McsmExtrasConfig.embeddedShaderPack = v);
 
-        // ---- column 2: gameplay ---------------------------------------------
-        addToggle(1, 0, fColW, gap, left, top, rowH, "Obliterate Flash",
+        // ---- Column 2: Gameplay, Story VFX & Entity AI ----------------------
+        int r2 = 1;
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Enhanced Wither Storm AI",
+                () -> McsmExtrasConfig.witherStormEnhancedAi, v -> McsmExtrasConfig.witherStormEnhancedAi = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "NPC Walk/Speak Animations",
+                () -> McsmExtrasConfig.npcWalkAnimations, v -> McsmExtrasConfig.npcWalkAnimations = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Death Cinematic",
+                () -> McsmExtrasConfig.deathCinematic, v -> McsmExtrasConfig.deathCinematic = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Supernova Rings",
+                () -> McsmExtrasConfig.supernovaRings, v -> McsmExtrasConfig.supernovaRings = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Smoke Screen + Sparks",
+                () -> McsmExtrasConfig.smokeScreen, v -> McsmExtrasConfig.smokeScreen = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Purple Sky (5.5+)",
+                () -> McsmExtrasConfig.purpleSky, v -> McsmExtrasConfig.purpleSky = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Dust Waves",
+                () -> McsmExtrasConfig.dustWaves, v -> McsmExtrasConfig.dustWaves = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Reality Tear",
+                () -> McsmExtrasConfig.realityTear, v -> McsmExtrasConfig.realityTear = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Obliterate Flash",
                 () -> McsmExtrasConfig.obliterateFlash, v -> McsmExtrasConfig.obliterateFlash = v);
-        addToggle(1, 1, fColW, gap, left, top, rowH, "Obliterate Kicks Players",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Obliterate Kicks Players",
                 () -> McsmExtrasConfig.obliterateKick, v -> McsmExtrasConfig.obliterateKick = v);
-        addToggle(1, 2, fColW, gap, left, top, rowH, "Tentacle Grab",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Tentacle Grab",
                 () -> McsmExtrasConfig.enableTentacleGrab, v -> McsmExtrasConfig.enableTentacleGrab = v);
-        addSlider(1, 3, fColW, gap, left, top, rowH, "Grab Interval", "%.1f s",
+        addSlider(1, r2++, fColW, gap, left, top, rowH, "Grab Interval", "%.1f s",
                 0.0, 30.0, () -> McsmExtrasConfig.grabIntervalSeconds, v -> McsmExtrasConfig.grabIntervalSeconds = v);
-        addToggle(1, 4, fColW, gap, left, top, rowH, "Lit Beacon Relay",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Lit Beacon Relay",
                 () -> McsmExtrasConfig.enableBeaconStorm, v -> McsmExtrasConfig.enableBeaconStorm = v);
-        addSlider(1, 5, fColW, gap, left, top, rowH, "Beacon Cooldown", "%.0f s",
+        addSlider(1, r2++, fColW, gap, left, top, rowH, "Beacon Cooldown", "%.0f s",
                 2.0, 120.0, () -> McsmExtrasConfig.beaconCooldownSeconds, v -> McsmExtrasConfig.beaconCooldownSeconds = v);
-        addToggle(1, 6, fColW, gap, left, top, rowH, "Storm Beacon Block",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Storm Beacon Block",
                 () -> McsmExtrasConfig.enableBeaconBlock, v -> McsmExtrasConfig.enableBeaconBlock = v);
-        addToggle(1, 7, fColW, gap, left, top, rowH, "Rise Ground FX",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Rise Ground FX",
                 () -> McsmExtrasConfig.enableRiseFx, v -> McsmExtrasConfig.enableRiseFx = v);
-        addToggle(1, 8, fColW, gap, left, top, rowH, "Counterclockwise Spiral",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Counterclockwise Spiral",
                 () -> McsmExtrasConfig.spiralCounterClockwise, v -> McsmExtrasConfig.spiralCounterClockwise = v);
-        addToggle(1, 9, fColW, gap, left, top, rowH, "Force MCSM Look",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Force MCSM Look",
                 () -> McsmExtrasConfig.forceMcsmLook, v -> McsmExtrasConfig.forceMcsmLook = v);
-        addToggle(1, 10, fColW, gap, left, top, rowH, "Force MCSM World",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Force MCSM World",
                 () -> McsmExtrasConfig.forceMcsmWorld, v -> McsmExtrasConfig.forceMcsmWorld = v);
-        addToggle(1, 11, fColW, gap, left, top, rowH, "Command Block Wire",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Command Block Wire",
                 () -> McsmExtrasConfig.commandWire, v -> McsmExtrasConfig.commandWire = v);
-        addToggle(1, 12, fColW, gap, left, top, rowH, "MCSM Instructions",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "MCSM Instructions",
                 () -> McsmExtrasConfig.mcsmInstructions, v -> McsmExtrasConfig.mcsmInstructions = v);
-        // MCSM 1.9.111 -- hands the shader-pack answer back to the mod so the
-        // look presets can be A/B tested; see McsmShaderGatePatch.
-        addToggle(1, 13, fColW, gap, left, top, rowH, "Shader Pack Gate",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Shader Pack Gate",
                 () -> McsmExtrasConfig.shaderPackGate, v -> McsmExtrasConfig.shaderPackGate = v);
-        // MCSM 1.9.112 -- the gate now respects anything changed after its
-        // first pass, so look presets applied in the mod's own screen survive
-        // this panel being opened and clicked. Forcing the full MCSM look
-        // again mid-session is therefore an explicit act: this button.
+
+        // Re-apply button
         Button reapply = Button.builder(Component.literal("Re-apply MCSM Look now"), b -> {
             McsmGate.clearMemory();
             McsmGate.reset();
-        }).bounds(left + fColW + gap, top + 14 * rowH, fColW, 20).build();
+        }).bounds(left + fColW + gap, top + r2 * rowH, fColW, 20).build();
         this.addWidget(reapply);
         this.chrome.add(reapply);
-        this.baseY.put(reapply, top + 14 * rowH);
+        this.baseY.put(reapply, top + r2 * rowH);
 
-        this.contentBottom = top + 15 * rowH + 4;
+        int maxRow = Math.max(r1, r2 + 1);
+        this.contentBottom = top + maxRow * rowH + 10;
         applyScrollLayout();
 
         Button done = Button.builder(Component.literal("Done"), b -> this.onClose())
@@ -194,11 +212,6 @@ public final class McsmExtrasScreen extends Screen {
         this.contentBottom = Math.max(this.contentBottom, y + 20);
     }
 
-    /**
-     * Same shape as the mod's own (compiling) WitherStormConfigScreen$ConfigSlider:
-     * AbstractSliderButton(int,int,int,int,Component,double) with this.value,
-     * updateMessage() and applyValue().
-     */
     private static final class Slider extends AbstractSliderButton {
         private final String label;
         private final String fmt;
@@ -267,7 +280,7 @@ public final class McsmExtrasScreen extends Screen {
         g.fill(0, 0, this.width, this.height, 0xB0101010);
         applyScrollLayout();
         g.centeredText(this.font, "Devouring Storms  --  The Point of No Return  " + McsmExtrasConfig.BUILD_VERSION, this.width / 2, 12, 0xFFFFFF);
-        g.centeredText(this.font, "Scroll wheel moves this panel. Changes save instantly.", this.width / 2, 23, 0xA0A0A0);
+        g.centeredText(this.font, "Scroll wheel moves panel. Shift+C in-game opens quickly.", this.width / 2, 23, 0xA0A0A0);
         if (this.contentBottom > this.height - 36) {
             g.centeredText(this.font, "scroll " + this.scrollPx + "/" + Math.max(0, this.contentBottom - (this.height - 36)), this.width - 62, 12, 0xA0A0A0);
         }

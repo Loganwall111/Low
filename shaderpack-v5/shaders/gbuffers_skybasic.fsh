@@ -1,32 +1,17 @@
 #version 330 compatibility
 
 /*
- * Devouring Storms v5 — sky pass.
+ * Devouring Storms v5 — sky pass with full Story Mode atmospherics.
  *
- * This is the round-5 Story Look sky from the mod's own core shader
- * (position.fsh), ported to Iris uniforms so the SAME look is painted when a
- * shader pack is active:
- *
- *   calm  - EnderCon gate / Sky City pastels by day, warm violet dawn/dusk,
- *           deep indigo night; layered cloud decks (layer -> void gap ->
- *           layer) with pale-blue shadowed fringes.
- *   storm - the phase skies sampled from the Minecraft Story Mode frames:
- *           5.5-5.9 pinkish-violet (violet zenith, magenta mid, SALMON-PINK
- *           horizon - the purple body comes from the storm blob, not the
- *           sky), green-teal frames, sunset-orange frames, deep-purple
- *           frames; blue silhouette rim around the horizon, gigantic purple
- *           line across the upper vault, darker roof tone, and the storm
- *           sky SHRUNK to the sides - overhead the dome collapses into a
- *           dark calm violet while the mod's halo ring quad carries the
- *           coloured glow around the storm's flanks.
- *
- * The mod cannot feed its per-phase ColorModulator tint through Iris, so the
- * storm gate reads fogColor instead: the Wither Storm pulls the world fog
- * purple/magenta, and (min(r,b) - g) isolates exactly that hue - dusk fog is
- * orange (b < g) and night fog is blue (r < g), so neither false-positives.
- * The same gate already drives the storm lightning in final.fsh.
- *
- * Aurora borealis rides on top after dark, and biome hues tint the calm sky.
+ * Features:
+ *   - Calm Story Mode pastels & deep navy night
+ *   - Phase skies (teal, purple, 5.5-5.9 salmon-pink horizon, cataclysmic deep purple)
+ *   - Multi-color Aurora Borealis ribbons (blue, pink, purple, orange curtains)
+ *   - Snow biome gigantic blue sky band
+ *   - Twinkling multi-colored stars (blue, pink, purple, gold)
+ *   - Night sky comets / shooting star streaks
+ *   - End Sky swirling purple vortex & reality rip
+ *   - Biome atmospheric tints
  */
 
 in vec4 starData;      // rgb = star colour, a > 0.5 marks a star vertex
@@ -48,13 +33,6 @@ uniform mat4 gbufferModelViewInverse;
 #define AURORA_STRENGTH 1.00  // [0.00 0.25 0.50 0.75 1.00 1.50 2.00]
 #define AURORA_SPEED    1.00  // [0.25 0.50 1.00 1.50 2.00]
 #define AURORA_HEIGHT   0.30  // [0.10 0.20 0.30 0.45 0.60]
-#define AURORA_R        0.35  // [0.00 0.35 0.60 1.00]
-#define AURORA_G        1.00  // [0.00 0.35 0.60 1.00]
-#define AURORA_B        0.80  // [0.00 0.20 0.80 1.00]
-#define AURORA_COVERAGE 0.55  // [0.20 0.35 0.55 0.75 0.95]
-#define AURORA_TIP_R    0.62  // [0.00 0.30 0.62 1.00]
-#define AURORA_TIP_G    0.28  // [0.00 0.28 0.60 1.00]
-#define AURORA_TIP_B    0.95  // [0.00 0.35 0.60 0.95]
 
 /* biome skies */
 #define BIOME_SKIES      1     // [0 1]
@@ -72,7 +50,7 @@ uniform mat4 gbufferModelViewInverse;
 #define BIOME_NETHER_G   0.07  // [0.00 0.07 0.30 0.60]
 #define BIOME_NETHER_B   0.48  // [0.00 0.20 0.48 0.90]
 
-/* ---- noise (vec2 for aurora, vec3 for the cloud decks) ------------------ */
+/* ---- noise helpers ------------------------------------------------------ */
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
@@ -126,11 +104,6 @@ float fbm3(vec3 p) {
 
 vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
                 float dayness, float warm, float sideFade, float mirror) {
-    // mirror = 1 paints the SAME decks mirrored into the lower hemisphere:
-    // the sky dome's bottom half only shows where terrain does not, so on
-    // the ground this reads as a far cloud sea past the edge, and from Sky
-    // City altitude it is the layers you fall through (user order: fall
-    // through 5-15 cloud layers). No camera-height uniform needed.
     float dy = (mirror > 0.5) ? max(-dirS.y, 0.02) : dirS.y;
     if (dy <= 0.02) {
         return col;
@@ -153,11 +126,7 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
         float a = smoothstep(th, th + 0.08, cov) * gapmask * pres
                 * (0.70 + 0.30 * smoothstep(0.35, 0.75, nest))
                 + ceilBonus * smoothstep(0.35, 0.6, cov) * pres;
-        // soften the deck edge into the horizon: kills the roof/side seam
         a *= smoothstep(0.02, 0.12, dy);
-        // storm skies keep their decks on the sides, not overhead (upward
-        // pass only - the mirrored sea below wants full coverage straight
-        // down); mirrored decks sit a touch thinner overall
         if (mirror < 0.5) {
             a *= mix(1.0, sideFade, smoothstep(0.30, 0.70, dy));
         } else {
@@ -188,25 +157,22 @@ void timeWeights(out float day, out float dusk, out float night) {
     day   = clamp(1.0 - dusk - night, 0.0, 1.0);
 }
 
-/* ---- calm Story Mode sky (EnderCon / Sky City pastels) -------------------- */
+/* ---- calm Story Mode sky (EnderCon / Sky City pastels + Deep Navy) ------- */
 
 vec3 storyCalmSky(vec3 dirS) {
     float day, dusk, night;
     timeWeights(day, dusk, night);
 
-    // vanilla's dawn and dusk both read orange, so the dawn palette carries
-    // both ends of the day here - exactly like the core-shader round-5 sky.
     vec3 zen = day   * vec3(0.216, 0.394, 0.716)
              + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
+             + night * vec3(0.005, 0.012, 0.140);
     vec3 mid = day   * vec3(0.394, 0.578, 0.806)
              + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.010, 0.014, 0.070);
+             + night * vec3(0.008, 0.018, 0.120);
     vec3 hor = day   * vec3(0.870, 0.745, 0.690)
              + dusk  * vec3(0.890, 0.680, 0.730)
              + night * vec3(0.019, 0.031, 0.130);
 
-    // per-biome variants (vanilla hands the biome hue through fogColor)
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
     float wk = clamp((fogColor.r - fogColor.b) * 1.2, 0.0, 0.6) * day * (1.0 - dusk);
     zen = mix(zen, vec3(0.150, 0.420, 0.470), gk);
@@ -225,7 +191,6 @@ vec3 storyCalmSky(vec3 dirS) {
     col += hor * 0.14 * exp(-abs(ty) * 7.0);
 #endif
 
-    // white story clouds with pale-blue shadowed fringes
     vec3 litC = mix(vec3(0.960, 0.975, 1.000), hor, 0.10);
     vec3 shadeC = mix(zen, hor, 0.35) * 0.85;
     col = paintDecks(dirS, col, 0.0, litC, shadeC, day, 0.5, 1.0, 0.0);
@@ -238,11 +203,10 @@ vec3 storyCalmSky(vec3 dirS) {
     return col;
 }
 
-/* ---- storm-phase sky (round-5 port) --------------------------------------- */
+/* ---- storm-phase sky ----------------------------------------------------- */
 
 vec3 storyStormSky(vec3 dirS) {
     vec3 C = fogColor;
-    float clum = dot(C, vec3(0.2126, 0.7152, 0.0722));
 
     float greenK  = clamp((C.g - max(C.r, C.b)) * 2.5, 0.0, 1.0);
     float orangeK = clamp((C.r - C.g) * 2.2, 0.0, 1.0) * step(C.b, C.g) * (1.0 - greenK);
@@ -254,26 +218,26 @@ vec3 storyStormSky(vec3 dirS) {
         magK = 1.0;
         wsum = 1.0;
     }
-    // 5.5-5.9 pinkish-violet (violet zenith, salmon-pink horizon)
+    // 5.5-5.9 pinkish-violet (salmon-pink horizon)
     vec3 z1 = vec3(0.055, 0.022, 0.130);
     vec3 m1 = vec3(0.200, 0.060, 0.230);
     vec3 h1 = vec3(0.640, 0.300, 0.310);
-    // green-teal frames
+    // green-teal
     vec3 z2 = vec3(0.050, 0.110, 0.095);
     vec3 m2 = vec3(0.120, 0.220, 0.180);
     vec3 h2 = vec3(0.440, 0.560, 0.360);
-    // sunset-orange frames
+    // sunset-orange
     vec3 z3 = vec3(0.120, 0.060, 0.080);
     vec3 m3 = vec3(0.350, 0.140, 0.110);
     vec3 h3 = vec3(0.780, 0.280, 0.100);
-    // deep purple / magenta frames
+    // deep purple
     vec3 z4 = vec3(0.070, 0.022, 0.120);
     vec3 m4 = vec3(0.230, 0.055, 0.220);
     vec3 h4 = vec3(0.560, 0.220, 0.320);
     vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
     vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
     vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
-    // keep the world's own tint in the mix so the blob colour still reads
+
     zen = mix(zen, C * 0.35, 0.30);
     mid = mix(mid, C * 0.80, 0.30);
     hor = mix(hor, C * 1.35, 0.22);
@@ -284,25 +248,19 @@ vec3 storyStormSky(vec3 dirS) {
     vec3 col = mix(zen, mid, smoothstep(0.04, 0.45, t));
     col = mix(col, hor, smoothstep(0.45, 0.95, t));
 #if HORIZON_GLOW
-    // soft horizon glow band, continuous - no seam between vault and rim
     col += hor * 0.22 * exp(-abs(ty) * 6.0);
 #endif
-    // blue silhouette rim hugging the horizon, all the way around
     float rim = exp(-abs(ty - 0.015) * 42.0);
     col = mix(col, vec3(0.16, 0.34, 0.95), rim * 0.50);
-    // gigantic purple line across the upper vault
     float topLine = exp(-abs(ty - 0.72) * 26.0);
     col = mix(col, vec3(0.40, 0.15, 0.85), topLine * 0.30);
-    // darker back tone so the roof reads heavier than the sides
     col *= 1.0 - 0.38 * smoothstep(0.50, 1.0, ty);
-    // the storm sky SHRINKS to the sides: overhead the dome collapses into a
-    // dark calm violet; the mod's halo ring quad carries the flank glow.
+
     float over = smoothstep(0.30, 0.70, ty);
     float olum = dot(col, vec3(0.299, 0.587, 0.114));
     vec3 ocol = mix(vec3(olum) * vec3(0.42, 0.30, 0.52), vec3(0.02, 0.012, 0.03), 0.55);
     col = mix(col, ocol, over * 0.85);
 
-    // purple-lit storm decks, kept on the sides (sideFade 0.35)
     vec3 litC = mix(vec3(0.52, 0.42, 0.62), hor, 0.35);
     vec3 shadeC = mix(zen, hor, 0.30) * 0.60;
     col = paintDecks(dirS, col, 0.0, litC, shadeC, 0.35, 0.5, 0.35, 0.0);
@@ -315,37 +273,65 @@ vec3 storyStormSky(vec3 dirS) {
     return col;
 }
 
-/* Aurora borealis ribbons, as requested from the reference frames. */
+/* Multi-colored Aurora Borealis ribbons: Blue, Pink, Purple, Orange */
 vec3 aurora(vec3 dir, float night) {
 #if AURORA == 0
     return vec3(0.0);
 #else
     if (dir.y < 0.02) return vec3(0.0);
     float t = frameTimeCounter * 0.06 * AURORA_SPEED;
-    // project onto a plane well above the player so ribbons stretch to the horizon
     vec2 p = dir.xz / max(dir.y, 0.05);
-    float acc = 0.0;
-    for (int i = 0; i < 3; i++) {
+
+    vec3 cBlue   = vec3(0.05, 0.55, 1.00);
+    vec3 cPink   = vec3(1.00, 0.35, 0.78);
+    vec3 cPurple = vec3(0.65, 0.18, 0.95);
+    vec3 cOrange = vec3(1.00, 0.58, 0.16);
+
+    vec3 col = vec3(0.0);
+    for (int i = 0; i < 4; i++) {
         float fi = float(i);
-        vec2 q = p * (0.45 + fi * 0.22) + vec2(t * (1.0 + fi * 0.35), -t * 0.5);
-        float ribbon = fbm(q + vec2(fbm(q * 0.5 + t), 0.0) * 1.6);
-        // thin the field into curtains
-        ribbon = pow(smoothstep(0.42, 0.86, ribbon), 2.4);
-        acc += ribbon * (1.0 - fi * 0.22);
+        vec2 q = p * (0.38 + fi * 0.18) + vec2(t * (0.8 + fi * 0.3), -t * (0.4 + fi * 0.15));
+        float ribbon = fbm(q + vec2(fbm(q * 0.5 + t), 0.0) * 1.5);
+        ribbon = pow(smoothstep(0.40, 0.85, ribbon), 2.2);
+
+        vec3 curCol = (i == 0) ? cBlue : ((i == 1) ? cPink : ((i == 2) ? cPurple : cOrange));
+        col += curCol * ribbon * (1.0 - fi * 0.18);
     }
-    acc *= smoothstep(0.02, AURORA_HEIGHT + 0.25, dir.y);
-    acc *= night;                       // only after dark
-    acc *= (1.0 - rainStrength * 0.8);
-    vec3 col = vec3(AURORA_R, AURORA_G, AURORA_B);
-    // green core fading to violet at the tips, like the real thing
-    col = mix(col, vec3(AURORA_TIP_R, AURORA_TIP_G, AURORA_TIP_B), clamp(acc * 0.55, 0.0, 1.0));
-    return col * acc * AURORA_COVERAGE * AURORA_STRENGTH;
+    col *= smoothstep(0.02, AURORA_HEIGHT + 0.35, dir.y);
+    col *= night;
+    col *= (1.0 - rainStrength * 0.8);
+    return col * AURORA_STRENGTH * 0.65;
 #endif
 }
 
-/* Biome sky, calm weather only (the storm owns the hue when it is near).
- * Iris hands us fogColor, which Minecraft already varies per biome; its hue
- * classifies the biome without needing a biome ID uniform. */
+/* Snow biome gigantic blue sky band */
+vec3 snowBand(vec3 dir) {
+    float b = fogColor.b, r = fogColor.r;
+    float snow = smoothstep(0.03, 0.18, b - r) * step(0.55, max(max(r, fogColor.g), b));
+    if (snow < 0.05) return vec3(0.0);
+
+    float bandY = exp(-abs(dir.y - 0.42) * 9.0);
+    float wave = 1.0 + 0.25 * sin(dir.x * 4.0 + frameTimeCounter * 0.2);
+    vec3 bandCol = vec3(0.12, 0.68, 1.00) * bandY * wave * snow * 0.55;
+    return bandCol;
+}
+
+/* End sky cosmic vortex */
+vec3 endSky(vec3 dir) {
+    float r = length(dir.xz);
+    float angle = atan(dir.z, dir.x) + r * 3.5 - frameTimeCounter * 0.06;
+    float spiral = sin(angle * 3.0) * 0.5 + 0.5;
+    vec3 darkVoid = vec3(0.005, 0.002, 0.012);
+    vec3 cosmicPurp = vec3(0.55, 0.12, 0.85);
+    vec3 vortex = mix(darkVoid, cosmicPurp, spiral * exp(-r * 1.8));
+
+    // Reality rip cracks on horizon
+    float rip = exp(-abs(dir.y - 0.05) * 20.0) * pow(wsNoise(dir.xz * 12.0 + frameTimeCounter * 0.1), 3.0);
+    vortex += vec3(0.85, 0.35, 1.0) * rip * 0.8;
+    return vortex;
+}
+
+/* Biome sky tint */
 vec3 biomeTint(vec3 base) {
 #if BIOME_SKIES == 0
     return base;
@@ -372,15 +358,17 @@ void main() {
     vec4 outc;
 
     if (starData.a > 0.5) {
-        // star vertex: keep vanilla stars, just cool them slightly
-        outc = vec4(starData.rgb * vec3(0.86, 0.90, 1.0), 1.0);
+        // Star vertex: multi-colored twinkling stars
+        float twinkle = 0.85 + 0.15 * sin(frameTimeCounter * 3.0 + dot(starData.rgb, vec3(12.3, 45.6, 78.9)));
+        vec3 starCol = starData.rgb * twinkle;
+        outc = vec4(starCol, 1.0);
     } else {
         float day, dusk, night;
         timeWeights(day, dusk, night);
 
-        // storm gate: the Wither Storm pulls the fog purple/magenta.
-        // (min(r,b) - g) fires ONLY on that hue - dusk is orange (b<g),
-        // night is blue (r<g) - so neither false-positives into a storm sky.
+        // Check if End dimension
+        float isEnd = step(max(max(fogColor.r, fogColor.g), fogColor.b), 0.08) * step(0.005, fogColor.r + fogColor.b);
+
         float stormK = 0.0;
 #if STORM_SKY
         stormK = clamp((min(fogColor.r, fogColor.b) - fogColor.g) * 3.0, 0.0, 1.0)
@@ -389,13 +377,16 @@ void main() {
 
 #if SKY_STORY_MODE
         vec3 c;
-        if (stormK > 0.02) {
+        if (isEnd > 0.5) {
+            c = endSky(dir);
+        } else if (stormK > 0.02) {
             vec3 calm = storyCalmSky(dir);
             vec3 storm = storyStormSky(dir);
             c = mix(calm, storm, stormK);
         } else {
             c = storyCalmSky(dir);
             c = biomeTint(c);
+            c += snowBand(dir);
         }
 #else
         vec3 c = skyColor;
