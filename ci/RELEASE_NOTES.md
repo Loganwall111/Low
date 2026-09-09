@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.173 — version sync + Shift+C quick menu fix
+
+## Fixes
+
+* **Version metadata synced**: source `fabric.mod.json`, `gradle.properties`, runtime `BUILD_VERSION`, and `VERSION` now all identify the build as Devouring Storms instead of the old Dabicco 1.9.60 metadata. The mod id stays `dabywitherstormmod` for save/config compatibility.
+* **Shift+C quick access implemented**: added a client tick mixin that opens the Devouring Storms / MCSM Control Panel in-game with Shift+C. The 1.9.172 notes mentioned this shortcut, but the polling mixin was missing, so players could install a newer jar and still see old behavior.
+* **Winter Storm overrides refreshed**: the merged override copies of Story Look and the Point of No Return Iris shaderpack are refreshed from the latest 1.9.172 assets.
+
+---
+
 # Devouring Storms 1.9.172 — The Point of No Return
 
 ## Atmospheric VFX, Enhanced AI, Speaking Cast & Shaders Overhaul

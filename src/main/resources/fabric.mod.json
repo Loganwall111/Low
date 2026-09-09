@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 1,
 	"id": "dabywitherstormmod",
-	"version": "1.9.60-26.2-beta",
-	"name": "Dabicco's Wither Storm Mod",
-	"description": "Adds The Wither Storm from Minecraft: Story Mode: a mutant wither that grows through several phases, flattens your world as it consumes it, and hunts you across it. Possessed enemies, deep configuration, multiplayer support, and a proper final boss fight. No matter how far you go, you cannot escape The Wither Storm.",
+	"version": "1.9.173-26.2-beta",
+	"name": "Devouring Storms: The Point of No Return",
+	"description": "A Minecraft: Story Mode inspired Wither Storm experience with Devouring Storms atmosphere, story visuals, storm progression, and the Point of No Return cinematic look.",
 	"authors": [
 		"Dabicco - Lead Programmer",
 		"Joeyready - Textures, Blocks, Items & Build"
