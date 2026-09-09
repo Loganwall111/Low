@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.dabicco.witherstormmod.structures.McsmSchematic;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
+import net.mcsm.extras.McsmTemplateSummoner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -19,99 +19,69 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
 /**
- * Devouring Storms: Item 4 slice 2 - you SPAWN INSIDE ENDERCON.
+ * Devouring Storms 1.9.178 -- first-spawn Story Mode world summon.
  *
- * Episode One opens at the fair, so the fair is where you arrive:
+ * The old version of this mixin queued the broken EnderCon .schematic and then
+ * teleported players to its absolute coordinates. The schematic assets are now
+ * intentionally purged, so first arrival must use the new vanilla NBT template
+ * path instead:
  *
- *  - On the first overworld tick with players present, the EnderCon Town
- *    Fair site is sampled. If it is not built yet, its schematic is
- *    queued through the base mod's own incremental builder (24k blocks
- *    per tick) instead of making anyone run /mcsm build.
- *  - While it builds, nobody is moved - the client-side MCSM episode
- *    card (Episode One / A NEW ORDER, shipped last build) plays over the wait,
- *    exactly like the Telltale loading sequence.
- *  - The moment the queue drains, every freshly-joined player (once per
- *    session each) is teleported into the fair with the episode intro
- *    lines in chat - you never watch EnderCon assemble from world spawn.
- *
- * All calls are the base mod's own verified 26.2 forms: layout() sites,
- * McsmSchematic.load(server.getResourceManager(), path), enqueue,
- * pending(), level.players(), player.teleportTo(level, x, y, z, Set.of(),
- * yRot, xRot, false), sendSystemMessage, dimension() == Level.OVERWORLD.
+ *  - On the first overworld tick with players present, summon the converted
+ *    Story Mode blueprint world at the player's actual spawn/current position.
+ *  - Structure placement goes through StructureTemplateManager via
+ *    McsmTemplateSummoner, never through McsmSchematic.
+ *  - Every freshly joined player is delivered once into that summoned spawn
+ *    world and gets the Episode One arrival message.
+ *  - If the uploaded/converted NBT blueprints are not present yet, the mixin
+ *    fails open and leaves normal gameplay alone; /ds towns summon will report
+ *    the missing blueprint clearly when used manually.
  */
 @Mixin(McsmWorldgen.class)
 public abstract class McsmEpisodeSpawnMixin {
 
     @Unique
-    private static int dabyws$phase = 0; // 0 = survey, 1 = building, 2 = fair ready
+    private static boolean dabyws$attemptedSummon = false;
     @Unique
-    private static McsmWorldgen.Site dabyws$fair = null;
+    private static boolean dabyws$worldReady = false;
+    @Unique
+    private static BlockPos dabyws$storySpawn = null;
     @Unique
     private static final Set<UUID> DABYWS$ARRIVED = new HashSet<>();
 
     @Inject(method = "tick", at = @At("HEAD"), remap = false)
     private static void dabyws$episodeOneSpawn(ServerLevel level,
             CallbackInfoReturnable<Integer> cir) {
-        if (level.dimension() != Level.OVERWORLD) {
+        if (level.dimension() != Level.OVERWORLD || level.players().isEmpty()) {
             return;
         }
 
-        if (dabyws$phase == 0) {
-            if (level.players().isEmpty()) {
-                return; // wait until somebody is actually in the story
+        if (!dabyws$attemptedSummon) {
+            dabyws$attemptedSummon = true;
+            ServerPlayer first = level.players().get(0);
+            dabyws$storySpawn = first.blockPosition();
+            int placed = McsmTemplateSummoner.summon(level, dabyws$storySpawn, "world");
+            dabyws$worldReady = placed > 0;
+            if (dabyws$worldReady) {
+                first.sendSystemMessage(Component.literal(
+                        "\u00a75\u00a7lEpisode One \u00a78\u2014 \u00a7d\u00a7lA New Order"));
+                first.sendSystemMessage(Component.literal(
+                        "\u00a77The Story Mode world has been summoned where you spawned."));
             }
-            for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
-                if ("EnderCon Town Fair".equals(s.label())) {
-                    dabyws$fair = s;
-                    break;
-                }
-            }
-            if (dabyws$fair == null) {
-                dabyws$phase = 2; // layout changed under us; never block play
-                return;
-            }
-            boolean built = false;
-            for (int dx = 2; dx <= 18 && !built; dx += 8) {
-                for (int dz = 2; dz <= 18 && !built; dz += 8) {
-                    BlockPos probe = new BlockPos(
-                            dabyws$fair.x() + dx, dabyws$fair.y() + 2, dabyws$fair.z() + dz);
-                    if (!level.getBlockState(probe).isAir()) {
-                        built = true;
-                    }
-                }
-            }
-            if (built) {
-                dabyws$phase = 2;
-            } else {
-                try {
-                    McsmSchematic sch = McsmSchematic.load(
-                            level.getServer().getResourceManager(), dabyws$fair.path());
-                    McsmWorldgen.enqueue(sch,
-                            new BlockPos(dabyws$fair.x(), dabyws$fair.y(), dabyws$fair.z()),
-                            dabyws$fair.label());
-                    dabyws$phase = 1;
-                } catch (Exception e) {
-                    dabyws$phase = 2; // no schematic in pack -> don't trap anyone
-                }
-            }
-        } else if (dabyws$phase == 1) {
-            if (McsmWorldgen.pending() > 0) {
-                return; // still building; the episode card covers the wait
-            }
-            dabyws$phase = 2;
         }
 
-        if (dabyws$phase == 2 && dabyws$fair != null) {
-            for (ServerPlayer p : level.players()) {
-                if (DABYWS$ARRIVED.add(p.getUUID())) {
-                    p.teleportTo(level,
-                            dabyws$fair.x() + 0.5D, dabyws$fair.y() + 2, dabyws$fair.z() + 0.5D,
-                            Set.of(), p.getYRot(), p.getXRot(), false);
-                    p.sendSystemMessage(Component.literal(
-                            "\u00a75\u00a7lEpisode One \u00a78\u2014 \u00a7d\u00a7lA New Order"));
-                    p.sendSystemMessage(Component.literal(
-                            "\u00a77You spawn inside \u00a7fEnderCon\u00a77 \u2014 the fair is already alive around you."));
-                }
+        if (!dabyws$worldReady || dabyws$storySpawn == null) {
+            return;
+        }
+
+        for (ServerPlayer p : level.players()) {
+            if (DABYWS$ARRIVED.add(p.getUUID())) {
+                p.teleportTo(level,
+                        dabyws$storySpawn.getX() + 0.5D,
+                        dabyws$storySpawn.getY() + 2.0D,
+                        dabyws$storySpawn.getZ() + 0.5D,
+                        Set.of(), p.getYRot(), p.getXRot(), false);
+                p.sendSystemMessage(Component.literal(
+                        "\u00a77You arrive inside the summoned Story Mode world at spawn."));
             }
         }
     }
