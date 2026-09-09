@@ -174,6 +174,7 @@ public final class McsmStormBlob {
             float wFace = ramp(phase, 5.5F, 5.8F);
             float wGlare = ramp(phase, 3.95F, 4.3F);
             float wMouth = ramp(phase, 3.9F, 4.3F);
+            float mouthBoost = phase >= 6.0F ? 1.65F : (phase >= 5.5F ? 1.45F : 1.0F);
 
             // THE GLARE, FIRST: one soft gradient billboard hung behind the
             // silhouette, exactly as the original frames expose it - wide
@@ -317,7 +318,7 @@ public final class McsmStormBlob {
                     Vec3 mo = billboardOffset(at, view, baseR * MOUTH_X[m], baseR * MOUTH_Y[m]);
                     // inner mouth: cyan-white emissive square
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), mo, view,
-                            baseR * 0.10, 140, 240, 235, (int) (a * wMouth * 120.0F));
+                            baseR * 0.135 * mouthBoost, 160, 255, 250, (int) (a * wMouth * 210.0F));
                     // dashed teeth: 7 tiny squares on a downward U-arc
                     for (int i = 0; i < 7; i++) {
                         float ang = (float) (Math.PI * (1.12 + 0.76 * i / 6.0));
@@ -326,13 +327,13 @@ public final class McsmStormBlob {
                                 + ((i & 1) == 1 ? 0.014F : 0.0F);
                         Vec3 tp = billboardOffset(at, view, baseR * tx, baseR * ty);
                         quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), tp, view,
-                                baseR * 0.028, 255, 255, 255, (int) (a * wMouth * 235.0F));
+                                baseR * 0.036 * mouthBoost, 210, 255, 255, (int) (a * wMouth * 255.0F));
                     }
                     // the magenta emitter cube above the mouth
                     Vec3 cp = billboardOffset(at, view, baseR * MOUTH_X[m],
                             baseR * (MOUTH_Y[m] + 0.17F));
                     quadAt(poseStack, collector, GlowRenderTypes.glow(WHITE), cp, view,
-                            baseR * 0.045, 232, 40, 226, (int) (a * wMouth * 255.0F));
+                            baseR * 0.052 * mouthBoost, 232, 40, 255, (int) (a * wMouth * 255.0F));
                 }
             }
         }

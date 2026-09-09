@@ -161,10 +161,11 @@ public final class McsmGate {
             changed += floorField(c, null, "blackGlareStrength", 1.0);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);
-            // Full-res HDR bloom was a native-memory pressure point in the user's
-            // Iris/Sodium log. Keep glow visible, but cap the bloom boost instead
-            // of forcing it to the old heavy value.
-            changed += ceilingField(c, null, "bloomStrength", 1.0);
+            // Full-res HDR storm bloom is the native-memory pressure point in
+            // the user's Iris/Sodium logs. Teeth/eyes stay emissive cyan through
+            // their render pass, but the expensive full-screen bloom buffer is
+            // off by default for stability.
+            changed += ceilingField(c, null, "bloomStrength", 0.0);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);

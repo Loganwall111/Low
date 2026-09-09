@@ -1,4 +1,16 @@
+# Devouring Storms 1.9.189 — cyan storm teeth, slimmer HUD rail, and lower-reflection shader defaults
+
+This build reacts to the 1.9.188 test: Story Look now loads, the dark storm body looks good, but the phase 5.5/6 teeth need the cyan Story Mode glow and the Intel/Iris/Sodium setup is still running out of native memory.
+
+* **Brightened/cyan-shifted phase 5.5 and phase 6+ Wither Storm emissive teeth textures** for both normal and OG skin paths.
+* **Actually ticks the phase teeth/eye tint driver every rendered frame**, so the configured turquoise teeth glow updates for the current storm phase instead of sitting unused.
+* **Boosted the flat cyan mouth/teeth glow overlays** in the storm-face renderer for phase 5.5 and post-split phase 6+.
+* **Shrank and whitened the left inventory rail** so it fits the left side better and is less black.
+* **Removed heavy reflection defaults from the bundled Super Duper shaderpack**: previous-frame reflections, PBR/specular/environment material reflections, SSR, and rough reflections are disabled by default/profiles; shader bloom is reduced to a subtle value.
+* **Disabled the mod's full-resolution HDR storm bloom by default** to stop the Iris/Sodium native-buffer memory failure seen in the crash log. Teeth/eyes still use emissive cyan render passes.
+
 # Devouring Storms 1.9.188 — Sodium-safe Story Look and first-spawn story area fallback
+
 
 The screenshots confirmed the pack is no longer red/broken in vanilla Minecraft metadata terms, but Sodium still marks Story Look incompatible because it contains vanilla `minecraft:core/*` shader overrides. This build makes the external pack Sodium-safe and moves that look back to the mod/shaderpack path.
 

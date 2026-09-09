@@ -30,9 +30,9 @@ import net.mcsm.extras.McsmExtrasConfig;
  */
 public final class McsmHudTerminal {
 
-    private static final int SLOT = 26;
+    private static final int SLOT = 22;
     private static final int SLOTS = 9;
-    private static final float ICON_SCALE = 1.5F; // 16px icon -> 24px, fills the 26px slot
+    private static final float ICON_SCALE = 1.25F; // 16px icon -> 20px, smaller Story Mode rail
 
     // --- MCSM episode card state (client-only, no extra mixin needed) --------
     private static ClientLevel lastLevel;
@@ -84,33 +84,33 @@ public final class McsmHudTerminal {
         // --- MCSM story HUD: vertical inventory rail + top ability callouts ---
         Matrix3x2fStack pose = g.pose();
         int selected = player.getInventory().getSelectedSlot();
-        int px = 12;
-        int py = Math.max(34, h / 8);
+        int px = 18;
+        int py = Math.max(38, h / 7);
         int railW = SLOT + 8;
         int railH = SLOTS * (SLOT + 3) + 5;
 
         // Left episode/action rail, matching the reference's stacked slots.
-        g.fill(px - 3, py - 4, px + railW + 3, py + railH + 4, 0x4405060A);
-        g.fill(px - 3, py - 4, px - 1, py + railH + 4, 0xFF8195A6);
-        g.fill(px + railW + 1, py - 4, px + railW + 3, py + railH + 4, 0xFF2B3543);
-        g.fill(px - 3, py - 4, px + railW + 3, py - 2, 0xFFB7C5D8);
-        g.fill(px - 3, py + railH + 2, px + railW + 3, py + railH + 4, 0xFF161A21);
+        g.fill(px - 3, py - 4, px + railW + 3, py + railH + 4, 0x33F2F6FF);
+        g.fill(px - 3, py - 4, px - 1, py + railH + 4, 0xFFFFFFFF);
+        g.fill(px + railW + 1, py - 4, px + railW + 3, py + railH + 4, 0xFFBFC9D8);
+        g.fill(px - 3, py - 4, px + railW + 3, py - 2, 0xFFFFFFFF);
+        g.fill(px - 3, py + railH + 2, px + railW + 3, py + railH + 4, 0xFFCAD3E2);
         for (int i = 0; i < SLOTS; i++) {
             int sx = px + 4;
             int sy = py + 3 + i * (SLOT + 3);
-            int bg = (i == selected) ? 0xAA343A44 : 0x663C4450;
+            int bg = (i == selected) ? 0xBEE8EEF8 : 0x82DCE4F0;
             g.fill(sx, sy, sx + SLOT, sy + SLOT, bg);
-            g.fill(sx, sy, sx + SLOT, sy + 1, 0x66FFFFFF);
-            g.fill(sx, sy, sx + 1, sy + SLOT, 0x66FFFFFF);
-            g.fill(sx + SLOT - 1, sy, sx + SLOT, sy + SLOT, 0x4405060A);
-            g.fill(sx, sy + SLOT - 1, sx + SLOT, sy + SLOT, 0x4405060A);
+            g.fill(sx, sy, sx + SLOT, sy + 1, 0xAAFFFFFF);
+            g.fill(sx, sy, sx + 1, sy + SLOT, 0xAAFFFFFF);
+            g.fill(sx + SLOT - 1, sy, sx + SLOT, sy + SLOT, 0x33F2F6FF);
+            g.fill(sx, sy + SLOT - 1, sx + SLOT, sy + SLOT, 0x33F2F6FF);
             if (i == selected) {
                 // Cream-white Story Mode selection frame.
                 g.fill(sx - 2, sy - 2, sx + SLOT + 2, sy, 0xFFFFF4C9);
                 g.fill(sx - 2, sy + SLOT, sx + SLOT + 2, sy + SLOT + 2, 0xFFFFF4C9);
                 g.fill(sx - 2, sy, sx, sy + SLOT, 0xFFFFF4C9);
                 g.fill(sx + SLOT, sy, sx + SLOT + 2, sy + SLOT, 0xFFFFF4C9);
-                g.fill(sx, sy, sx + SLOT, sy + SLOT, 0x226A8FF7);
+                g.fill(sx, sy, sx + SLOT, sy + SLOT, 0x448FD8FF);
             }
             ItemStack stack = player.getInventory().getItem(i);
             if (!stack.isEmpty()) {

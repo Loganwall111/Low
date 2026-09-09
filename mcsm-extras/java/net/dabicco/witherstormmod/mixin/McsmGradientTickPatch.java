@@ -80,6 +80,7 @@ public abstract class McsmGradientTickPatch {
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
             StormSkyGradient.update(cameraState.pos);
+            net.mcsm.extras.client.McsmTeethPhaseTint.tick();
             // Report what update() produced. This is the value the glare blob
             // depends on -- if it never reports ACTIVE, the blob cannot draw
             // and the problem is upstream of the carrier, not in the shader.

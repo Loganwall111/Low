@@ -36,9 +36,9 @@ public final class McsmTeethPhaseTint {
             }
             float r, g, b, inten;
             if (phase >= 6.0F) {
-                r = 0.06F; g = 0.12F; b = 0.35F; inten = 1.0F;   // extremely dark blue
+                r = 0.62F; g = 1.00F; b = 1.00F; inten = 1.85F;   // cyan split-phase teeth
             } else if (phase >= 5.5F) {
-                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.55F; // MCSM neon white  // glowing white
+                r = 0.86F; g = 1.00F; b = 1.00F; inten = 1.75F; // white-cyan phase 5.5 mouth
             } else if (phase >= 5.1F) {
                 r = 0.85F; g = 0.98F; b = 1.00F; inten = 1.40F;  // white + slight blue
             } else if (phase >= 5.0F) {
