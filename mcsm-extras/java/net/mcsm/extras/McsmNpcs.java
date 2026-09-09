@@ -243,9 +243,9 @@ public final class McsmNpcs {
                 || n.contains("stacy")) {
             // player-like: use armor stand with custom name for distinct pose,
             // fall back to villager if armor_stand spawn fails
-            return "minecraft:villager";
+            return "minecraft:armor_stand";
         }
-        return "minecraft:villager";
+        return "minecraft:armor_stand";
     }
 
     private static void populate(ServerLevel level, BlockPos centre, String[] cast) {
