@@ -81,33 +81,39 @@ public final class McsmHudTerminal {
             g.fill(0, h - bar, w, h, 0xFF000000);
         }
 
-        // --- MCSM hotbar: top-left, big, real icons -------------------------
-        int px = 4;
-        int py = 4;
-        int pw = SLOTS * SLOT + 8;
-        g.fill(px, py, px + pw, py + SLOT + 8, 0xB00D0D16);
-        g.fill(px, py, px + pw, py + 1, 0xFF6A8FF7);
-        g.fill(px, py + SLOT + 7, px + pw, py + SLOT + 8, 0xFF263165);
-
-        int selected = player.getInventory().getSelectedSlot();
+        // --- MCSM story HUD: vertical inventory rail + top ability callouts ---
         Matrix3x2fStack pose = g.pose();
+        int selected = player.getInventory().getSelectedSlot();
+        int px = 12;
+        int py = Math.max(34, h / 8);
+        int railW = SLOT + 8;
+        int railH = SLOTS * (SLOT + 3) + 5;
+
+        // Left episode/action rail, matching the reference's stacked slots.
+        g.fill(px - 3, py - 4, px + railW + 3, py + railH + 4, 0xAA05060A);
+        g.fill(px - 3, py - 4, px - 1, py + railH + 4, 0xFF8195A6);
+        g.fill(px + railW + 1, py - 4, px + railW + 3, py + railH + 4, 0xFF2B3543);
+        g.fill(px - 3, py - 4, px + railW + 3, py - 2, 0xFFB7C5D8);
+        g.fill(px - 3, py + railH + 2, px + railW + 3, py + railH + 4, 0xFF161A21);
         for (int i = 0; i < SLOTS; i++) {
-            int sx = px + 4 + i * SLOT;
-            int sy = py + 4;
-            g.fill(sx, sy, sx + SLOT, sy + SLOT, 0x66000000);
+            int sx = px + 4;
+            int sy = py + 3 + i * (SLOT + 3);
+            int bg = (i == selected) ? 0xDD242A33 : 0x99323841;
+            g.fill(sx, sy, sx + SLOT, sy + SLOT, bg);
+            g.fill(sx, sy, sx + SLOT, sy + 1, 0x66FFFFFF);
+            g.fill(sx, sy, sx + 1, sy + SLOT, 0x66FFFFFF);
+            g.fill(sx + SLOT - 1, sy, sx + SLOT, sy + SLOT, 0xAA05060A);
+            g.fill(sx, sy + SLOT - 1, sx + SLOT, sy + SLOT, 0xAA05060A);
             if (i == selected) {
-                g.fill(sx - 1, sy - 1, sx + SLOT + 1, sy, 0xFFFFFFFF);
-                g.fill(sx - 1, sy + SLOT, sx + SLOT + 1, sy + SLOT + 1, 0xFFFFFFFF);
-                g.fill(sx - 1, sy, sx, sy + SLOT, 0xFFFFFFFF);
-                g.fill(sx + SLOT, sy, sx + SLOT + 1, sy + SLOT, 0xFFFFFFFF);
-                g.fill(sx, sy, sx + SLOT, sy + SLOT, 0x337FA8FF);
-            } else {
-                g.fill(sx, sy, sx + SLOT, sy + 1, 0x44FFFFFF);
-                g.fill(sx, sy, sx + 1, sy + SLOT, 0x44FFFFFF);
+                // Cream-white Story Mode selection frame.
+                g.fill(sx - 2, sy - 2, sx + SLOT + 2, sy, 0xFFFFF4C9);
+                g.fill(sx - 2, sy + SLOT, sx + SLOT + 2, sy + SLOT + 2, 0xFFFFF4C9);
+                g.fill(sx - 2, sy, sx, sy + SLOT, 0xFFFFF4C9);
+                g.fill(sx + SLOT, sy, sx + SLOT + 2, sy + SLOT, 0xFFFFF4C9);
+                g.fill(sx, sy, sx + SLOT, sy + SLOT, 0x226A8FF7);
             }
             ItemStack stack = player.getInventory().getItem(i);
             if (!stack.isEmpty()) {
-                // icon + count/durability, drawn 1.5x inside the big slot
                 pose.pushMatrix();
                 pose.translate(sx + 1, sy + 1);
                 pose.scale(ICON_SCALE);
@@ -117,16 +123,29 @@ public final class McsmHudTerminal {
             }
         }
 
-        // --- holographic terminal panel beneath the hotbar ------------------
-        String[] lines = new String[] {
-            "\u00a79DEVOURING STORMS",
-            "build " + McsmExtrasConfig.BUILD_VERSION,
-            "storm: " + (active ? "\u00a7cACTIVE" : "\u00a77dormant"),
-            "xyz " + player.blockPosition().getX()
-                   + " " + player.blockPosition().getY()
-                   + " " + player.blockPosition().getZ(),
-            "time " + (mc.level.getOverworldClockTime() % 24000) / 1000 + "h",
-        };
+        ItemStack held = player.getInventory().getItem(selected);
+        if (!held.isEmpty()) {
+            String label = itemName(held);
+            int lx = px + railW + 28;
+            int ly = py + 3 + selected * (SLOT + 3) + 7;
+            int lw = Math.min(150, 10 + mc.font.width(label));
+            g.fill(lx - 7, ly - 5, lx + lw, ly + 12, 0x8C07070B);
+            g.fill(lx - 7, ly - 5, lx - 4, ly + 12, 0xFFE9EEF8);
+            g.text(mc.font, "\u00a7f" + label, lx, ly, 0xFFFFFFFF, true);
+        }
+
+        paintEffectCallouts(mc, player, g, w);
+        paintStoryActionMeter(mc, player, g, w, h, active);
+
+        // --- tiny diagnostics chip; the big debug panel is intentionally gone
+        // so gameplay looks like the screenshot instead of a mod console.
+        if (active) {
+            String chip = "DS " + McsmExtrasConfig.BUILD_VERSION;
+            g.fill(w - 76, 4, w - 4, 17, 0x88040610);
+            g.fill(w - 76, 4, w - 74, 17, 0xFF6A8FF7);
+            g.text(mc.font, chip, w - 70, 7, 0xFF9FB4D8, false);
+        }
+
         // --- mega-phase 4: the N-flash pulse ---------------------------------
         // Phase 7+: every 30-50 s a 20 s purple gradient slowly appears and
         // disappears OVER the storm, with a heartbeat double-thump, exactly
@@ -165,16 +184,6 @@ public final class McsmHudTerminal {
             } else if (nowMs >= pulseNextAt) {
                 pulseStartAt = nowMs;
             }
-        }
-
-        int ty = py + SLOT + 12;
-        int tw = 128;
-        int th = lines.length * 11 + 8;
-        g.fill(px, ty, px + tw, ty + th, 0x88101018);
-        g.fill(px, ty, px + 2, ty + th, 0xFF6A8FF7);
-        for (int i = 0; i < lines.length; i++) {
-            g.text(mc.font, lines[i], px + 6, ty + 4 + i * 11,
-                    i == 0 ? 0xFFBFD3FF : 0xFF9FB4D8, false);
         }
 
         // --- mega-phase 6b: portal glow + the warp entry sequence -----------
@@ -254,6 +263,117 @@ public final class McsmHudTerminal {
         } catch (Throwable ignored) {
             // spectacle only - never crash the HUD
         }
+    }
+
+    private static String itemName(ItemStack stack) {
+        try {
+            Object c = stack.getClass().getMethod("getHoverName").invoke(stack);
+            Object txt = c.getClass().getMethod("getString").invoke(c);
+            if (txt instanceof String s && !s.isBlank()) {
+                return s;
+            }
+        } catch (Throwable ignored) {
+        }
+        return "Item";
+    }
+
+    private static void paintEffectCallouts(Minecraft mc, LocalPlayer player,
+            GuiGraphicsExtractor g, int w) {
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        try {
+            Object effects = player.getClass().getMethod("getActiveEffects").invoke(player);
+            if (effects instanceof Iterable<?> it) {
+                for (Object effect : it) {
+                    String name = effectName(effect);
+                    int amp = effectAmplifier(effect) + 1;
+                    if (!name.isBlank()) {
+                        labels.add("+" + amp + " " + name);
+                    }
+                    if (labels.size() >= 3) {
+                        break;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // some loader/API builds hide the collection: no status text then
+        }
+        if (labels.isEmpty()) {
+            return;
+        }
+        int y = 13;
+        int x = w / 2;
+        for (int i = 0; i < labels.size(); i++) {
+            String text = "\u00a7l" + labels.get(i);
+            int yy = y + i * 12;
+            int col = i == 0 ? 0xFFFF5656 : (i == 1 ? 0xFFFF8B8B : 0xFF65DBFF);
+            g.centeredText(mc.font, text, x, yy, col);
+        }
+    }
+
+    private static String effectName(Object effect) {
+        try {
+            Object desc = effect.getClass().getMethod("getDescriptionId").invoke(effect);
+            String raw = String.valueOf(desc);
+            raw = raw.substring(raw.lastIndexOf('.') + 1).replace('_', ' ');
+            if (raw.isBlank()) {
+                return "Effect";
+            }
+            String[] parts = raw.split(" ");
+            StringBuilder out = new StringBuilder();
+            for (String part : parts) {
+                if (part.isEmpty()) {
+                    continue;
+                }
+                if (out.length() > 0) {
+                    out.append(' ');
+                }
+                out.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+            }
+            return out.toString();
+        } catch (Throwable ignored) {
+            return "Effect";
+        }
+    }
+
+    private static int effectAmplifier(Object effect) {
+        try {
+            Object v = effect.getClass().getMethod("getAmplifier").invoke(effect);
+            if (v instanceof Number n) {
+                return n.intValue();
+            }
+        } catch (Throwable ignored) {
+        }
+        return 0;
+    }
+
+    private static void paintStoryActionMeter(Minecraft mc, LocalPlayer player,
+            GuiGraphicsExtractor g, int w, int h, boolean active) {
+        // Gold quick-action rails in the lower right, like Story Mode's
+        // contextual prompts. They breathe subtly when the storm is active.
+        int bars = 4;
+        int bw = 46;
+        int bh = 6;
+        int gap = 3;
+        int total = bars * bw + (bars - 1) * gap;
+        int x = Math.max(86, w - total - 64);
+        int y = h - Math.max(42, h / 12);
+        float breath = active ? (0.85F + 0.15F * (float) Math.sin(System.currentTimeMillis() * 0.006D)) : 0.75F;
+        int goldA = (int) (255.0F * breath);
+        for (int i = 0; i < bars; i++) {
+            int bx = x + i * (bw + gap);
+            g.fill(bx, y, bx + bw, y + bh, 0x66332A00);
+            g.fill(bx, y, bx + bw, y + 1, 0xFFFFF3AA);
+            g.fill(bx, y + bh - 1, bx + bw, y + bh, 0xFF9C7614);
+            g.fill(bx + 2, y + 2, bx + bw - 2, y + bh - 1, (goldA << 24) | 0xFFE55D);
+        }
+        int hookX = w - 38;
+        int hookY = h - 32;
+        int c = active ? 0xFF20D7F2 : 0xFF11889A;
+        g.fill(hookX - 8, hookY + 11, hookX + 9, hookY + 14, 0x77000000);
+        g.fill(hookX - 11, hookY + 7, hookX - 8, hookY + 12, c);
+        g.fill(hookX + 8, hookY + 7, hookX + 11, hookY + 12, c);
+        g.fill(hookX - 6, hookY + 12, hookX + 7, hookY + 15, c);
+        g.text(mc.font, "↻", hookX - 6, hookY - 1, c, true);
     }
 
     private static void bottomGlow(GuiGraphicsExtractor g, int w, int h, int col, float near) {

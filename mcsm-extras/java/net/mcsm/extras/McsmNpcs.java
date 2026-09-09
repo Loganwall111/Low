@@ -50,34 +50,23 @@ public final class McsmNpcs {
     private static final Set<String> POPULATED = new HashSet<>();
     private static final Map<String, Integer> PROGRESS = new HashMap<>();
     private static final Set<String> ROSTER = new HashSet<>();
+    private static final Set<String> STORY_TOWNS = new HashSet<>();
+    private static final int TOWN_RADIUS = 86;
 
     private static boolean hooked;
     private static ServerLevel lastLevel;
 
     static {
-        CAST.put("Beacon Town", new String[] { "Radar", "Stella", "Lluna's Keeper", "Nurm" });
-        CAST.put("Beacon Town Outskirts", new String[] { "Stampy", "Dan" });
-        CAST.put("Beacon Town Map Shop", new String[] { "Jack", "Nurm" });
-        CAST.put("EnderCon Town Fair", new String[] { "Jesse", "Petra", "Axel", "Olivia", "Lukas" });
-        CAST.put("Order of the Stone Temple", new String[] { "Gabriel", "Ivor" });
-        CAST.put("Temple Interior", new String[] { "Ivor" });
-        CAST.put("The Wilderness", new String[] { "Petra", "Reuben's Tracker" });
-        CAST.put("Wilderness Treehouse", new String[] { "Olivia" });
-        CAST.put("Wilderness Tower", new String[] { "Axel" });
-        CAST.put("Forest Stage", new String[] { "Sparklez", "Stacy" });
-        CAST.put("Ellegaard's Courtyard", new String[] { "Ellegaard" });
-        CAST.put("Magnus's Courtyard", new String[] { "Magnus" });
-        CAST.put("Soren's Courtyard", new String[] { "Soren" });
-        CAST.put("Soren's Interior", new String[] { "Soren" });
-        CAST.put("The Creepy Mansion", new String[] { "The White Pumpkin" });
-        CAST.put("Champion City", new String[] { "Aiden", "Maya", "Gill" });
+        CAST.put("Beacon Town", new String[] { "Radar", "Stella", "Nurm" });
+        CAST.put("Beacon Town Outskirts", new String[] { "Stampy" });
+        CAST.put("Beacon Town Map Shop", new String[] { "Jack" });
+        CAST.put("EnderCon Town Fair", new String[] { "Jesse", "Petra", "Axel" });
+        // Non-town story sites no longer receive ambient population by default.
+        CAST.put("Champion City", new String[] { "Aiden", "Maya" });
         CAST.put("Snowy Village", new String[] { "Binta", "Wink" });
         CAST.put("The Wonderland", new String[] { "Otto", "Hadrian" });
-        CAST.put("The Prison Maze", new String[] { "Em" });
-        CAST.put("Beacon Town (Twisted)", new String[] { "Radar", "Nell" });
-        CAST.put("Terminal Control Center", new String[] { "Harper", "PAMA Terminal" });
-        CAST.put("Far Lands Maze", new String[] { "Nell" });
-        CAST.put("Badlands Maze", new String[] { "Fangirl" });
+        CAST.put("Beacon Town (Twisted)", new String[] { "Radar" });
+        STORY_TOWNS.addAll(CAST.keySet());
 
         LINES.put("Jesse", new String[] {
                 "That thing in the sky... it keeps getting bigger. Tell me you see it too.",
@@ -133,6 +122,27 @@ public final class McsmNpcs {
         LINES.put("PAMA Terminal", new String[] {
                 "YOU WILL BE USEFUL.", "COMPLIANCE IS EFFICIENT.", "THE STORM IS NOT IN MY PARAMETERS." });
 
+        // Keep every older cast name in the managed roster so 1.9.186 can clean
+        // overpopulated/out-of-town NPCs left behind by 1.9.185 and earlier.
+        ROSTER.addAll(LINES.keySet());
+        ROSTER.add("Reuben's Tracker");
+        ROSTER.add("Lluna's Keeper");
+        ROSTER.add("Stampy");
+        ROSTER.add("Dan");
+        ROSTER.add("Jack");
+        ROSTER.add("Maya");
+        ROSTER.add("Gill");
+        ROSTER.add("Binta");
+        ROSTER.add("Wink");
+        ROSTER.add("Otto");
+        ROSTER.add("Hadrian");
+        ROSTER.add("Em");
+        ROSTER.add("Nell");
+        ROSTER.add("Fangirl");
+        ROSTER.add("The White Pumpkin");
+        ROSTER.add("Sparklez");
+        ROSTER.add("Stacy");
+
         for (String[] cast : CAST.values()) {
             for (String n : cast) {
                 ROSTER.add(n);
@@ -173,8 +183,9 @@ public final class McsmNpcs {
             if (level.players().isEmpty()) {
                 return;
             }
+            pruneLegacyOverpopulation(level);
             for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
-                if (s.floating() || POPULATED.contains(s.label())) {
+                if (s.floating() || POPULATED.contains(s.label()) || !STORY_TOWNS.contains(s.label())) {
                     continue;
                 }
                 String[] cast = CAST.get(s.label());
@@ -184,7 +195,7 @@ public final class McsmNpcs {
                 BlockPos centre = new BlockPos(s.x(), s.y(), s.z());
                 boolean near = false;
                 for (Entity p : level.players()) {
-                    if (p.blockPosition().distSqr(centre) < 128.0 * 128.0) {
+                    if (p.blockPosition().distSqr(centre) < TOWN_RADIUS * TOWN_RADIUS) {
                         near = true;
                         break;
                     }
@@ -206,24 +217,97 @@ public final class McsmNpcs {
         if (n.contains("reuben") || n.contains("lluna") || n.contains("pig")) {
             return "minecraft:pig";
         }
-        if (n.contains("stampy") || n.contains("dan") || n.contains("wolf")) {
-            return "minecraft:wolf";
-        }
-        if (n.contains("magnus") || n.contains("aiden") || n.contains("golem")) {
-            return "minecraft:iron_golem";
-        }
-        if (n.contains("soren") || n.contains("ellegaard") || n.contains("harper")
-                || n.contains("pama") || n.contains("white pumpkin")) {
-            return "minecraft:witch";
-        }
+        // Human story cast should look human; renderer/resource overrides turn
+        // villager bodies into Story Mode people while preserving vanilla AI.
         return "minecraft:villager";
+    }
+
+    private static boolean isNearStoryTown(BlockPos pos) {
+        for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
+            if (!s.floating() && STORY_TOWNS.contains(s.label())) {
+                BlockPos centre = new BlockPos(s.x(), s.y(), s.z());
+                if (pos.distSqr(centre) <= TOWN_RADIUS * TOWN_RADIUS) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void pruneLegacyOverpopulation(ServerLevel level) {
+        try {
+            for (Player p : level.players()) {
+                AABB scan = p.getBoundingBox().inflate(144.0D, 64.0D, 144.0D);
+                Map<String, Integer> seenByTown = new HashMap<>();
+                for (Mob mob : level.getEntitiesOfClass(Mob.class, scan)) {
+                    if (!isManagedCast(mob)) {
+                        continue;
+                    }
+                    BlockPos bp = mob.blockPosition();
+                    String town = nearestStoryTown(bp);
+                    if (town == null || !isNearStoryTown(bp)) {
+                        discard(mob);
+                        continue;
+                    }
+                    int seen = seenByTown.getOrDefault(town, 0);
+                    int allowed = CAST.containsKey(town) ? CAST.get(town).length : 0;
+                    if (seen >= Math.max(1, allowed)) {
+                        discard(mob);
+                    } else {
+                        seenByTown.put(town, seen + 1);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // population cleanup must never break the server tick
+        }
+    }
+
+    private static boolean isManagedCast(Mob mob) {
+        if (!mob.hasCustomName()) {
+            return false;
+        }
+        Component c = mob.getCustomName();
+        return c != null && ROSTER.contains(c.getString());
+    }
+
+    private static String nearestStoryTown(BlockPos pos) {
+        String bestLabel = null;
+        double best = Double.MAX_VALUE;
+        for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
+            if (!s.floating() && STORY_TOWNS.contains(s.label())) {
+                BlockPos centre = new BlockPos(s.x(), s.y(), s.z());
+                double d = pos.distSqr(centre);
+                if (d < best) {
+                    best = d;
+                    bestLabel = s.label();
+                }
+            }
+        }
+        return best <= TOWN_RADIUS * TOWN_RADIUS ? bestLabel : null;
+    }
+
+    private static void discard(Entity entity) {
+        try {
+            Class<?> reason = Class.forName("net.minecraft.world.entity.Entity$RemovalReason");
+            @SuppressWarnings({ "rawtypes", "unchecked" })
+            Class enumClass = reason.asSubclass(Enum.class);
+            Object discarded = Enum.valueOf(enumClass, "DISCARDED");
+            entity.getClass().getMethod("remove", reason).invoke(entity, discarded);
+        } catch (Throwable ignored) {
+            try {
+                entity.getClass().getMethod("discard").invoke(entity);
+            } catch (Throwable ignoredToo) {
+                // If neither removal path exists, leave the legacy NPC alone.
+            }
+        }
     }
 
     private static void populate(ServerLevel level, BlockPos centre, String[] cast) {
         AABB box = AABB.ofSize(new Vec3(centre.getX() + 0.5, centre.getY() + 0.5, centre.getZ() + 0.5),
                 96.0, 48.0, 96.0);
         for (Mob m : level.getEntitiesOfClass(Mob.class, box)) {
-            if (m.hasCustomName()) {
+            if (isManagedCast(m)) {
                 return;
             }
         }
@@ -260,6 +344,7 @@ public final class McsmNpcs {
             }
             mob.finalizeSpawn(level, level.getCurrentDifficultyAt(at), EntitySpawnReason.STRUCTURE,
                     (SpawnGroupData) null);
+            applyHumanVariant(mob, who, i);
             mob.setCustomName(Component.literal(who));
             mob.setCustomNameVisible(true);
             mob.setPersistenceRequired();
@@ -270,6 +355,56 @@ public final class McsmNpcs {
             }
             level.addFreshEntity(mob);
         }
+    }
+
+    private static void applyHumanVariant(Mob mob, String who, int index) {
+        // Reflective on purpose: 26.x mappings moved villager data classes a few
+        // times. If the methods/classes are missing, the NPC still walks/talks.
+        try {
+            Class<?> villager = Class.forName("net.minecraft.world.entity.npc.Villager");
+            if (!villager.isInstance(mob)) {
+                return;
+            }
+            Object data = villager.getMethod("getVillagerData").invoke(mob);
+            Class<?> vtype = Class.forName("net.minecraft.world.entity.npc.VillagerType");
+            Class<?> prof = Class.forName("net.minecraft.world.entity.npc.VillagerProfession");
+            Object type = namedRegistryValue(vtype, switch (Math.floorMod(who.hashCode() + index, 6)) {
+                case 0 -> "plains";
+                case 1 -> "savanna";
+                case 2 -> "taiga";
+                case 3 -> "snow";
+                case 4 -> "desert";
+                default -> "jungle";
+            });
+            Object profession = namedRegistryValue(prof, switch (Math.floorMod(who.hashCode(), 5)) {
+                case 0 -> "cartographer";
+                case 1 -> "toolsmith";
+                case 2 -> "cleric";
+                case 3 -> "mason";
+                default -> "none";
+            });
+            if (type != null) {
+                data = data.getClass().getMethod("setType", vtype).invoke(data, type);
+            }
+            if (profession != null) {
+                data = data.getClass().getMethod("setProfession", prof).invoke(data, profession);
+            }
+            villager.getMethod("setVillagerData", data.getClass()).invoke(mob, data);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static Object namedRegistryValue(Class<?> holder, String name) {
+        try {
+            for (String field : new String[] { name.toUpperCase(), name.toUpperCase().replace('-', '_') }) {
+                try {
+                    return holder.getField(field).get(null);
+                } catch (Throwable ignored) {
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     /* ---- dialogue & interaction ------------------------------------------ */
@@ -345,6 +480,14 @@ public final class McsmNpcs {
             if (target instanceof Mob mob) {
                 mob.getLookControl().setLookAt(player, 40.0F, 40.0F);
                 mob.setYHeadRot(player.getYRot());
+                // Speaking/waving animation: vanilla swing if present, plus the
+                // tiny Story Mode hop already used for dialogue emphasis.
+                try {
+                    Class<?> hand = Class.forName("net.minecraft.world.InteractionHand");
+                    Object main = hand.getField("MAIN_HAND").get(null);
+                    mob.getClass().getMethod("swing", hand).invoke(mob, main);
+                } catch (Throwable ignoredSwing) {
+                }
                 Vec3 v = mob.getDeltaMovement();
                 mob.setDeltaMovement(v.x, Math.max(v.y, 0.28), v.z);
             }

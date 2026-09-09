@@ -1,4 +1,15 @@
+# Devouring Storms 1.9.186 — Story Mode HUD, camera, and town NPC pass
+
+This build starts the in-game interface and NPC cleanup requested from the reference screenshots while keeping the 1.9.185 resource-pack format fix.
+
+* **Changed the gameplay HUD toward the Minecraft: Story Mode layout**: the hotbar is now a large vertical left-side rail with a cream selection outline, selected-item label beside the rail, top-center effect/status callouts, lower-right gold action bars, and a small cyan prompt icon.
+* **Improved third-person framing** by pulling the detached camera farther back so the player has a better full-body/bridge view like the screenshots.
+* **Reduced Story Mode NPC population**: ambient cast now spawns only around actual story towns, with smaller town rosters and automatic cleanup for older overpopulated custom cast members found outside those towns.
+* **Started human-like NPC variants**: named story cast members now use humanized villager bodies/professions where available, with procedurally generated skin/type texture variants bundled directly in the jar and Story Look pack.
+* **Added simple interaction animation hooks**: talking NPCs look at the player, hop slightly, sparkle, and attempt a vanilla hand wave/swing when spoken to.
+
 # Devouring Storms 1.9.185 — Minecraft 26.2 resource-pack format fix
+
 
 ## Resource packs
 
