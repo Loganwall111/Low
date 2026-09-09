@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.174 — permanent Story Mode clouds
+
+## Fixes
+
+* **Shader clouds no longer disappear**: the Iris/Oculus `gbuffers_clouds` pass now owns a persistent Story Mode cloud layer with a safe alpha floor, white/lavender colour, storm tint, and procedural softness. Turning shaders on should not wipe the Story Mode cloud read anymore.
+* **Regular non-Iris clouds protected too**: the vanilla/core resource-pack cloud vertex shader now clamps the fade math so real cloud faces cannot fade to full transparent just because of camera height or shader pipeline differences.
+* **Merged default look stays in the mod**: Story Look remains embedded/built into the jar for no-shader play, and the override copies were refreshed from the same sources.
+
+---
+
 # Devouring Storms 1.9.173 — version sync + Shift+C quick menu fix
 
 ## Fixes

@@ -104,7 +104,12 @@ void main() {
     float mixFactor = (dir + 1.0) * 0.5;
     float fade = mix(fadeBelow, fadeAbove, mixFactor);
 
-    finalA = baseA * (0.8 - fade);
+    // Devouring Storms 1.9.174 -- permanent cloud floor. Some shader paths
+    // and camera heights drive the vanilla fade term above 0.8, which made
+    // Story Mode clouds vanish the moment a shader pack owned the cloud pass.
+    // Keep the authored fade, but never let an existing cloud face become
+    // fully transparent unless the cloud system itself sent zero alpha.
+    finalA = baseA * max(0.30, 0.8 - fade);
 
     vertexColor = vec4(rgb, finalA) * CloudColor;
 }
