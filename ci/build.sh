@@ -377,6 +377,8 @@ ver = sys.argv[2]
 replacements = {
     "MCSM extras 1.9.95": f"Devouring Storms {ver}",
     "MCSM extras": "Devouring Storms",
+    "Dabicco's Wither Storm Config": "Devouring Storms Config",
+    "Dabicco's Wither Storm": "Devouring Storms",
 }
 size_by_tag = {3:4, 4:4, 5:8, 6:8, 7:2, 8:2, 9:4, 10:4, 11:4, 12:4, 15:3, 16:2, 17:4, 18:4, 19:2, 20:2}
 patched = []

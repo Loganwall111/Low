@@ -45,7 +45,7 @@ public final class McsmTeethPhaseTint {
             } else if (phase >= 5.5F) {
                 r = 0.96F; g = 1.00F; b = 1.00F; inten = 1.85F; glow = true;   // white teeth, glowing
             } else if (phase >= 5.0F) {
-                r = 1.00F; g = 1.00F; b = 0.88F; inten = 0.85F; glow = false;  // flat white, no glow
+                r = 1.00F; g = 1.00F; b = 0.88F; inten = 0.35F; glow = true;   // phase 5: visible flat white teeth, but kept low so it does not bloom hard
             } else if (phase >= 4.0F) {
                 r = 0.82F; g = 0.98F; b = 1.00F; inten = 1.10F; glow = true;   // slight phase-4 glow
             } else {

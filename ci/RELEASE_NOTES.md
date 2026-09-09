@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.193 — darker MCSM storm skin and visible phase-5 teeth
+
+This build corrects the screenshot where the phase-5/phase-6 preview still looked like a purple body with no readable teeth.
+
+* **Reworked phase-4/5, phase-5.5, phase-6 and phase-7 body/devourer atlases** so the storm is mostly black/blue-black like Minecraft: Story Mode, with only sparse purple/blue/teal panel scratches instead of a full purple or blue flood.
+* **Made phase-5 teeth visibly white** by keeping the teeth overlay enabled at a very low intensity and increasing the phase-5 white teeth mask opacity. It should read as white teeth without the huge bloom cloud reserved for phase 5.5+.
+* **Rebranded the base config title** from `Dabicco's Wither Storm` to `Devouring Storms` during jar assembly so the fresh build no longer looks like the old base screen.
+* **Preserved phase behavior:** phase 5.5 glows white, phase 6 shifts blue/cyan, and phase 7 shifts green-blue.
+* Keeps the 1.9.192 Fabric API 0.160 built-in resource-pack activation fix.
+
 # Devouring Storms 1.9.192 — Fabric 0.160 resource-pack activation fix
 
 This build follows up on the successful 1.9.191 launch log. The game is now loading the correct jar, but Fabric API 0.160 changed/renamed the built-in resource-pack activation API that the mod was reflecting.
