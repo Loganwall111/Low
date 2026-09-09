@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.180 — stale config label patched
+
+## UI / install diagnostics
+
+* **Patched the stale base config label** that still printed `MCSM extras 1.9.95` inside the original config screen even when the fresh jar was loaded. The build now rewrites that base class constant to the current Devouring Storms version during assembly.
+* **The fixed bottom-left control-panel button now includes the live build number**, making it obvious which jar is loaded.
+* Keeps the restored OGS Wither Storm assets from 1.9.179.
+
+---
+
 # Devouring Storms 1.9.179 — original OGS Wither Storm assets restored
 
 ## Models / textures

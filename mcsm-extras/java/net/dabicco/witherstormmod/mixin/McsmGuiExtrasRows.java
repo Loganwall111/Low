@@ -61,7 +61,7 @@ public abstract class McsmGuiExtrasRows {
     private static int mcsm$buttonY(Screen sc) { return Math.max(8, sc.height - 58); }
 
     @Unique
-    private static int mcsm$buttonW() { return 154; }
+    private static int mcsm$buttonW() { return 206; }
 
     @Unique
     private static int mcsm$buttonH() { return 20; }
@@ -85,7 +85,7 @@ public abstract class McsmGuiExtrasRows {
         try {
             Screen sc = (Screen) self;
             Button direct = Button.builder(
-                    Component.literal("Devouring Storms"),
+                    Component.literal("Devouring Storms " + McsmExtrasConfig.BUILD_VERSION),
                     b -> mcsm$openPanel(self))
                 .bounds(mcsm$buttonX(), mcsm$buttonY(sc), mcsm$buttonW(), mcsm$buttonH())
                 .build();
@@ -175,7 +175,7 @@ public abstract class McsmGuiExtrasRows {
             boolean hover = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
             g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFFB0A0C8);
             g.fill(x, y, x + w, y + h, hover ? 0xFF6E5A86 : 0xFF4E425E);
-            g.centeredText(sc.getFont(), "Devouring Storms", x + w / 2, y + 6, hover ? 0xFFFFE680 : 0xFFFFFFFF);
+            g.centeredText(sc.getFont(), "Devouring Storms " + McsmExtrasConfig.BUILD_VERSION, x + w / 2, y + 6, hover ? 0xFFFFE680 : 0xFFFFFFFF);
         } catch (Throwable t) {
             System.err.println("[MCSM] direct MCSM Extras render failed: " + t);
         }

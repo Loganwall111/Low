@@ -368,6 +368,69 @@ with open(p, "w") as f:
 PYNAME
 echo "[build] fabric.mod.json name: $(python3 -c "import json;print(json.load(open('$FX/cls/fabric.mod.json'))['name'])")"
 
+# Devouring Storms 1.9.180 -- the base config screen still contains a stale
+# hardcoded section title such as "MCSM extras 1.9.95". Patch UTF8 constants in
+# class files at assembly time so the visible screen cannot make a fresh jar look
+# like an old one. This is a constant-pool rewrite, not a source-code guess.
+python3 - "$FX/cls" "$VER" <<'PYCLASSLABEL'
+import pathlib, struct, sys
+root = pathlib.Path(sys.argv[1])
+ver = sys.argv[2]
+replacements = {
+    "MCSM extras 1.9.95": f"Devouring Storms {ver}",
+    "MCSM extras": "Devouring Storms",
+}
+size_by_tag = {3:4, 4:4, 5:8, 6:8, 7:2, 8:2, 9:4, 10:4, 11:4, 12:4, 15:3, 16:2, 17:4, 18:4, 19:2, 20:2}
+patched = []
+for path in root.rglob("*.class"):
+    data = path.read_bytes()
+    if not any(k.encode() in data for k in replacements):
+        continue
+    if data[:4] != b"\xca\xfe\xba\xbe":
+        continue
+    out = bytearray(data[:10])
+    cp_count = struct.unpack(">H", data[8:10])[0]
+    off = 10
+    i = 1
+    changed = False
+    while i < cp_count:
+        tag = data[off]
+        if tag == 1:
+            ln = struct.unpack(">H", data[off+1:off+3])[0]
+            raw = data[off+3:off+3+ln]
+            try:
+                txt = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                txt = None
+            if txt is not None:
+                ntxt = txt
+                for a,b in replacements.items():
+                    ntxt = ntxt.replace(a,b)
+                if ntxt != txt:
+                    enc = ntxt.encode("utf-8")
+                    out.append(tag); out += struct.pack(">H", len(enc)); out += enc
+                    changed = True
+                else:
+                    out += data[off:off+3+ln]
+            else:
+                out += data[off:off+3+ln]
+            off += 3 + ln
+        else:
+            n = size_by_tag.get(tag)
+            if n is None:
+                raise SystemExit(f"unknown class constant tag {tag} in {path}")
+            out += data[off:off+1+n]
+            off += 1 + n
+            if tag in (5,6):
+                i += 1
+        i += 1
+    out += data[off:]
+    if changed:
+        path.write_bytes(bytes(out))
+        patched.append(str(path.relative_to(root)))
+print("[build] patched stale config labels: " + (", ".join(patched) if patched else "none found"))
+PYCLASSLABEL
+
 # Devouring Storms 1.9.114 -- mixin config MERGE. The base jar's mixin config
 # is frozen at whatever the 1.9.100 build listed; any mixin class added since
 # (McsmShaderGatePatch, McsmTownCommandPatch, ...) must be appended at assembly
