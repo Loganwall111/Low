@@ -98,6 +98,9 @@ public final class McsmExtrasConfig {
     public static double bodyAnimPulse = 0.0;
     /** Glare animation intensity multiplier. */
     public static double glareAnimIntensity = 0.0;
+    /** When true, glare stays fixed relative to storm center (non-euclidean),
+     *  allowing player to "go behind it" even when storm moves. */
+    public static boolean glareNonEuclidean = false;
 
     // ---- MCSM 1.9.137 -- mega-phase 5b ------------------------------------
     /** Ship + auto-install the Devouring Storms Iris shader pack from inside
@@ -129,6 +132,7 @@ public final class McsmExtrasConfig {
             p.setProperty("glare_anim_phase", String.valueOf(glareAnimPhase));
             p.setProperty("body_anim_pulse", String.valueOf(bodyAnimPulse));
             p.setProperty("glare_anim_intensity", String.valueOf(glareAnimIntensity));
+            p.setProperty("glare_non_euclidean", String.valueOf(glareNonEuclidean));
             p.setProperty("cloud_alpha", String.valueOf(cloudAlpha));
             p.setProperty("cloud_speed", String.valueOf(cloudSpeed));
             p.setProperty("precipitation_intensity", String.valueOf(precipitationIntensity));
@@ -215,6 +219,7 @@ public final class McsmExtrasConfig {
             glareAnimPhase = dbl(p, "glare_anim_phase", glareAnimPhase);
             bodyAnimPulse = dbl(p, "body_anim_pulse", bodyAnimPulse);
             glareAnimIntensity = dbl(p, "glare_anim_intensity", glareAnimIntensity);
+            glareNonEuclidean = bool(p, "glare_non_euclidean", glareNonEuclidean);
             cloudAlpha = dbl(p, "cloud_alpha", cloudAlpha);
             cloudSpeed = dbl(p, "cloud_speed", cloudSpeed);
             precipitationIntensity = dbl(p, "precipitation_intensity", precipitationIntensity);

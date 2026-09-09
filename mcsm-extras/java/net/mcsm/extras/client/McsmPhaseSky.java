@@ -103,6 +103,7 @@ public final class McsmPhaseSky {
         double glareAnimPhase = McsmExtrasConfig.glareAnimPhase;
         double bodyAnimPulse = McsmExtrasConfig.bodyAnimPulse;
         double glareAnimIntensity = McsmExtrasConfig.glareAnimIntensity;
+        boolean glareNonEuclidean = McsmExtrasConfig.glareNonEuclidean;
         Vec3 cam = ctx.levelState().cameraRenderState.pos;
         McsmExtrasConfig.load();
         double glareMul = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
@@ -119,7 +120,20 @@ public final class McsmPhaseSky {
             }
             Vec3 stormPos = new Vec3(d.dispX, d.dispY, d.dispZ);
             double bodyR = bodyRadius(phase);
-            Vec3 centre = stormPos.add(swayOffset(phase, nowSec, bodyR));
+            // Non-euclidean glare: when enabled, glare stays fixed relative to storm
+        // center regardless of player position, creating the effect of "going behind it"
+        float glareOffsetX = 0.0F;
+        float glareOffsetY = 0.0F;
+        float glareOffsetZ = 0.0F;
+        if (glareNonEuclidean) {
+            // Glare stays fixed relative to storm, player can "go behind it"
+            // Position is based on storm center at a fixed distance
+            double glareDist = 1200.0;  // Fixed distance from storm center
+            float theta = (float) (System.currentTimeMillis() % 20000L) * 0.001F;
+            glareOffsetX = (float) (glareDist * Math.sin(theta));
+            glareOffsetZ = (float) (glareDist * Math.cos(theta));
+        }
+        Vec3 centre = stormPos.add(swayOffset(phase, nowSec, bodyR)).add(glareOffsetX, 0.0F, glareOffsetZ);
 
             Vec3 toStorm = centre.subtract(cam);
             double dist = toStorm.length();

@@ -13,6 +13,11 @@
 uniform float nightSkyOpacity = 1.0;
     uniform float cloudAlpha = 1.0;
     uniform float cloudSpeed = 1.0;
+    uniform float auroraIntensity = 0.0;
+    uniform vec3 auroraColor1 = vec3(0.0, 0.5, 1.0);  # blue
+    uniform float auroraColor2 = 1.0;  # pink intensity
+    uniform float auroraColor3 = 0.8;  # purple intensity
+    uniform float auroraColor4 = 0.5;  # orange intensity
 
 // Phase 5.5 transition point
 // Exact phase where purple-pink horizon begins
