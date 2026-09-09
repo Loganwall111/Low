@@ -1,3 +1,11 @@
+# Devouring Storms 1.9.192 — Fabric 0.160 resource-pack activation fix
+
+This build follows up on the successful 1.9.191 launch log. The game is now loading the correct jar, but Fabric API 0.160 changed/renamed the built-in resource-pack activation API that the mod was reflecting.
+
+* **Fixed built-in Story Look / OGS CEM auto-registration on Fabric API 0.160+** by reflecting the actual `registerBuiltinResourcePack` activation parameter type instead of hard-coding the removed `ResourcePackActivationPredicate` class name.
+* **Keeps 1.9.191’s phase-6 texture correction and shader crash-safe defaults.**
+* The normal extracted `DevouringStorms-StoryLook.zip` / `DevouringStorms-OGS-CEM.zip` files still work manually, but the built-in default-enabled path should no longer print `ClassNotFoundException: ResourcePackActivationPredicate`.
+
 # Devouring Storms 1.9.191 — corrected phase-6 texture atlases and crash-safe shader defaults
 
 This build fixes the 1.9.190 texture miss: the body atlas was pushed too blue everywhere, and the head glow path was still not guaranteed to see the current phase before choosing the phase-6 atlas.

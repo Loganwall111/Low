@@ -1,6 +1,5 @@
 package net.mcsm.extras;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.io.File;
@@ -174,6 +173,36 @@ public final class McsmBuiltinPack {
         return "[\"vanilla\"," + q + "]";
     }
 
+    private static Object[] enumConstants(Class<?> cls) {
+        try {
+            Object[] constants = cls.getEnumConstants();
+            return constants == null ? new Object[0] : constants;
+        } catch (Throwable t) {
+            return new Object[0];
+        }
+    }
+
+    private static Object defaultEnabled(Class<?> activationCls) {
+        // Fabric API 0.160+/MC 26.2 uses ResourcePackActivationType. Some
+        // older generated builds used ResourcePackActivationPredicate. Do not
+        // name either type at compile time; reflect the actual parameter type
+        // of ResourceManagerHelper.registerBuiltinResourcePack and pull its
+        // DEFAULT_ENABLED constant/field.
+        for (String field : new String[] { "DEFAULT_ENABLED", "ALWAYS_ENABLED", "NORMAL" }) {
+            try {
+                return activationCls.getField(field).get(null);
+            } catch (Throwable ignored) {
+            }
+        }
+        for (Object c : enumConstants(activationCls)) {
+            String name = String.valueOf(c);
+            if ("DEFAULT_ENABLED".equals(name) || "ALWAYS_ENABLED".equals(name) || "NORMAL".equals(name)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
     private static File gameDir() {
         try {
             Class<?> loaderCls = Class.forName("net.fabricmc.loader.api.FabricLoader");
@@ -247,60 +276,51 @@ public final class McsmBuiltinPack {
             }
 
             Class<?> rmhCls = Class.forName("net.fabricmc.fabric.api.resource.ResourceManagerHelper");
-            Class<?> predCls = Class.forName("net.fabricmc.fabric.api.resource.ResourcePackActivationPredicate");
-            Object predicate = null;
-            try {
-                Field f = predCls.getField("DEFAULT_ENABLED");
-                predicate = f.get(null);
-            } catch (NoSuchFieldException ignored) {
-                // fall through to the enum scan below
-            }
-            if (predicate == null) {
-                for (Object c : predCls.getEnumConstants()) {
-                    if ("DEFAULT_ENABLED".equals(String.valueOf(c))) {
-                        predicate = c;
-                        break;
-                    }
-                }
-            }
-            if (predicate == null) {
-                warn(label, "no DEFAULT_ENABLED activation predicate in this fabric-api");
-                return;
-            }
 
             Method target = null;
             Object packType = null;
+            Object activation = null;
             for (Method m : rmhCls.getMethods()) {
                 if (!"registerBuiltinResourcePack".equals(m.getName())) {
                     continue;
                 }
                 Class<?>[] ps = m.getParameterTypes();
+                int activationIndex = -1;
                 if (ps.length == 3 && ps[0] == rlCls) {
-                    target = m;
-                    packType = null;
-                    break; // legacy signature wins outright
-                }
-                if (ps.length == 4 && ps[1] == rlCls && target == null) {
-                    for (Object c : ps[0].getEnumConstants()) {
-                        String name = String.valueOf(c);
-                        if (name.contains("CLIENT") || name.contains("RESOURCE")) {
-                            packType = c;
-                            break;
+                    activationIndex = 2;
+                } else if (ps.length == 4 && ps[1] == rlCls) {
+                    activationIndex = 3;
+                    if (packType == null) {
+                        for (Object c : enumConstants(ps[0])) {
+                            String name = String.valueOf(c);
+                            if (name.contains("CLIENT") || name.contains("RESOURCE")) {
+                                packType = c;
+                                break;
+                            }
                         }
                     }
-                    if (packType != null) {
-                        target = m;
+                    if (packType == null) {
+                        continue;
                     }
                 }
+                if (activationIndex < 0) {
+                    continue;
+                }
+                Object a = defaultEnabled(ps[activationIndex]);
+                if (a != null) {
+                    target = m;
+                    activation = a;
+                    break;
+                }
             }
-            if (target == null) {
-                warn(label, "no registerBuiltinResourcePack overload recognized");
+            if (target == null || activation == null) {
+                warn(label, "no compatible registerBuiltinResourcePack DEFAULT_ENABLED overload recognized");
                 return;
             }
             if (target.getParameterCount() == 3) {
-                target.invoke(null, id, modContainer, predicate);
+                target.invoke(null, id, modContainer, activation);
             } else {
-                target.invoke(null, packType, id, modContainer, predicate);
+                target.invoke(null, packType, id, modContainer, activation);
             }
             System.out.println("[ds] " + label + " built-in resource pack registered (default enabled): " + packPath);
         } catch (Throwable t) {
