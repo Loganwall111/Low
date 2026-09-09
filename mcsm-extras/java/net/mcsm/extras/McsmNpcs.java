@@ -389,6 +389,40 @@ public final class McsmNpcs {
         player.sendSystemMessage(Component.literal("\u00a7d\u00a7l" + name + "\u00a7r\u00a77: \u00a7f"
                 + tree[i % tree.length]));
         // villager/yes sounds read as speech better than bundle click
+
+
+    /* ---- NPC Tick AI ------------------------------------------------------ */
+    /** Called every server tick from the worldgen patch. */
+    public static void npcTick(ServerLevel level) {
+        try {
+            if (level.players().isEmpty()) {
+                return;
+            }
+            // Subtle AI: make NPCs wander slightly and look at players
+            for (Entity e : level.entitiesByClass(Entity.class)) {
+                if (e.hasCustomName() && e instanceof Mob mob) {
+                    // Make mob look at random player sometimes
+                    if (level.random.nextFloat() < 0.01F) {
+                        for (Entity player : level.players()) {
+                            if (player.distanceTo(mob) < 32.0) {
+                                mob.getLookControl().setLookAt(player, 20.0F, 20.0F);
+                                break;
+                            }
+                        }
+                    }
+                    // Subtle walking animation - slight position perturbations
+                    if (level.random.nextFloat() < 0.005F) {
+                        double offsetX = level.random.nextGaussian() * 0.5;
+                        double offsetZ = level.random.nextGaussian() * 0.5;
+                        mob.setPos(mob.getX() + offsetX, mob.getY(), mob.getZ() + offsetZ);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+
         player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
                 SoundEvents.VILLAGER_YES, SoundSource.NEUTRAL, 1.0F, 0.95F + (float) (Math.random() * 0.2));
         player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
