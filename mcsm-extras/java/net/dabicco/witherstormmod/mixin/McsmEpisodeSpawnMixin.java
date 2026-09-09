@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import net.dabicco.witherstormmod.structures.McsmSchematic;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
 import net.mcsm.extras.McsmTemplateSummoner;
 import net.minecraft.core.BlockPos;
@@ -19,22 +20,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
 /**
- * Devouring Storms 1.9.178 -- first-spawn Story Mode world summon.
+ * Devouring Storms first-spawn Story Mode arrival.
  *
- * The old version of this mixin queued the broken EnderCon .schematic and then
- * teleported players to its absolute coordinates. The schematic assets are now
- * intentionally purged, so first arrival must use the new vanilla NBT template
- * path instead:
- *
- *  - On the first overworld tick with players present, summon the converted
- *    Story Mode blueprint world at the player's actual spawn/current position.
- *  - Structure placement goes through StructureTemplateManager via
- *    McsmTemplateSummoner, never through McsmSchematic.
- *  - Every freshly joined player is delivered once into that summoned spawn
- *    world and gets the Episode One arrival message.
- *  - If the uploaded/converted NBT blueprints are not present yet, the mixin
- *    fails open and leaves normal gameplay alone; /ds towns summon will report
- *    the missing blueprint clearly when used manually.
+ * Preferred path: use converted vanilla NBT templates through
+ * StructureTemplateManager. Fallback path, used until the clean MC105/MC201 NBT
+ * source folders are supplied: queue the recovered legacy Story Mode schematics
+ * and place the player at the Episode One treehouse cluster.
  */
 @Mixin(McsmWorldgen.class)
 public abstract class McsmEpisodeSpawnMixin {
@@ -65,7 +56,16 @@ public abstract class McsmEpisodeSpawnMixin {
                 first.sendSystemMessage(Component.literal(
                         "\u00a75\u00a7lEpisode One \u00a78\u2014 \u00a7d\u00a7lA New Order"));
                 first.sendSystemMessage(Component.literal(
-                        "\u00a77The Story Mode world has been summoned where you spawned."));
+                        "\u00a77The converted Story Mode blueprint has been summoned where you spawned."));
+            } else {
+                dabyws$storySpawn = dabyws$queueEpisodeOne(level);
+                dabyws$worldReady = dabyws$storySpawn != null;
+                if (dabyws$worldReady) {
+                    first.sendSystemMessage(Component.literal(
+                            "\u00a75\u00a7lEpisode One \u00a78\u2014 \u00a7d\u00a7lA New Order"));
+                    first.sendSystemMessage(Component.literal(
+                            "\u00a77The Story Mode opening area is being built; you start at the treehouse."));
+                }
             }
         }
 
@@ -81,8 +81,32 @@ public abstract class McsmEpisodeSpawnMixin {
                         dabyws$storySpawn.getZ() + 0.5D,
                         Set.of(), p.getYRot(), p.getXRot(), false);
                 p.sendSystemMessage(Component.literal(
-                        "\u00a77You arrive inside the summoned Story Mode world at spawn."));
+                        "\u00a77You arrive inside the Story Mode opening area."));
             }
         }
+    }
+
+    @Unique
+    private static BlockPos dabyws$queueEpisodeOne(ServerLevel level) {
+        BlockPos start = null;
+        String[] wants = { "Wilderness Treehouse", "The Wilderness", "EnderCon Town Fair", "Beacon Town" };
+        for (String want : wants) {
+            for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
+                if (!s.label().equalsIgnoreCase(want)) {
+                    continue;
+                }
+                try {
+                    McsmSchematic sch = McsmSchematic.load(level.getServer().getResourceManager(), s.path());
+                    McsmWorldgen.enqueue(sch, new BlockPos(s.x(), s.y(), s.z()), s.label());
+                    if (start == null || s.label().equalsIgnoreCase("Wilderness Treehouse")) {
+                        start = new BlockPos(s.x(), s.y(), s.z());
+                    }
+                } catch (Throwable ignored) {
+                    // Missing one legacy schematic should not block the others.
+                }
+                break;
+            }
+        }
+        return start;
     }
 }

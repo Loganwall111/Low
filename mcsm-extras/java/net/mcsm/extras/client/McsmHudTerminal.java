@@ -90,7 +90,7 @@ public final class McsmHudTerminal {
         int railH = SLOTS * (SLOT + 3) + 5;
 
         // Left episode/action rail, matching the reference's stacked slots.
-        g.fill(px - 3, py - 4, px + railW + 3, py + railH + 4, 0xAA05060A);
+        g.fill(px - 3, py - 4, px + railW + 3, py + railH + 4, 0x4405060A);
         g.fill(px - 3, py - 4, px - 1, py + railH + 4, 0xFF8195A6);
         g.fill(px + railW + 1, py - 4, px + railW + 3, py + railH + 4, 0xFF2B3543);
         g.fill(px - 3, py - 4, px + railW + 3, py - 2, 0xFFB7C5D8);
@@ -98,12 +98,12 @@ public final class McsmHudTerminal {
         for (int i = 0; i < SLOTS; i++) {
             int sx = px + 4;
             int sy = py + 3 + i * (SLOT + 3);
-            int bg = (i == selected) ? 0xDD242A33 : 0x99323841;
+            int bg = (i == selected) ? 0xAA343A44 : 0x663C4450;
             g.fill(sx, sy, sx + SLOT, sy + SLOT, bg);
             g.fill(sx, sy, sx + SLOT, sy + 1, 0x66FFFFFF);
             g.fill(sx, sy, sx + 1, sy + SLOT, 0x66FFFFFF);
-            g.fill(sx + SLOT - 1, sy, sx + SLOT, sy + SLOT, 0xAA05060A);
-            g.fill(sx, sy + SLOT - 1, sx + SLOT, sy + SLOT, 0xAA05060A);
+            g.fill(sx + SLOT - 1, sy, sx + SLOT, sy + SLOT, 0x4405060A);
+            g.fill(sx, sy + SLOT - 1, sx + SLOT, sy + SLOT, 0x4405060A);
             if (i == selected) {
                 // Cream-white Story Mode selection frame.
                 g.fill(sx - 2, sy - 2, sx + SLOT + 2, sy, 0xFFFFF4C9);
@@ -129,7 +129,7 @@ public final class McsmHudTerminal {
             int lx = px + railW + 28;
             int ly = py + 3 + selected * (SLOT + 3) + 7;
             int lw = Math.min(150, 10 + mc.font.width(label));
-            g.fill(lx - 7, ly - 5, lx + lw, ly + 12, 0x8C07070B);
+            g.fill(lx - 7, ly - 5, lx + lw, ly + 12, 0x6607070B);
             g.fill(lx - 7, ly - 5, lx - 4, ly + 12, 0xFFE9EEF8);
             g.text(mc.font, "\u00a7f" + label, lx, ly, 0xFFFFFFFF, true);
         }
@@ -141,7 +141,7 @@ public final class McsmHudTerminal {
         // so gameplay looks like the screenshot instead of a mod console.
         if (active) {
             String chip = "DS " + McsmExtrasConfig.BUILD_VERSION;
-            g.fill(w - 76, 4, w - 4, 17, 0x88040610);
+            g.fill(w - 76, 4, w - 4, 17, 0x55040610);
             g.fill(w - 76, 4, w - 74, 17, 0xFF6A8FF7);
             g.text(mc.font, chip, w - 70, 7, 0xFF9FB4D8, false);
         }
@@ -369,7 +369,7 @@ public final class McsmHudTerminal {
         int hookX = w - 38;
         int hookY = h - 32;
         int c = active ? 0xFF20D7F2 : 0xFF11889A;
-        g.fill(hookX - 8, hookY + 11, hookX + 9, hookY + 14, 0x77000000);
+        g.fill(hookX - 8, hookY + 11, hookX + 9, hookY + 14, 0x44000000);
         g.fill(hookX - 11, hookY + 7, hookX - 8, hookY + 12, c);
         g.fill(hookX + 8, hookY + 7, hookX + 11, hookY + 12, c);
         g.fill(hookX - 6, hookY + 12, hookX + 7, hookY + 15, c);

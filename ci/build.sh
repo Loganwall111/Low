@@ -330,12 +330,10 @@ echo "[assemble] overlay onto base"
 FX=/tmp/mcsm-fx
 rm -rf "$FX" && mkdir -p "$FX/cls"
 ( cd "$FX/cls" && unzip -o -q "$BASE" )
-# Devouring Storms 1.9.177 -- purge every old MCEdit .schematic from the
-# assembled jar. Those legacy schematic assets are broken for the current world
-# summon path; new sites must be converted to vanilla NBT templates with
-# ci/convert_story_worlds.py and loaded through StructureTemplateManager.
-rm -rf "$FX/cls/assets/dabywitherstormmod/schematics"
-find "$FX/cls" -path '*/schematics/*' -name '*.schematic' -delete 2>/dev/null || true
+# Devouring Storms 1.9.188 -- keep the recovered legacy MCEdit schematics in
+# the assembled jar as a fallback until the clean MC105/MC201 NBT blueprints are
+# supplied/generated.  /ds towns build/start and the first-spawn fallback rely on
+# these resources so the player can actually arrive in Story Mode locations now.
 cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
 # 1.9.167: 26.2 loads position/block, not sky/terrain. Alias so vivid grade+shadows actually bind.
 CS="$FX/cls/assets/minecraft/shaders/core"
@@ -694,8 +692,12 @@ if [ ! -f "$FX/cls/assets/minecraft/shaders/core/position.fsh" ] || [ ! -f "$FX/
   echo "::error title=jar audit::26.2 shader aliases missing (position/block) — vivid light would never load"
   AUDIT_FAIL=1
 fi
-if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/shaders/core/position.fsh" ]; then
-  echo "::error title=jar audit::built-in Story Look pack missing from the jar"
+if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/textures/environment/sun.png" ]; then
+  echo "::error title=jar audit::built-in Sodium-safe Story Look pack missing from the jar"
+  AUDIT_FAIL=1
+fi
+if [ -d "$FX/cls/resourcepacks/storylook/assets/minecraft/shaders" ]; then
+  echo "::error title=jar audit::external Story Look pack still overrides vanilla core shaders; Sodium will reject it"
   AUDIT_FAIL=1
 fi
 
@@ -726,12 +728,8 @@ else
   echo "[audit] stale 1.9.95 config label purged"
 fi
 
-if find "$FX/cls/assets/dabywitherstormmod" -path '*/schematics/*' -name '*.schematic' 2>/dev/null | grep -q .; then
-  echo "::error title=jar audit::legacy .schematic files survived purge"
-  AUDIT_FAIL=1
-else
-  echo "[audit] legacy .schematic assets purged"
-fi
+SCHEMATIC_COUNT="$(find "$FX/cls/assets/dabywitherstormmod" -path '*/schematics/*' -name '*.schematic' 2>/dev/null | wc -l | tr -d ' ')"
+echo "[audit] legacy schematic fallback assets available: ${SCHEMATIC_COUNT}"
 
 # mega-phase 5b: the embedded Iris pack must actually be in the jar, and its
 # zip must contain the v5 sky pass - an installer with nothing to install is

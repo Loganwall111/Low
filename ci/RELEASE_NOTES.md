@@ -1,4 +1,16 @@
+# Devouring Storms 1.9.188 — Sodium-safe Story Look and first-spawn story area fallback
+
+The screenshots confirmed the pack is no longer red/broken in vanilla Minecraft metadata terms, but Sodium still marks Story Look incompatible because it contains vanilla `minecraft:core/*` shader overrides. This build makes the external pack Sodium-safe and moves that look back to the mod/shaderpack path.
+
+* **Removed vanilla core shader overrides from the external Story Look resource pack** so Sodium should stop flagging `DevouringStorms-StoryLook.zip` as incompatible.
+* **Kept Story Look as a normal visual pack** for sky/environment/NPC textures while the jar and Iris shaderpack continue handling the shader look.
+* **Restored legacy schematic fallback assets in the jar** until the clean MC105/MC201 NBT blueprints are supplied, so `/ds towns build`, `/ds towns start`, and first-spawn fallback can actually place Story Mode areas again.
+* **First-spawn now falls back to the Episode One schematic cluster** if converted NBT blueprints are not present, placing/teleporting the player to the Wilderness Treehouse opening area instead of leaving them at an empty vanilla spawn tower.
+* **Lightened the Story Mode HUD rail** so the hotbar is less black and closer to the white/clear UI in the reference image.
+* **Capped full-res storm bloom strength** to reduce Iris/Sodium native-memory pressure while keeping the glow visible.
+
 # Devouring Storms 1.9.187 — 26.2 pack metadata + Story Look shader reload fix
+
 
 The latest log showed the exact problem: Minecraft 26.2 rejects packs above format 64 unless `min_format` and `max_format` are present. It also showed Story Look was overriding `minecraft:core/block` with an older fragment shader that did not match the 26.2 block vertex shader.
 

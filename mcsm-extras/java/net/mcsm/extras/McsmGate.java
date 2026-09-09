@@ -161,6 +161,10 @@ public final class McsmGate {
             changed += floorField(c, null, "blackGlareStrength", 1.0);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);
+            // Full-res HDR bloom was a native-memory pressure point in the user's
+            // Iris/Sodium log. Keep glow visible, but cap the bloom boost instead
+            // of forcing it to the old heavy value.
+            changed += ceilingField(c, null, "bloomStrength", 1.0);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
@@ -262,6 +266,23 @@ public final class McsmGate {
     }
 
     /** Intervals count DOWN in desirability: a smaller positive number fires sooner. */
+    private static int ceilingField(Class<?> owner, Object instance, String name, double max) {
+        try {
+            Field f = owner.getField(name);
+            String key = memKey(owner, instance, name);
+            double cur = readNum(f, instance);
+            Object prev = LAST_SET.get(key);
+            if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
+                return 0;
+            }
+            double nv = writeNum(f, instance, Math.min(cur, max));
+            LAST_SET.put(key, nv);
+            return 1;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
     private static int ceilInterval(Class<?> owner, Object instance, String name, int max) {
         try {
             Field f = owner.getField(name);
