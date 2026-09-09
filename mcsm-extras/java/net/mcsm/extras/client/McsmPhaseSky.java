@@ -99,6 +99,10 @@ public final class McsmPhaseSky {
         float gt = (float) (mc.level.getGameTime() % 240000L)
                 + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float nowSec = gt * 0.05F;
+        McsmExtrasConfig.load();
+        double glareAnimPhase = McsmExtrasConfig.glareAnimPhase;
+        double bodyAnimPulse = McsmExtrasConfig.bodyAnimPulse;
+        double glareAnimIntensity = McsmExtrasConfig.glareAnimIntensity;
         Vec3 cam = ctx.levelState().cameraRenderState.pos;
         McsmExtrasConfig.load();
         double glareMul = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
@@ -133,8 +137,12 @@ public final class McsmPhaseSky {
                 continue;
             }
 
-            float breathe = 1.0F + 0.02F * Mth.sin(nowSec * 0.05F);
-            double baseR = bodyR * (1.55 + 1.05 * glareMul) * smudge * breathe;
+            float breathe = 1.0F
+    + 0.02F * Mth.sin(nowSec * 0.05F)
+    * (float) Mth.clamp(glareAnimIntensity, 0.0, 3.0)
+    * (float) Mth.clamp((float) bodyAnimPulse, 0.0F, 1.0F);
+            double baseR = bodyR * (1.55 + 1.05 * glareMul) * smudge * breathe
+    * (float) Mth.clamp((float) bodyAnimPulse, 0.0F, 1.0F);
             if (phase > 5.3F) {
                 baseR *= 1.0 + (phase - 5.3F) * 0.16;
             }
@@ -143,7 +151,7 @@ public final class McsmPhaseSky {
                 baseR *= 1.35;
             }
             float amp = presence * distFade;
-            int aa = Mth.clamp((int) (amp * 210.0F), 0, 255);
+            int aa = Mth.clamp((int) (amp * 210.0F * (float) Mth.clamp(glareAnimIntensity, 0.0F, 2.0F)), 0, 255);
             if (aa <= 4) {
                 continue;
             }
