@@ -450,7 +450,7 @@ public final class McsmFxDriver {
                 }
 
                 // 3. Night Sky Comets / Shooting Stars
-                boolean isNightTime = !srv.isDay();
+                boolean isNightTime = !srv.isBrightOutside();
                 if (McsmExtrasConfig.comets && Level.OVERWORLD.equals(srv.dimension()) && isNightTime) {
                     if (srv.getRandom().nextFloat() < 0.12F) {
                         double cx = px + (srv.getRandom().nextDouble() - 0.5) * 80.0;
