@@ -105,7 +105,7 @@ jobs:
             ( cd shaderpack-v5 && zip -q -r "/tmp/devouringstorms-shaderpack-v5-${VER}.zip" shaders )
             gh release upload "$TAG" "/tmp/devouringstorms-shaderpack-v5-${VER}.zip" --clobber \
               || echo "::warning::shader pack upload failed"
-            ( cd shaderpack-superduper && zip -q -r "/tmp/devouringstorms-superduper-default-${VER}.zip" shaders DEVOURING_STORMS_MERGE.md )
+            ( cd shaderpack-superduper && zip -q -r "/tmp/devouringstorms-superduper-default-${VER}.zip" shaders DEVOURING_STORMS_MERGE.md pack.mcmeta )
             gh release upload "$TAG" "/tmp/devouringstorms-superduper-default-${VER}.zip" --clobber \
               || echo "::warning::super duper default shader pack upload failed"
           else

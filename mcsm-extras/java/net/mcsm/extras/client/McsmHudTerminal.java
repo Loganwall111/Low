@@ -84,10 +84,10 @@ public final class McsmHudTerminal {
         // --- MCSM story HUD: vertical inventory rail + top ability callouts ---
         Matrix3x2fStack pose = g.pose();
         int selected = player.getInventory().getSelectedSlot();
-        int px = 18;
-        int py = Math.max(38, h / 7);
         int railW = SLOT + 8;
         int railH = SLOTS * (SLOT + 3) + 5;
+        int px = 56;
+        int py = Math.max(20, Math.min(h - railH - 20, h / 2 - railH / 2));
 
         // Left episode/action rail, matching the reference's stacked slots.
         g.fill(px - 3, py - 4, px + railW + 3, py + railH + 4, 0x33F2F6FF);

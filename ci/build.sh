@@ -675,7 +675,7 @@ rm -f "$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip"
 # absolute path re-anchors the zip under the repo and zip dies with exit 15
 # (run 34050631385). The repo-relative cd source is resolved before the cd.
 MANAGED_SHADER_ROOT="$(pwd)/shaderpack-superduper"
-( cd "$MANAGED_SHADER_ROOT" && zip -q -r -X "$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip" shaders DEVOURING_STORMS_MERGE.md )
+( cd "$MANAGED_SHADER_ROOT" && zip -q -r -X "$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip" shaders DEVOURING_STORMS_MERGE.md pack.mcmeta )
 echo "[build] managed Super Duper default shader pack embedded at assets/dabywitherstormmod/shaderpacks/devouringstorms.zip"
 
 # mega-phase 3: the phase-6 halo ring texture, generated at build time and

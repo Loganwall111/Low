@@ -1,3 +1,16 @@
+# Devouring Storms 1.9.198 — storm-anchored sky-volume glare, OGS default, shader safety
+
+This build follows the 1.9.197 test and the new MCSM references. The important correction is that the storm glare should not be a texture billboard/card: it should behave like a storm-attached skybox/fog volume behind the storm.
+
+* **Replaced the flat glare billboard with a curved sky-volume wash**: layered dome patches are projected onto a far sky shell around the camera in the storm's direction, creating a foggy MCSM backdrop/blob instead of a visible 2D card.
+* **Removed edge sparkle/dot fields from the glare** so the backdrop reads as atmospheric darkness/colour, not particles stuck to a rectangle.
+* **Uses vanilla translucent-emissive rendering for the sky volume** to avoid Iris custom pipeline warnings like missing `dabywitherstormmod:pipeline/storm_glow` / `storm_translucent` when external shaderpacks are active.
+* **Stops forcing `ShaderPackCompat.active()` false by default** when Iris/external shaders are on. No-shader play keeps the mod visuals, but external shaders no longer get our custom storm pipelines forced into their override lists.
+* **Adds `pack.mcmeta` to the bundled Super Duper shaderpack zips** and includes it in the embedded/release shaderpack packaging, improving Iris pack recognition.
+* **Restores the OGS CEM preset/model pack as a default-enabled built-in pack** and refreshes the default OGS body/tentacle/tractor textures from `Loganwall111/ogs-stuff/witherstormmod`.
+* **Recenters and fits the left HUD sidebar** so it sits in the vertical center area instead of being too low/cut off.
+* Heavy shaders are still optional rather than forced on, because the latest log shows native virtual-memory/pagefile failure when Super Duper shaders are enabled.
+
 # Devouring Storms 1.9.197 — soft MCSM glare, calm blue night, restored opening structures
 
 This build targets the first successful no-shader gameplay test after 1.9.196: the game runs, but the sky glare/duplicate-head cards, purple night wash, missing opening structures, and weak cyan teeth needed an immediate correction pass.

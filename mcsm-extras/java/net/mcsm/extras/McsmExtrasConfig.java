@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.197";
+    public static final String BUILD_VERSION = "1.9.198";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -26,7 +26,7 @@ public final class McsmExtrasConfig {
 
     // ---- fields that ALSO existed in the 1.9.88-1.9.95 jars ----------------
     /** Use Tainted's original 103-part CEM model for the phase-5 body. */
-    public static boolean ogCemModels = false;
+    public static boolean ogCemModels = true;
     /** Apparent size of the smudge/halo quads behind the storm (0.5 = new). */
     public static double  smudgeScale = 0.5;
 
@@ -61,7 +61,7 @@ public final class McsmExtrasConfig {
      *  particles, structure raids, withered mobs, cave rumble. */
     public static boolean forceMcsmWorld = true;
 
-    public static boolean shaderPackGate = true;
+    public static boolean shaderPackGate = false;
     /** Taut glowing wire from the storm's core down to its ground anchor. */
     public static boolean commandWire = true;
     /** Brief a player the first time they get close to a live storm. */
@@ -232,6 +232,9 @@ public final class McsmExtrasConfig {
             spiralCounterClockwise = bool(p, "spiral_counter_clockwise", spiralCounterClockwise);
             enableBeaconBlock = bool(p, "enable_beacon_block", enableBeaconBlock);
             ogCemModels        = bool(p, "og_cem_models", ogCemModels);
+            if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
+                ogCemModels = true;
+            }
             smudgeScale        = dbl(p, "smudge_scale", smudgeScale);
             glareSize          = dbl(p, "glare_size", glareSize);
             String cv = p.getProperty("config_version");
@@ -240,7 +243,7 @@ public final class McsmExtrasConfig {
             }
             nightSkyOpacity = dbl(p, "night_sky_opacity", nightSkyOpacity);
             if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && nightSkyOpacity > 0.85) {
-                // 1.9.197: old defaults over-darkened/re-tinted normal night.
+                // 1.9.198: old defaults over-darkened/re-tinted normal night.
                 nightSkyOpacity = 0.42;
             }
             phase55Threshold = dbl(p, "phase_55_threshold", phase55Threshold);
@@ -254,6 +257,14 @@ public final class McsmExtrasConfig {
             precipitationIntensity = dbl(p, "precipitation_intensity", precipitationIntensity);
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
             shaderPackGate     = bool(p, "shader_pack_gate", shaderPackGate);
+            if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
+                // 1.9.198: do not force custom storm pipelines while Iris is
+                // running an external shaderpack; Iris reports those custom
+                // programs missing from its override list and memory pressure
+                // climbs. No-shader play is unaffected because Iris reports
+                // inactive naturally.
+                shaderPackGate = false;
+            }
             deathCinematic     = bool(p, "death_cinematic", deathCinematic);
             supernovaRings     = bool(p, "supernova_rings", supernovaRings);
             smokeScreen        = bool(p, "smoke_screen", smokeScreen);

@@ -94,10 +94,114 @@ public final class McsmStormBlob {
 
     public static void submit(LevelRenderContext ctx) {
         try {
-            submitInner(ctx);
+            submitSkyVolume(ctx);
         } catch (Throwable ignored) {
             // an unexpected base-jar surface degrades to no blob, never a crash
         }
+    }
+
+    /**
+     * MCSM-style storm backdrop: a curved sky-volume/wash, not a flat card.
+     * The reference frames read like a storm-bearing skybox layer: the colour
+     * is locked to the direction of the storm, blacks out the horizon behind
+     * it, and forms a broad foggy lobe above/behind the body.
+     */
+    private static void submitSkyVolume(LevelRenderContext ctx) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || ClientDistantStormManager.all().isEmpty()) return;
+        Vec3 cam = ctx.levelState().cameraRenderState.pos;
+        ClientDistantStormManager.StormData best = null;
+        double bestD = Double.MAX_VALUE;
+        for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
+            if (d.phase < 3.9F) continue;
+            double dx = d.dispX - cam.x, dy = d.dispY - cam.y, dz = d.dispZ - cam.z;
+            double dd = dx * dx + dy * dy + dz * dz;
+            if (dd < bestD) { bestD = dd; best = d; }
+        }
+        if (best == null) return;
+        float phase = best.phase;
+        double dist = Math.sqrt(bestD);
+        if (dist < 1.0D || dist > 2800.0D) return;
+        float gt = (float)(mc.level.getGameTime() % 240000L)
+                + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        Vec3 centre = new Vec3(best.dispX, best.dispY, best.dispZ)
+                .add(sway(phase, gt * 0.05F, bodyRadius(phase)));
+        Vec3 dir = centre.subtract(cam).normalize();
+        if (dir.lengthSqr() < 1.0E-4D) return;
+        float amp = ramp(phase, 3.95F, 4.25F)
+                * (1.0F - Mth.clamp((float)((dist - 1500.0D) / 1200.0D), 0.0F, 1.0F));
+        if (amp <= 0.01F) return;
+
+        float wBlue = ramp(phase, 3.95F, 4.2F) * (1.0F - ramp(phase, 4.6F, 5.0F));
+        float wTurq = ramp(phase, 4.45F, 4.9F) * (1.0F - ramp(phase, 5.2F, 5.5F));
+        float wViolet = ramp(phase, 5.2F, 5.5F) * (1.0F - ramp(phase, 6.0F, 6.35F));
+        float wPurp = ramp(phase, 6.0F, 6.35F);
+        float wPink = ramp(phase, 5.48F, 5.9F) * (1.0F - ramp(phase, 5.95F, 6.15F));
+        float sum = Math.max(0.001F, wBlue + wTurq + wViolet + wPurp + wPink);
+        final float rr = (0.10F*wBlue + 0.05F*wTurq + 0.23F*wViolet + 0.14F*wPurp + 0.36F*wPink) / sum;
+        final float gg = (0.25F*wBlue + 0.56F*wTurq + 0.12F*wViolet + 0.11F*wPurp + 0.13F*wPink) / sum;
+        final float bb = (0.58F*wBlue + 0.50F*wTurq + 0.46F*wViolet + 0.30F*wPurp + 0.36F*wPink) / sum;
+        final float aa = amp;
+        final Vec3 bearing = dir;
+        ctx.submitNodeCollector().submitCustomGeometry(ctx.poseStack(), RenderTypes.entityTranslucentEmissive(WHITE),
+                (pose, consumer) -> {
+            emitDomePatch(pose, consumer, cam, bearing, 520.0D, 34.0D, 22.0D,
+                    rr * 0.35F, gg * 0.35F, bb * 0.38F, aa * 118.0F, -0.20F);
+            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.16D, 0.0D)).normalize(),
+                    560.0D, 24.0D, 16.0D, rr, gg, bb, aa * 72.0F, 0.10F);
+            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, -0.10D, 0.0D)).normalize(),
+                    500.0D, 42.0D, 12.0D, 0.015F, 0.018F, 0.035F, aa * 132.0F, -0.55F);
+        });
+    }
+
+    private static Vec3 sway(float phase, float timeSec, double bodyR) {
+        if (phase < 4.0F || bodyR <= 0.0D) return Vec3.ZERO;
+        float amp = (float)(bodyR * (0.025D + 0.020D * Mth.clamp((phase - 4.0F) / 3.0F, 0.0F, 1.0F)));
+        return new Vec3(Mth.sin(timeSec * 0.20F) * amp,
+                Mth.sin(timeSec * 0.11F) * amp * 0.16F,
+                Mth.sin(timeSec * 0.16F + 1.3F) * amp * 0.45F);
+    }
+
+    private static void emitDomePatch(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir,
+            double shell, double halfDegX, double halfDegY, float r, float g, float b, float alpha, float yBias) {
+        Vec3 upHint = Math.abs(dir.y) > 0.96D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 right = dir.cross(upHint).normalize();
+        Vec3 up = right.cross(dir).normalize();
+        int sx = 18, sy = 12;
+        double hx = Math.toRadians(halfDegX), hy = Math.toRadians(halfDegY);
+        for (int iy = 0; iy < sy; iy++) {
+            for (int ix = 0; ix < sx; ix++) {
+                domeQuad(pose, consumer, cam, dir, right, up, shell, hx, hy,
+                        ix / (float)sx, iy / (float)sy, (ix + 1) / (float)sx, (iy + 1) / (float)sy,
+                        r, g, b, alpha, yBias);
+            }
+        }
+    }
+
+    private static void domeQuad(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir, Vec3 right, Vec3 up,
+            double shell, double hx, double hy, float u0, float v0, float u1, float v1,
+            float r, float g, float b, float alpha, float yBias) {
+        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u0, v1, r, g, b, alpha, yBias);
+        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u1, v1, r, g, b, alpha, yBias);
+        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u1, v0, r, g, b, alpha, yBias);
+        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u0, v0, r, g, b, alpha, yBias);
+    }
+
+    private static void domeVtx(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir, Vec3 right, Vec3 up,
+            double shell, double hx, double hy, float u, float v, float r, float g, float b, float alpha, float yBias) {
+        double x = (u * 2.0D - 1.0D) * hx;
+        double y = (v * 2.0D - 1.0D) * hy;
+        Vec3 d = dir.add(right.scale(Math.tan(x))).add(up.scale(Math.tan(y + yBias * hy))).normalize();
+        double rx = (u * 2.0D - 1.0D), ry = (v * 2.0D - 1.0D);
+        double fall = Math.max(0.0D, 1.0D - Math.pow(Math.abs(rx), 2.6D))
+                * Math.max(0.0D, 1.0D - Math.pow(Math.abs(ry), 2.2D));
+        fall = fall * fall * (3.0D - 2.0D * fall);
+        int a = Mth.clamp((int)(alpha * fall), 0, 255);
+        Vec3 p = cam.add(d.scale(shell));
+        vertex(pose, consumer, p, u, v,
+                Mth.clamp((int)(r * 255.0F), 0, 255),
+                Mth.clamp((int)(g * 255.0F), 0, 255),
+                Mth.clamp((int)(b * 255.0F), 0, 255), a);
     }
 
     private static void submitInner(LevelRenderContext ctx) {

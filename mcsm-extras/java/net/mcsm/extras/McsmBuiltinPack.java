@@ -1,32 +1,19 @@
 package net.mcsm.extras;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 
 /**
- * Devouring Storms: built-in visual resource packs ship INSIDE the mod jar and
- * are registered DEFAULT_ENABLED through Fabric resource-loader.
+ * Devouring Storms built-in resource packs.
  *
- * Registered packs:
- *   - resourcepacks/storylook : Story Mode sky/light/cloud core-shader look
- *   - resourcepacks/ogs-cem   : restored OGS Wither Storm CEM/model assets
- *
- * Everything is invoked reflectively on purpose: the fabric-api generation
- * shipped for MC 26.2 changed the overload (older builds take
- * (ResourceLocation, ModContainer, predicate); newer ones take a leading
- * ResourcePackType). Reflection binds whichever signature actually exists at
- * runtime, and any failure degrades to a log line instead of a crash.
+ * Story Look stays default-enabled for the no-shader MCSM palette. The OGS CEM
+ * pack is also registered as the default model/preset again per the user's
+ * 1.9.198 correction: use Loganwall111/ogs-stuff/witherstormmod as the default
+ * Wither Storm look instead of endlessly recolouring approximations. Shaderpacks
+ * remain available but are not forced on because the user's machine hit
+ * native/OpenGL/pagefile exhaustion when heavy shaders were active.
  */
 public final class McsmBuiltinPack {
 
@@ -40,206 +27,12 @@ public final class McsmBuiltinPack {
             return;
         }
         attempted = true;
-        // mega-phase 5b: the Iris shader pack that ships inside this jar
-        // installs itself here, before Iris reads its config on the client.
         McsmShaderPackInstall.install();
-        installResourcePack("/assets/dabywitherstormmod/resourcepacks/storylook.zip",
-                "DevouringStorms-StoryLook.zip");
-        installResourcePack("/assets/dabywitherstormmod/resourcepacks/ogs-cem.zip",
-                "DevouringStorms-OGS-CEM.zip");
-        deselectManagedVisualPacks();
-        // Do not force-edit options.txt anymore: if a core-shader pack fails,
-        // forcing it selected makes the whole resource reload fail. The fixed
-        // zips are installed to resourcepacks/ and registered built-in; the
-        // player can select Story Look/OGS manually while we keep startup safe.
-        registerPack("storylook", "Story Look");
-        // 1.9.196 stability: OGS CEM is still extracted/available, but it is
-        // no longer default-enabled. EMF+CEM on the enormous phase-5 storm can
-        // allocate huge dynamic transform buffers and trigger GL/native OOM on
-        // the user's 26.2 + Sodium/Iris stack. Enable it manually after a stable
-        // no-shader run if you want to test the full OG model pack.
+        registerBuiltIn("storylook", "Story Look");
+        registerBuiltIn("ogs-cem", "OGS CEM preset/model pack");
     }
 
-    private static void installResourcePack(String resource, String fileName) {
-        try {
-            File gameDir = gameDir();
-            if (gameDir == null) {
-                return;
-            }
-            File dir = new File(gameDir, "resourcepacks");
-            File target = new File(dir, fileName);
-            File marker = new File(dir, fileName + ".version");
-            String have = read(marker);
-            if (target.isFile() && McsmExtrasConfig.BUILD_VERSION.equals(have)) {
-                return;
-            }
-            InputStream in = McsmBuiltinPack.class.getResourceAsStream(resource);
-            if (in == null) {
-                return;
-            }
-            try {
-                dir.mkdirs();
-                Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            } finally {
-                in.close();
-            }
-            write(marker, McsmExtrasConfig.BUILD_VERSION);
-            System.out.println("[ds] installed built-in resource pack: " + fileName);
-        } catch (Throwable t) {
-            warn(fileName, "resource-pack extraction failed: " + t);
-        }
-    }
-
-    private static void deselectManagedVisualPacks() {
-        try {
-            File gameDir = gameDir();
-            if (gameDir == null) {
-                return;
-            }
-            File options = new File(gameDir, "options.txt");
-            if (!options.isFile()) {
-                return;
-            }
-            List<String> lines = Files.readAllLines(options.toPath(), java.nio.charset.StandardCharsets.UTF_8);
-            boolean changed = false;
-            for (int i = 0; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (!line.startsWith("resourcePacks:")) {
-                    continue;
-                }
-                String v = line.substring("resourcePacks:".length());
-                String nv = v
-                        .replace(",\"file/DevouringStorms-StoryLook.zip\"", "")
-                        .replace("\"file/DevouringStorms-StoryLook.zip\",", "")
-                        .replace(",\"file/DevouringStorms-OGS-CEM.zip\"", "")
-                        .replace("\"file/DevouringStorms-OGS-CEM.zip\",", "")
-                        .replace(",\"dabywitherstormmod/ogs-cem\"", "")
-                        .replace("\"dabywitherstormmod/ogs-cem\",", "");
-                if (!nv.equals(v)) {
-                    lines.set(i, "resourcePacks:" + nv);
-                    changed = true;
-                }
-            }
-            if (changed) {
-                Files.write(options.toPath(), lines, java.nio.charset.StandardCharsets.UTF_8);
-                System.out.println("[ds] deselected managed visual packs after previous failed reload; enable them manually to test");
-            }
-        } catch (Throwable t) {
-            warn("resource pack selection", "options.txt cleanup failed: " + t);
-        }
-    }
-
-    private static void selectResourcePacks() {
-        try {
-            File gameDir = gameDir();
-            if (gameDir == null) {
-                return;
-            }
-            File options = new File(gameDir, "options.txt");
-            List<String> lines = options.isFile()
-                    ? Files.readAllLines(options.toPath(), java.nio.charset.StandardCharsets.UTF_8)
-                    : new ArrayList<>();
-            String a = "file/DevouringStorms-StoryLook.zip";
-            String b = "file/DevouringStorms-OGS-CEM.zip";
-            boolean found = false;
-            for (int i = 0; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (!line.startsWith("resourcePacks:")) {
-                    continue;
-                }
-                found = true;
-                String v = line.substring("resourcePacks:".length());
-                if (!v.contains(a)) {
-                    v = appendPack(v, a);
-                }
-                if (!v.contains(b)) {
-                    v = appendPack(v, b);
-                }
-                lines.set(i, "resourcePacks:" + v);
-            }
-            if (!found) {
-                lines.add("resourcePacks:[\"vanilla\",\"" + a + "\",\"" + b + "\"]");
-            }
-            Files.write(options.toPath(), lines, java.nio.charset.StandardCharsets.UTF_8);
-            System.out.println("[ds] selected Story Look + OGS resource packs in options.txt");
-        } catch (Throwable t) {
-            warn("resource pack selection", "options.txt update failed: " + t);
-        }
-    }
-
-    private static String appendPack(String existing, String pack) {
-        String e = existing == null ? "" : existing.trim();
-        String q = "\"" + pack + "\"";
-        if (e.startsWith("[") && e.endsWith("]")) {
-            if (e.length() <= 2) {
-                return "[\"vanilla\"," + q + "]";
-            }
-            return e.substring(0, e.length() - 1) + "," + q + "]";
-        }
-        return "[\"vanilla\"," + q + "]";
-    }
-
-    private static Object[] enumConstants(Class<?> cls) {
-        try {
-            Object[] constants = cls.getEnumConstants();
-            return constants == null ? new Object[0] : constants;
-        } catch (Throwable t) {
-            return new Object[0];
-        }
-    }
-
-    private static Object defaultEnabled(Class<?> activationCls) {
-        // Fabric API 0.160+/MC 26.2 uses ResourcePackActivationType. Some
-        // older generated builds used ResourcePackActivationPredicate. Do not
-        // name either type at compile time; reflect the actual parameter type
-        // of ResourceManagerHelper.registerBuiltinResourcePack and pull its
-        // DEFAULT_ENABLED constant/field.
-        for (String field : new String[] { "DEFAULT_ENABLED", "ALWAYS_ENABLED", "NORMAL" }) {
-            try {
-                return activationCls.getField(field).get(null);
-            } catch (Throwable ignored) {
-            }
-        }
-        for (Object c : enumConstants(activationCls)) {
-            String name = String.valueOf(c);
-            if ("DEFAULT_ENABLED".equals(name) || "ALWAYS_ENABLED".equals(name) || "NORMAL".equals(name)) {
-                return c;
-            }
-        }
-        return null;
-    }
-
-    private static File gameDir() {
-        try {
-            Class<?> loaderCls = Class.forName("net.fabricmc.loader.api.FabricLoader");
-            Object loader = loaderCls.getMethod("getInstance").invoke(null);
-            Object path = loaderCls.getMethod("getGameDir").invoke(loader);
-            return new File(path.toString());
-        } catch (Throwable t) {
-            return null;
-        }
-    }
-
-    private static String read(File f) {
-        try {
-            if (!f.isFile()) {
-                return "";
-            }
-            return new String(Files.readAllBytes(f.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim();
-        } catch (Throwable t) {
-            return "";
-        }
-    }
-
-    private static void write(File f, String s) {
-        try (OutputStream out = new FileOutputStream(f)) {
-            out.write(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        } catch (Throwable t) {
-            // ignore
-        }
-    }
-
-    private static void registerPack(String packPath, String label) {
+    private static void registerBuiltIn(String packId, String label) {
         try {
             Class<?> loaderCls = Class.forName("net.fabricmc.loader.api.FabricLoader");
             Object loader = loaderCls.getMethod("getInstance").invoke(null);
@@ -251,7 +44,6 @@ public final class McsmBuiltinPack {
             }
             Object modContainer = ((Optional<?>) opt).get();
 
-            // 26.2 renamed ResourceLocation -> Identifier; support both
             Class<?> rlCls = null;
             for (String n : new String[] {
                     "net.minecraft.resources.Identifier",
@@ -260,19 +52,19 @@ public final class McsmBuiltinPack {
                     rlCls = Class.forName(n);
                     break;
                 } catch (ClassNotFoundException ignored) {
-                    // try the next name
                 }
             }
             if (rlCls == null) {
                 warn(label, "no Identifier/ResourceLocation class on this minecraft version");
                 return;
             }
+
             Object id = null;
             for (Method m : rlCls.getMethods()) {
                 Class<?>[] ps = m.getParameterTypes();
                 if (Modifier.isStatic(m.getModifiers()) && m.getReturnType() == rlCls
                         && ps.length == 2 && ps[0] == String.class && ps[1] == String.class) {
-                    id = m.invoke(null, "dabywitherstormmod", packPath);
+                    id = m.invoke(null, "dabywitherstormmod", packId);
                     break;
                 }
             }
@@ -282,53 +74,61 @@ public final class McsmBuiltinPack {
             }
 
             Class<?> rmhCls = Class.forName("net.fabricmc.fabric.api.resource.ResourceManagerHelper");
+            Class<?> predCls = Class.forName("net.fabricmc.fabric.api.resource.ResourcePackActivationPredicate");
+            Object predicate = null;
+            try {
+                Field f = predCls.getField("DEFAULT_ENABLED");
+                predicate = f.get(null);
+            } catch (NoSuchFieldException ignored) {
+            }
+            if (predicate == null) {
+                for (Object c : predCls.getEnumConstants()) {
+                    if ("DEFAULT_ENABLED".equals(String.valueOf(c))) {
+                        predicate = c;
+                        break;
+                    }
+                }
+            }
+            if (predicate == null) {
+                warn(label, "no DEFAULT_ENABLED activation predicate in this fabric-api");
+                return;
+            }
 
             Method target = null;
             Object packType = null;
-            Object activation = null;
             for (Method m : rmhCls.getMethods()) {
                 if (!"registerBuiltinResourcePack".equals(m.getName())) {
                     continue;
                 }
                 Class<?>[] ps = m.getParameterTypes();
-                int activationIndex = -1;
                 if (ps.length == 3 && ps[0] == rlCls) {
-                    activationIndex = 2;
-                } else if (ps.length == 4 && ps[1] == rlCls) {
-                    activationIndex = 3;
-                    if (packType == null) {
-                        for (Object c : enumConstants(ps[0])) {
-                            String name = String.valueOf(c);
-                            if (name.contains("CLIENT") || name.contains("RESOURCE")) {
-                                packType = c;
-                                break;
-                            }
-                        }
-                    }
-                    if (packType == null) {
-                        continue;
-                    }
-                }
-                if (activationIndex < 0) {
-                    continue;
-                }
-                Object a = defaultEnabled(ps[activationIndex]);
-                if (a != null) {
                     target = m;
-                    activation = a;
+                    packType = null;
                     break;
                 }
+                if (ps.length == 4 && ps[1] == rlCls && target == null) {
+                    for (Object c : ps[0].getEnumConstants()) {
+                        String name = String.valueOf(c);
+                        if (name.contains("CLIENT") || name.contains("RESOURCE")) {
+                            packType = c;
+                            break;
+                        }
+                    }
+                    if (packType != null) {
+                        target = m;
+                    }
+                }
             }
-            if (target == null || activation == null) {
-                warn(label, "no compatible registerBuiltinResourcePack DEFAULT_ENABLED overload recognized");
+            if (target == null) {
+                warn(label, "no registerBuiltinResourcePack overload recognized");
                 return;
             }
             if (target.getParameterCount() == 3) {
-                target.invoke(null, id, modContainer, activation);
+                target.invoke(null, id, modContainer, predicate);
             } else {
-                target.invoke(null, packType, id, modContainer, activation);
+                target.invoke(null, packType, id, modContainer, predicate);
             }
-            System.out.println("[ds] " + label + " built-in resource pack registered (default enabled): " + packPath);
+            System.out.println("[ds] " + label + " built-in resource pack registered (default enabled): " + packId);
         } catch (Throwable t) {
             warn(label, "unavailable: " + t);
         }
@@ -336,6 +136,6 @@ public final class McsmBuiltinPack {
 
     private static void warn(String label, String msg) {
         System.err.println("[ds] " + label + " built-in pack " + msg
-                + " - install the release resource pack manually if the world looks vanilla");
+                + " - install the matching release zip manually if the world looks vanilla");
     }
 }
