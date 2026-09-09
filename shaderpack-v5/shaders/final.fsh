@@ -1,5 +1,40 @@
 #version 330 compatibility
 /*
+// ============================================
+// MCSM 1.9.171 Custom Graphics Configuration
+// These parameters can be edited in McsmExtrasConfig.java
+// and affect the shader behavior at runtime.
+// ============================================
+
+// Emissive intensity multiplier for particles and lighting
+// 0.0 = no emissive, 1.0 = standard, >1.0 = enhanced
+uniform float emissiveIntensity = 1.0;
+
+// Screen-space ambient occlusion strength
+// 0.0 = no SSAO, 1.0 = full SSAO
+uniform float ssaoStrength = 0.0;
+
+// Cloud transparency control
+// 1.0 = normal, 0.0 = fully transparent (disable clouds)
+// uniform float cloudAlpha = 1.0;
+
+// Water reflection refractiveness
+// 1.0 = normal water, 0.0 = invisible water
+// uniform float waterRefraction = 1.0;
+
+// Torch/emissive object brightness multiplier
+// Affects torches, items, blocks with emissive maps
+// uniform float objectEmissive = 1.0;
+
+// Aurora/borealis intensity at night
+// 0.0 = no aurora, 1.0 = standard aurora
+// uniform float auroraIntensity = 0.0;
+
+// Storm glow intensity
+// Affects the soft glare/halo around the storm
+// uniform float stormGlowIntensity = 1.0;
+
+// ============================================
  * Devouring Storms v5 — colour grade, bloom, vignette and lightning.
  *
  * This stage used to live in composite.fsh, whose output never reached the

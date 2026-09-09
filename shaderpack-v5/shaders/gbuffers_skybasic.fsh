@@ -1,6 +1,43 @@
 #version 330 compatibility
 
 /*
+// ============================================
+// MCSM 1.9.171 Custom Graphics Configuration
+// These parameters can be edited in McsmExtrasConfig.java
+// and affect the shader behavior at runtime.
+// ============================================
+
+// Night sky opacity uniform (affects calm navy intensity)
+// 0.0 = clear sky, 1.0 = deepest navy
+// Note: Actual value read from McsmExtrasConfig.nightSkyOpacity
+uniform float nightSkyOpacity = 1.0;
+
+// Phase 5.5 transition point
+// Exact phase where purple-pink horizon begins
+// uniform float phase55Threshold = 5.5;
+
+// Salmon-pink intensity in phase 5.5-5.9 range
+// 1.0 = standard, >1.0 = stronger pink
+// uniform float phase5_9PinkIntensity = 1.0;
+
+// Glare animation phase
+// 0 = static, 1 = flowing, -1 = reverse
+// uniform float glareAnimPhase = 0.0;
+
+// Storm body animation pulse
+// Makes phase-1 eye/jaw throb rhythmically
+// uniform float bodyAnimPulse = 0.0;
+
+// Glare animation intensity multiplier
+// uniform float glareAnimIntensity = 0.0;
+
+// Base calm night color (deep navy from ground truth)
+// vec3 calmNightBase = vec3(0.005, 0.012, 0.140);
+
+// Base day sky color (mid-blue zenith -> soft lavender horizon)
+// vec3 daySkyBase = vec3(0.28, 0.38, 0.68);
+
+// ============================================
  * Devouring Storms v5 — sky pass.
  *
  * This is the round-5 Story Look sky from the mod's own core shader
