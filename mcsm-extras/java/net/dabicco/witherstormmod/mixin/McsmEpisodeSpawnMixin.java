@@ -89,7 +89,13 @@ public abstract class McsmEpisodeSpawnMixin {
     @Unique
     private static BlockPos dabyws$queueEpisodeOne(ServerLevel level) {
         BlockPos start = null;
-        String[] wants = { "Wilderness Treehouse", "The Wilderness", "EnderCon Town Fair", "Beacon Town" };
+        // 1.9.194 native-memory fix: first login used to queue four large
+        // schematic areas at once. Even with lower render/simulation distance,
+        // the sudden block flood could make Sodium/Iris allocate too many
+        // chunk-render buffers and crash outside Java heap. Start with the
+        // treehouse only; players can still use /ds towns build/summon for the
+        // larger towns after the world settles.
+        String[] wants = { "Wilderness Treehouse" };
         for (String want : wants) {
             for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
                 if (!s.label().equalsIgnoreCase(want)) {

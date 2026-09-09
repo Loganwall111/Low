@@ -1,3 +1,13 @@
+# Devouring Storms 1.9.194 — native-memory crash guard for first-spawn/chunk loading
+
+This build targets the new HotSpot fatal error: `Native memory allocation (malloc) failed ... Chunk::new`. That is not a normal Java exception; it means the JVM/native renderer ran out of native memory while chunks/models were being built.
+
+* **Stops first-spawn from queueing four large Story Mode schematic areas at once.** The first world now starts with the Wilderness Treehouse only; larger towns can still be built/summoned after the world settles.
+* **Spreads schematic placement across ticks** instead of forcing a near-whole structure in one tick, reducing Sodium/Iris chunk-mesh allocation spikes.
+* **Disables the heaviest storm debris/ejecta defaults** while keeping the body, teeth/eye glow, sky, water, HUD, and core Story Mode look active.
+* **Clears old per-pack shader option sidecars when the managed shaderpack updates**, so an older heavy Custom profile does not keep overriding the new safe defaults.
+* Keeps 1.9.193’s darker storm skin and visible phase-5 teeth.
+
 # Devouring Storms 1.9.193 — darker MCSM storm skin and visible phase-5 teeth
 
 This build corrects the screenshot where the phase-5/phase-6 preview still looked like a purple body with no readable teeth.

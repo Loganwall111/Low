@@ -122,9 +122,9 @@ public final class McsmGate {
             // ---- the halo / glare the user has been chasing ----------------
             changed += setBool(c, "sunGlow", true);
             changed += setBool(c, "blackGlare", true);
-            changed += setBool(c, "glareEjecta", true);
+            changed += setBool(c, "glareEjecta", false);
             changed += setBool(c, "headEyeGlow", true);
-            changed += setBool(c, "devourerDebrisGlow", true);
+            changed += setBool(c, "devourerDebrisGlow", false);
 
             // ---- ground shadows for trees and mobs (user request) ---------
             changed += setBool(c, "trailerShadows", true);
@@ -153,8 +153,8 @@ public final class McsmGate {
             changed += floorField(c, null, "sicknessVeinIntensity", 0.7);
             changed += floorField(c, null, "screenTremorIntensity", 0.8);
             changed += floorField(c, null, "chromaticGlitchStrength", 0.35);
-            changed += ceilingField(c, null, "debrisDustParticles", 0.55);
-            changed += ceilingField(c, null, "debrisAmount", 1.0);
+            changed += ceilingField(c, null, "debrisDustParticles", 0.0);
+            changed += ceilingField(c, null, "debrisAmount", 0.0);
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += ceilingField(c, null, "sunGlowStrength", 0.45);

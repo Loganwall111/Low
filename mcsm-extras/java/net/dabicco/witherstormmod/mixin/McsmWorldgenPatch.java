@@ -49,7 +49,12 @@ public abstract class McsmWorldgenPatch {
                 lastLevel = level;
                 McsmWorldgen.clear();
             }
-            McsmWorldgen.setBudget(900000);
+            // 1.9.194 native-memory fix: placing hundreds of thousands of
+            // structure blocks in one tick forces Sodium/Iris to rebuild too
+            // many chunk meshes at once and can kill the JVM with
+            // "Native memory allocation (malloc) failed ... Chunk::new".
+            // Keep the structure queue alive, but spread it across frames.
+            McsmWorldgen.setBudget(4096);
             // mega-phase 9: the towns get their cast, and their dialogue hook
             try {
                 McsmNpcs.tick(level);

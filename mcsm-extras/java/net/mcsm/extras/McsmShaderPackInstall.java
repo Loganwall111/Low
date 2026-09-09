@@ -73,6 +73,7 @@ public final class McsmShaderPackInstall {
                     } finally {
                         in.close();
                     }
+                    clearManagedShaderOptions(packs);
                     write(marker, McsmExtrasConfig.BUILD_VERSION);
                 }
             } else {
@@ -126,6 +127,30 @@ public final class McsmShaderPackInstall {
             }
         } catch (Throwable t) {
             // best-effort only
+        }
+    }
+
+    private static void clearManagedShaderOptions(File packs) {
+        // Iris keeps per-pack option overrides outside the zip on some builds.
+        // If a user previously had a heavy Custom profile, replacing only the
+        // zip can still leave SSR/shadows/volumetrics enabled. When our managed
+        // pack updates, remove only option sidecars whose names clearly belong
+        // to this pack so the safe defaults inside the new zip win again.
+        try {
+            File[] files = packs.listFiles();
+            if (files == null) {
+                return;
+            }
+            for (File f : files) {
+                String n = f.getName();
+                if (!n.startsWith(PACK_NAME) || n.equals(PACK_NAME)) {
+                    continue;
+                }
+                if (n.endsWith(".txt") || n.endsWith(".properties") || n.endsWith(".json")) {
+                    f.delete();
+                }
+            }
+        } catch (Throwable ignored) {
         }
     }
 
