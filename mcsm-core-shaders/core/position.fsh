@@ -133,6 +133,79 @@ vec3 mcsm_biome_tint(vec3 c) {
     return c * mix(vec3(1.0), push, w);
 }
 
+
+// Devouring Storms 1.9.175 -- high-atmosphere Story Mode cloud strata.
+// This is the no-Iris/default-mod twin of the shaderpack stack: 1024 logical
+// cloud layers from y=192 to y=1,000,000, clustered into short decks and long
+// void gaps. It is altitude gated so the ground view keeps the normal nearby
+// Story Mode clouds; the million-block stack appears only once the camera is
+// actually high enough to fly/fall through it.
+float mcsm_sky_strata_fbm(vec2 uv) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) {
+        v += a * mcsm_cloud_noise(uv);
+        uv *= 2.03;
+        a *= 0.5;
+    }
+    return v;
+}
+
+float mcsm_sky_strata_height(float idx) {
+    float q = clamp(idx / 1023.0, 0.0, 1.0);
+    return 192.0 * pow(1000000.0 / 192.0, q);
+}
+
+vec3 mcsm_sky_high_strata(vec3 dir, vec3 sky, float clock, float stormP) {
+    const float LAYERS = 1024.0;
+    float camY = clamp(float(CameraBlockPos.y) + CameraOffset.y, -256.0, 1000000.0);
+    float highGate = smoothstep(850.0, 4200.0, camY);
+    if (highGate <= 0.001) return sky;
+
+    float dy = abs(dir.y);
+    if (dy <= 0.035) return sky; // high stacks hidden from ordinary ground-horizon views
+
+    float baseIdx = log(max(camY, 192.0) / 192.0) / log(1000000.0 / 192.0) * (LAYERS - 1.0);
+    baseIdx = clamp(baseIdx, 0.0, LAYERS - 1.0);
+    float acc = 0.0;
+    float storm = mcsm_sky_active(stormP) ? 1.0 : 0.0;
+
+    for (int i = 0; i < 41; i++) {
+        float idx = clamp(floor(baseIdx + (float(i) - 20.0) * 3.0), 0.0, LAYERS - 1.0);
+        float inCluster = mod(idx, 64.0);
+        float stackGate = smoothstep(0.0, 3.0, inCluster) * (1.0 - smoothstep(12.0, 20.0, inCluster));
+        if (stackGate <= 0.001) continue;
+
+        float h = mcsm_sky_strata_height(idx);
+        float rel = h - camY;
+        // Draw whichever side of the stack the player is looking through.
+        if (rel * dir.y <= 2.0) continue;
+
+        float rayLen = abs(rel) / max(dy, 0.035);
+        float localGate = (1.0 - smoothstep(36000.0, 140000.0, rayLen)) * smoothstep(0.060, 0.180, dy);
+        if (localGate <= 0.001) continue;
+
+        float q = idx / (LAYERS - 1.0);
+        vec2 uv = dir.xz * rayLen * mix(0.010, 0.00042, q)
+                + vec2(idx * 2.173 + clock * 0.006, idx * 0.731 - clock * 0.003);
+        float cov = mcsm_sky_strata_fbm(uv);
+        float holes = mcsm_sky_strata_fbm(uv * 0.23 + idx * 0.017);
+        float a = smoothstep(0.49, 0.64, cov) * smoothstep(0.35, 0.58, holes);
+        a *= stackGate * localGate * highGate * 0.28 * (1.0 - acc);
+
+        vec3 lit = mix(vec3(0.93, 0.96, 1.00), vec3(0.70, 0.78, 1.00), q * 0.35);
+        vec3 shade = mix(vec3(0.50, 0.48, 0.70), vec3(0.16, 0.16, 0.32), q * 0.60);
+        vec3 stormTint = mix(vec3(0.30, 0.22, 0.42), vec3(0.46, 0.20, 0.50), mcsm_ramp(stormP, 5.0, 5.8));
+        lit = mix(lit, stormTint, storm * 0.60);
+        shade = mix(shade, stormTint * 0.55, storm * 0.75);
+        vec3 cc = mix(shade, lit, smoothstep(0.45, 0.78, cov));
+        sky = mix(sky, cc, a);
+        acc += a * 0.72;
+        if (acc > 0.86) break;
+    }
+    return sky;
+}
+
 void main() {
     float mcsmP = mcsm_phase(FogSkyEnd, FogColor, FogRenderDistanceEnd);
     float clock = mcsm_clock(GameTime);
@@ -204,6 +277,8 @@ void main() {
                           (FogColor.b - FogColor.r) + 0.5 * (FogColor.g - FogColor.r));
         sky += mcsm_aurora(worldDir, clock, nightW, coolFog);
 
+        sky = mcsm_sky_high_strata(worldDir, sky, clock, mcsmP);
+
         // MCSM v8: sun halo in ordinary play. Blooms wider and hotter through
         // the late phases; mcsmP is 0 with no storm so this is the calm
         // baseline glow until things start going wrong.
@@ -260,6 +335,8 @@ void main() {
     // User rejected floating circle + dots + line mesh. Phase sky colour still
     // comes from mcsm_storm_dome below; thick 3D glare rebuilds later from stills.
     // (aim carrier still written by Java for beams/fog — unused here.)
+
+    dome = mcsm_sky_high_strata(worldDir, dome, clock, mcsmP);
 
     // Bodies: tinted briefly at the start, then fade to nothing - no sun or
     // moon may shine through the storm dome (user: "being above the

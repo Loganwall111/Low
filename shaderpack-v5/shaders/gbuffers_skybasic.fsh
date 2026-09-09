@@ -23,6 +23,7 @@ uniform float rainStrength;
 uniform vec3 fogColor;
 uniform vec3 skyColor;
 uniform mat4 gbufferModelViewInverse;
+uniform vec3 cameraPosition;
 
 /* user options ------------------------------------------------------------ */
 #define SKY_STORY_MODE  1     // [0 1]
@@ -101,12 +102,79 @@ float fbm3(vec3 p) {
 }
 
 /* ---- shared cloud decks: layer -> void gap -> layer ---------------------- */
+/* 1.9.175: nearby Story Mode decks + a 1024-layer high-atmosphere stack that
+   reaches y=1,000,000. High layers are clustered into huge empty gaps and are
+   hidden from ground-horizon views, so they read only when the camera actually
+   climbs into the stratosphere / Sky City range. */
+float mcsmDeckNoise(vec3 p) { return fbm3(p); }
+float mcsmDeckCameraY() { return cameraPosition.y; }
+float mcsmDeckClock() { return frameTimeCounter; }
+float mcsmLayerHash(float i) { return fract(sin(i * 41.731 + 19.17) * 43758.5453); }
+float mcsmMegaHeight(float idx) {
+    float q = clamp(idx / 1023.0, 0.0, 1.0);
+    return 192.0 * pow(1000000.0 / 192.0, q);
+}
+
+vec3 paintMegaStrata(vec3 dirS, vec3 col, vec3 litCol, vec3 shadeCol,
+                     float warm, float mirror) {
+    const float LAYERS = 1024.0;
+    float camY = clamp(mcsmDeckCameraY(), -256.0, 1000000.0);
+    float highGate = smoothstep(850.0, 4200.0, camY);
+    if (highGate <= 0.001) return col;
+
+    float dyRaw = dirS.y;
+    float dy = abs(dyRaw);
+    if (dy <= 0.035) return col;
+
+    float baseIdx = log(max(camY, 192.0) / 192.0) / log(1000000.0 / 192.0) * (LAYERS - 1.0);
+    baseIdx = clamp(baseIdx, 0.0, LAYERS - 1.0);
+    float acc = 0.0;
+
+    for (int i = 0; i < 41; i++) {
+        float idx = clamp(floor(baseIdx + (float(i) - 20.0) * 3.0), 0.0, LAYERS - 1.0);
+        float inCluster = mod(idx, 64.0);
+        float stackGate = smoothstep(0.0, 3.0, inCluster) * (1.0 - smoothstep(12.0, 20.0, inCluster));
+        if (stackGate <= 0.001) continue;
+
+        float h = mcsmMegaHeight(idx);
+        float rel = h - camY;
+        if (mirror < 0.5 && rel <= 2.0) continue;
+        if (mirror > 0.5 && rel >= -2.0) continue;
+
+        float rayLen = abs(rel) / max(dy, 0.035);
+        float localGate = 1.0 - smoothstep(36000.0, 140000.0, rayLen);
+        localGate *= smoothstep(0.060, 0.180, dy);
+        if (localGate <= 0.001) continue;
+
+        vec2 hit = dirS.xz * rayLen;
+        float q = idx / (LAYERS - 1.0);
+        vec2 uv = hit * mix(0.010, 0.00042, q)
+                + vec2(idx * 2.173, idx * 0.731)
+                + vec2(mcsmDeckClock() * 0.006, -mcsmDeckClock() * 0.003);
+        float cov = mcsmDeckNoise(vec3(uv, idx * 0.113));
+        float gapNibble = mcsmDeckNoise(vec3(uv * 0.23 + idx * 0.017, idx * 0.071));
+        float a = smoothstep(0.49, 0.64, cov) * smoothstep(0.35, 0.58, gapNibble);
+        a *= stackGate * localGate * highGate * 0.28;
+        a *= (mirror > 0.5) ? 0.92 : 1.0;
+        a *= 0.70 + 0.30 * mcsmLayerHash(idx);
+        a *= (1.0 - acc);
+
+        vec3 layerLit = mix(litCol, vec3(0.78, 0.86, 1.00), q * 0.35);
+        vec3 layerShade = mix(shadeCol, vec3(0.18, 0.20, 0.36), q * 0.55);
+        vec3 dc = mix(layerShade, layerLit, smoothstep(0.45, 0.78, cov));
+        dc = mix(dc, dc * vec3(1.05, 0.98, 1.10), warm * 0.45);
+        col = mix(col, dc, a);
+        acc += a * 0.72;
+        if (acc > 0.86) break;
+    }
+    return col;
+}
 
 vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
                 float dayness, float warm, float sideFade, float mirror) {
     float dy = (mirror > 0.5) ? max(-dirS.y, 0.02) : dirS.y;
     if (dy <= 0.02) {
-        return col;
+        return paintMegaStrata(dirS, col, litCol, shadeCol, warm, mirror);
     }
     vec2 pxz = dirS.xz / dy;
     float H[9];
@@ -143,6 +211,7 @@ vec3 paintDecks(vec3 dirS, vec3 col, float acc0, vec3 litCol, vec3 shadeCol,
             break;
         }
     }
+    col = paintMegaStrata(dirS, col, litCol, shadeCol, warm, mirror);
     return col;
 }
 
