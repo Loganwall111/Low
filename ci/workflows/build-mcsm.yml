@@ -15,7 +15,7 @@ name: Build Devouring Storms jar
 
 on:
   push:
-    branches: [arena/01a071bb-lowuuuuuu, arena/01a06ef4-lowuuuuuu, arena/01a06df7-lowuuuuuu]
+    branches: ['arena/**', 'main']
   workflow_dispatch:
 
 permissions:

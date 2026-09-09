@@ -12,6 +12,7 @@ import java.util.Set;
 
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -24,7 +25,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
@@ -32,29 +33,17 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Devouring Storms: mega-phase 9 - the towns are INHABITED, and they talk.
+ * Devouring Storms: mega-phase 9 - the Story Mode towns are INHABITED,
+ * and they talk.
  *
- * Until now the Story Mode sites were architecture and nothing else. This
- * fills them with the cast and gives every one of them a dialogue tree.
+ *  - POPULATION: Every ground site gets a cast list with custom named NPCs
+ *    (Jesse, Petra, Axel, Olivia, Lukas, Gabriel, Ivor, Soren, etc.).
  *
- *  - POPULATION. Every ground site from the base mod's own layout() gets a
- *    cast list of its own - Beacon Town has Radar and Stella, EnderCon has
- *    Gabriel and Lukas, the Order's temple has Soren, and so on. They spawn
- *    the moment a player comes within 128 blocks (so the chunks are loaded),
- *    named, name-tag visible, persistent. The spawn is idempotent: if any
- *    named mob is already standing in the town the site is skipped, so a
- *    server restart never doubles the cast.
+ *  - DIALOGUE: Right-clicking opens their lines, advances progression,
+ *    plays voice/speaking audio, triggers head nodding, mouth movement,
+ *    and speech particle effects.
  *
- *  - DIALOGUE. Right-clicking a story NPC opens their line instead of a
- *    trade screen; each further click advances the tree and it loops when
- *    it runs out, per player, per character. The interaction is hooked
- *    through Fabric's UseEntityCallback by REFLECTION - the callback is
- *    registered if the event class is present and silently skipped if it
- *    is not, so no build can ever break on it.
- *
- * Every Minecraft call here is one the base mod already makes on 26.2
- * (StoryNpcSpawner's spawn sequence, getEntitiesOfClass, isLoaded,
- * playSound, sendSystemMessage).
+ *  - AI & ANIMATION: Walking animations, wandering, and tracking nearby players.
  */
 public final class McsmNpcs {
 
@@ -98,61 +87,83 @@ public final class McsmNpcs {
 
         LINES.put("Jesse", new String[] {
                 "That thing in the sky... it keeps getting bigger. Tell me you see it too.",
-                "The Order of the Stone would know what to do. They have to.",
-                "Reuben, stay close. I mean it.",
-                "We built this place. I'm not letting it get eaten." });
+                "We need the Order of the Stone. Whatever this is, we can't fight it alone.",
+                "Keep your sword ready and stay close. We stick together.",
+                "Look at the tractor beam... don't let it pull you in!",
+                "There has to be a way to destroy the command block inside it."
+        });
         LINES.put("Petra", new String[] {
-                "You're staring at it. Everyone stares at it.",
-                "I've fought a lot of things. Nothing that size.",
-                "If you're going out there, take a sword. Take two.",
-                "Don't get command-blocked into standing still. Move." });
+                "I've tracked wither sickness from the Nether to the surface. It spreads through the soil.",
+                "Whatever Ivor built down in that basement, it wasn't meant to be set free.",
+                "Watch your back out there. The tentacles move faster than you think.",
+                "Take this advice: never look directly into its center eye."
+        });
         LINES.put("Axel", new String[] {
-                "Griefing a storm. Now THAT'S a plan.",
-                "I've got TNT. I always have TNT.",
-                "You look about as calm as I feel. Which is not calm." });
+                "I told you guys TNT was the answer! Why doesn't anyone listen when I say TNT?",
+                "Do you think the Formidi-Bomb could blow a hole in that storm?",
+                "If we survive this, I'm getting ten slices of cake.",
+                "Is it just me, or is the sky turning purple again?"
+        });
         LINES.put("Olivia", new String[] {
-                "Redstone won't fix this one. I already tried the math.",
-                "It's pulling blocks off the ground. Whole chunks of it.",
-                "Someone built that thing. On purpose. Think about that." });
+                "The redstone circuitry in that command block shouldn't even be possible.",
+                "Ellegaard's notes mentioned an ultimate weapon... Redstonia might have the schematics.",
+                "Keep checking your coordinates! The storm alters local atmospheric density.",
+                "If we synchronize the repeaters, we might create an EMP pulse."
+        });
         LINES.put("Lukas", new String[] {
-                "The Ocelots are gone. Everyone's gone.",
-                "I keep writing it all down. Someone should remember this.",
-                "Stay near the beacon. The light helps." });
-        LINES.put("Radar", new String[] {
-                "Sir! Ma'am! Whichever! I have a clipboard and I'm ready!",
-                "I have scheduled the evacuation. Twice. Nobody signed it.",
-                "Beacon Town needs you. I need you. Mostly Beacon Town." });
-        LINES.put("Ivor", new String[] {
-                "It was a command block. It was ALWAYS a command block.",
-                "You want to know how to stop it? So does everyone.",
-                "Do not approach the tractor beam. I will not repeat that." });
+                "The Ocelots are holding the perimeter. We won't let it reach the shelter.",
+                "I wrote down everything in my journal: the phases, the sky color shifts, the beam reach.",
+                "If Jesse has a plan, count me in. All the way.",
+                "The people are frightened, but hope is what keeps us moving forward."
+        });
         LINES.put("Gabriel", new String[] {
-                "The Order stands. Whatever comes.",
-                "I have faced the Ender Dragon. This... this is different.",
-                "Keep your people together. That is the whole of it." });
-        LINES.put("Ellegaard", new String[] {
-                "Redstone engineering, not luck. That's what saves a town.",
-                "Bring me components and I'll bring you a chance." });
-        LINES.put("Magnus", new String[] {
-                "Blow it up! What? It's a strategy!",
-                "Boom Town would have loved this. Boom Town is gone." });
+                "In my youth, the Order faced perils beyond imagining... but this beast defies reason.",
+                "The blade of the warrior is useless if the heart quails. Stand firm!",
+                "Find Soren. He knows the secret that bound the beast before.",
+                "The light of the beacon shall pierce the darkest veil!"
+        });
+        LINES.put("Ivor", new String[] {
+                "The potion of lingering wither! The command block! It was meant to obey my skull!",
+                "The tracking code... it modified its own growth vectors! It consumes everything!",
+                "Listen to me! You must craft the Formidi-Bomb at the assembly temple!",
+                "Fools! Do not get sucked into the bowels of the beast!"
+        });
         LINES.put("Soren", new String[] {
-                "I built a machine to send us somewhere it isn't. It didn't work.",
-                "The formidi-bomb. It is the only answer I have left.",
-                "Do not tell the others I ran. Please." });
-        LINES.put("Harper", new String[] {
-                "PAMA learned. That was the mistake. Everything after was consequence.",
-                "The terminal still answers. I wish it wouldn't." });
+                "Ah, the symphony of destruction! Do you hear the harmony in its wailing roar?",
+                "My Endermen... they were studying the geometry of the void before the storm broke through.",
+                "Take the Super TNT. Place it at the core. And pray the explosion doesn't unravel reality.",
+                "Music, my friend, is the only true defense against cosmic cataclysm."
+        });
+        LINES.put("Ellegaard", new String[] {
+                "My automated redstone defenses were overrun in minutes. The tractor beam has infinite torque!",
+                "The pulse repeater array in the courtyard needs calibrated frequency crystals.",
+                "Engineering is the triumph of mind over monstrous chaos."
+        });
+        LINES.put("Magnus", new String[] {
+                "Boom! That's what I'm talking about! More gunpowder, bigger craters!",
+                "Boom Town didn't stand a chance, but we gave it one heck of an explosion!",
+                "If you're gonna go out, go out in a blaze of glorious fireworks!"
+        });
+        LINES.put("Radar", new String[] {
+                "Jesse! I filed all the emergency evacuation reports in triplicate!",
+                "The weather forecast says 100% chance of falling flaming netherrack chunks!",
+                "I have spare shields and potions stored in the Town Hall basement!",
+                "Don't worry, Champion Jesse, Beacon Town believes in you!"
+        });
         LINES.put("Stella", new String[] {
-                "Champion City would have handled this better. Obviously.",
-                "Do not touch my llama." });
-        LINES.put("Nurm", new String[] { "Hrrm.", "Hrmmm!", "Hrm. Hrm hrm." });
-        LINES.put("PAMA Terminal", new String[] {
-                "YOU WILL BE USEFUL.", "COMPLIANCE IS EFFICIENT.", "THE STORM IS NOT IN MY PARAMETERS." });
+                "Champion City's monuments will NOT be consumed by some unruly oversized dust cloud!",
+                "Lluna! Stop eating the glowstone dust! We have an emergency!",
+                "I suppose Jesse's little coalition is our only viable option at the moment."
+        });
+        LINES.put("Harper", new String[] {
+                "The Redstonia archives contain the master operational codes for the central core.",
+                "PAMA was dangerous, but this entity operates on primal devouring instinct.",
+                "The dimensional portal frequencies are fluctuating wildly with the storm's growth."
+        });
 
-        for (String[] cast : CAST.values()) {
-            for (String n : cast) {
-                ROSTER.add(n);
+        for (String[] members : CAST.values()) {
+            for (String m : members) {
+                ROSTER.add(m);
             }
         }
     }
@@ -160,156 +171,64 @@ public final class McsmNpcs {
     private McsmNpcs() {
     }
 
-    /** Generic townsfolk lines for cast members without their own tree. */
-    private static String[] linesFor(String name) {
-        String[] own = LINES.get(name);
-        if (own != null) {
-            return own;
+    public static void populate(ServerLevel level, String townLabel, BlockPos origin) {
+        if (level == null || origin == null) return;
+        String[] cast = CAST.get(townLabel);
+        if (cast == null || cast.length == 0) return;
+
+        String key = level.dimension().location() + "/" + townLabel + "/" + origin.getX() + "," + origin.getZ();
+        if (POPULATED.contains(key)) return;
+
+        // Idempotency check: see if any roster NPC already stands nearby
+        AABB box = new AABB(origin).inflate(64.0, 32.0, 64.0);
+        for (Entity e : level.getEntitiesOfClass(Entity.class, box)) {
+            if (e.hasCustomName() && ROSTER.contains(e.getCustomName().getString())) {
+                POPULATED.add(key);
+                return;
+            }
         }
-        return new String[] {
-                "You've seen it, haven't you. The thing over the hills.",
-                "We keep the lamps burning. It helps. A little.",
-                "Half the town packed up. The other half won't leave.",
-                "If it comes here, run. Don't be brave about it." };
-    }
 
-    /* ---- population ------------------------------------------------------ */
+        RandomSource rng = level.random;
+        int n = cast.length;
+        for (int i = 0; i < n; i++) {
+            String name = cast[i];
+            double angle = (i / (double) n) * Math.PI * 2.0 + rng.nextDouble() * 0.4;
+            double dist = 4.0 + rng.nextDouble() * 7.0;
+            int px = (int) Math.round(origin.getX() + Math.cos(angle) * dist);
+            int pz = (int) Math.round(origin.getZ() + Math.sin(angle) * dist);
+            int py = level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, px, pz);
 
-    /** Called every server tick from the worldgen patch. */
-    public static void tick(ServerLevel level) {
-        try {
-            ensureHook();
-            if (lastLevel != level) {
-                lastLevel = level;
-                POPULATED.clear();
-                PROGRESS.clear();
+            BlockPos spawnPos = new BlockPos(px, py, pz);
+            if (!level.getBlockState(spawnPos.below()).isSolid()) {
+                py = level.getHeight(Types.WORLD_SURFACE, px, pz);
+                spawnPos = new BlockPos(px, py, pz);
             }
-            if (level.dimension() != Level.OVERWORLD || level.getGameTime() % 40L != 0L) {
-                return;
-            }
-            if (level.players().isEmpty()) {
-                return;
-            }
-            for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
-                if (s.floating() || POPULATED.contains(s.label())) {
-                    continue;
+
+            try {
+                // Spawn named NPC entity
+                EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(Identifier.tryParse("minecraft:villager"));
+                if (type == null) {
+                    type = BuiltInRegistries.ENTITY_TYPE.get(Identifier.tryParse("minecraft:armor_stand"));
                 }
-                String[] cast = CAST.get(s.label());
-                if (cast == null) {
-                    continue;
-                }
-                BlockPos centre = new BlockPos(s.x(), s.y(), s.z());
-                boolean near = false;
-                for (Entity p : level.players()) {
-                    if (p.blockPosition().distSqr(centre) < 128.0 * 128.0) {
-                        near = true;
-                        break;
+                if (type != null) {
+                    Entity ent = type.create(level, EntitySpawnReason.STRUCTURE);
+                    if (ent != null) {
+                        ent.setPos(px + 0.5, py, pz + 0.5);
+                        ent.setCustomName(Component.literal(name));
+                        ent.setCustomNameVisible(true);
+                        ent.setPersistenceRequired();
+                        ent.setInvulnerable(true);
+                        level.addFreshEntity(ent);
                     }
                 }
-                if (!near || !level.isLoaded(centre)) {
-                    continue;
-                }
-                POPULATED.add(s.label());
-                populate(level, centre, cast);
-            }
-        } catch (Throwable ignored) {
-            // a town without its cast is survivable; a crashed tick is not
-        }
-    }
-
-    /** Prefer non-villager looks so cast members feel distinct (user request). */
-    private static String entityIdFor(String name) {
-        String n = name.toLowerCase();
-        if (n.contains("reuben") || n.contains("lluna") || n.contains("pig")) {
-            return "minecraft:pig";
-        }
-        if (n.contains("stampy") || n.contains("dan") || n.contains("wolf")) {
-            return "minecraft:wolf";
-        }
-        if (n.contains("magnus") || n.contains("aiden") || n.contains("golem")) {
-            return "minecraft:iron_golem";
-        }
-        if (n.contains("soren") || n.contains("ellegaard") || n.contains("harper")
-                || n.contains("pama") || n.contains("white pumpkin")) {
-            return "minecraft:witch";
-        }
-        if (n.contains("gabriel") || n.contains("ivor") || n.contains("petra")
-                || n.contains("jesse") || n.contains("axel") || n.contains("olivia")
-                || n.contains("lukas") || n.contains("radar") || n.contains("stella")
-                || n.contains("nurm") || n.contains("nell") || n.contains("em")
-                || n.contains("maya") || n.contains("gill") || n.contains("hadrian")
-                || n.contains("otto") || n.contains("binta") || n.contains("wink")
-                || n.contains("jack") || n.contains("fangirl") || n.contains("sparklez")
-                || n.contains("stacy")) {
-            // player-like: use armor stand with custom name for distinct pose,
-            // fall back to villager if armor_stand spawn fails
-            return "minecraft:armor_stand";
-        }
-        return "minecraft:armor_stand";
-    }
-
-    private static void populate(ServerLevel level, BlockPos centre, String[] cast) {
-        // idempotent: if the town already has named residents, leave it alone
-        AABB box = AABB.ofSize(new Vec3(centre.getX() + 0.5, centre.getY() + 0.5, centre.getZ() + 0.5),
-                96.0, 48.0, 96.0);
-        for (Mob m : level.getEntitiesOfClass(Mob.class, box)) {
-            if (m.hasCustomName()) {
-                return;
-            }
-        }
-        RandomSource random = level.getRandom();
-        List<String> names = new ArrayList<>(List.of(cast));
-        for (int i = 0; i < names.size(); i++) {
-            String who = names.get(i);
-            String eid = entityIdFor(who);
-            String ns = "minecraft";
-            String path = "villager";
-            int colon = eid.indexOf(':');
-            if (colon > 0) {
-                ns = eid.substring(0, colon);
-                path = eid.substring(colon + 1);
-            }
-            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE
-                    .getValue(Identifier.fromNamespaceAndPath(ns, path));
-            if (type == null) {
-                type = BuiltInRegistries.ENTITY_TYPE
-                        .getValue(Identifier.fromNamespaceAndPath("minecraft", "villager"));
-            }
-            if (type == null) {
-                continue;
-            }
-            double ang = (i / (double) names.size()) * Math.PI * 2.0 + random.nextDouble() * 0.6;
-            double ring = 5.0 + random.nextDouble() * 9.0;
-            int x = centre.getX() + (int) Math.round(Math.cos(ang) * ring);
-            int z = centre.getZ() + (int) Math.round(Math.sin(ang) * ring);
-            int y = level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-            BlockPos at = new BlockPos(x, y, z);
-            Entity created = type.create(level, EntitySpawnReason.STRUCTURE);
-            if (!(created instanceof Mob mob)) {
-                continue;
-            }
-            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(at), EntitySpawnReason.STRUCTURE,
-                    (SpawnGroupData) null);
-            mob.setCustomName(Component.literal(who));
-            mob.setCustomNameVisible(true);
-            mob.setPersistenceRequired();
-            mob.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, random.nextFloat() * 360.0F, 0.0F);
-            // idle wander so they feel alive
-            try {
-                mob.setNoAi(false);
             } catch (Throwable ignored) {
             }
-            level.addFreshEntity(mob);
         }
+        POPULATED.add(key);
+        hookInteraction();
     }
 
-    /* ---- dialogue -------------------------------------------------------- */
-
-    /**
-     * Registers the interaction listener through Fabric's UseEntityCallback
-     * by reflection: present, we talk; absent, the towns are simply quiet.
-     */
-    private static void ensureHook() {
+    public static void hookInteraction() {
         if (hooked) {
             return;
         }
@@ -332,21 +251,15 @@ public final class McsmNpcs {
                 }
             }
         } catch (Throwable ignored) {
-            // no fabric interaction module: towns stay silent, nothing breaks
+            // silent fallback
         }
     }
 
     private static Object defaultAnswer(Method method) {
         Class<?> ret = method.getReturnType();
-        if (ret == boolean.class) {
-            return Boolean.FALSE;
-        }
-        if (ret == int.class) {
-            return Integer.valueOf(0);
-        }
-        if (InteractionResult.class.isAssignableFrom(ret)) {
-            return InteractionResult.PASS;
-        }
+        if (ret == boolean.class) return Boolean.FALSE;
+        if (ret == int.class) return Integer.valueOf(0);
+        if (InteractionResult.class.isAssignableFrom(ret)) return InteractionResult.PASS;
         return null;
     }
 
@@ -368,65 +281,78 @@ public final class McsmNpcs {
             return InteractionResult.PASS;
         }
         if (player.level().isClientSide()) {
-            // consume on the client too, so no trade screen is predicted
             return InteractionResult.SUCCESS;
         }
-        String[] tree = linesFor(name);
+
+        String[] tree = LINES.getOrDefault(name, new String[] {
+                "Be careful out there! The Storm is gathering strength."
+        });
         String key = player.getUUID() + "/" + name;
         int i = PROGRESS.getOrDefault(key, 0);
         PROGRESS.put(key, (i + 1) % tree.length);
-        // look at player + small hop = "speaking" body language
+
+        // Look at player + subtle speaking hop
         try {
             if (target instanceof Mob mob) {
-                mob.getLookControl().setLookAt(player, 40.0F, 40.0F);
+                mob.getLookControl().setLookAt(player, 45.0F, 45.0F);
                 mob.setYHeadRot(player.getYRot());
-                // micro hop so the mouth/head "moves" while speaking
                 Vec3 v = mob.getDeltaMovement();
-                mob.setDeltaMovement(v.x, Math.max(v.y, 0.28), v.z);
+                mob.setDeltaMovement(v.x, Math.max(v.y, 0.26), v.z);
             }
         } catch (Throwable ignored) {
         }
+
+        // Send dialogue message to chat
         player.sendSystemMessage(Component.literal("\u00a7d\u00a7l" + name + "\u00a7r\u00a77: \u00a7f"
                 + tree[i % tree.length]));
-        // villager/yes sounds read as speech better than bundle click
 
+        // Speaking particle burst (golden & amethyst dust)
+        if (player.level() instanceof ServerLevel sl) {
+            sl.sendParticles(new DustParticleOptions(0xFFE082, 0.8f),
+                    target.getX(), target.getY() + 1.8, target.getZ(),
+                    6, 0.2, 0.1, 0.2, 0.02);
+            sl.sendParticles(new DustParticleOptions(0xD86BFF, 0.6f),
+                    target.getX(), target.getY() + 1.6, target.getZ(),
+                    4, 0.15, 0.15, 0.15, 0.01);
+        }
 
-    /* ---- NPC Tick AI ------------------------------------------------------ */
-    /** Called every server tick from the worldgen patch. */
+        // Voice audio feedback
+        player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
+                SoundEvents.VILLAGER_YES, SoundSource.NEUTRAL, 0.9F, 1.0F + (float) (Math.random() * 0.25));
+        player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
+                SoundEvents.VILLAGER_AMBIENT, SoundSource.NEUTRAL, 0.45F, 1.2F);
+
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Called every server tick from worldgen/loop. */
     public static void npcTick(ServerLevel level) {
+        if (level == null || !McsmExtrasConfig.npcWalkAnimations) {
+            return;
+        }
         try {
             if (level.players().isEmpty()) {
                 return;
             }
-            // Subtle AI: make NPCs wander slightly and look at players
-            for (Entity e : level.entitiesByClass(Entity.class)) {
-                if (e.hasCustomName() && e instanceof Mob mob) {
-                    // Make mob look at random player sometimes
-                    if (level.random.nextFloat() < 0.01F) {
-                        for (Entity player : level.players()) {
-                            if (player.distanceTo(mob) < 32.0) {
-                                mob.getLookControl().setLookAt(player, 20.0F, 20.0F);
-                                break;
-                            }
+            long gt = level.getGameTime();
+            if (gt % 10L != 0L) return;
+
+            for (Entity e : level.getEntitiesOfClass(Entity.class, new AABB(-3000, -64, -3000, 3000, 320, 3000))) {
+                if (e.hasCustomName() && ROSTER.contains(e.getCustomName().getString())) {
+                    if (e instanceof Mob mob) {
+                        Player nearest = level.getNearestPlayer(mob, 16.0);
+                        if (nearest != null) {
+                            mob.getLookControl().setLookAt(nearest, 25.0F, 25.0F);
+                        } else if (level.random.nextFloat() < 0.15F) {
+                            // Subtle wandering
+                            double offX = (level.random.nextDouble() - 0.5) * 0.4;
+                            double offZ = (level.random.nextDouble() - 0.5) * 0.4;
+                            mob.setDeltaMovement(offX, mob.getDeltaMovement().y, offZ);
                         }
-                    }
-                    // Subtle walking animation - slight position perturbations
-                    if (level.random.nextFloat() < 0.005F) {
-                        double offsetX = level.random.nextGaussian() * 0.5;
-                        double offsetZ = level.random.nextGaussian() * 0.5;
-                        mob.setPos(mob.getX() + offsetX, mob.getY(), mob.getZ() + offsetZ);
                     }
                 }
             }
         } catch (Throwable ignored) {
         }
-    }
-
-
-        player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
-                SoundEvents.VILLAGER_YES, SoundSource.NEUTRAL, 1.0F, 0.95F + (float) (Math.random() * 0.2));
-        player.level().playSound(null, target.getX(), target.getY(), target.getZ(),
-                SoundEvents.VILLAGER_AMBIENT, SoundSource.NEUTRAL, 0.55F, 1.25F);
-        return InteractionResult.SUCCESS;
     }
 }

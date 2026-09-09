@@ -10,11 +10,12 @@ import java.util.Properties;
 /**
  * MCSM extras config. Lives beside the mod's own config (their in-game
  * config screen + /dabyws still drive the mod itself; this file only drives
- * the MCSM additions: tentacle grab cadence, beacon storm path, rise fx and
- * the counterclockwise spiral pin). Written with defaults on first launch.
+ * the MCSM additions: tentacle grab cadence, beacon storm path, rise fx,
+ * visual parameters, custom shaders, animations, and NPC systems).
+ * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.171";
+    public static final String BUILD_VERSION = "1.9.172";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -24,10 +25,6 @@ public final class McsmExtrasConfig {
     public static boolean enableBeaconBlock = true;
 
     // ---- fields that ALSO existed in the 1.9.88-1.9.95 jars ----------------
-    // (these live in the shipped jar's bytecode; other jar-side classes read
-    // them, so the names/types must NEVER change or those classes crash with
-    // NoSuchFieldError. ogCemModels defaults false: the redone model is the
-    // default look, Tainted's original CEM is opt-in.)
     /** Use Tainted's original 103-part CEM model for the phase-5 body. */
     public static boolean ogCemModels = false;
     /** Apparent size of the smudge/halo quads behind the storm (0.5 = new). */
@@ -39,7 +36,7 @@ public final class McsmExtrasConfig {
     /** Mod-side aurora borealis at night (cold-biome biased). */
     public static boolean auroraEnabled = true;
     /** Full death cinematic: distortion -> white cracks -> implosion flash ->
-     *  supernova rings -> segments. Drives the sky carrier band 1906..2906. */
+     *  supernova rings -> segments. */
     public static boolean deathCinematic = true;
     /** Expanding ring shockwaves on phase 4 rise, phase 7 rise, and death. */
     public static boolean supernovaRings = true;
@@ -49,8 +46,7 @@ public final class McsmExtrasConfig {
     public static boolean purpleSky = true;
     /** Dust trails when the storm sweeps blocks. */
     public static boolean dustWaves = true;
-    /** Post-death reality tear with the black aurora + corruption spread
-     *  (user: "turned on by default in the config"). */
+    /** Post-death reality tear with the black aurora + corruption spread. */
     public static boolean realityTear = true;
     /** Command block obliterate flash erases entities incl. players. */
     public static boolean obliterateFlash = true;
@@ -59,53 +55,72 @@ public final class McsmExtrasConfig {
 
     // ---- MCSM 1.9.100 batch: the gates ------------------------------------
     /** Force the client's Story Mode look on (shadows, glare, smoke screen,
-     *  skyboxes, vignette, tremor). Booleans only ever go ON, numeric values
-     *  are only raised -- see McsmGate. */
+     *  skyboxes, vignette, tremor). */
     public static boolean forceMcsmLook = true;
     /** Force the world config on: building tear, corruption, shockwave
      *  particles, structure raids, withered mobs, cave rumble. */
     public static boolean forceMcsmWorld = true;
 
-    // MCSM 1.9.111 -- McsmShaderGatePatch forces ShaderPackCompat.active() to
-    // false so the mod draws its own visuals under Iris. Dabicco's look presets
-    // (Cinematic, Netflix) route part of their difference through that
-    // shader-pack path, so with the gate forced they appear to "do nothing".
-    // This toggle lets the player hand the answer back to the mod and A/B the
-    // presets without editing files.
     public static boolean shaderPackGate = true;
     /** Taut glowing wire from the storm's core down to its ground anchor. */
     public static boolean commandWire = true;
     /** Brief a player the first time they get close to a live storm. */
     public static boolean mcsmInstructions = true;
 
-    // ---- MCSM 1.9.171 -- Atmosphere Parameters -
-
-    /** Night sky opacity: 0.0 = clear, 1.0 = deepest navy (affects calm night intensity). */
+    // ---- Atmosphere & Custom Graphics Parameters --------------------------
+    /** Night sky opacity: 0.0 = clear, 1.0 = deepest navy. */
     public static double nightSkyOpacity = 1.0;
     /** Phase 5.5 transition point: exact phase where purple-pink horizon begins. */
     public static double phase55Threshold = 5.5;
-    /** Salmon-pink intensity in phase 5.5-5.9 range. 1.0 = standard, >1.0 = stronger pink. */
+    /** Salmon-pink intensity in phase 5.5-5.9 range. */
     public static double phase5_9PinkIntensity = 1.0;
-    /** Cloud alpha: 0.0 = fully transparent (disabled), 1.0 = normal cloud opacity. */
+    /** Cloud alpha: 0.0 = transparent, 1.0 = normal. */
     public static double cloudAlpha = 1.0;
-    /** Cloud speed multiplier: 0.5 = half speed, 1.0 = normal, 2.0 = double speed. */
+    /** Cloud speed multiplier: 1.0 = normal. */
     public static double cloudSpeed = 1.0;
-    /** Rain/snow intensity: 0.0 = no precipitation, 1.0 = normal precipitation. */
+    /** Rain/snow intensity multiplier. */
     public static double precipitationIntensity = 1.0;
-    /** Storm glare animation phase (0 = static, 1 = flowing, -1 = reverse). Affects disc rotation. */
+    /** Storm glare animation phase (0 = static, 1 = flowing). */
     public static double glareAnimPhase = 0.0;
-    /** Storm body animation pulse: makes phase-1 eye/jaw throb rhythmically. */
+    /** Storm body animation pulse: phase-1 eye/jaw throb rhythm. */
     public static double bodyAnimPulse = 0.0;
     /** Glare animation intensity multiplier. */
     public static double glareAnimIntensity = 0.0;
-    /** When true, glare stays fixed relative to storm center (non-euclidean),
-     *  allowing player to "go behind it" even when storm moves. */
+    /** Non-euclidean glare: stays fixed relative to storm center. */
     public static boolean glareNonEuclidean = false;
 
-    // ---- MCSM 1.9.137 -- mega-phase 5b ------------------------------------
-    /** Ship + auto-install the Devouring Storms Iris shader pack from inside
-     *  the mod jar (user order: merged into the mod, DEFAULT ON). Applies at
-     *  launch; see McsmShaderPackInstall. */
+    // ---- Advanced Atmospheric VFX & Lighting ------------------------------
+    /** Beacon luminous glow corona. */
+    public static boolean beaconGlow = true;
+    /** Nether and End portal luminous casted light. */
+    public static boolean portalLights = true;
+    /** Biome-specific subtle mist/fog palettes. */
+    public static boolean biomeAtmospherics = true;
+    /** Nether deep crimson fog and rising lava sparks. */
+    public static boolean netherRedFog = true;
+    /** Snow/ice biome gigantic blue sky band. */
+    public static boolean snowSkyBand = true;
+    /** Multi-colored Aurora Borealis ribbons (blue/pink/purple/orange). */
+    public static boolean auroraRibbons = true;
+    /** Twinkling multi-colored stars. */
+    public static boolean twinklingStars = true;
+    /** Night sky comets / shooting stars. */
+    public static boolean comets = true;
+    /** Magical colored sparkles (white/pink/purple). */
+    public static boolean coloredSparkles = true;
+    /** Underwater god rays and hazy dark blue depth. */
+    public static boolean waterGodRays = true;
+    /** End sky purple spiral vortex and reality rip. */
+    public static boolean endSkyVortex = true;
+    /** Screen-space shadows & lighting contrast. */
+    public static boolean globalShadows = true;
+    /** Enhanced aggressive Wither Storm AI & targeting. */
+    public static boolean witherStormEnhancedAi = true;
+    /** NPC natural walking and speaking animations. */
+    public static boolean npcWalkAnimations = true;
+
+    // ---- Iris Shader Pack -------------------------------------------------
+    /** Ship + auto-install the Devouring Storms Iris shader pack. */
     public static boolean embeddedShaderPack = true;
 
     private static boolean loaded = false;
@@ -156,9 +171,23 @@ public final class McsmExtrasConfig {
             p.setProperty("force_mcsm_world", String.valueOf(forceMcsmWorld));
             p.setProperty("command_wire", String.valueOf(commandWire));
             p.setProperty("mcsm_instructions", String.valueOf(mcsmInstructions));
+            p.setProperty("beacon_glow", String.valueOf(beaconGlow));
+            p.setProperty("portal_lights", String.valueOf(portalLights));
+            p.setProperty("biome_atmospherics", String.valueOf(biomeAtmospherics));
+            p.setProperty("nether_red_fog", String.valueOf(netherRedFog));
+            p.setProperty("snow_sky_band", String.valueOf(snowSkyBand));
+            p.setProperty("aurora_ribbons", String.valueOf(auroraRibbons));
+            p.setProperty("twinkling_stars", String.valueOf(twinklingStars));
+            p.setProperty("comets", String.valueOf(comets));
+            p.setProperty("colored_sparkles", String.valueOf(coloredSparkles));
+            p.setProperty("water_god_rays", String.valueOf(waterGodRays));
+            p.setProperty("end_sky_vortex", String.valueOf(endSkyVortex));
+            p.setProperty("global_shadows", String.valueOf(globalShadows));
+            p.setProperty("wither_storm_enhanced_ai", String.valueOf(witherStormEnhancedAi));
+            p.setProperty("npc_walk_animations", String.valueOf(npcWalkAnimations));
             p.setProperty("embedded_shader_pack", String.valueOf(embeddedShaderPack));
             try (OutputStream out = new FileOutputStream(f)) {
-                p.store(out, "MCSM - storm gameplay patches + visuals + gates (glare size, aurora, death cinematic, supernova, smoke, tear, forced MCSM look/world). config_version below is the build that wrote this file.");
+                p.store(out, "MCSM - storm gameplay patches + visuals + gates. config_version below is the build that wrote this file.");
             }
             stamp = f.lastModified();
         } catch (Throwable t) {
@@ -181,17 +210,8 @@ public final class McsmExtrasConfig {
             if (f.isFile()) {
                 try (InputStream in = new FileInputStream(f)) { p.load(in); }
             } else {
-                f.getParentFile().mkdirs();
-                p.setProperty("enable_tentacle_grab", "true");
-                p.setProperty("grab_interval_seconds", "11.0");
-                p.setProperty("enable_beacon_storm", "true");
-                p.setProperty("beacon_cooldown_seconds", "30.0");
-                p.setProperty("enable_rise_fx", "true");
-                p.setProperty("spiral_counter_clockwise", "true");
-                p.setProperty("enable_beacon_block", "true");
-                try (OutputStream out = new FileOutputStream(f)) {
-                    p.store(out, "MCSM - storm gameplay patches (grab, beacon, rise fx, spiral)");
-                }
+                save();
+                return;
             }
             enableTentacleGrab = bool(p, "enable_tentacle_grab", enableTentacleGrab);
             grabIntervalSeconds = dbl(p, "grab_interval_seconds", grabIntervalSeconds);
@@ -205,12 +225,6 @@ public final class McsmExtrasConfig {
             glareSize          = dbl(p, "glare_size", glareSize);
             String cv = p.getProperty("config_version");
             if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
-                // 1.9.106/early-1.9.107 saved the overlarge test value.
-                // Migrate only that exact legacy default; user-picked slider values remain intact.
-            String cv = p.getProperty("config_version");
-            if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
-                // 1.9.106/early-1.9.107 saved the overlarge test value.
-                // Migrate only that exact legacy default; user-picked slider values remain intact.
                 glareSize = 0.58;
             }
             nightSkyOpacity = dbl(p, "night_sky_opacity", nightSkyOpacity);
@@ -223,9 +237,6 @@ public final class McsmExtrasConfig {
             cloudAlpha = dbl(p, "cloud_alpha", cloudAlpha);
             cloudSpeed = dbl(p, "cloud_speed", cloudSpeed);
             precipitationIntensity = dbl(p, "precipitation_intensity", precipitationIntensity);
-            auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
-                glareSize = 0.58;
-            }
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
             shaderPackGate     = bool(p, "shader_pack_gate", shaderPackGate);
             deathCinematic     = bool(p, "death_cinematic", deathCinematic);
@@ -240,6 +251,20 @@ public final class McsmExtrasConfig {
             forceMcsmWorld     = bool(p, "force_mcsm_world", forceMcsmWorld);
             commandWire        = bool(p, "command_wire", commandWire);
             mcsmInstructions   = bool(p, "mcsm_instructions", mcsmInstructions);
+            beaconGlow         = bool(p, "beacon_glow", beaconGlow);
+            portalLights       = bool(p, "portal_lights", portalLights);
+            biomeAtmospherics  = bool(p, "biome_atmospherics", biomeAtmospherics);
+            netherRedFog       = bool(p, "nether_red_fog", netherRedFog);
+            snowSkyBand        = bool(p, "snow_sky_band", snowSkyBand);
+            auroraRibbons      = bool(p, "aurora_ribbons", auroraRibbons);
+            twinklingStars     = bool(p, "twinkling_stars", twinklingStars);
+            comets             = bool(p, "comets", comets);
+            coloredSparkles    = bool(p, "colored_sparkles", coloredSparkles);
+            waterGodRays       = bool(p, "water_god_rays", waterGodRays);
+            endSkyVortex       = bool(p, "end_sky_vortex", endSkyVortex);
+            globalShadows      = bool(p, "global_shadows", globalShadows);
+            witherStormEnhancedAi = bool(p, "wither_storm_enhanced_ai", witherStormEnhancedAi);
+            npcWalkAnimations  = bool(p, "npc_walk_animations", npcWalkAnimations);
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
         } catch (Throwable t) {
             // stay on defaults; never crash the game over a config file

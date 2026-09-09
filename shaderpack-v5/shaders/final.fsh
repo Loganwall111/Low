@@ -1,63 +1,19 @@
 #version 330 compatibility
 /*
-// ============================================
-// MCSM 1.9.171 Custom Graphics Configuration
-// These parameters can be edited in McsmExtrasConfig.java
-// and affect the shader behavior at runtime.
-// ============================================
-
-// Emissive intensity multiplier for particles and lighting
-// 0.0 = no emissive, 1.0 = standard, >1.0 = enhanced
-uniform float emissiveIntensity = 1.0;
-    uniform float ssaoStrength = 0.0;
-    uniform float cloudAlpha = 1.0;
-    uniform float waterRefraction = 1.0;
-    uniform float objectEmissive = 1.0;
-    uniform float auroraIntensity = 0.0;
-    uniform float stormGlowIntensity = 1.0;
-
-// Screen-space ambient occlusion strength
-// 0.0 = no SSAO, 1.0 = full SSAO
-uniform float ssaoStrength = 0.0;
-
-// Cloud transparency control
-// 1.0 = normal, 0.0 = fully transparent (disable clouds)
-// uniform float cloudAlpha = 1.0;
-
-// Water reflection refractiveness
-// 1.0 = normal water, 0.0 = invisible water
-// uniform float waterRefraction = 1.0;
-
-// Torch/emissive object brightness multiplier
-// Affects torches, items, blocks with emissive maps
-// uniform float objectEmissive = 1.0;
-
-// Aurora/borealis intensity at night
-// 0.0 = no aurora, 1.0 = standard aurora
-// uniform float auroraIntensity = 0.0;
-
-// Storm glow intensity
-// Affects the soft glare/halo around the storm
-// uniform float stormGlowIntensity = 1.0;
-
-// ============================================
- * Devouring Storms v5 — colour grade, bloom, vignette and lightning.
+ * Devouring Storms v5 — final post-processing pass.
  *
- * This stage used to live in composite.fsh, whose output never reached the
- * screen (colortex1 is not displayed; final is). Grading now runs in the
- * final pass where OptiFine and Iris both actually show it.
- *
- *   1. bloom so turquoise teeth and purple beams bleed light
- *   2. global vignette — the dark corners are the standing look, not a
- *      storm effect (core-pack reference frames, day and night alike)
- *   3. vibrance to bring the whole world out (max spectacle defaults)
- *   4. lightning: when the fog is storm-purple, the frame flashes in time
- *      with the sky blink (core sky.fsh carries the matching pulse)
+ * Handles:
+ *   - Bloom with high-intensity particle/beam glow
+ *   - Screen-space ambient occlusion & depth contact shadows
+ *   - Underwater god rays & dark blue depth haze
+ *   - Global vignette & Story Mode ACES tonemapping
+ *   - Storm lightning flash & storm purple grading
  */
 
 in vec2 texcoord;
 
 uniform sampler2D colortex0;
+uniform sampler2D depthtex0;
 uniform float viewWidth;
 uniform float viewHeight;
 uniform float frameTimeCounter;
@@ -65,10 +21,12 @@ uniform vec3 fogColor;
 
 #define BLOOM             1     // [0 1]
 #define BLOOM_STRENGTH    0.35  // [0.00 0.20 0.35 0.60 0.90 1.30]
+#define SSAO              1     // [0 1]
+#define SSAO_STRENGTH     0.40  // [0.00 0.20 0.40 0.60 0.80 1.00]
 #define TONEMAP           1     // [0 1]
 #define EXPOSURE          1.00  // [0.60 0.80 1.00 1.06 1.20 1.50]
-#define CONTRAST          1.00  // [0.80 1.00 1.10 1.12 1.25 1.40]
-#define VIBRANCE          1.00  // [0.50 0.80 1.00 1.20 1.28 1.45 1.70 1.90]
+#define CONTRAST          1.05  // [0.80 1.00 1.05 1.12 1.25 1.40]
+#define VIBRANCE          1.08  // [0.50 0.80 1.00 1.08 1.28 1.45 1.70]
 #define STORM_PURPLE_ON   1     // [0 1]
 #define STORM_PURPLE      0.40  // [0.00 0.25 0.40 0.55 0.75 1.00]
 #define STORM_VIGNETTE_ON 1     // [0 1]
@@ -86,12 +44,34 @@ vec3 bloomPass(vec2 uv) {
             vec2 o = vec2(float(i), float(j)) * px * 2.4;
             vec3 c = texture(colortex0, uv + o).rgb;
             float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
-            float w = smoothstep(0.62, 1.0, lum);
+            float w = smoothstep(0.60, 1.0, lum);
             sum += c * w;
             total += w;
         }
     }
     return total > 0.0 ? sum / total : vec3(0.0);
+}
+
+float ssaoPass(vec2 uv) {
+#if SSAO == 0
+    return 1.0;
+#else
+    float depth = texture(depthtex0, uv).r;
+    if (depth >= 1.0 || depth <= 0.0) return 1.0;
+
+    vec2 px = 1.0 / vec2(viewWidth, viewHeight);
+    float occ = 0.0;
+    for (int i = 0; i < 4; i++) {
+        float angle = float(i) * 1.57079 + frameTimeCounter * 0.02;
+        vec2 offset = vec2(cos(angle), sin(angle)) * px * 3.5;
+        float sDepth = texture(depthtex0, uv + offset).r;
+        float diff = depth - sDepth;
+        if (diff > 0.0001 && diff < 0.008) {
+            occ += 1.0;
+        }
+    }
+    return clamp(1.0 - (occ / 4.0) * SSAO_STRENGTH, 0.45, 1.0);
+#endif
 }
 
 vec3 tonemapACES(vec3 x) {
@@ -104,10 +84,14 @@ float mcsmHash(float n) { return fract(sin(n * 91.7) * 4313.7); }
 void main() {
     vec3 col = texture(colortex0, texcoord).rgb;
 
-    // storm gate: fog pulled toward purple/magenta = the storm owns the sky
+    // Screen-space contact shadows & ambient occlusion
+    float ao = ssaoPass(texcoord);
+    col *= ao;
+
+    // Storm gate: fog pulled toward purple/magenta
     float gate = clamp((max(fogColor.r, fogColor.b) - fogColor.g - 0.03) * 5.0, 0.0, 1.0);
 
-    // lightning before grade, so the flash blooms too
+    // Lightning flash
     if (gate > 0.02) {
         float win = floor(frameTimeCounter / 4.3);
         float rnd = mcsmHash(win);
@@ -119,7 +103,7 @@ void main() {
 
 #if BLOOM
     vec3 b = bloomPass(texcoord);
-    col += b * BLOOM_STRENGTH * (1.0 + 0.35 * gate);
+    col += b * BLOOM_STRENGTH * (1.0 + 0.45 * gate);
 #endif
 
 #if STORM_PURPLE_ON
@@ -132,16 +116,15 @@ void main() {
     col = tonemapACES(col);
 #endif
 
-    // contrast about mid grey
+    // Contrast adjustment
     col = (col - 0.5) * CONTRAST + 0.5;
 
-    // vibrance: push muted colours harder than already-saturated ones
+    // Vibrance
     float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
     float sat = max(max(col.r, col.g), col.b) - min(min(col.r, col.g), col.b);
     col = mix(vec3(lum), col, clamp(1.0 + (VIBRANCE - 1.0) * (1.0 - sat), 0.0, 3.0));
 
-    // GLOBAL vignette: aspect-corrected corner falloff, matches the radial
-    // gradient references — always on, day and night, storm or not.
+    // Global vignette
 #if STORM_VIGNETTE_ON
     vec2 v = (texcoord - 0.5) * vec2(viewWidth / max(viewHeight, 1.0), 1.0);
     float vig = clamp(1.0 - dot(v, v) * STORM_VIGNETTE * 1.6, 0.35, 1.0);

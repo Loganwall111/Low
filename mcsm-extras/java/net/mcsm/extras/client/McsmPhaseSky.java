@@ -18,9 +18,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * MCSM storm glare — body-glued SOFT volume from mcsm_atmosphere/glare/*.
  *
- * One (plus thin flank) soft radial disc per storm. NO mesh, NO stacked
- * concentric rings, NO dots, NO lines. Texture alpha carries the fade.
- * Purple/pink glare is storm-phase only (5.4+); calm night never uses it.
+ * Smooth multi-color gradient radial discs attached to the storm.
+ * Smooth animation pulses and non-euclidean world-anchoring support.
  */
 public final class McsmPhaseSky {
 
@@ -99,48 +98,41 @@ public final class McsmPhaseSky {
         float gt = (float) (mc.level.getGameTime() % 240000L)
                 + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float nowSec = gt * 0.05F;
+
         McsmExtrasConfig.load();
+        double glareMul = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
+        double smudge = Mth.clamp(McsmExtrasConfig.smudgeScale, 0.15, 2.5);
         double glareAnimPhase = McsmExtrasConfig.glareAnimPhase;
         double bodyAnimPulse = McsmExtrasConfig.bodyAnimPulse;
         double glareAnimIntensity = McsmExtrasConfig.glareAnimIntensity;
         boolean glareNonEuclidean = McsmExtrasConfig.glareNonEuclidean;
-        Vec3 cam = ctx.levelState().cameraRenderState.pos;
-        McsmExtrasConfig.load();
-        double glareMul = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-        double smudge = Mth.clamp(McsmExtrasConfig.smudgeScale, 0.15, 2.5);
 
+        Vec3 cam = ctx.levelState().cameraRenderState.pos;
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
 
         for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
             float phase = d.phase;
-            // Glare only when storm has real mass — never paints calm night purple
             if (phase < 3.95F) {
                 continue;
             }
             Vec3 stormPos = new Vec3(d.dispX, d.dispY, d.dispZ);
             double bodyR = bodyRadius(phase);
-            // Non-euclidean glare: when enabled, glare stays fixed relative to storm
-        // center regardless of player position, creating the effect of "going behind it"
-        float glareOffsetX = 0.0F;
-        float glareOffsetY = 0.0F;
-        float glareOffsetZ = 0.0F;
-        if (glareNonEuclidean) {
-            // Glare stays fixed relative to storm, player can "go behind it"
-            // Position is based on storm center at a fixed distance
-            double glareDist = 1200.0;  // Fixed distance from storm center
-            float theta = (float) (System.currentTimeMillis() % 20000L) * 0.001F;
-            glareOffsetX = (float) (glareDist * Math.sin(theta));
-            glareOffsetZ = (float) (glareDist * Math.cos(theta));
-        }
-        Vec3 centre = stormPos.add(swayOffset(phase, nowSec, bodyR)).add(glareOffsetX, 0.0F, glareOffsetZ);
+
+            Vec3 centre = stormPos.add(swayOffset(phase, nowSec + (float) glareAnimPhase * 2.0F, bodyR));
 
             Vec3 toStorm = centre.subtract(cam);
             double dist = toStorm.length();
             if (dist < 1.0E-3) {
                 continue;
             }
+
             Vec3 view = toStorm.scale(1.0 / dist);
+            if (glareNonEuclidean) {
+                // Non-euclidean: anchored in storm's fixed space
+                view = new Vec3(0.0, 0.2, -1.0).normalize();
+            }
+
             float distFade = 1.0F - Mth.clamp((float) ((dist - 1800.0) / 1200.0), 0.0F, 1.0F);
             if (distFade <= 0.01F) {
                 continue;
@@ -151,39 +143,39 @@ public final class McsmPhaseSky {
                 continue;
             }
 
-            float breathe = 1.0F
-    + 0.02F * Mth.sin(nowSec * 0.05F)
-    * (float) Mth.clamp(glareAnimIntensity, 0.0, 3.0)
-    * (float) Mth.clamp((float) bodyAnimPulse, 0.0F, 1.0F);
-            double baseR = bodyR * (1.55 + 1.05 * glareMul) * smudge * breathe
-    * (float) Mth.clamp((float) bodyAnimPulse, 0.0F, 1.0F);
+            // Smooth pulsation
+            float pulse = 1.0F + 0.05F * (float) Mth.sin(nowSec * 2.4F) * (float) (1.0 + glareAnimIntensity);
+            float bodyThrob = 1.0F + 0.08F * (float) Mth.sin(nowSec * 4.0F) * (float) Math.max(0.0, bodyAnimPulse);
+
+            double baseR = bodyR * (1.55 + 1.05 * glareMul) * smudge * pulse * bodyThrob;
             if (phase > 5.3F) {
                 baseR *= 1.0 + (phase - 5.3F) * 0.16;
             }
-            // 5.5+ glare is BIG soft mass like stills (wraps body, not tiny ball)
             if (phase >= 5.48F && phase < 6.0F) {
                 baseR *= 1.35;
             }
+
             float amp = presence * distFade;
-            int aa = Mth.clamp((int) (amp * 210.0F * (float) Mth.clamp(glareAnimIntensity, 0.0F, 2.0F)), 0, 255);
+            float intenMult = (float) (1.0 + 0.4 * glareAnimIntensity);
+            int aa = Mth.clamp((int) (amp * 210.0F * intenMult), 0, 255);
             if (aa <= 4) {
                 continue;
             }
 
             Identifier tex = glareTex(phase);
 
-            // Dark core plate behind glare so body stays silhouette (no grey wash)
+            // Dark core silhouette plate behind glare
             if (phase >= 4.5F) {
                 int ca = Mth.clamp((int) (amp * 70.0F), 0, 255);
                 quad(poseStack, collector, GlowRenderTypes.glow(BLACK),
                         centre, view, baseR * 0.72, 4, 3, 6, ca);
             }
 
-            // MAIN glare: single soft disc (texture alpha = fade). No stack.
-            // Tint white so texture RGB carries phase colour.
+            // MAIN glare: multi-color soft gradient disc
             quad(poseStack, collector, GlowRenderTypes.glow(tex),
                     centre, view, baseR, 255, 255, 255, aa);
-            // one slightly larger outer skirt for thickness without ring artifacts
+
+            // Outer soft atmospheric skirt
             int aa2 = Mth.clamp((int) (aa * 0.45F), 0, 255);
             if (aa2 > 4) {
                 quad(poseStack, collector, GlowRenderTypes.glow(tex),
@@ -191,7 +183,7 @@ public final class McsmPhaseSky {
                         baseR * 1.28, 255, 255, 255, aa2);
             }
 
-            // thin flank fill so volume reads from the side (still no dots)
+            // Volumetric lateral fill
             if (amp > 0.12F && baseR > 8.0) {
                 Vec3 upHint = Math.abs(view.y) > 0.95 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
                 Vec3 right = view.cross(upHint).normalize();
@@ -218,7 +210,6 @@ public final class McsmPhaseSky {
             Vec3 upHint = Math.abs(view.y) > 0.98 ? new Vec3(1.0, 0.0, 0.0) : new Vec3(0.0, 1.0, 0.0);
             Vec3 right = view.cross(upHint).normalize();
             Vec3 up = right.cross(view).normalize();
-            // slight oval like MCSM mass (not perfect circle sticker)
             Vec3 rx = right.scale(radius * 1.10);
             Vec3 uy = up.scale(radius * 0.95);
             int fa = Math.min(Math.max(alpha, 0), 255);
