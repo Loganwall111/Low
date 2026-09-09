@@ -640,6 +640,10 @@ mkdir -p "$FX/cls/resourcepacks/storylook"
 cp -r storylook/pack.mcmeta storylook/pack.png "$FX/cls/resourcepacks/storylook/"
 cp -r storylook/assets "$FX/cls/resourcepacks/storylook/"
 echo "[build] built-in story look pack embedded at resourcepacks/storylook"
+mkdir -p "$FX/cls/assets/dabywitherstormmod/resourcepacks"
+rm -f "$FX/cls/assets/dabywitherstormmod/resourcepacks/storylook.zip"
+( cd "$FX/cls/resourcepacks/storylook" && zip -q -r -X "$FX/cls/assets/dabywitherstormmod/resourcepacks/storylook.zip" pack.mcmeta pack.png assets )
+echo "[build] extractable Story Look pack embedded at assets/dabywitherstormmod/resourcepacks/storylook.zip"
 
 # 1.9.151: Totally Accurate / MCSM OG CEM models (from Loganwall111/ogs-stuff)
 # ship as a second DEFAULT_ENABLED built-in pack. EMF / OptiFine CEM reads
@@ -649,7 +653,14 @@ if [ -d ogs-cem/assets ] && [ -f ogs-cem/pack.mcmeta ]; then
   cp -f ogs-cem/pack.mcmeta "$FX/cls/resourcepacks/ogs-cem/"
   [ -f ogs-cem/pack.png ] && cp -f ogs-cem/pack.png "$FX/cls/resourcepacks/ogs-cem/"
   cp -r ogs-cem/assets "$FX/cls/resourcepacks/ogs-cem/"
+  rm -f "$FX/cls/assets/dabywitherstormmod/resourcepacks/ogs-cem.zip"
+  if [ -f "$FX/cls/resourcepacks/ogs-cem/pack.png" ]; then
+    ( cd "$FX/cls/resourcepacks/ogs-cem" && zip -q -r -X "$FX/cls/assets/dabywitherstormmod/resourcepacks/ogs-cem.zip" pack.mcmeta pack.png assets )
+  else
+    ( cd "$FX/cls/resourcepacks/ogs-cem" && zip -q -r -X "$FX/cls/assets/dabywitherstormmod/resourcepacks/ogs-cem.zip" pack.mcmeta assets )
+  fi
   echo "[build] built-in OG CEM pack embedded at resourcepacks/ogs-cem ($(du -sh ogs-cem | cut -f1))"
+  echo "[build] extractable OG CEM pack embedded at assets/dabywitherstormmod/resourcepacks/ogs-cem.zip"
 else
   echo "::warning title=build::ogs-cem pack missing — Totally Accurate models will not ship"
 fi
@@ -700,7 +711,9 @@ for need in \
   assets/dabywitherstormmod/textures/entity/wither_storm/wither_storm.png \
   assets/witherstormmod/textures/entity/wither_storm/wither_storm.png \
   resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm_phase5.jem \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/witherstormmod/wither_storm_phase5.jem; do
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/witherstormmod/wither_storm_phase5.jem \
+  assets/dabywitherstormmod/resourcepacks/storylook.zip \
+  assets/dabywitherstormmod/resourcepacks/ogs-cem.zip; do
   if [ ! -s "$FX/cls/$need" ]; then
     echo "::error title=jar audit::restored OGS asset missing from jar: $need"
     AUDIT_FAIL=1

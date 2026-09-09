@@ -6,7 +6,7 @@
 
 // #define RETRO_FILTER // Enable retro filter. Works best at low render quality.
 
-#define ANTI_ALIASING 2 // Enables anti-aliasing. FXAA is fast and works with screenshot sizes. TAA is slower, doesn't work with custom screenshots, but smooths noise. Disable anti-aliasing on your shader menu before using this feature! [0 1 2 3]
+#define ANTI_ALIASING 1 // Enables anti-aliasing. FXAA is fast and works with screenshot sizes. TAA is slower, doesn't work with custom screenshots, but smooths noise. Disable anti-aliasing on your shader menu before using this feature! [0 1 2 3]
 // #define SHARPEN_FILTER // Enables image sharpening. Use this with AA on if the image appears blurry.
 
 /// -------------------------------- /// Camera /// -------------------------------- ///
@@ -49,8 +49,8 @@
 /// -------------------------------- /// Lighting /// -------------------------------- ///
 
 #define SHADOW_MAPPING // Enables shadow mapping. Disable to use fake shadows with lightmap.
-#define SHADOW_FILTER // Enables soft shadow filtering, if enabled shadows will appear softer by using noise. May impact performance.
-#define SHADOW_COLOR // Enables shadow color from colored transparent objects.
+// #define SHADOW_FILTER // Enables soft shadow filtering, if enabled shadows will appear softer by using noise. May impact performance.
+// #define SHADOW_COLOR // Enables shadow color from colored transparent objects.
 
 #define ENTITY_SHADOWS // Enables entity shadows.
 #define BLOCK_ENTITY_SHADOWS // Enables block entity shadows.
@@ -64,7 +64,7 @@ const float sunPathRotation = 30.0; // Light path angle. This also affects sky a
 /// -------------------------------- /// Ray tracing settings /// -------------------------------- ///
 
 // #define SSGI // Enables screen space global illumination. May improve the ambience of dark areas despite the noisiness. Currently experimental and unoptimized. Turn on TAA for best results.
-#define SSR // Enables screen space global reflections. May improve the reflections of smooth objects using PBR.
+// #define SSR // Enables screen space global reflections. May improve the reflections of smooth objects using PBR.
 
 #define RAYTRACER_STEPS 20 // Raytracer steps. Increasing may improve quality and demand more performance. [16 20 24 28 32]
 #define RAYTRACER_BISTEPS 2 // Raytracer binary refinement steps. Improves quality especially when using a low step count. Balancing the values may be necessary for performance.  [0 2 4 6 8]
@@ -77,7 +77,7 @@ const float sunPathRotation = 30.0; // Light path angle. This also affects sky a
 #define SUN_MOON_TYPE 0 // Changes sun and moon type [0 1 2]
 #define SUN_MOON_INTENSITY 4 // The sun or moon's intensity. Also affects specular reflections. [0 1 2 3 4 5 6 7 8]
 
-#define VOLUMETRIC_LIGHTING // Enables volumetric lighting.
+// #define VOLUMETRIC_LIGHTING // Enables volumetric lighting.
 #define VOLUMETRIC_LIGHTING_STRENGTH 0.50 // The strength of volumetric lighting, set it to zero to disable it [0.00 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.20 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.30 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.00]
 #define BORDER_FOG // Enables border fog to cover world edges
 #define GROUND_FOG_STRENGTH 0.50 // The strength of mist/ground fog. [0.00 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.20 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.30 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.00]
@@ -85,7 +85,7 @@ const float sunPathRotation = 30.0; // Light path angle. This also affects sky a
 
 /// -------------------------------- /// Cloud settings /// -------------------------------- ///
 
-#define CLOUD_TYPE 2 // Changes cloud type. [0 1 2]
+#define CLOUD_TYPE 1 // Changes cloud type. [0 1 2]
 #define DOUBLE_LAYERED_CLOUDS // Adds another layer of clouds (works on both vanilla and shader clouds), may use up performance.
 #define DYNAMIC_CLOUDS // Makes clouds more dynamic and allows weather to affect it. (affects on both vanilla and story mode clouds).
 #define FADE_SPEED 0.20 // Cloud fade speed [0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20 1.25 1.30 1.35 1.40 1.45 1.50 1.55 1.60 1.65 1.70 1.75 1.80 1.85 1.90 1.95 2.00 2.05 2.10 2.15 2.20 2.25 2.30 2.35 2.40 2.45 2.50 2.55 2.60 2.65 2.70 2.75 2.80 2.85 2.90 2.95 3.00 3.05 3.10 3.15 3.20 3.25 3.30 3.35 3.40 3.45 3.50 3.55 3.60 3.65 3.70 3.75 3.80 3.85 3.90 3.95 4.00]
@@ -100,7 +100,7 @@ const float sunPathRotation = 30.0; // Light path angle. This also affects sky a
 /// -------------------------------- /// World /// -------------------------------- ///
 
 #define TERRAIN_ANIMATION // Enables terrain waving animation.
-#define WATER_ANIMATION // Enables water waving animation.
+// #define WATER_ANIMATION // Disabled by Devouring Storms: keep vanilla-still water, no waving animation.
 #define WEATHER_ANIMATION // Enables rain waving animation.
 
 #define TIMELAPSE_MODE 0 // Enable timelapse mode. This smoothens the transition of animations of the sky, the foliage waving etc according to current world time instead of frame time. Set to fragment for water normals and sky only and full for the water normals, sky, and waves. This feature does not work on vanilla clouds, skybox, and the sun and moon. [0 1 2]
@@ -134,16 +134,16 @@ const float sunPathRotation = 30.0; // Light path angle. This also affects sky a
 
 /// -------------------------------- /// Water material settings /// -------------------------------- ///
 
-#define WATER_NOISE // Enables water noise. Varies the water brightness by noise similar to SDGP.
+// #define WATER_NOISE // Disabled by Devouring Storms: keep vanilla water texture/brightness.
 #define WATER_BRIGHTNESS 1.00 // Water brightness, lower values mean deeper colors [0.00 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.20 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.30 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.00]
 
-#define WATER_NORMAL // Enables water normals
+// #define WATER_NORMAL // Disabled by Devouring Storms: no wavy normal map.
 #define WATER_BLUR_SIZE 8.0 // Water normal map blur size, smaller means more defined waves, larger means smoother waves [1.0 2.0 4.0 8.0 16.0 32.0 64.0]
 #define WATER_DEPTH_SIZE 0.5 // The normal map depth of the waves, the smaller the more depth it has [0.125 0.25 0.5 1.0 2.0]
 #define WATER_TILE_SIZE 16 // Tile size of the water [4 8 16 24 32]
 
-#define WATER_STYLIZE_ABSORPTION // Enables stylized water absorption. Changes water color based on depth.
-#define WATER_FOAM // Enables water foam. Appears on the sides of most solid objects, including entities.
+// #define WATER_STYLIZE_ABSORPTION // Disabled by Devouring Storms: vanilla water colour response.
+// #define WATER_FOAM // Disabled by Devouring Storms: vanilla water edges.
 // #define WATER_FLAT // Enables flat water albedo.
 
 /// -------------------------------- /// Lava material settings /// -------------------------------- ///
@@ -185,7 +185,7 @@ const vec3 blockLightColor = vec3(BLOCKLIGHT_R, BLOCKLIGHT_G, BLOCKLIGHT_B) * (B
 
 // Note to self: I absolutely want all of the variables below this text to be all macros to follow the style guideline
 
-#define PHYSICS_OCEAN_SUPPORT // Enables physics mod ocean support
+// #define PHYSICS_OCEAN_SUPPORT // Disabled by Devouring Storms: no extra ocean/wave simulation.
 
 const int PHYSICS_ITERATIONS_OFFSET = 13;
 

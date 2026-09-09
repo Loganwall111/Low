@@ -45,12 +45,13 @@ public abstract class McsmQuickConfigKeyMixin {
             if (now - mcsm$lastOpenMs < 350L) return;
             mcsm$lastOpenMs = now;
 
-            // Only hijack normal in-game play. If the player is already in a
-            // menu, the explicit Devouring Storms button inside the settings
-            // screen still handles opening the panel.
-            if (mcsm$currentScreen(mc) != null) return;
+            // 1.9.182: open from gameplay OR from the old config screen. The
+            // earlier guard made Shift+C appear dead whenever a menu was open,
+            // exactly where players were testing it.
+            Screen parent = mcsm$currentScreen(mc);
+            if (parent instanceof McsmExtrasScreen) return;
 
-            mc.setScreenAndShow(new McsmExtrasScreen((Screen) null));
+            mc.setScreenAndShow(new McsmExtrasScreen(parent));
             System.err.println("[MCSM] Shift+C opened Devouring Storms Control Panel");
         } catch (Throwable t) {
             System.err.println("[MCSM] Shift+C quick panel failed: " + t);

@@ -3,7 +3,17 @@ package net.mcsm.extras;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 /**
  * Devouring Storms: built-in visual resource packs ship INSIDE the mod jar and
@@ -34,8 +44,123 @@ public final class McsmBuiltinPack {
         // mega-phase 5b: the Iris shader pack that ships inside this jar
         // installs itself here, before Iris reads its config on the client.
         McsmShaderPackInstall.install();
+        installResourcePack("/assets/dabywitherstormmod/resourcepacks/storylook.zip",
+                "DevouringStorms-StoryLook.zip");
+        installResourcePack("/assets/dabywitherstormmod/resourcepacks/ogs-cem.zip",
+                "DevouringStorms-OGS-CEM.zip");
+        selectResourcePacks();
         registerPack("storylook", "Story Look");
         registerPack("ogs-cem", "OGS CEM models");
+    }
+
+    private static void installResourcePack(String resource, String fileName) {
+        try {
+            File gameDir = gameDir();
+            if (gameDir == null) {
+                return;
+            }
+            File dir = new File(gameDir, "resourcepacks");
+            File target = new File(dir, fileName);
+            File marker = new File(dir, fileName + ".version");
+            String have = read(marker);
+            if (target.isFile() && McsmExtrasConfig.BUILD_VERSION.equals(have)) {
+                return;
+            }
+            InputStream in = McsmBuiltinPack.class.getResourceAsStream(resource);
+            if (in == null) {
+                return;
+            }
+            try {
+                dir.mkdirs();
+                Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                in.close();
+            }
+            write(marker, McsmExtrasConfig.BUILD_VERSION);
+            System.out.println("[ds] installed built-in resource pack: " + fileName);
+        } catch (Throwable t) {
+            warn(fileName, "resource-pack extraction failed: " + t);
+        }
+    }
+
+    private static void selectResourcePacks() {
+        try {
+            File gameDir = gameDir();
+            if (gameDir == null) {
+                return;
+            }
+            File options = new File(gameDir, "options.txt");
+            List<String> lines = options.isFile()
+                    ? Files.readAllLines(options.toPath(), java.nio.charset.StandardCharsets.UTF_8)
+                    : new ArrayList<>();
+            String a = "file/DevouringStorms-StoryLook.zip";
+            String b = "file/DevouringStorms-OGS-CEM.zip";
+            boolean found = false;
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i);
+                if (!line.startsWith("resourcePacks:")) {
+                    continue;
+                }
+                found = true;
+                String v = line.substring("resourcePacks:".length());
+                if (!v.contains(a)) {
+                    v = appendPack(v, a);
+                }
+                if (!v.contains(b)) {
+                    v = appendPack(v, b);
+                }
+                lines.set(i, "resourcePacks:" + v);
+            }
+            if (!found) {
+                lines.add("resourcePacks:[\"vanilla\",\"" + a + "\",\"" + b + "\"]");
+            }
+            Files.write(options.toPath(), lines, java.nio.charset.StandardCharsets.UTF_8);
+            System.out.println("[ds] selected Story Look + OGS resource packs in options.txt");
+        } catch (Throwable t) {
+            warn("resource pack selection", "options.txt update failed: " + t);
+        }
+    }
+
+    private static String appendPack(String existing, String pack) {
+        String e = existing == null ? "" : existing.trim();
+        String q = "\"" + pack + "\"";
+        if (e.startsWith("[") && e.endsWith("]")) {
+            if (e.length() <= 2) {
+                return "[\"vanilla\"," + q + "]";
+            }
+            return e.substring(0, e.length() - 1) + "," + q + "]";
+        }
+        return "[\"vanilla\"," + q + "]";
+    }
+
+    private static File gameDir() {
+        try {
+            Class<?> loaderCls = Class.forName("net.fabricmc.loader.api.FabricLoader");
+            Object loader = loaderCls.getMethod("getInstance").invoke(null);
+            Object path = loaderCls.getMethod("getGameDir").invoke(loader);
+            return new File(path.toString());
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static String read(File f) {
+        try {
+            if (!f.isFile()) {
+                return "";
+            }
+            return new String(Files.readAllBytes(f.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim();
+        } catch (Throwable t) {
+            return "";
+        }
+    }
+
+    private static void write(File f, String s) {
+        try (OutputStream out = new FileOutputStream(f)) {
+            out.write(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Throwable t) {
+            // ignore
+        }
     }
 
     private static void registerPack(String packPath, String label) {
