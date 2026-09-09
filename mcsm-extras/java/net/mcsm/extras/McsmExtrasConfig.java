@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.196";
+    public static final String BUILD_VERSION = "1.9.197";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -69,7 +69,7 @@ public final class McsmExtrasConfig {
 
     // ---- Atmosphere & Custom Graphics Parameters --------------------------
     /** Night sky opacity: 0.0 = clear, 1.0 = deepest navy. */
-    public static double nightSkyOpacity = 1.0;
+    public static double nightSkyOpacity = 0.42;
     /** Phase 5.5 transition point: exact phase where purple-pink horizon begins. */
     public static double phase55Threshold = 5.5;
     /** Salmon-pink intensity in phase 5.5-5.9 range. */
@@ -239,6 +239,10 @@ public final class McsmExtrasConfig {
                 glareSize = 0.58;
             }
             nightSkyOpacity = dbl(p, "night_sky_opacity", nightSkyOpacity);
+            if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && nightSkyOpacity > 0.85) {
+                // 1.9.197: old defaults over-darkened/re-tinted normal night.
+                nightSkyOpacity = 0.42;
+            }
             phase55Threshold = dbl(p, "phase_55_threshold", phase55Threshold);
             phase5_9PinkIntensity = dbl(p, "phase_5_9_pink_intensity", phase5_9PinkIntensity);
             glareAnimPhase = dbl(p, "glare_anim_phase", glareAnimPhase);

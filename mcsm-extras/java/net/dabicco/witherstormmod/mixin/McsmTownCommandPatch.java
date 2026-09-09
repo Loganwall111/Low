@@ -290,8 +290,8 @@ public abstract class McsmTownCommandPatch {
     private static int ds$status(CommandSourceStack src) {
         int pending = McsmWorldgen.pending();
         src.sendSuccess(() -> Component.literal("[ds] town queue: " + pending
-                + " job(s) pending. The queue drains every server tick at up to"
-                + " 24000 blocks/tick -- a town takes seconds, not minutes."), false);
+                + " job(s) pending. The queue drains safely every server tick at up to"
+                + " 4096 blocks/tick; use /ds towns tp <site> to watch fixed-coordinate builds."), false);
         return pending;
     }
 }

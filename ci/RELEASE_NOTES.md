@@ -1,3 +1,16 @@
+# Devouring Storms 1.9.197 — soft MCSM glare, calm blue night, restored opening structures
+
+This build targets the first successful no-shader gameplay test after 1.9.196: the game runs, but the sky glare/duplicate-head cards, purple night wash, missing opening structures, and weak cyan teeth needed an immediate correction pass.
+
+* **Rebuilt storm glare textures as clean soft radial haze**: no embedded storm-face silhouettes, no hard square/card edges, and no big line-like texture artifacts.
+* **Disabled the duplicate phase-sky glare card path** so only one camera-space storm halo renders around the nearest storm instead of stacked billboards that looked like extra heads.
+* **Removed fake sky teeth/head overlays from the glare pass**; teeth should now come from the real storm model/emissive tint instead of a giant stamped sky texture.
+* **Reduced purple/pink storm sky strength** and made phase 6 more grey-black with only slight purple, so normal night is no longer globally purple. Existing old configs with max night opacity are migrated down.
+* **Restored first-spawn Episode One structure queue** to the treehouse, wilderness, and EnderCon opening cluster while keeping the safe 4096 blocks/tick placement budget.
+* **Boosted phase-dynamic cyan teeth/emissives**: phase 5 reads white-cyan, phase 5.5 glows white-cyan, phase 6 is stronger blue/cyan, and phase 7 is green-blue.
+* **Added only subtle purple underside tinting** to later body/devourer atlases while preserving the dark black/blue-black MCSM body.
+* Shaders are still shipped as release assets and installed as available shaderpacks, but are **not auto-enabled** after the user's NVIDIA/OpenGL `GL_OUT_OF_MEMORY` crash path.
+
 # Devouring Storms 1.9.196 — no-shader stability and readable dark storm body
 
 This build reacts to the no-shader test: the game can play without shaders, but the storm body became too black/silhouette-like and the remaining crash path is native/GL memory rather than Java code.
@@ -297,7 +310,7 @@ Note: this workspace did not currently contain `world_data_temp/MC105/` or `worl
 * **Beacon Corona**: Radiant cyan light halo around active beacons.
 * **Nether Atmosphere**: Deep crimson fog and rising sparks/embers over lava lakes.
 * **Underwater Ambience**: Subtle crepuscular god rays and deep blue haze.
-* **Magical Sparkles**: Shimmering white, pink, and purple particles around storm bodies and magical anchors.
+* **Magical Sparkles**: Shimmering white, pink and purple particles around storm bodies and magical anchors.
 
 ### ⚡ Enhanced Wither Storm AI
 * **Menacing Threat Tracking**: Prioritizes players holding beacons, formidibombs, or nether stars.

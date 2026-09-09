@@ -84,10 +84,12 @@ public final class McsmPhaseSky {
     }
 
     public static void submit(LevelRenderContext ctx) {
-        try {
-            submitInner(ctx);
-        } catch (Throwable ignored) {
-        }
+        // 1.9.197: the old world-space phase sky card fought with the newer
+        // StormBlob sky halo, making two or three stacked glare billboards and
+        // obvious rectangular/line artifacts in the sky. The atmospheric glare
+        // now comes from McsmStormBlob only, using cleaned radial textures and a
+        // single camera-space halo attached to the nearest storm.
+        return;
     }
 
     private static void submitInner(LevelRenderContext ctx) {

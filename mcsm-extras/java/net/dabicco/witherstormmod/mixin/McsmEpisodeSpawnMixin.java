@@ -64,7 +64,7 @@ public abstract class McsmEpisodeSpawnMixin {
                     first.sendSystemMessage(Component.literal(
                             "\u00a75\u00a7lEpisode One \u00a78\u2014 \u00a7d\u00a7lA New Order"));
                     first.sendSystemMessage(Component.literal(
-                            "\u00a77The Story Mode opening area is being built; you start at the treehouse."));
+                            "\u00a77The Story Mode opening cluster is being built at its fixed coordinates; use /ds towns status or /ds towns build all if an older world already skipped it."));
                 }
             }
         }
@@ -89,13 +89,11 @@ public abstract class McsmEpisodeSpawnMixin {
     @Unique
     private static BlockPos dabyws$queueEpisodeOne(ServerLevel level) {
         BlockPos start = null;
-        // 1.9.194 native-memory fix: first login used to queue four large
-        // schematic areas at once. Even with lower render/simulation distance,
-        // the sudden block flood could make Sodium/Iris allocate too many
-        // chunk-render buffers and crash outside Java heap. Start with the
-        // treehouse only; players can still use /ds towns build/summon for the
-        // larger towns after the world settles.
-        String[] wants = { "Wilderness Treehouse" };
+        // 1.9.197: restore visible Episode-One structure spawning. The 1.9.194
+        // emergency build reduced this to the treehouse only while shaders were
+        // crashing the renderer; with shaders no longer forced on and the low
+        // worldgen budget still active, queue the full opening cluster again.
+        String[] wants = { "Wilderness Treehouse", "The Wilderness", "EnderCon Town Fair" };
         for (String want : wants) {
             for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
                 if (!s.label().equalsIgnoreCase(want)) {

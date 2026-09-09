@@ -13,11 +13,11 @@ public final class StormSkyDome {
    // phase 5 teal
    private static final float[] TEAL = new float[]{0.060F, 0.280F, 0.270F};
    // phase 5.4 purple
-   private static final float[] PURP = new float[]{0.280F, 0.080F, 0.380F};
-   // phase 5.5 pink-magenta
-   private static final float[] PINK = new float[]{0.620F, 0.160F, 0.480F};
-   // phase 6+ deep purple / rose
-   private static final float[] SIX = new float[]{0.420F, 0.100F, 0.360F};
+   private static final float[] PURP = new float[]{0.220F, 0.070F, 0.320F};
+   // phase 5.5 pink-magenta, restrained so normal night does not become purple
+   private static final float[] PINK = new float[]{0.380F, 0.120F, 0.320F};
+   // phase 6+ storm-grey with only a little purple undertone
+   private static final float[] SIX = new float[]{0.190F, 0.170F, 0.210F};
    private static final double RANGE = 900.0;
    private static float displayed;
    private static float displayedCore;
@@ -72,14 +72,14 @@ public final class StormSkyDome {
 
    public static float strength() {
       // MCSM: fog tint only while a real phase-5+ storm is nearby AND displayed.
-      // Cap at 0.72 so residual fog cannot purple-wash the calm night vault.
+      // Cap low so residual fog cannot purple-wash the calm night vault.
       if (!DabyWSClientConfig.stormBackdrop) {
          return 0.0F;
       }
       if (phaseSeen < 4.95F) {
          return 0.0F;
       }
-      return Mth.clamp(displayed * (float)DabyWSClientConfig.stormBackdropStrength * 0.55F, 0.0F, 0.55F);
+      return Mth.clamp(displayed * (float)DabyWSClientConfig.stormBackdropStrength * 0.32F, 0.0F, 0.32F);
    }
 
    public static float coreStrength() {

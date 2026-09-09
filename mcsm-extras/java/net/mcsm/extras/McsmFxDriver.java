@@ -105,8 +105,9 @@ public final class McsmFxDriver {
                 st[1] = 0.0;     // healed back: allow replay
             }
 
-            // ---- phase 5.5+: purple sky motes + sparks ---------------------
-            if (McsmExtrasConfig.purpleSky && phase >= 5.5 && gt % 4L == 0L) {
+            // ---- phase 5.5+: local storm motes only, never global purple night
+            if (McsmExtrasConfig.purpleSky && phase >= 5.5 && gt % 6L == 0L
+                    && hasNearbyPlayer(srv, self, 620.0D)) {
                 purpleMotes(srv, self, gt);
             }
 
@@ -312,6 +313,12 @@ public final class McsmFxDriver {
             spawn(srv, dust(0xff4d6d, 1.0f), sp.getX(), sp.getY() + 1.6, sp.getZ(), 8, 0.5, 0.5, 0.5, 0.1);
         }
         spawn(srv, dust(0xffd76a, 1.2f), x, y + 2.0, z, 160, 4.0, 3.0, 4.0, 0.35);
+    }
+
+    private static boolean hasNearbyPlayer(ServerLevel srv, WitherStormEntity self, double range) {
+        double x = self.getX(), y = self.getY(), z = self.getZ();
+        double r2 = range * range;
+        return !srv.getPlayers(p -> p.isAlive() && p.distanceToSqr(x, y, z) <= r2).isEmpty();
     }
 
     private static void purpleMotes(ServerLevel srv, WitherStormEntity self, long gt) {

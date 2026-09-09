@@ -39,15 +39,15 @@ public final class McsmTeethPhaseTint {
             float r, g, b, inten;
             boolean glow;
             if (phase >= 7.0F) {
-                r = 0.52F; g = 1.00F; b = 0.88F; inten = 2.10F; glow = true;   // green-blue late storm
+                r = 0.44F; g = 1.00F; b = 0.92F; inten = 2.35F; glow = true;   // bright green-blue late storm
             } else if (phase >= 6.0F) {
-                r = 0.34F; g = 0.78F; b = 1.00F; inten = 2.00F; glow = true;   // blue/cyan split teeth
+                r = 0.18F; g = 0.92F; b = 1.00F; inten = 2.45F; glow = true;   // stronger blue/cyan split teeth
             } else if (phase >= 5.5F) {
-                r = 0.96F; g = 1.00F; b = 1.00F; inten = 1.85F; glow = true;   // white teeth, glowing
+                r = 0.82F; g = 1.00F; b = 1.00F; inten = 2.05F; glow = true;   // white-cyan teeth, glowing
             } else if (phase >= 5.0F) {
-                r = 1.00F; g = 1.00F; b = 0.88F; inten = 0.35F; glow = true;   // phase 5: visible flat white teeth, but kept low so it does not bloom hard
+                r = 0.92F; g = 1.00F; b = 0.96F; inten = 0.70F; glow = true;   // phase 5: readable flat white with cyan edge, low bloom
             } else if (phase >= 4.0F) {
-                r = 0.82F; g = 0.98F; b = 1.00F; inten = 1.10F; glow = true;   // slight phase-4 glow
+                r = 0.72F; g = 0.98F; b = 1.00F; inten = 1.25F; glow = true;   // slight phase-4 cyan-white glow
             } else {
                 r = 0.98F; g = 0.98F; b = 0.86F; inten = 0.0F; glow = false;  // phase 3: no glowing teeth
             }

@@ -157,9 +157,9 @@ public final class McsmStormBlob {
             double skyDist = 220.0D;
             Vec3 at = cam.add(view.scale(skyDist));
             double angular = Mth.clamp(bodyRadius(phase) / Math.max(dist, 1.0), 0.012, 0.85);
-            double baseR = skyDist * angular * 1.5;
+            double baseR = skyDist * angular * 1.08;
             if (phase > 5.5F) {
-                baseR *= 1.0F + (phase - 5.5F) * 0.26F;
+                baseR *= 1.0F + (phase - 5.5F) * 0.12F;
             }
             float breathe = 1.0F + 0.03F * Mth.sin(nowSec * 0.045F);
             baseR *= breathe;
@@ -170,10 +170,14 @@ public final class McsmStormBlob {
             float wViolet = ramp(phase, 5.2F, 5.5F) * (1.0F - ramp(phase, 6.0F, 6.35F));
             float wPurp = ramp(phase, 6.0F, 6.35F);
             float wPink = ramp(phase, 6.3F, 7.0F);
-            float wCore = ramp(phase, 4.0F, 4.3F);
-            float wFace = ramp(phase, 5.5F, 5.8F);
+            float wCore = ramp(phase, 4.0F, 4.3F) * 0.42F;
+            // 1.9.197: no fake storm-face or fake three-mouth overlay in the
+            // sky glare. Those cards looked like duplicated heads stamped on a
+            // giant texture. Teeth now come from the real storm model/tint path;
+            // this pass is only a soft atmospheric halo.
+            float wFace = 0.0F;
             float wGlare = ramp(phase, 3.95F, 4.3F);
-            float wMouth = phase < 4.0F ? 0.0F : ramp(phase, 4.0F, 4.25F);
+            float wMouth = 0.0F;
             float mouthBoost = phase >= 7.0F ? 1.85F : (phase >= 6.0F ? 1.70F : (phase >= 5.5F ? 1.45F : 0.82F));
             float mouthAlphaScale = phase >= 7.0F ? 1.18F : (phase >= 6.0F ? 1.12F : (phase >= 5.5F ? 1.0F : (phase >= 5.0F ? 0.36F : 0.48F)));
             int mouthR = phase >= 7.0F ? 132 : (phase >= 6.0F ? 88 : (phase >= 5.5F ? 245 : 225));
@@ -188,7 +192,7 @@ public final class McsmStormBlob {
             if (key == mainKey && wGlare > 0.004F) {
                 McsmExtrasConfig.load();
                 double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-                float gr = (float) (baseR * (1.7D + 2.2D * gs));
+                float gr = (float) (baseR * (0.95D + 0.92D * gs));
                 float wr = 0.30F * wBlue + 0.35F * wTurq + 0.48F * wViolet
                         + 0.55F * wPurp + 0.72F * wPink;
                 float wg = 0.45F * wBlue + 0.85F * wTurq + 0.28F * wViolet
@@ -203,7 +207,7 @@ public final class McsmStormBlob {
                 }
                 quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
                         gr, (int) (wr * 255.0F), (int) (wg * 255.0F), (int) (wb * 255.0F),
-                        (int) (a * wGlare * 110.0F));
+                        (int) (a * wGlare * 68.0F));
             }
             if (wPink > 0.004F) {
                 quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE_PINK), at, view,

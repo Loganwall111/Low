@@ -97,9 +97,9 @@ public final class McsmStormAtmosphere {
         }
         // zenith-ish colours (fog/sky carrier)
         float[] teal = {0.08F, 0.32F, 0.30F};
-        float[] purp = {0.35F, 0.10F, 0.48F};
-        float[] pink = {0.55F, 0.18F, 0.42F}; // 5.5 magenta-pink horizon feel
-        float[] six  = {0.22F, 0.18F, 0.24F};
+        float[] purp = {0.24F, 0.08F, 0.34F};
+        float[] pink = {0.38F, 0.13F, 0.32F}; // 5.5 magenta-pink, but not a whole-night wash
+        float[] six  = {0.18F, 0.17F, 0.20F}; // phase 6 is storm-grey with only a little purple
         out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + six[0] * wSix) / tot;
         out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + six[1] * wSix) / tot;
         out[2] = (teal[2] * wTeal + purp[2] * wPurp + pink[2] * wPink + six[2] * wSix) / tot;
@@ -107,8 +107,9 @@ public final class McsmStormAtmosphere {
         // fades back to calm/vanilla Story Mode sky when the player gets far
         // away from the storm.
         float blend = Mth.clamp(tot, 0.0F, 1.0F) * distanceInfluence();
-        // near-storm boost
-        return blend * 0.92F;
+        // Keep purple/pink as storm atmosphere only; do not repaint the entire
+        // normal night sky purple when the player is merely nearby.
+        return blend * 0.46F;
     }
 
     public static void tick() {
