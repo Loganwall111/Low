@@ -1,4 +1,13 @@
+# Devouring Storms 1.9.187 — 26.2 pack metadata + Story Look shader reload fix
+
+The latest log showed the exact problem: Minecraft 26.2 rejects packs above format 64 unless `min_format` and `max_format` are present. It also showed Story Look was overriding `minecraft:core/block` with an older fragment shader that did not match the 26.2 block vertex shader.
+
+* **Fixed generated Story Look and OGS CEM `pack.mcmeta` again**: they now include `pack_format: 88`, `min_format: [88, 0]`, and `max_format: [88, 0]`.
+* **Synced Story Look's block/terrain core shaders with the jar's 26.2 shader pair** so selecting the resource pack should no longer break `minecraft:pipeline/solid_block`, `cutout_block`, or `translucent_block` during reload.
+* Keeps the 1.9.186 HUD/camera/NPC changes.
+
 # Devouring Storms 1.9.186 — Story Mode HUD, camera, and town NPC pass
+
 
 This build starts the in-game interface and NPC cleanup requested from the reference screenshots while keeping the 1.9.185 resource-pack format fix.
 

@@ -135,16 +135,12 @@ void main() {
 
     // directional key light (sun by day, dim moon by night)
     float ndlA   = dot(nrm, sunT.y >= 0.0 ? sunT : -sunT);
-    float crispA = mix(ndlA, step(-0.08, ndlA), 0.88); // harder block-face shadows
-    float keyA   = sunT.y >= 0.0 ? 1.0 : 0.48;
-    // deeper shade side + brighter lit side = MCSM contrast
-    color.rgb *= mix(1.0, clamp(0.42 + 0.68 * crispA, 0.0, 1.25), keyA);
+    float crispA = mix(ndlA, step(-0.05, ndlA), 0.75);
+    float keyA   = sunT.y >= 0.0 ? 1.0 : 0.42;
+    color.rgb *= mix(1.0, clamp(0.58 + 0.42 * crispA, 0.0, 1.0), keyA);
 
     // clouds / cinematic tree-like bands cast moving shape onto the ground
-    float csh = mcsm_cloud_shadow(mcsmWorldPos, sunT, clockS, upFace);
-    // exaggerate cloud occlusion so ground reads cinematic
-    csh = mix(1.0, csh, 1.35);
-    color.rgb *= clamp(csh, 0.35, 1.15);
+    color.rgb *= mcsm_cloud_shadow(mcsmWorldPos, sunT, clockS, upFace);
 
     // local emissive lift after shadows: torches/glow blocks keep their colour
     // and read like little Story Mode light sources.
@@ -163,7 +159,29 @@ void main() {
         return;
     }
 
-    // 1.9.168: ground glare rim wiped with halo system
+    // ---- MCSM faked moving shadows (spec §4, no depth map) ----
+    // 26.2 terrain carries no Normal attribute, so reconstruct the face
+    // normal per pixel from the world-position derivatives: constant on each
+    // axis-aligned block face => crisp, blocky shading by construction.
+    // (base sun/moon key + cloud shadows already applied above for every
+    //  frame; the storm pass only adds its own occlusion on top.)
+    vec3 n = nrm;
+    vec3 camWorld = camW;
+
+    // ---- MCSM storm occlusion: the ground under the storm column goes
+    // dark, ringed by a faint rim of its glare colour (the pack's "shadow on
+    // the ground", no depth map). Strongest on up-facing faces.
+    vec4 mcsmAim = mcsm_boss_dir(camWorld);
+    if (mcsmAim.w > 0.5) {
+        vec3 toStorm = mcsmWorldPos - mcsmAim.xyz;
+        toStorm.y = 0.0;
+        float sdist = length(toStorm);
+        float column = 1.0 - 0.48 * exp(-pow(sdist / 95.0, 2.0));
+        float rim = 0.18 * exp(-pow(max(sdist - 130.0, 0.0) / 45.0, 2.0)) * n.y;
+        float upf = clamp(0.4 + 0.6 * n.y, 0.0, 1.0);
+        color.rgb *= mix(1.0, column, upf);
+        color.rgb += mcsm_blob_color(mcsmP, mcsm_clock(GameTime)) * rim * 0.35;
+    }
 
     // ---- multi-phase fog: colour blend + "denser teal" density layer ----
     vec3 fogRGB = mcsm_fog_color(mcsmP, FogColor.rgb);

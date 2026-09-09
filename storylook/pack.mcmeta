@@ -1,6 +1,14 @@
 {
   "pack": {
     "pack_format": 88,
+    "min_format": [
+      88,
+      0
+    ],
+    "max_format": [
+      88,
+      0
+    ],
     "description": "Devouring Storms: Story Look - MCSM pastel skies, stacked cloud decks, soft lavender shadows (26.1 and newer)"
   }
 }
