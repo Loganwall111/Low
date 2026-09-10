@@ -1,3 +1,11 @@
+# 1.9.203 — MCSM Visual Shader, user palettes, no more sphere, readable blue teeth
+
+- **Shader is now "MCSM Visual Shader".** It installs into `shaderpacks/MCSM Visual Shader.zip` on every launch by default (the old `DevouringStorms-SuperDuperDefault.zip` is removed), so it is visible in the Iris shader list; auto-selection stays opt-in in the MCSM panel for GL safety. Tuned toward the Story Mode concept frames: soft bloom on torches/lava/glowstone, soft coloured shadows, warmer orange block light (255/214/150 @1.25), saturation 1.20, emissive intensity 8, gentler sun, lighter ground fog. Reflections, god rays and see-through water stay hard-killed.
+- **Skies use the palettes you supplied.** Midnight (navy 16,16,72 → 70,95,230 horizon band), phase-5 purple, phase-5.5 dusk (glarephase6plus) and phase-6 mauve decks are now taken from the palette PNGs instead of my extracted ramps, so night is no longer purple.
+- **The giant sphere is gone.** The glare dome patches used a polynomial falloff that stayed almost opaque out to the rim, so they read as a hard-edged ball floating in the world. Falloff is now gaussian, the main glare patch is 28% smaller and half as bright, the skirt 20% smaller, and the black upper cap is 30×17° (was 42×24°).
+- **Teeth read as blue.** Phase 5.5+ is now 0.62/0.86/1.0 at intensity 3.2, phase 6 0.50/0.82/1.0 at 3.4 — the old values were so dark the overlay looked unlit.
+- If new features seem missing: make sure `mods/` contains ONLY `devouringstorms-1.9.203-*.jar` (older copies load first) and the Mods list shows 1.9.203.
+
 # 1.9.202 — teal vault wins over the sunset, small-phase glitch squashed, opaque Story-Mode water
 
 - **The teal vault actually wins now.** The 1.9.201 dome capped the storm blend at 0.85 and only reached alpha 210, so vanilla's pink/orange sunset bled straight through — that is the wash in the 09-10 screenshot vs the accurate 09-06 frame. The storm decks now commit to ~96% blend with alpha 175–235, and the calm day/sunset/night decks ride the `customSkyboxes` gate too, so a stale config can no longer leave them dark.

@@ -131,7 +131,8 @@ public final class McsmExtrasConfig {
     /** Ship + auto-install the Devouring Storms Iris shader pack.
      *  Default OFF after native/GL out-of-memory reports; players can turn it
      *  back on from Shift+C once the world is stable. */
-    public static boolean embeddedShaderPack = false;
+    public static boolean autoSelectShaderPack = false; // 1.9.203: write Iris shaderPack= line (opt-in, GL-safety)
+    public static boolean embeddedShaderPack = true; // 1.9.203: pack installs into shaderpacks/ by default (never auto-selected)
 
     private static boolean loaded = false;
     private static long stamp = -1L;
@@ -199,6 +200,7 @@ public final class McsmExtrasConfig {
             p.setProperty("infinite_back_growth", String.valueOf(infiniteBackGrowth));
             p.setProperty("infinite_back_growth_speed", String.valueOf(infiniteBackGrowthSpeed));
             p.setProperty("embedded_shader_pack", String.valueOf(embeddedShaderPack));
+            p.setProperty("auto_select_shader_pack", String.valueOf(autoSelectShaderPack));
             try (OutputStream out = new FileOutputStream(f)) {
                 p.store(out, "MCSM - storm gameplay patches + visuals + gates. config_version below is the build that wrote this file.");
             }
@@ -301,12 +303,16 @@ public final class McsmExtrasConfig {
             infiniteBackGrowth = bool(p, "infinite_back_growth", infiniteBackGrowth);
             infiniteBackGrowthSpeed = dbl(p, "infinite_back_growth_speed", infiniteBackGrowthSpeed);
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
+            autoSelectShaderPack = bool(p, "auto_select_shader_pack", autoSelectShaderPack);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
                 // 1.9.196 migration: old configs wrote embedded_shader_pack=true,
                 // which kept auto-selecting the heavy Iris pack and caused
                 // GL_OUT_OF_MEMORY/native AllocateHeap crashes. Flip only on
                 // version migration; the player can opt back in afterwards.
-                embeddedShaderPack = false;
+                // 1.9.203: keep the pack INSTALLED by default so the user can
+                // see/select "MCSM Visual Shader" in Iris; selection itself
+                // stays manual (selectIris only writes the pack line on opt-in).
+                embeddedShaderPack = true;
                 save();
             }
         } catch (Throwable t) {

@@ -36,7 +36,7 @@ import java.util.Properties;
 public final class McsmShaderPackInstall {
 
     private static final String PACK_RES  = "/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip";
-    private static final String PACK_NAME = "DevouringStorms-SuperDuperDefault.zip";
+    private static final String PACK_NAME = "MCSM Visual Shader.zip";
     private static final String MARKER    = "DevouringStorms.version";
 
     private static boolean attempted = false;
@@ -60,6 +60,10 @@ public final class McsmShaderPackInstall {
             File marker = new File(packs, MARKER);
             boolean want = McsmExtrasConfig.embeddedShaderPack;
 
+            File legacy = new File(packs, "DevouringStorms-SuperDuperDefault.zip");
+            if (legacy.isFile()) {
+                legacy.delete();
+            }
             if (want) {
                 String have = read(marker);
                 if (!target.isFile() || !McsmExtrasConfig.BUILD_VERSION.equals(have)) {
@@ -84,7 +88,9 @@ public final class McsmShaderPackInstall {
                     marker.delete();
                 }
             }
-            selectIris(gameDir, want);
+            // 1.9.203: install by default, but only take over the Iris
+            // selection when the user explicitly opted in via the panel.
+            selectIris(gameDir, want && McsmExtrasConfig.autoSelectShaderPack);
         } catch (Throwable t) {
             // never crash the game over a shader pack
         }
@@ -106,7 +112,7 @@ public final class McsmShaderPackInstall {
                 }
             }
             String cur = p.getProperty("shaderPack", "").trim();
-            boolean ours = cur.contains("DevouringStorms");
+            boolean ours = cur.contains("DevouringStorms") || cur.contains("MCSM Visual Shader");
             boolean free = cur.isEmpty() || "(internal)".equals(cur) || "none".equalsIgnoreCase(cur);
             if (want) {
                 if (!ours && !free) {

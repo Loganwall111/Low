@@ -35,7 +35,7 @@ public final class McsmSkyDome {
             "dabywitherstormmod", "textures/misc/storm_white.png");
 
     /** shell radius in blocks; terrain inside this still cuts the gradient. */
-    private static final double SHELL = 430.0D;
+    private static final double SHELL = 430.0D; // inside the far plane even at 8 chunks (4*128=512)
 
     private static final int SECTORS = 16;   // azimuth segments
     private static final int BANDS = 9;      // elevation rings: -18deg .. +90deg

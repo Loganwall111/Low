@@ -200,10 +200,10 @@ public final class McsmStormBlob {
         collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(gtex),
                 (pose, consumer) -> {
                     emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.14D, 0.0D)).normalize(),
-                            505.0D, hx, hy, 1.0F, 1.0F, 1.0F, aa * 190.0F, 0.06F);
+                            505.0D, hx * 0.72D, hy * 0.72D, 1.0F, 1.0F, 1.0F, aa * 125.0F, 0.06F);
                     // outer atmospheric skirt: same disc, bigger and dimmer
                     emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.22D, 0.0D)).normalize(),
-                            515.0D, sx2, sy2, 1.0F, 1.0F, 1.0F, aa * 85.0F, 0.14F);
+                            515.0D, sx2 * 0.8D, sy2 * 0.8D, 1.0F, 1.0F, 1.0F, aa * 45.0F, 0.14F);
                 });
         collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(WHITE),
                 (pose, consumer) -> {
@@ -212,7 +212,7 @@ public final class McsmStormBlob {
                     // phases it hung as a floating black blob above the mini
                     // storm and read as "the small phase is completely glitched".
                     emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.38D, 0.0D)).normalize(),
-                            548.0D, 42.0D, 24.0D, 0.010F, 0.010F, 0.022F,
+                            548.0D, 30.0D, 17.0D, 0.010F, 0.010F, 0.022F,
                             aa * 185.0F * ramp(phase, 4.55F, 5.25F), 0.22F);
                     // Saturated colour core behind the heads/tractor beams.
                     emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.06D, 0.0D)).normalize(),
@@ -259,9 +259,13 @@ public final class McsmStormBlob {
         double y = (v * 2.0D - 1.0D) * hy;
         Vec3 d = dir.add(right.scale(Math.tan(x))).add(up.scale(Math.tan(y + yBias * hy))).normalize();
         double rx = (u * 2.0D - 1.0D), ry = (v * 2.0D - 1.0D);
-        double fall = Math.max(0.0D, 1.0D - Math.pow(Math.abs(rx), 2.6D))
-                * Math.max(0.0D, 1.0D - Math.pow(Math.abs(ry), 2.2D));
-        fall = fall * fall * (3.0D - 2.0D * fall);
+        // 1.9.203: gaussian falloff. The old polynomial edge stayed near-opaque
+        // almost to the rim, so the patch read as a giant hard-edged sphere
+        // sitting in the world instead of atmospheric glare.
+        double rr2 = rx * rx + ry * ry;
+        double fall = Math.exp(-3.2D * rr2) - Math.exp(-3.2D);
+        fall = Math.max(0.0D, fall / (1.0D - Math.exp(-3.2D)));
+        fall = fall * fall;
         int a = Mth.clamp((int)(alpha * fall), 0, 255);
         Vec3 p = cam.add(d.scale(shell));
         vertex(pose, consumer, p, u, v,
