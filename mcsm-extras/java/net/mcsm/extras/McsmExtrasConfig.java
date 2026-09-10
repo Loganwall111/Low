@@ -31,8 +31,10 @@ public final class McsmExtrasConfig {
     public static double  smudgeScale = 0.5;
 
     // ---- MCSM 1.9.98 batch (phase 29/30 user orders, 2026-09-04) ----------
-    /** Storm glare mass scale; read by the blob carrier every frame. */
-    public static double  glareSize = 0.58;
+    /** Storm glare mass scale; read by the blob carrier every frame.
+     * 1.9.201: raised from 0.58 — the glare read far too small against the
+     * MCSM reference frames. */
+    public static double  glareSize = 1.35;
     /** Mod-side aurora borealis at night (cold-biome biased). */
     public static boolean auroraEnabled = true;
     /** Full death cinematic: distortion -> white cracks -> implosion flash ->
@@ -238,8 +240,12 @@ public final class McsmExtrasConfig {
             }
             smudgeScale        = dbl(p, "smudge_scale", smudgeScale);
             glareSize          = dbl(p, "glare_size", glareSize);
-            if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && Math.abs(glareSize - 1.18) < 0.001) {
-                glareSize = 0.58;
+            if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
+                // 1.9.201: users on the old too-small defaults get the new
+                // bigger glare unless they explicitly moved the slider.
+                if (Math.abs(glareSize - 1.18) < 0.001 || Math.abs(glareSize - 0.58) < 0.001) {
+                    glareSize = 1.35;
+                }
             }
             nightSkyOpacity = dbl(p, "night_sky_opacity", nightSkyOpacity);
             if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && nightSkyOpacity > 0.85) {

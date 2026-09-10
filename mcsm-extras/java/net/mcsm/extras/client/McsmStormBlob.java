@@ -65,6 +65,36 @@ public final class McsmStormBlob {
             "dabywitherstormmod", "textures/misc/storm_glare.png");
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
+    // 1.9.201: the extracted multi-colour glare discs (rebuilt by
+    // ci/make_glare_from_sky.py from the OG sky strips).  The flat one-colour
+    // wash is replaced by these textured domes.
+    private static final Identifier GLARE4 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase4.png");
+    private static final Identifier GLARE5 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase5.png");
+    private static final Identifier GLARE54 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase54.png");
+    private static final Identifier GLARE55 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase55.png");
+    private static final Identifier GLARE6 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase6.png");
+
+    /** Glare disc texture for the phase, matching the extracted sky decks. */
+    private static Identifier glareTex(float phase) {
+        if (phase >= 6.0F) {
+            return GLARE6;
+        }
+        if (phase >= 5.48F) {
+            return GLARE55;
+        }
+        if (phase >= 5.25F) {
+            return GLARE54;
+        }
+        if (phase >= 4.9F) {
+            return GLARE5;
+        }
+        return GLARE4;
+    }
 
     /** The three beam mouths, in billboard units of baseR (x right, y up). */
     private static final float[] MOUTH_X = { -0.30F, 0.00F, 0.30F };
@@ -95,6 +125,9 @@ public final class McsmStormBlob {
 
     public static void submit(LevelRenderContext ctx) {
         try {
+            // 1.9.201: the extracted OG sky gradients render every frame
+            // (calm decks + storm decks) before the storm glare volume.
+            McsmSkyDome.submit(ctx);
             submitSkyVolume(ctx);
         } catch (Throwable ignored) {
             // an unexpected base-jar surface degrades to no blob, never a crash
@@ -147,18 +180,40 @@ public final class McsmStormBlob {
         final float bb = (0.30F*wEarly + 0.30F*wP5 + 0.36F*w55 + 0.44F*w59 + 0.28F*w6) / sum;
         final float aa = Math.min(1.0F, amp * 1.55F);
         final Vec3 bearing = dir;
-        ctx.submitNodeCollector().submitCustomGeometry(ctx.poseStack(), RenderTypes.entityTranslucentEmissive(WHITE),
+        final Identifier gtex = glareTex(phase);
+        McsmExtrasConfig.load();
+        final double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
+        // 1.9.201 -- the glare was a single flat colour and too small.  It is
+        // now the textured multi-colour disc rebuilt from the extracted sky
+        // strips, at roughly 1.6-2x the old angular size and riding the Glare
+        // Size slider (default raised to 1.35).  Black cap + saturated core
+        // stay so the silhouette still reads against it.
+        // half-angles grow with the slider but stay inside the tangent-space
+        // dome (never near 90 degrees or the projection blows up).
+        final double hx = Math.min(80.0D, 40.0D + 28.0D * gs);
+        final double hy = Math.min(72.0D, 34.0D + 24.0D * gs);
+        final double sx2 = Math.min(85.0D, 52.0D + 30.0D * gs);
+        final double sy2 = Math.min(78.0D, 42.0D + 26.0D * gs);
+        SubmitNodeCollector collector = ctx.submitNodeCollector();
+        PoseStack poseStack = ctx.poseStack();
+        // MAIN multi-colour glare wash: textured dome patch in the bearing.
+        collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(gtex),
                 (pose, consumer) -> {
-            // Main thick oval: top/sides around the storm, not a horizon strip.
-            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.20D, 0.0D)).normalize(),
-                    535.0D, 46.0D, 40.0D, rr, gg, bb, aa * 155.0F, 0.12F);
-            // Deep black upper cap like the references: darkness curls over the body.
-            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.38D, 0.0D)).normalize(),
-                    548.0D, 42.0D, 24.0D, 0.010F, 0.010F, 0.022F, aa * 185.0F, 0.22F);
-            // Saturated colour core behind the heads/tractor beams.
-            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.06D, 0.0D)).normalize(),
-                    520.0D, 30.0D, 26.0D, Math.min(1.0F, rr * 1.35F), Math.min(1.0F, gg * 1.20F), Math.min(1.0F, bb * 1.45F), aa * 92.0F, -0.02F);
-        });
+                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.14D, 0.0D)).normalize(),
+                            505.0D, hx, hy, 1.0F, 1.0F, 1.0F, aa * 190.0F, 0.06F);
+                    // outer atmospheric skirt: same disc, bigger and dimmer
+                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.22D, 0.0D)).normalize(),
+                            515.0D, sx2, sy2, 1.0F, 1.0F, 1.0F, aa * 85.0F, 0.14F);
+                });
+        collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(WHITE),
+                (pose, consumer) -> {
+                    // Deep black upper cap like the references: darkness curls over the body.
+                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.38D, 0.0D)).normalize(),
+                            548.0D, 42.0D, 24.0D, 0.010F, 0.010F, 0.022F, aa * 185.0F, 0.22F);
+                    // Saturated colour core behind the heads/tractor beams.
+                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.06D, 0.0D)).normalize(),
+                            520.0D, 26.0D, 22.0D, Math.min(1.0F, rr * 1.35F), Math.min(1.0F, gg * 1.20F), Math.min(1.0F, bb * 1.45F), aa * 70.0F, -0.02F);
+                });
     }
 
     private static Vec3 sway(float phase, float timeSec, double bodyR) {

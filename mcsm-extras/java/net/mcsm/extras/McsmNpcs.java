@@ -388,21 +388,10 @@ public final class McsmNpcs {
             Object data = villager.getMethod("getVillagerData").invoke(mob);
             Class<?> vtype = Class.forName("net.minecraft.world.entity.npc.VillagerType");
             Class<?> prof = Class.forName("net.minecraft.world.entity.npc.VillagerProfession");
-            Object type = namedRegistryValue(vtype, switch (Math.floorMod(who.hashCode() + index, 6)) {
-                case 0 -> "plains";
-                case 1 -> "savanna";
-                case 2 -> "taiga";
-                case 3 -> "snow";
-                case 4 -> "desert";
-                default -> "jungle";
-            });
-            Object profession = namedRegistryValue(prof, switch (Math.floorMod(who.hashCode(), 5)) {
-                case 0 -> "cartographer";
-                case 1 -> "toolsmith";
-                case 2 -> "cleric";
-                case 3 -> "mason";
-                default -> "none";
-            });
+            // 1.9.201: deterministic outfit per character (the type textures are
+            // the Story Look skins), not a hash roulette.
+            Object type = namedRegistryValue(vtype, typeFor(who));
+            Object profession = namedRegistryValue(prof, profFor(who));
             if (type != null) {
                 data = data.getClass().getMethod("setType", vtype).invoke(data, type);
             }
@@ -412,6 +401,38 @@ public final class McsmNpcs {
             villager.getMethod("setVillagerData", data.getClass()).invoke(mob, data);
         } catch (Throwable ignored) {
         }
+    }
+
+    /** Story Look villager-type skin each named character always wears. */
+    private static String typeFor(String who) {
+        return switch (who) {
+            case "Jesse", "Stampy", "Jack", "Aiden" -> "plains";
+            case "Petra", "Stella", "Radar" -> "savanna";
+            case "Axel", "Magnus", "Ellegaard" -> "desert";
+            case "Olivia", "Harper", "Maya" -> "jungle";
+            case "Lukas", "Nurm" -> "taiga";
+            case "Ivor", "Soren", "Gabriel", "Binta", "Wink" -> "snow";
+            case "Otto", "Hadrian", "Dan" -> "swamp";
+            default -> switch (Math.floorMod(who.hashCode(), 6)) {
+                case 0 -> "plains";
+                case 1 -> "savanna";
+                case 2 -> "taiga";
+                case 3 -> "snow";
+                case 4 -> "desert";
+                default -> "jungle";
+            };
+        };
+    }
+
+    /** Matching profession so hats/robes do not fight the outfit. */
+    private static String profFor(String who) {
+        return switch (who) {
+            case "Ivor", "Soren" -> "cleric";
+            case "Olivia", "Harper" -> "toolsmith";
+            case "Ellegaard", "Magnus" -> "mason";
+            case "Radar", "Jack" -> "cartographer";
+            default -> "none";
+        };
     }
 
     private static Object namedRegistryValue(Class<?> holder, String name) {

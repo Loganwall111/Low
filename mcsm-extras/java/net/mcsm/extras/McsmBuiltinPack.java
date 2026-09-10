@@ -74,15 +74,52 @@ public final class McsmBuiltinPack {
                 return;
             }
 
+            // 1.9.201: Fabric API 0.160+ removed/renamed the
+            // ResourcePackActivationPredicate class, so the old hard-coded
+            // Class.forName threw and the built-in packs NEVER registered --
+            // the reason the OG texture packs "did not install with it".
+            // Derive the predicate type from the real method signature instead.
             Class<?> rmhCls = Class.forName("net.fabricmc.fabric.api.resource.ResourceManagerHelper");
-            Class<?> predCls = Class.forName("net.fabricmc.fabric.api.resource.ResourcePackActivationPredicate");
+            Method target = null;
+            Class<?> predCls = null;
+            Object packType = null;
+            for (Method m : rmhCls.getMethods()) {
+                if (!"registerBuiltinResourcePack".equals(m.getName())) {
+                    continue;
+                }
+                Class<?>[] ps = m.getParameterTypes();
+                if (ps.length == 3 && ps[0] == rlCls) {
+                    target = m;
+                    predCls = ps[2];
+                    packType = null;
+                    break;
+                }
+                if (ps.length == 4 && ps[1] == rlCls && target == null) {
+                    Object[] packTypes = ps[0].isEnum() ? ps[0].getEnumConstants() : new Object[0];
+                    for (Object c : packTypes) {
+                        String name = String.valueOf(c);
+                        if (name.contains("CLIENT") || name.contains("RESOURCE")) {
+                            packType = c;
+                            break;
+                        }
+                    }
+                    if (packType != null) {
+                        target = m;
+                        predCls = ps[3];
+                    }
+                }
+            }
+            if (target == null || predCls == null) {
+                warn(label, "no registerBuiltinResourcePack overload recognized");
+                return;
+            }
             Object predicate = null;
             try {
                 Field f = predCls.getField("DEFAULT_ENABLED");
                 predicate = f.get(null);
-            } catch (NoSuchFieldException ignored) {
+            } catch (Throwable ignored) {
             }
-            if (predicate == null) {
+            if (predicate == null && predCls.isEnum()) {
                 for (Object c : predCls.getEnumConstants()) {
                     if ("DEFAULT_ENABLED".equals(String.valueOf(c))) {
                         predicate = c;
@@ -92,36 +129,6 @@ public final class McsmBuiltinPack {
             }
             if (predicate == null) {
                 warn(label, "no DEFAULT_ENABLED activation predicate in this fabric-api");
-                return;
-            }
-
-            Method target = null;
-            Object packType = null;
-            for (Method m : rmhCls.getMethods()) {
-                if (!"registerBuiltinResourcePack".equals(m.getName())) {
-                    continue;
-                }
-                Class<?>[] ps = m.getParameterTypes();
-                if (ps.length == 3 && ps[0] == rlCls) {
-                    target = m;
-                    packType = null;
-                    break;
-                }
-                if (ps.length == 4 && ps[1] == rlCls && target == null) {
-                    for (Object c : ps[0].getEnumConstants()) {
-                        String name = String.valueOf(c);
-                        if (name.contains("CLIENT") || name.contains("RESOURCE")) {
-                            packType = c;
-                            break;
-                        }
-                    }
-                    if (packType != null) {
-                        target = m;
-                    }
-                }
-            }
-            if (target == null) {
-                warn(label, "no registerBuiltinResourcePack overload recognized");
                 return;
             }
             if (target.getParameterCount() == 3) {

@@ -41,11 +41,11 @@ public final class McsmTeethPhaseTint {
             if (phase >= 7.0F) {
                 r = 0.44F; g = 1.00F; b = 0.92F; inten = 2.35F; glow = true;   // bright green-blue late storm
             } else if (phase >= 6.0F) {
-                r = 0.18F; g = 0.92F; b = 1.00F; inten = 2.45F; glow = true;   // stronger blue/cyan split teeth
+                r = 0.22F; g = 0.66F; b = 1.00F; inten = 2.45F; glow = true;   // blue glowing split teeth
             } else if (phase >= 5.5F) {
-                r = 0.82F; g = 1.00F; b = 1.00F; inten = 2.05F; glow = true;   // white-cyan teeth, glowing
+                r = 0.34F; g = 0.60F; b = 1.00F; inten = 2.10F; glow = true;   // 5.5+: the bluish glow the frames show
             } else if (phase >= 5.0F) {
-                r = 0.92F; g = 1.00F; b = 0.96F; inten = 0.70F; glow = true;   // phase 5: readable flat white with cyan edge, low bloom
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.15F; glow = false;  // phase 5: completely white, NOT blue, no glow bloom
             } else if (phase >= 4.0F) {
                 r = 0.72F; g = 0.98F; b = 1.00F; inten = 1.25F; glow = true;   // slight phase-4 cyan-white glow
             } else {
