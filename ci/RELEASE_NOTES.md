@@ -1,3 +1,10 @@
+# 1.9.204 — Story Mode storm density: debris vortex, colossal tentacles, neon tractor beams
+
+- **Debris vortex.** Every tracked storm (phase 2+) is now wrapped in a swirling cloud of dark obsidian/blackstone/crying-obsidian block fragments, purple dust and black smoke plumes — up to ~110 fragments per frame at phase 6+, spiralling tangentially with an inward pull. The silhouette reads dense and massive like the Story Mode frames instead of a clean cut-out. Client-side only; fades with distance; never touches gameplay.
+- **Colossal tentacles.** New `tentacle_girth` (default 2.2) fattens every tentacle chain on its cross axes after the physics pose, ramping from ~1.4× at phase 1.5 to full girth at phase 4, so the limbs read as heavy block limbs rather than thin ropes. Set it to 1.0 in the MCSM config to restore the original.
+- **Neon-purple tractor beams.** Force MCSM Look now drives the beam colour to solid violet (0.55/0.15/1.0) and opacity 1.35, so the eyes radiate a powerful purple light.
+- CI now also dumps the 26.2 entity/renderer/Fabric-object-builder API (`ci/api/entity.txt`) for the upcoming Story Mode character entity.
+
 # 1.9.203 — MCSM Visual Shader, user palettes, no more sphere, readable blue teeth
 
 - **Shader is now "MCSM Visual Shader".** It installs into `shaderpacks/MCSM Visual Shader.zip` on every launch by default (the old `DevouringStorms-SuperDuperDefault.zip` is removed), so it is visible in the Iris shader list; auto-selection stays opt-in in the MCSM panel for GL safety. Tuned toward the Story Mode concept frames: soft bloom on torches/lava/glowstone, soft coloured shadows, warmer orange block light (255/214/150 @1.25), saturation 1.20, emissive intensity 8, gentler sun, lighter ground fog. Reflections, god rays and see-through water stay hard-killed.

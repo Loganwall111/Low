@@ -35,6 +35,8 @@ public final class McsmExtrasConfig {
      * 1.9.201: raised from 0.58 — the glare read far too small against the
      * MCSM reference frames. */
     public static double  glareSize = 1.35;
+    /** 1.9.204: cross-axis scale of every tentacle chain (Story Mode heavy block limbs). */
+    public static double  tentacleGirth = 2.2;
     /** Mod-side aurora borealis at night (cold-biome biased). */
     public static boolean auroraEnabled = true;
     /** Full death cinematic: distortion -> white cracks -> implosion flash ->
@@ -168,6 +170,7 @@ public final class McsmExtrasConfig {
             p.setProperty("og_cem_models", String.valueOf(ogCemModels));
             p.setProperty("smudge_scale", String.valueOf(smudgeScale));
             p.setProperty("glare_size", String.valueOf(glareSize));
+            p.setProperty("tentacle_girth", String.valueOf(tentacleGirth));
             p.setProperty("aurora_enabled", String.valueOf(auroraEnabled));
             p.setProperty("shader_pack_gate", String.valueOf(shaderPackGate));
             p.setProperty("death_cinematic", String.valueOf(deathCinematic));
@@ -242,6 +245,7 @@ public final class McsmExtrasConfig {
             }
             smudgeScale        = dbl(p, "smudge_scale", smudgeScale);
             glareSize          = dbl(p, "glare_size", glareSize);
+            tentacleGirth      = dbl(p, "tentacle_girth", tentacleGirth);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
                 // 1.9.201: users on the old too-small defaults get the new
                 // bigger glare unless they explicitly moved the slider.

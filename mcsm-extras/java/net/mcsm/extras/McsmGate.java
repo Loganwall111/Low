@@ -119,6 +119,14 @@ public final class McsmGate {
             // textures stop falling back to the Classic orange/plain skin.
             changed += floorField(c, null, "stormSkin", 1.0);
 
+            // ---- 1.9.204: Story Mode neon-purple tractor beams ---------------
+            // Solid violet (0.55, 0.15, 1.0), near-opaque, so the eyes read as a
+            // powerful radiating light instead of a faint blue haze.
+            changed += floorField(c, null, "beamColorR", 0.55);
+            changed += ceilingField(c, null, "beamColorG", 0.15);
+            changed += floorField(c, null, "beamColorB", 1.0);
+            changed += floorField(c, null, "beamOpacity", 1.35);
+
             // ---- the halo / glare the user has been chasing ----------------
             changed += setBool(c, "sunGlow", true);
             changed += setBool(c, "blackGlare", true);

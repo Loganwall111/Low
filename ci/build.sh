@@ -142,7 +142,7 @@ try:
 except OSError:
     open(sys.argv[2], "w").write("")
     sys.exit(0)
-want = {"fabric-rendering-v1", "fabric-api-base"}
+want = {"fabric-rendering-v1", "fabric-api-base", "fabric-object-builder-api-v1", "fabric-lifecycle-events-v1"}
 out = []
 for m in re.finditer(r'<dependency>\s*<groupId>([^<]+)</groupId>\s*<artifactId>([^<]+)</artifactId>\s*<version>([^<]+)</version>', pom):
     g, a, v = m.groups()
@@ -207,6 +207,25 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.minecraft.server.level.ServerPlayer net.minecraft.core.particles.ParticleType \
     net.minecraft.core.particles.DustParticleOptions net.minecraft.network.chat.Component"
   javap -public -classpath "$CP2" $LEVEL_CLASSES > ci/api/level.txt 2>&1 || true
+  # 1.9.204 -- entity/renderer API for the Story Mode character entity round.
+  ENTITY_CLASSES="net.minecraft.world.entity.EntityType net.minecraft.world.entity.EntityType\$Builder \
+    net.minecraft.world.entity.PathfinderMob net.minecraft.world.entity.Mob net.minecraft.world.entity.LivingEntity \
+    net.minecraft.world.entity.ai.attributes.AttributeSupplier net.minecraft.world.entity.ai.attributes.Attributes \
+    net.minecraft.world.entity.ai.goal.GoalSelector net.minecraft.world.entity.MobCategory \
+    net.minecraft.client.renderer.entity.HumanoidMobRenderer net.minecraft.client.renderer.entity.LivingEntityRenderer \
+    net.minecraft.client.renderer.entity.MobRenderer net.minecraft.client.renderer.entity.EntityRendererProvider\$Context \
+    net.minecraft.client.renderer.entity.EntityRenderers net.minecraft.client.renderer.entity.state.HumanoidRenderState \
+    net.minecraft.client.renderer.entity.state.LivingEntityRenderState net.minecraft.client.model.HumanoidModel \
+    net.minecraft.client.model.player.PlayerModel net.minecraft.client.model.geom.ModelLayers \
+    net.minecraft.client.model.geom.ModelLayerLocation net.minecraft.client.model.geom.builders.LayerDefinition \
+    net.minecraft.client.renderer.entity.ZombieRenderer net.minecraft.client.renderer.entity.AbstractZombieRenderer \
+    net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry \
+    net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry \
+    net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry \
+    net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder \
+    net.minecraft.core.registries.BuiltInRegistries net.minecraft.core.Registry net.minecraft.core.registries.Registries \
+    net.minecraft.resources.ResourceKey net.minecraft.resources.Identifier"
+  javap -public -classpath "$CP2:$FAPI2_CP" $ENTITY_CLASSES > ci/api/entity.txt 2>&1 || true
   unzip -Z1 "$DL/client.jar" 2>/dev/null | grep -E '^net/minecraft/(world/level|server/level|core/particles|client/particles|network/chat)/' \
     | sort > ci/api/api-classes-index.txt || true
   unzip -Z1 "$DL/client.jar" 2>/dev/null | grep -iE 'message' > ci/api/message-locations.txt || true
@@ -214,7 +233,7 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
   unzip -Z1 "$DL/client.jar" 2>/dev/null | grep -E '^net/minecraft/client/.*\.class$' | sort \
     > ci/api/client-index.txt || true
   wc -l ci/api/*.txt || true
-  if [ -s ci/api/client.txt ]; then
+  if [ -s ci/api/client.txt ] || [ -s ci/api/entity.txt ]; then
     git add -f ci/api || true
     if ! git diff --cached --quiet -- ci/api; then
       git -c user.email="ci@mcsm.local" -c user.name="MCSM build" \
