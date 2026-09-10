@@ -28,6 +28,7 @@ public final class McsmBuiltinPack {
         }
         attempted = true;
         McsmShaderPackInstall.install();
+        McsmCommandBlockUse.register();
         registerBuiltIn("storylook", "Story Look");
         registerBuiltIn("ogs-cem", "OGS CEM preset/model pack");
     }

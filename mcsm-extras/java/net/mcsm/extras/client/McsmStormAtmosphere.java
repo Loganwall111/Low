@@ -86,23 +86,25 @@ public final class McsmStormAtmosphere {
         if (p < 4.9F) {
             return 0.0F;
         }
-        // phase colour decks — sampled from user atmosphere strips
+        // phase colour decks — sampled from the user's uploaded gradient set:
+        // 5 turquoise, 5.5 pink/purple/orange, 5.9 purple-blue-pink, 6 brown-pink/black.
         float wTeal = ramp(p, 4.90F, 5.10F) * (1.0F - ramp(p, 5.25F, 5.40F));
-        float wPurp = ramp(p, 5.20F, 5.38F) * (1.0F - ramp(p, 5.48F, 5.58F));
-        float wPink = ramp(p, 5.48F, 5.60F) * (1.0F - ramp(p, 5.95F, 6.12F)); // 5.5-5.9 ONLY
+        float wPurp = ramp(p, 5.20F, 5.42F) * (1.0F - ramp(p, 5.48F, 5.60F));
+        float wPink = ramp(p, 5.48F, 5.65F) * (1.0F - ramp(p, 5.78F, 5.94F));
+        float wLate = ramp(p, 5.78F, 5.92F) * (1.0F - ramp(p, 5.96F, 6.10F));
         float wSix  = ramp(p, 5.95F, 6.20F);
-        float tot = wTeal + wPurp + wPink + wSix;
+        float tot = wTeal + wPurp + wPink + wLate + wSix;
         if (tot < 0.02F) {
             return 0.0F;
         }
-        // zenith-ish colours (fog/sky carrier)
-        float[] teal = {0.08F, 0.32F, 0.30F};
-        float[] purp = {0.24F, 0.08F, 0.34F};
-        float[] pink = {0.38F, 0.13F, 0.32F}; // 5.5 magenta-pink, but not a whole-night wash
-        float[] six  = {0.18F, 0.17F, 0.20F}; // phase 6 is storm-grey with only a little purple
-        out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + six[0] * wSix) / tot;
-        out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + six[1] * wSix) / tot;
-        out[2] = (teal[2] * wTeal + purp[2] * wPurp + pink[2] * wPink + six[2] * wSix) / tot;
+        float[] teal = {0.02F, 0.28F, 0.25F};
+        float[] purp = {0.26F, 0.10F, 0.36F};
+        float[] pink = {0.48F, 0.16F, 0.40F};
+        float[] late = {0.34F, 0.12F, 0.48F};
+        float[] six  = {0.32F, 0.16F, 0.26F};
+        out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + late[0] * wLate + six[0] * wSix) / tot;
+        out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + late[1] * wLate + six[1] * wSix) / tot;
+        out[2] = (teal[2] * wTeal + purp[2] * wPurp + pink[2] * wPink + late[2] * wLate + six[2] * wSix) / tot;
         // presence scales with phase weight; 5.5 is strongest purple-pink, and
         // fades back to calm/vanilla Story Mode sky when the player gets far
         // away from the storm.

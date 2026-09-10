@@ -30,9 +30,9 @@ import net.mcsm.extras.McsmExtrasConfig;
  */
 public final class McsmHudTerminal {
 
-    private static final int SLOT = 22;
+    private static final int SLOT = 20;
     private static final int SLOTS = 9;
-    private static final float ICON_SCALE = 1.25F; // 16px icon -> 20px, smaller Story Mode rail
+    private static final float ICON_SCALE = 1.12F; // user feedback: smaller, closer-to-edge Story Mode rail
 
     // --- MCSM episode card state (client-only, no extra mixin needed) --------
     private static ClientLevel lastLevel;
@@ -86,8 +86,8 @@ public final class McsmHudTerminal {
         int selected = player.getInventory().getSelectedSlot();
         int railW = SLOT + 8;
         int railH = SLOTS * (SLOT + 3) + 5;
-        int px = 56;
-        int py = Math.max(20, Math.min(h - railH - 20, h / 2 - railH / 2));
+        int px = 20;
+        int py = Math.max(16, Math.min(h - railH - 16, h / 2 - railH / 2));
 
         // Left episode/action rail, matching the reference's stacked slots.
         g.fill(px - 3, py - 4, px + railW + 3, py + railH + 4, 0x33F2F6FF);

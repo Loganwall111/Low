@@ -133,25 +133,31 @@ public final class McsmStormBlob {
                 * (1.0F - Mth.clamp((float)((dist - 1500.0D) / 1200.0D), 0.0F, 1.0F));
         if (amp <= 0.01F) return;
 
-        float wBlue = ramp(phase, 3.95F, 4.2F) * (1.0F - ramp(phase, 4.6F, 5.0F));
-        float wTurq = ramp(phase, 4.45F, 4.9F) * (1.0F - ramp(phase, 5.2F, 5.5F));
-        float wViolet = ramp(phase, 5.2F, 5.5F) * (1.0F - ramp(phase, 6.0F, 6.35F));
-        float wPurp = ramp(phase, 6.0F, 6.35F);
-        float wPink = ramp(phase, 5.48F, 5.9F) * (1.0F - ramp(phase, 5.95F, 6.15F));
-        float sum = Math.max(0.001F, wBlue + wTurq + wViolet + wPurp + wPink);
-        final float rr = (0.10F*wBlue + 0.05F*wTurq + 0.23F*wViolet + 0.14F*wPurp + 0.36F*wPink) / sum;
-        final float gg = (0.25F*wBlue + 0.56F*wTurq + 0.12F*wViolet + 0.11F*wPurp + 0.13F*wPink) / sum;
-        final float bb = (0.58F*wBlue + 0.50F*wTurq + 0.46F*wViolet + 0.30F*wPurp + 0.36F*wPink) / sum;
-        final float aa = amp;
+        // Palettes pulled from the uploaded gradient references by phase:
+        // phase 5 turquoise+black, phase 5.5 pink/purple/orange+black,
+        // phase 5.9 purple/blue/pink, phase 6 brown-pink/purple/black.
+        float wP5 = ramp(phase, 4.90F, 5.08F) * (1.0F - ramp(phase, 5.24F, 5.38F));
+        float w55 = ramp(phase, 5.28F, 5.48F) * (1.0F - ramp(phase, 5.78F, 5.92F));
+        float w59 = ramp(phase, 5.72F, 5.90F) * (1.0F - ramp(phase, 5.95F, 6.08F));
+        float w6 = ramp(phase, 5.95F, 6.22F);
+        float wEarly = Math.max(0.0F, 1.0F - Math.min(1.0F, wP5 + w55 + w59 + w6));
+        float sum = Math.max(0.001F, wEarly + wP5 + w55 + w59 + w6);
+        final float rr = (0.05F*wEarly + 0.02F*wP5 + 0.42F*w55 + 0.30F*w59 + 0.34F*w6) / sum;
+        final float gg = (0.10F*wEarly + 0.34F*wP5 + 0.13F*w55 + 0.10F*w59 + 0.15F*w6) / sum;
+        final float bb = (0.30F*wEarly + 0.30F*wP5 + 0.36F*w55 + 0.44F*w59 + 0.28F*w6) / sum;
+        final float aa = Math.min(1.0F, amp * 1.55F);
         final Vec3 bearing = dir;
         ctx.submitNodeCollector().submitCustomGeometry(ctx.poseStack(), RenderTypes.entityTranslucentEmissive(WHITE),
                 (pose, consumer) -> {
-            emitDomePatch(pose, consumer, cam, bearing, 520.0D, 34.0D, 22.0D,
-                    rr * 0.35F, gg * 0.35F, bb * 0.38F, aa * 118.0F, -0.20F);
-            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.16D, 0.0D)).normalize(),
-                    560.0D, 24.0D, 16.0D, rr, gg, bb, aa * 72.0F, 0.10F);
-            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, -0.10D, 0.0D)).normalize(),
-                    500.0D, 42.0D, 12.0D, 0.015F, 0.018F, 0.035F, aa * 132.0F, -0.55F);
+            // Main thick oval: top/sides around the storm, not a horizon strip.
+            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.20D, 0.0D)).normalize(),
+                    535.0D, 46.0D, 40.0D, rr, gg, bb, aa * 155.0F, 0.12F);
+            // Deep black upper cap like the references: darkness curls over the body.
+            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.38D, 0.0D)).normalize(),
+                    548.0D, 42.0D, 24.0D, 0.010F, 0.010F, 0.022F, aa * 185.0F, 0.22F);
+            // Saturated colour core behind the heads/tractor beams.
+            emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.06D, 0.0D)).normalize(),
+                    520.0D, 30.0D, 26.0D, Math.min(1.0F, rr * 1.35F), Math.min(1.0F, gg * 1.20F), Math.min(1.0F, bb * 1.45F), aa * 92.0F, -0.02F);
         });
     }
 

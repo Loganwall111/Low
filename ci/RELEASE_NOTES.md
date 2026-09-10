@@ -1,3 +1,13 @@
+# 1.9.199 — thick MCSM storm halo, command-block controls, Story Mode shader trim
+
+- Reworked the storm wash into a thick storm-bearing oval/top-cap halo: a black upper shell plus saturated phase-colored core now wraps the Wither Storm sides/top instead of reading as thin horizon fog.
+- Added uploaded-reference-style day, midnight, sunset, phase 5, phase 5.5/5.9, and phase 6 sky/glare gradients into both mod assets and jar override assets.
+- Copied the OGS Wither Storm texture set directly into the mod namespace as a fallback in addition to the default-enabled OGS CEM resource pack, so the OG look is no longer dependent only on pack ordering.
+- Added command-block interactions: crouch/use opens the Devouring Storms control panel; normal use snaps nearby non-player entities out with DISCARDED removal instead of damage/death.
+- Shrunk and re-anchored the left inventory rail closer to the screen edge.
+- Added high-altitude Sky City blue haze blending and kept storm phase sky/fog distance-limited.
+- Stripped the packaged Super Duper default further toward Story Mode defaults: reflections/god-rays stay disabled while shadows, lighting, and dynamic sky remain.
+
 # Devouring Storms 1.9.198 — storm-anchored sky-volume glare, OGS default, shader safety
 
 This build follows the 1.9.197 test and the new MCSM references. The important correction is that the storm glare should not be a texture billboard/card: it should behave like a storm-attached skybox/fog volume behind the storm.
