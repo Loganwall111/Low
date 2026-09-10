@@ -3,7 +3,7 @@ package net.dabicco.witherstormmod.mixin;
 import net.dabicco.witherstormmod.DabyWitherStormModClient;
 import net.mcsm.extras.client.StoryCharacterRenderer;
 import net.mcsm.extras.entity.McsmEntities;
-import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,7 +21,7 @@ public abstract class McsmStoryRendererMixin {
     private void mcsm$storyRenderer(CallbackInfo ci) {
         try {
             if (McsmEntities.STORY_CHARACTER != null) {
-                EntityRenderers.register(McsmEntities.STORY_CHARACTER, StoryCharacterRenderer::new);
+                EntityRendererRegistry.register(McsmEntities.STORY_CHARACTER, StoryCharacterRenderer::new);
             }
         } catch (Throwable ignored) {
         }
