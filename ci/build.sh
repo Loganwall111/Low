@@ -360,6 +360,23 @@ if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f
 if [ -f "$CS/sky.fsh" ]; then cp -f "$CS/sky.fsh" "$CS/position.fsh"; cp -f "$CS/sky.vsh" "$CS/position.vsh"; fi
 echo "[build] 26.2 shader aliases: block<-terrain position<-sky"
 cp -r jar-overrides/* "$FX/cls/"
+# 1.9.206: src/main/resources was never overlaid -- the merged Story Look
+# textures (sun/moon, villager cast skins) and the story_character skins
+# silently missed every jar. Overlay it after jar-overrides.
+# Only assets/ (never its fabric.mod.json / mixins.json), and only files the
+# jar does not already have, so the tuned jar-overrides atlases stay in charge.
+if [ -d src/main/resources/assets ]; then
+  N_SRC=0
+  while IFS= read -r -d '' f; do
+    rel="${f#src/main/resources/}"
+    if [ ! -e "$FX/cls/$rel" ]; then
+      mkdir -p "$FX/cls/$(dirname "$rel")"
+      cp "$f" "$FX/cls/$rel"
+      N_SRC=$((N_SRC + 1))
+    fi
+  done < <(find src/main/resources/assets -type f -print0)
+  echo "[build] overlaid $N_SRC new files from src/main/resources/assets"
+fi
 # nullglob guard: on a failed javac the class dir is empty and a bare
 # `cp -r /tmp/mcsm-build/*` would die under set -e (that bug ate the jar).
 shopt -s nullglob

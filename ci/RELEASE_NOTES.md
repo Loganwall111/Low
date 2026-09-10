@@ -1,3 +1,11 @@
+# 1.9.206 — Story Mode body skin, merged textures ACTUALLY ship, simulated tentacles off
+
+- **Critical packaging fix.** `src/main/resources/` was never overlaid into the jar by the build, so the merged Story Look sun/moon, the villager cast skins and 1.9.205's 22 story_character skins silently missed every release (that is why "the old skin texture is appearing" and packs still seemed needed). The build now overlays every asset from it that the jar does not already contain.
+- **Story Mode body pass** (`ci/make_storymode_body.py`) on all 9 OG storm atlases: luminance crushed to a near-black silhouette (avg 24,25,35 → 8,11,36), remaining light pushed blue, and block edges get a dark-blue underglow — the Telltale look from your comparison frames. Command-block orange and magenta accents preserved; emissive masks untouched.
+- **Teeth vivid white.** Phase 4–5 pure white at intensity 2.6–3.0; 5.5+ white-blue (0.8/0.92/1.0 @3.4). Beams stay neon purple.
+- **Simulate Tentacles OFF by default** (Force MCSM Look now sets `tentaclePhysics=false`); the 2.2× girth still applies.
+- Shader reminder: "MCSM Visual Shader" is embedded in the jar and self-installs into `shaderpacks/` on launch; select it in Iris.
+
 # 1.9.205 — the Story Mode cast are real characters now
 
 - **New entity `dabywitherstormmod:story_character`.** Player-shaped humanoid (vanilla PLAYER model layer, 64×64 skin), 40 HP, walks with the normal walk/arm-swing cycle, opens doors, wanders, looks at players and at each other. Named cast in towns (Jesse, Petra, Axel, Olivia, Lukas, Ivor, Radar, Gabriel, Ellegaard, Magnus, Soren, Harper, Stella, Nurm, Jack, Binta, Otto, Hadrian, Maya, Stampy, Aiden) now spawn as this entity instead of re-skinned villagers; Reuben stays a pig.

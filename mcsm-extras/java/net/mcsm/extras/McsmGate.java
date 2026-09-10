@@ -111,7 +111,7 @@ public final class McsmGate {
             changed += setBool(c, "phaseAnim", true);
             changed += setBool(c, "filledSubphases", true);
             changed += setBool(c, "scaledSubphaseGrowth", true);
-            changed += setBool(c, "tentaclePhysics", true);
+            changed += setBool(c, "tentaclePhysics", false); // 1.9.206: user: simulated tentacles look wrong; off by default
             changed += setBool(c, "optimizeDistantAnimations", true);
             changed += setBool(c, "flatbackFlipFix", true);
             // Obsidian Gloss is the mod's built-in OG/MCSM texture set. The

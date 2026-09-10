@@ -43,14 +43,14 @@ public final class McsmTeethPhaseTint {
             } else if (phase >= 6.0F) {
                 r = 0.50F; g = 0.82F; b = 1.00F; inten = 3.40F; glow = true;   // blue glowing split teeth
             } else if (phase >= 5.5F) {
-                r = 0.62F; g = 0.86F; b = 1.00F; inten = 3.20F; glow = true;   // 5.5+: brighter bluish glow (was too dark to read)
+                r = 0.80F; g = 0.92F; b = 1.00F; inten = 3.40F; glow = true;   // 5.5+: brighter bluish glow (was too dark to read)
             } else if (phase >= 5.0F) {
                 // 1.9.202 regression fix: glow=false hid the teeth overlay
                 // entirely ("no glowing teeth"). Phase 5 must still RENDER —
                 // completely white, with the overlay switched on.
-                r = 1.00F; g = 1.00F; b = 1.00F; inten = 1.60F; glow = true;   // phase 5: completely white teeth, visible
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 3.00F; glow = true;   // phase 5: completely white teeth, visible
             } else if (phase >= 4.0F) {
-                r = 0.72F; g = 0.98F; b = 1.00F; inten = 1.25F; glow = true;   // slight phase-4 cyan-white glow
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 2.60F; glow = true;   // slight phase-4 cyan-white glow
             } else {
                 r = 0.98F; g = 0.98F; b = 0.86F; inten = 0.0F; glow = false;  // phase 3: no glowing teeth
             }
