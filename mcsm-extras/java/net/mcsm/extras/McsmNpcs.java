@@ -233,8 +233,17 @@ public final class McsmNpcs {
                 ns = eid.substring(0, colon);
                 path = eid.substring(colon + 1);
             }
-            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE
-                    .getValue(Identifier.fromNamespaceAndPath(ns, path));
+            EntityType<?> type = null;
+            boolean story = false;
+            if ("minecraft".equals(ns) && "villager".equals(path)
+                    && net.mcsm.extras.entity.McsmEntities.STORY_CHARACTER != null) {
+                // 1.9.205: human cast are real player-shaped StoryCharacter entities
+                type = net.mcsm.extras.entity.McsmEntities.STORY_CHARACTER;
+                story = true;
+            }
+            if (type == null) {
+                type = BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.fromNamespaceAndPath(ns, path));
+            }
             if (type == null) {
                 type = BuiltInRegistries.ENTITY_TYPE
                         .getValue(Identifier.fromNamespaceAndPath("minecraft", "villager"));
@@ -248,7 +257,11 @@ public final class McsmNpcs {
             }
             mob.finalizeSpawn(level, level.getCurrentDifficultyAt(at),
                     manual ? EntitySpawnReason.COMMAND : EntitySpawnReason.STRUCTURE, (SpawnGroupData) null);
-            applyHumanVariant(mob, who, Math.floorMod(who.hashCode(), 16));
+            if (story && mob instanceof net.mcsm.extras.entity.StoryCharacterEntity sc) {
+                sc.setCharacter(who);
+            } else {
+                applyHumanVariant(mob, who, Math.floorMod(who.hashCode(), 16));
+            }
             mob.setCustomName(Component.literal(who));
             mob.setCustomNameVisible(true);
             mob.setPersistenceRequired();
@@ -529,8 +542,17 @@ public final class McsmNpcs {
                     mob.getClass().getMethod("swing", hand).invoke(mob, main);
                 } catch (Throwable ignoredSwing) {
                 }
-                Vec3 v = mob.getDeltaMovement();
-                mob.setDeltaMovement(v.x, Math.max(v.y, 0.28), v.z);
+                if (mob instanceof net.mcsm.extras.entity.StoryCharacterEntity sc) {
+                    String line = tree[i % tree.length].toLowerCase();
+                    if (line.contains("ha!") || line.contains("haha") || line.contains("hah")) {
+                        sc.laugh(40);
+                    } else {
+                        sc.talk(50 + Math.min(80, tree[i % tree.length].length()));
+                    }
+                } else {
+                    Vec3 v = mob.getDeltaMovement();
+                    mob.setDeltaMovement(v.x, Math.max(v.y, 0.28), v.z);
+                }
             }
         } catch (Throwable ignored) {
         }

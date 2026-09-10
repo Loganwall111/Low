@@ -1,3 +1,10 @@
+# 1.9.205 — the Story Mode cast are real characters now
+
+- **New entity `dabywitherstormmod:story_character`.** Player-shaped humanoid (vanilla PLAYER model layer, 64×64 skin), 40 HP, walks with the normal walk/arm-swing cycle, opens doors, wanders, looks at players and at each other. Named cast in towns (Jesse, Petra, Axel, Olivia, Lukas, Ivor, Radar, Gabriel, Ellegaard, Magnus, Soren, Harper, Stella, Nurm, Jack, Binta, Otto, Hadrian, Maya, Stampy, Aiden) now spawn as this entity instead of re-skinned villagers; Reuben stays a pig.
+- **Acting.** Two synced channels the renderer animates: *talking* (head nods, raised gesturing right arm, body sway, white speech motes) and *laughing* (fast head-bob, shoulders shaking, arms drawn in, celebrate sound). Talking to a character triggers them from the dialogue line (lines with "ha!"/"haha" laugh); idle cast members also chatter to each other every 15–45 s and sometimes laugh.
+- **22 cast skins** generated in `ci/make_cast_skins.py` (canonical outfit colours: Jesse's white tee + red suspenders, Petra's bandana + gold armour trim, Axel's green hoodie, Olivia's goggles, Lukas's Ocelot jacket, Ivor's purple robe, …) at `textures/entity/story/<name>.png`. Unknown names fall back to Jesse.
+- Not included (honestly): Telltale facial animation, lip-sync and voice acting.
+
 # 1.9.204 — Story Mode storm density: debris vortex, colossal tentacles, neon tractor beams
 
 - **Debris vortex.** Every tracked storm (phase 2+) is now wrapped in a swirling cloud of dark obsidian/blackstone/crying-obsidian block fragments, purple dust and black smoke plumes — up to ~110 fragments per frame at phase 6+, spiralling tangentially with an inward pull. The silhouette reads dense and massive like the Story Mode frames instead of a clean cut-out. Client-side only; fades with distance; never touches gameplay.
