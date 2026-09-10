@@ -208,8 +208,12 @@ public final class McsmStormBlob {
         collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(WHITE),
                 (pose, consumer) -> {
                     // Deep black upper cap like the references: darkness curls over the body.
+                    // 1.9.202: fade it in only once the storm is big.  On small
+                    // phases it hung as a floating black blob above the mini
+                    // storm and read as "the small phase is completely glitched".
                     emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.38D, 0.0D)).normalize(),
-                            548.0D, 42.0D, 24.0D, 0.010F, 0.010F, 0.022F, aa * 185.0F, 0.22F);
+                            548.0D, 42.0D, 24.0D, 0.010F, 0.010F, 0.022F,
+                            aa * 185.0F * ramp(phase, 4.55F, 5.25F), 0.22F);
                     // Saturated colour core behind the heads/tractor beams.
                     emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.06D, 0.0D)).normalize(),
                             520.0D, 26.0D, 22.0D, Math.min(1.0F, rr * 1.35F), Math.min(1.0F, gg * 1.20F), Math.min(1.0F, bb * 1.45F), aa * 70.0F, -0.02F);

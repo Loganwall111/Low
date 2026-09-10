@@ -121,7 +121,10 @@ public final class McsmSkyDome {
         if (mc.level.dimension() != Level.OVERWORLD) {
             return;
         }
-        boolean calmOn = DabyWSClientConfig.storyModeSky;
+        // 1.9.202: the calm decks also ride the customSkyboxes gate (forced on
+        // by the MCSM client gate), so the skies render even when a stale
+        // config left storyModeSky off.
+        boolean calmOn = DabyWSClientConfig.storyModeSky || DabyWSClientConfig.customSkyboxes;
         float phase = 0.0F;
         double bestD = Double.MAX_VALUE;
         for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
@@ -148,13 +151,19 @@ public final class McsmSkyDome {
         calmRamp(mc.level.getGameTime() + (long) (mc.getDeltaTracker().getGameTimeDeltaPartialTick(false) * 50.0F), calm);
         float[] storm = new float[McsmGlarePalettes.STOPS * 3];
         float stormDeck = stormW > 0.01F ? stormRamp(phase, storm) : 0.0F;
-        float blend = Mth.clamp(stormW * stormDeck, 0.0F, 1.0F) * 0.85F;
+        // 1.9.202: commit hard to the phase decks once a storm is near. The old
+        // 0.85 cap let vanilla's pink/orange sunset bleed through and wash out
+        // the teal vault the user wants (09-10 screenshots vs the 09-06 target).
+        float blend = Mth.clamp(stormW, 0.0F, 1.0F)
+                * Mth.clamp(0.40F + stormDeck, 0.0F, 1.0F) * 0.96F;
 
         final float[] ramp = new float[McsmGlarePalettes.STOPS * 3];
         for (int i = 0; i < ramp.length; i++) {
             ramp[i] = calm[i] + (storm[i] - calm[i]) * blend;
         }
-        final int alpha = (int) (140.0F + 70.0F * blend);
+        // 1.9.202: much less see-through — 175..235 so the vanilla sunset can no
+        // longer tint the dome; the sun/moon/stars still show around it.
+        final int alpha = (int) (175.0F + 60.0F * blend);
 
         Vec3 cam = ctx.levelState().cameraRenderState.pos;
         SubmitNodeCollector collector = ctx.submitNodeCollector();
