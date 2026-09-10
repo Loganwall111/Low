@@ -1,3 +1,7 @@
+# 1.9.207 — teeth colours per the corrected spec
+
+- **Pure white ONLY at phase 5.** Phase 4, 5.5 and 6 are cyan-white (0.72/1.0/1.0); phase 7+ is GREEN (0.45/1.0/0.62). The 5.5/6/7 emissive masks were repainted to the same colours (recolour only, pixels never moved) so the atlas no longer fights the tint.
+
 # 1.9.206 — Story Mode body skin, merged textures ACTUALLY ship, simulated tentacles off
 
 - **Critical packaging fix.** `src/main/resources/` was never overlaid into the jar by the build, so the merged Story Look sun/moon, the villager cast skins and 1.9.205's 22 story_character skins silently missed every release (that is why "the old skin texture is appearing" and packs still seemed needed). The build now overlays every asset from it that the jar does not already contain.
