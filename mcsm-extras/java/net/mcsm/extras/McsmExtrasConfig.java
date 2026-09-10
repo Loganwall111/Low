@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.199";
+    public static final String BUILD_VERSION = "1.9.200";
     public static boolean enableTentacleGrab = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
@@ -243,7 +243,7 @@ public final class McsmExtrasConfig {
             }
             nightSkyOpacity = dbl(p, "night_sky_opacity", nightSkyOpacity);
             if ((cv == null || !BUILD_VERSION.equals(cv.trim())) && nightSkyOpacity > 0.85) {
-                // 1.9.199: old defaults over-darkened/re-tinted normal night.
+                // 1.9.200: old defaults over-darkened/re-tinted normal night.
                 nightSkyOpacity = 0.42;
             }
             phase55Threshold = dbl(p, "phase_55_threshold", phase55Threshold);
@@ -258,7 +258,7 @@ public final class McsmExtrasConfig {
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
             shaderPackGate     = bool(p, "shader_pack_gate", shaderPackGate);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
-                // 1.9.199: do not force custom storm pipelines while Iris is
+                // 1.9.200: do not force custom storm pipelines while Iris is
                 // running an external shaderpack; Iris reports those custom
                 // programs missing from its override list and memory pressure
                 // climbs. No-shader play is unaffected because Iris reports

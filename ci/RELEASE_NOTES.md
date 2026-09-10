@@ -1,3 +1,8 @@
+# 1.9.200 — Sky City haze included in verified build
+
+- Includes the high-altitude Sky City blue haze blend in the published jar, ramping in above tall build heights without changing normal ground-level play.
+- Carries forward 1.9.199's thick storm-top oval halo/backdrop, command-block controls, OGS texture fallback, shader reflection/god-ray trim, and skybox audit.
+
 # 1.9.199 — thick MCSM storm halo, command-block controls, Story Mode shader trim
 
 - Reworked the storm wash into a thick storm-bearing oval/top-cap halo: a black upper shell plus saturated phase-colored core now wraps the Wither Storm sides/top instead of reading as thin horizon fog.

@@ -1,6 +1,7 @@
 package net.dabicco.witherstormmod.client;
 
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.mcsm.extras.client.McsmStormAtmosphere;
 
@@ -40,6 +41,27 @@ public final class StoryModeSkyTint {
       return t * t * (3.0F - 2.0F * t);
    }
 
+   private static float skyCityBlend() {
+      try {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc == null || mc.player == null) return 0.0F;
+         // Sky City atmosphere starts high but ramps gently, with support for
+         // the user's million-block cloud-stack concept without showing it
+         // from normal ground play.
+         return ease((float)((mc.player.getY() - 220.0D) / 420.0D));
+      } catch (Throwable ignored) {
+         return 0.0F;
+      }
+   }
+
+   private static void mixTowardSkyCity(float[] out, float strength) {
+      if (strength <= 0.001F) return;
+      float[] blue = {0.42F, 0.70F, 1.0F};
+      out[0] = out[0] + (blue[0] - out[0]) * strength;
+      out[1] = out[1] + (blue[1] - out[1]) * strength;
+      out[2] = out[2] + (blue[2] - out[2]) * strength;
+   }
+
    private static void byTime(long clockTime, float[] day, float[] dusk, float[] night, float[] dawn, float[] out) {
       float t = (float)(clockTime % 24000L);
       if (t < 1500.0F) {
@@ -69,6 +91,7 @@ public final class StoryModeSkyTint {
          }
       } catch (Throwable ignored) {
       }
+      mixTowardSkyCity(out, skyCityBlend() * 0.42F);
    }
 
    public static void lightColor(long clockTime, float[] out) {
@@ -87,6 +110,7 @@ public final class StoryModeSkyTint {
          }
       } catch (Throwable ignored) {
       }
+      mixTowardSkyCity(out, skyCityBlend() * 0.55F);
    }
 
    public static void blockLightColor(float[] out) {
@@ -98,8 +122,9 @@ public final class StoryModeSkyTint {
             ? Mth.clamp((float)DabyWSClientConfig.storyModeFogStrength * 0.42F, 0.0F, 0.42F) : 0.0F;
       try {
          float b = McsmStormAtmosphere.skyBlend(TMP);
-         // storm fog denser; calm stays quiet
-         return Mth.clamp(base + b * 0.35F, 0.0F, 0.85F);
+         float skyCity = skyCityBlend();
+         // storm fog denser; high-altitude Sky City adds clean blue haze.
+         return Mth.clamp(base + b * 0.35F + skyCity * 0.28F, 0.0F, 0.85F);
       } catch (Throwable t) {
          return base;
       }
