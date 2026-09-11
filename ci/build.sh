@@ -129,8 +129,20 @@ fetch "https://libraries.minecraft.net/com/mojang/brigadier/1.3.10/brigadier-1.3
 # MCSM 1.9.133 -- the extras storm-blob resubmit references the Fabric
 # rendering context type, so the rendering-v1 module (+api-base) joins the
 # extras compile classpath, fetched exactly like build-source does it.
-FAPI_VER="$(curl -fsSL https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml \
-  | grep -oE '<version>[^<]*\+26\.2[^<]*</version>' | sed 's/<[^>]*>//g' | tail -1 || true)"
+FAPI_VER=""
+for attempt in 1 2 3; do
+  FAPI_META="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+      https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml 2>/dev/null || true)"
+  [ -z "$FAPI_META" ] && sleep 5 && continue
+  FAPI_VER="$(printf '%s' "$FAPI_META" \
+    | grep -oE '<version>[^<]*\+26\.2[^<]*</version>' | sed 's/<[^>]*>//g' | tail -1 || true)"
+  [ -n "$FAPI_VER" ] && break
+  # 1.9.209: if the exact +26.2 build tag vanished from metadata, fall back to
+  # any 26.x build so the rendering modules still land on the classpath.
+  FAPI_VER="$(printf '%s' "$FAPI_META" \
+    | grep -oE '<version>[^<]*\+26[^<]*</version>' | sed 's/<[^>]*>//g' | tail -1 || true)"
+  [ -n "$FAPI_VER" ] && break
+done
 mkdir -p "$DL/fapi2"
 : > "$DL/fapi2-list.txt"
 if [ -n "$FAPI_VER" ]; then
@@ -158,6 +170,12 @@ PYMOD
   done < "$DL/fapi2-list.txt"
 fi
 FAPI2_CP="$(find "$DL/fapi2" -name '*.jar' 2>/dev/null | tr '\n' ':')"
+FAPI2_COUNT="$(find "$DL/fapi2" -name '*.jar' 2>/dev/null | wc -l)"
+echo "[deps] fabric rendering modules on classpath: $FAPI2_COUNT"
+if [ "$FAPI2_COUNT" -lt 4 ]; then
+  echo "::error::fabric-api rendering modules missing from the compile classpath ($FAPI2_COUNT/4) -- the maven metadata fetch flaked; re-run the build"
+  exit 1
+fi
 
 
 # MCSM 1.9.100 -- close the loop: teach the sandbox the real API.
