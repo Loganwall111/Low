@@ -57,6 +57,10 @@ public final class McsmStormBlob {
     private static final Identifier VORTEX_BACKDROP = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/mcsm_atmosphere/vortex_backdrop.png");
 
+    /** The three beam mouths, in billboard units of baseR (x right, y up). */
+    private static final float[] MOUTH_X = { -0.30F, 0.00F, 0.30F };
+    private static final float[] MOUTH_Y = { -0.04F, -0.14F, -0.02F };
+
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
 
     private McsmStormBlob() {
