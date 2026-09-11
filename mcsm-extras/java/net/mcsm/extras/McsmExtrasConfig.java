@@ -38,6 +38,8 @@ public final class McsmExtrasConfig {
     /** 1.9.204: cross-axis scale of every tentacle chain (Story Mode heavy block limbs). */
     /** 1.9.208: raised 2.2 -> 2.8 -- colossal, heavy segmented limbs. */
     public static double  tentacleGirth = 2.8;
+    /** 1.9.209: multiplies the whole storm MODEL per phase (bigger each phase). */
+    public static double  stormModelScale = 1.0;
     /** Mod-side aurora borealis at night (cold-biome biased). */
     public static boolean auroraEnabled = true;
     /** Full death cinematic: distortion -> white cracks -> implosion flash ->

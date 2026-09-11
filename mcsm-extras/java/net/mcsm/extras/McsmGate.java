@@ -89,7 +89,7 @@ public final class McsmGate {
             if (mc == null || mc.gameDirectory == null) {
                 return persisted;
             }
-            Path p = mc.gameDirectory.resolve("config").resolve("dabywitherstormmod-client.json");
+            Path p = mc.gameDirectory.toPath().resolve("config").resolve("dabywitherstormmod-client.json");
             if (!Files.exists(p)) {
                 return persisted;
             }
