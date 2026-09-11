@@ -12,7 +12,9 @@ import net.dabicco.witherstormmod.client.GlowRenderTypes;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.mcsm.extras.McsmExtrasConfig;
 import net.minecraft.world.phys.Vec3;
@@ -38,6 +40,14 @@ public final class McsmStormRings {
     }
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
+
+    // 1.9.214 -- REAL Telltale block textures (repo gggggrff) for the cubes
+    private static final Identifier BLOCK_PURPLE = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_purple.png");
+    private static final Identifier BLOCK_DARK = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_darkpurple.png");
+    private static final Identifier BLOCK_BLACK = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_black.png");
 
     private static float ramp(float v, float lo, float hi) {
         if (hi <= lo) {
@@ -105,9 +115,9 @@ public final class McsmStormRings {
                 final float cg = vortex ? 26 : 27;
                 final float cb = vortex ? 18 : 52;
 
-                collector.submitCustomGeometry(poseStack, GlowRenderTypes.translucent(
-                                net.minecraft.resources.Identifier.fromNamespaceAndPath(
-                                        "dabywitherstormmod", "textures/misc/storm_white.png")),
+                Identifier blockTex = vortex ? BLOCK_BLACK : (phase7 ? BLOCK_PURPLE : BLOCK_DARK);
+                final RenderType ringType = GlowRenderTypes.translucent(blockTex);
+                collector.submitCustomGeometry(poseStack, ringType,
                         (pose, consumer) -> {
                             if (vortex) {
                                 drawVortex(pose, consumer, c, cam, bR, tSec, fade, cr, cg, cb);
@@ -217,31 +227,32 @@ public final class McsmStormRings {
         Vec3 up = right.cross(view).normalize();
         Vec3 rx = right.scale(cube);
         Vec3 uy = up.scale(cube);
-        int a = Mth.clamp((int) (fade * 235.0F), 0, 255);
+        int a = Mth.clamp((int) (fade * 245.0F), 0, 255);
         int ir = Mth.clamp((int) (cr * 255.0F), 0, 255);
         int ig = Mth.clamp((int) (cg * 255.0F), 0, 255);
         int ib = Mth.clamp((int) (cb * 255.0F), 0, 255);
-        // axis-aligned square
-        v(pose, consumer, p.subtract(rx).subtract(uy), ir, ig, ib, a);
-        v(pose, consumer, p.add(rx).subtract(uy), ir, ig, ib, a);
-        v(pose, consumer, p.add(rx).add(uy), ir, ig, ib, a);
-        v(pose, consumer, p.subtract(rx).add(uy), ir, ig, ib, a);
+        // axis-aligned square: full real block texture
+        v(pose, consumer, p.subtract(rx).subtract(uy), 0.0F, 1.0F, ir, ig, ib, a);
+        v(pose, consumer, p.add(rx).subtract(uy), 1.0F, 1.0F, ir, ig, ib, a);
+        v(pose, consumer, p.add(rx).add(uy), 1.0F, 0.0F, ir, ig, ib, a);
+        v(pose, consumer, p.subtract(rx).add(uy), 0.0F, 0.0F, ir, ig, ib, a);
         // 45-degree diamond twin (slightly brighter = block facet)
         Vec3 dx = rx.add(uy).scale(0.7071D);
         Vec3 dy = rx.scale(-1.0D).add(uy).scale(0.7071D);
         int ar = Mth.clamp(ir + 26, 0, 255);
         int ag = Mth.clamp(ig + 26, 0, 255);
         int ab = Mth.clamp(ib + 34, 0, 255);
-        v(pose, consumer, p.subtract(dx), ar, ag, ab, a);
-        v(pose, consumer, p.add(dy), ar, ag, ab, a);
-        v(pose, consumer, p.add(dx), ar, ag, ab, a);
-        v(pose, consumer, p.subtract(dy), ar, ag, ab, a);
+        v(pose, consumer, p.subtract(dx), 0.35F, 0.65F, ar, ag, ab, a);
+        v(pose, consumer, p.add(dy), 0.65F, 0.65F, ar, ag, ab, a);
+        v(pose, consumer, p.add(dx), 0.65F, 0.35F, ar, ag, ab, a);
+        v(pose, consumer, p.subtract(dy), 0.35F, 0.35F, ar, ag, ab, a);
     }
 
-    private static void v(Pose pose, VertexConsumer consumer, Vec3 at, int r, int g, int b, int a) {
+    private static void v(Pose pose, VertexConsumer consumer, Vec3 at,
+            float u, float vv, int r, int g, int b, int a) {
         consumer.addVertex(pose, (float) at.x, (float) at.y, (float) at.z)
                 .setColor(r, g, b, a)
-                .setUv(0.5F, 0.5F)
+                .setUv(u, vv)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(15728880)
                 .setNormal(pose, 0.0F, 1.0F, 0.0F);

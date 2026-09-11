@@ -1,89 +1,100 @@
 #!/usr/bin/env python3
-"""1.9.208: Story Mode body pass v2 over the OG storm atlases.
+"""1.9.214: remap the mod's storm atlases to the TRUE Telltale palette.
 
-User spec (from the Telltale frames): the body is NOT obsidian -- it is a
-MATTE DARK CHARCOAL-INDIGO block texture whose edges catch CRISP, sharp
-blue-white highlights (shiny without gloss).  Jagged obsidian detail is
-restricted to the very bottom of the atlas (the tentacle tips).
+Measured from the real extracted assets (repo Loganwall111/gggggrff,
+Telltale meshes/textures, traced by wheatlycrab5892):
 
-So this pass:
-  * maps the mid-body to charcoal-indigo (target avg ~ (30,31,52)),
-  * keeps saturated accents (command-block orange, magenta),
-  * adds hard, thresholded edge highlights -- only pixels that stand clearly
-    above their neighbourhood get the blue-white kick (crisp, not fuzzy),
-  * crushes the bottom 22% of the atlas darker/obsidian and keeps its local
-    contrast jagged.
-Emissive (_e) atlases are NOT touched.
+  Stage B body  (1:1 flesh.png):         black + (0,8,16) blue sheen,
+                                         highlights up to (0,8,24)/(0,16,32)
+  Stage D head  (heead.png):             black + (0,16,32) family
+  Stage C mass  (nice try...):           black + blues + cyan glow (0,112,224)
+  Stage A small (skM0_witherstormStageA): light grey (96,80,80) w/ dark detail
+
+No invented colours: every target value above was measured from those
+textures.  The mod's atlases keep their own UV layout (the mod's model
+defines it); this pass only swaps the colour ramp to the real one.
+Emissive (_e) atlases are untouched.
 """
-import os, sys, glob
+import os, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from pngutil import read_png, write_png
 
 ROOTS = ['jar-overrides/assets/dabywitherstormmod/textures/entity']
-NAMES = ['phase_4_assets_og', 'phase_4_assets_og_p55', 'phase_4_assets_og_p6', 'phase_4_assets_og_p7',
-         'phase_4_assets', 'phase_4_assets_p55', 'phase_4_assets_p6', 'phase_4_assets_p7',
-         'devourer_assets_og', 'devourer_assets_og_p55', 'devourer_assets_og_p6', 'devourer_assets_og_p7',
-         'devourer_assets', 'devourer_assets_p55', 'devourer_assets_p6', 'devourer_assets_p7',
-         'wither_storm_og', 'wither_storm']
-BODY_ONLY = {'wither_storm_og', 'wither_storm'}  # face atlases: no tentacle-tip zone
+BODY_NAMES = ['phase_4_assets', 'phase_4_assets_og',
+              'phase_4_assets_p55', 'phase_4_assets_og_p55',
+              'phase_4_assets_p6', 'phase_4_assets_og_p6',
+              'phase_4_assets_p7', 'phase_4_assets_og_p7',
+              'devourer_assets', 'devourer_assets_og',
+              'devourer_assets_p55', 'devourer_assets_og_p55',
+              'devourer_assets_p6', 'devourer_assets_og_p6',
+              'devourer_assets_p7', 'devourer_assets_og_p7']
+# face atlases: stage A style is light grey; phase 4+ faces follow the
+# stage B/C blue-black ramp (the head measured (0,16,32) family)
+FACE_NAMES = ['wither_storm', 'wither_storm_og']
 
-def lum(p):
-    return (p[0] * 299 + p[1] * 587 + p[2] * 114) // 1000
+def ramp_body(l):
+    """black -> dark blue sheen, per the measured stage B/C clusters."""
+    if l < 36:
+        return (0, 0, 0)
+    if l < 90:
+        return (0, 0, 8)
+    if l < 140:
+        return (0, 8, 16)
+    if l < 195:
+        return (0, 8, 24)
+    return (0, 16, 32)
 
-def process(path, name):
+def ramp_face_grey(l):
+    """stage A small storm: light warm grey (96,80,80) with dark detail."""
+    if l < 45:
+        return (20, 17, 17)
+    g = int(0.60 * l + 42)
+    return (min(255, g), min(255, int(g * 0.83)), min(255, int(g * 0.83)))
+
+def process(path, ramp):
     w, h, px = read_png(path)
-    lums = [lum(p) for p in px]
+    lums = [(p[0] * 299 + p[1] * 587 + p[2] * 114) // 1000 if p[3] > 0 else None for p in px]
+    live = sorted(l for l in lums if l is not None)
+    if not live:
+        return
+    lo, hi = live[max(0, len(live) // 100)], live[min(len(live) - 1, len(live) * 99 // 100)]
+    span = max(1, hi - lo)
     out = []
     for i, (r, g, b, a) in enumerate(px):
         if a == 0:
             out.append((r, g, b, a))
             continue
-        y = i // w
-        frac_y = y / max(1, h - 1)
+        # stretch this atlas' own luminance range to 0..255, then apply the
+        # measured Telltale ramp -- the atlases peak at very low luminance,
+        # so a global threshold would crush everything to black.
+        l = min(255, max(0, (lums[i] - lo) * 255 // span))
+        nr, ng, nb = ramp(l)
+        # keep saturated accents (command-block orange, magenta) intact --
+        # except on the stage-A face, where the real small storm is grey
+        # with only its purple eye kept.
         mx, mn = max(r, g, b), min(r, g, b)
-        sat = (mx - mn) / max(1, mx)
-        if sat > 0.45 and mx > 90:
-            out.append((r, g, b, a))          # keep saturated accents
-            continue
-        x = i % w
-        n = []
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            xx, yy = x + dx, y + dy
-            if 0 <= xx < w and 0 <= yy < h and px[yy * w + xx][3] > 0:
-                n.append(lums[yy * w + xx])
-        edge = max(0, lums[i] - (sum(n) / len(n))) if n else 0
-        if frac_y > 0.78 and name not in BODY_ONLY:
-            # tentacle tips: jagged obsidian, local contrast preserved
-            nr = int(r * 0.22)
-            ng = int(g * 0.22)
-            nb = int(b * 0.24 + 4)
-            if edge > 26:
-                boost = min(110, edge * 2)
-                nr, ng, nb = min(255, nr + boost), min(255, ng + boost), min(255, nb + boost)
-            out.append((min(255, nr), min(255, ng), nb, a))
-            continue
-        # charcoal-indigo body: desaturate toward indigo, keep luminance shape
-        nr = int(r * 0.30 + 8)
-        ng = int(g * 0.38 + 10)
-        nb = int(b * 0.78 + 22)
-        if edge > 18:
-            # crisp edge highlight: hard threshold, blue-white, no soft bloom
-            boost = min(120, (edge - 18) * 2)
-            nr = min(255, nr + boost)
-            ng = min(255, ng + boost)
-            nb = min(255, nb + boost)
-        out.append((min(255, nr), min(255, ng), min(255, nb), a))
+        keep = (mx - mn) / max(1, mx) > 0.45 and mx > 90
+        if ramp is ramp_face_grey:
+            keep = keep and b > r
+        if keep:
+            nr, ng, nb = r, g, b
+        out.append((nr, ng, nb, a))
     write_png(path, w, h, out)
 
 def main():
     n = 0
     for root in ROOTS:
-        for name in NAMES:
+        for name in BODY_NAMES:
             p = os.path.join(root, name + '.png')
             if os.path.isfile(p):
-                process(p, name)
+                process(p, ramp_body)
                 n += 1
-    print('charcoal-indigo body pass v2 applied to %d atlases' % n)
+        for name in FACE_NAMES:
+            p = os.path.join(root, name + '.png')
+            if os.path.isfile(p):
+                process(p, ramp_face_grey)
+                n += 1
+    print('true Telltale palette applied to %d atlases' % n)
 
 if __name__ == '__main__':
     main()

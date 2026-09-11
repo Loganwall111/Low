@@ -1,3 +1,16 @@
+# 1.9.214 — THE REAL TELLTALE ASSETS DROP (repo Loganwall111/gggggrff)
+
+The asset pack finally landed: original MCSM/Telltale meshes and textures extracted for Blockbench, with traced 1:1 "shaded" textures. Everything below uses those REAL assets -- no more invented textures.
+
+- **TRUE body palette.** Measured from the 1:1 traced textures: Stage B body = black + (0,8,16) blue sheen with (0,8,24)/(0,16,32) highlights; Stage D head = black + (0,16,32); the massive-stage cyan glow is exactly (0,112,224). All 18 storm atlases are remapped to those exact measured values (per-atlas luminance stretch so the ramp lands correctly). The mini storm (Stage A) now uses the real light-grey (96,80,80) Stage A look with its purple eye kept.
+- **THE HALO IS THE REAL ONE -- a volumetric thin shell.** Not a billboard, not a dome: an ellipsoid SHELL (wide oval) lathed around the storm in world space, textured with the game's own extracted halo radial falloff (fx_haloWitherstormStageB.png) -- bright core behind the body, black at the silhouette rim -- rendered additively in the phase tint as TWO nested layers (thin volumetric layer). World-anchored: it rides the storm's sway, never the camera; walk behind it and it is still there. Front-side quads keep only the rim band, so the glow wraps the storm's edges while the blackness stays inside.
+- **REAL tractor beams.** The extracted beam textures (RECREATION A/B/C) are in the jar: the base beam is overridden with the real tapered blue shaft, and stage B/C colour variants ship for the later phases.
+- **REAL vortex backdrop** (tile_witherstormVortexABackdrop) now darkens the sky band behind the storm's lower body.
+- **REAL block textures** (obj_witherstormBlock Purple/DarkPurple/Black) now texture the phase 6/7/8-9 ring cubes.
+- Also: Stage A body texture, block command textures and the rest of the extracted set are in the jar for future passes.
+
+Carries everything from 1.9.208-1.9.213 (shader default + water fix, no dome, no purple night, teeth bloom, debris/glacier flakes/block tornado, ember 8-9 sky, characters).
+
 # 1.9.213 — shader crash fixed, dome deleted, purple night gone, teeth glow restored
 
 - **THE SHADER IS FIXED.** 1.9.212's water-stripe edit referenced a time uniform this pack never declares, which broke the water program and degraded the whole pack under Iris -- that is why the shader "was failing". The stripes are now a static pattern (safe uniforms only); the pack loads clean again.

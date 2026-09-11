@@ -49,35 +49,13 @@ public final class McsmStormBlob {
     // glare is gone.
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
-    // 1.9.212 -- the ORIGINAL oval glare, revamped with the new banded
-    // textures (black rim -> dark purple -> purple middle -> black core).
-    private static final Identifier OVAL4 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase4.png");
-    private static final Identifier OVAL5 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase5.png");
-    private static final Identifier OVAL54 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase54.png");
-    private static final Identifier OVAL55 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase55.png");
-    private static final Identifier OVAL6 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase6.png");
-    private static final Identifier OVAL89 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase89.png");
-
-    private static Identifier ovalTex(float phase) {
-        if (phase >= 8.0F) return OVAL89;
-        if (phase >= 5.9F) return OVAL6;
-        if (phase >= 5.48F) return OVAL55;
-        if (phase >= 5.25F) return OVAL54;
-        if (phase >= 4.9F) return OVAL5;
-        return OVAL4;
-    }
-    // 1.9.201: the extracted multi-colour glare discs (rebuilt by
-    // ci/make_glare_from_sky.py from the OG sky strips).  The flat one-colour
-    // wash is replaced by these textured domes.
-    /** The three beam mouths, in billboard units of baseR (x right, y up). */
-    private static final float[] MOUTH_X = { -0.30F, 0.00F, 0.30F };
-    private static final float[] MOUTH_Y = { -0.04F, -0.14F, -0.02F };
+    // 1.9.214 -- REAL Telltale assets (repo Loganwall111/gggggrff):
+    // the volumetric halo is a thin ellipsoid SHELL around the storm,
+    // textured with the game's own radial falloff halo texture.
+    private static final Identifier HALO_TEX = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/halo.png");
+    private static final Identifier VORTEX_BACKDROP = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/vortex_backdrop.png");
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
 
@@ -167,26 +145,59 @@ public final class McsmStormBlob {
                 + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float nowSec = gt * 0.05F;
         double bodyR = bodyRadius(phase);
-        // anchored to the storm, riding its atmosphere sway -- NOT the camera
-        Vec3 at = new Vec3(best.dispX, best.dispY + bodyR * 0.10D, best.dispZ)
+        // world-anchored: rides the storm and its atmosphere sway, never the
+        // camera -- walk behind it and it is still there.
+        Vec3 c = new Vec3(best.dispX, best.dispY + bodyR * 0.06D, best.dispZ)
                 .add(sway(phase, nowSec, bodyR));
-        Vec3 view = at.subtract(cam).normalize();
-        if (view.lengthSqr() < 1.0E-4D) return;
+        Vec3 b = c.subtract(cam).normalize();
+        if (b.lengthSqr() < 1.0E-4D) return;
         float amp = ramp(phase, 3.95F, 4.25F)
                 * (1.0F - Mth.clamp((float)((dist - 1500.0D) / 1200.0D), 0.0F, 1.0F));
         if (amp <= 0.01F) return;
         float aa = Math.min(1.0F, amp * 1.45F);
+
+        // phase deck tint (the purple middle of the oval)
+        float[][] deck = McsmGlarePalettes.P4;
+        if (phase >= 8.0F)      deck = McsmGlarePalettes.P89;
+        else if (phase >= 5.9F) deck = McsmGlarePalettes.P6;
+        else if (phase >= 5.48F) deck = McsmGlarePalettes.P55;
+        else if (phase >= 5.25F) deck = McsmGlarePalettes.P5_PURPLE;
+        else if (phase >= 4.9F) deck = McsmGlarePalettes.P5_TEAL;
+        final float[] tint = {
+                Math.min(1.0F, deck[8][0] * 1.45F + 0.06F),
+                Math.min(1.0F, deck[8][1] * 1.45F + 0.06F),
+                Math.min(1.0F, deck[8][2] * 1.45F + 0.10F) };
+
         McsmExtrasConfig.load();
         double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-        double ovalR = bodyR * (1.55D + 0.85D * gs);
+        final double aH = bodyR * (1.45D + 0.55D * gs);  // oval: wide
+        final double aV = bodyR * (0.98D + 0.34D * gs);  // oval: shorter
+        final double aMaxAng = Math.atan2(aH, Math.max(dist, 1.0D));
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
-        // the oval, coloured by the banded texture at "a little" alpha
-        quad(poseStack, collector, GlowRenderTypes.glow(ovalTex(phase)), at, view,
-                ovalR, 255, 255, 255, (int)(aa * 205.0F));
-        // a dimmer, larger echo for depth (still world-anchored)
-        quad(poseStack, collector, GlowRenderTypes.glow(ovalTex(phase)), at, view,
-                ovalR * 1.32D, 255, 255, 255, (int)(aa * 62.0F));
+        final Vec3 centre = c;
+        final Vec3 bearing = b;
+        final float fade = aa;
+        final float tSec = nowSec;
+
+        // the volumetric shell: two nested thin ellipsoid layers, additive
+        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(HALO_TEX),
+                (pose, consumer) -> {
+                    emitHaloShell(pose, consumer, cam, centre, bearing, aH, aV,
+                            1.00D, tSec * 0.012D, aMaxAng, tint, fade * 122.0F);
+                    emitHaloShell(pose, consumer, cam, centre, bearing, aH, aV,
+                            0.93D, -tSec * 0.008D, aMaxAng, tint, fade * 84.0F);
+                });
+
+        // the vortex backdrop: the game's own black swirl strip behind the
+        // lower body, darkening the sky like the original silhouette band
+        collector.submitCustomGeometry(poseStack, GlowRenderTypes.translucent(VORTEX_BACKDROP),
+                (pose, consumer) -> {
+                    quadVertsTex(pose, consumer, centre.add(0.0D, -bodyR * 0.75D, 0.0D), bearing,
+                            bodyR * 2.6D, bodyR * 1.1D,
+                            26, 16, 44, (int)(fade * 120.0F));
+                });
+
         // faint purple fog pool cast onto the ground under the beams
         double groundY = best.dispY - bodyR * 1.15D;
         Vec3 gAt = new Vec3(best.dispX, Math.max(groundY, best.dispY - 260.0D), best.dispZ);
@@ -196,6 +207,88 @@ public final class McsmStormBlob {
                     quadVerts(pose, consumer, gAt, new Vec3(0.0D, 1.0D, 0.0D), gr,
                             150, 85, 230, (int)(aa * 42.0F));
                 });
+    }
+
+    /**
+     * The halo as the game builds it: a THIN VOLUMETRIC LAYER.  An
+     * ellipsoid shell lathed in world space around the storm, textured with
+     * the extracted radial falloff (bright core behind the body, black at
+     * the silhouette), additively blended in the phase tint.  Front-facing
+     * shell quads are skipped except the outer rim band, so the glow wraps
+     * the storm's edges without washing the black body -- the blackness
+     * stays inside, the purple ring hugs the sides.
+     */
+    private static void emitHaloShell(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 c,
+            Vec3 b, double aH, double aV, double layer, double spin,
+            double aMaxAng, float[] tint, float alpha) {
+        int seg = 48, rings = 14;
+        double hh = aH * layer, vv = aV * layer;
+        for (int iy = 0; iy < rings; iy++) {
+            double f0 = -0.5D + (double) iy / rings;
+            double f1 = -0.5D + (double) (iy + 1) / rings;
+            double p0 = Math.asin(Mth.clamp(f0, -1.0D, 1.0D));
+            double p1 = Math.asin(Mth.clamp(f1, -1.0D, 1.0D));
+            double cy0 = Math.cos(p0), cy1 = Math.cos(p1);
+            double y0 = vv * Math.sin(p0), y1 = vv * Math.sin(p1);
+            for (int ix = 0; ix < seg; ix++) {
+                double t0 = 2.0D * Math.PI * ix / seg + spin;
+                double t1 = 2.0D * Math.PI * (ix + 1) / seg + spin;
+                double c0x = Math.cos(t0), c0z = Math.sin(t0);
+                double c1x = Math.cos(t1), c1z = Math.sin(t1);
+                Vec3 v00 = c.add(c0x * cy0 * hh, y0, c0z * cy0 * hh);
+                Vec3 v10 = c.add(c1x * cy0 * hh, y0, c1z * cy0 * hh);
+                Vec3 v11 = c.add(c1x * cy1 * hh, y1, c1z * cy1 * hh);
+                Vec3 v01 = c.add(c0x * cy1 * hh, y1, c0z * cy1 * hh);
+                emitHaloQuad(pose, consumer, cam, c, b, v00, v10, v11, v01,
+                        aMaxAng, tint, alpha);
+            }
+        }
+    }
+
+    /** One shell quad: front-side quads only keep the rim band. */
+    private static void emitHaloQuad(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 c, Vec3 b,
+            Vec3 v00, Vec3 v10, Vec3 v11, Vec3 v01, double aMaxAng, float[] tint, float alpha) {
+        double d0 = v00.subtract(c).normalize().dot(b);
+        if (d0 > 0.03D) {
+            // front-facing: keep only the outer rim (edge glow, no body wash)
+            double q = Math.acos(Mth.clamp(v00.subtract(cam).normalize().dot(b), -1.0D, 1.0D))
+                    / Math.max(0.02D, aMaxAng);
+            if (q < 0.70D) {
+                return;
+            }
+        }
+        emitHaloVertex(pose, consumer, cam, c, b, v00, aMaxAng, tint, alpha);
+        emitHaloVertex(pose, consumer, cam, c, b, v10, aMaxAng, tint, alpha);
+        emitHaloVertex(pose, consumer, cam, c, b, v11, aMaxAng, tint, alpha);
+        emitHaloVertex(pose, consumer, cam, c, b, v01, aMaxAng, tint, alpha);
+    }
+
+    /** UV = the texture's radial falloff sampled by angular offset from the
+     *  storm bearing, so the bright core sits behind the body and the rim
+     *  fades to black exactly like the extracted halo texture. */
+    private static void emitHaloVertex(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 c, Vec3 b,
+            Vec3 p, double aMaxAng, float[] tint, float alpha) {
+        Vec3 d = p.subtract(cam).normalize();
+        double dot = Mth.clamp(d.dot(b), -1.0D, 1.0D);
+        double q = Math.acos(dot) / Math.max(0.02D, aMaxAng);
+        double rad = Mth.clamp(q, 0.0D, 1.0D);
+        // tangent direction of the offset, for the radial gradient orientation
+        double tx = d.x - b.x * dot, ty = d.y - b.y * dot, tz = d.z - b.z * dot;
+        double tl = Math.sqrt(tx * tx + ty * ty + tz * tz);
+        double ux = tl > 1.0E-5D ? tx / tl : 1.0D;
+        double uy = tl > 1.0E-5D ? ty / tl : 0.0D;
+        float u = (float) (0.5D + 0.5D * rad * ux);
+        float v = (float) (0.5D + 0.5D * rad * uy);
+        int ir = Mth.clamp((int)(tint[0] * 255.0F), 0, 255);
+        int ig = Mth.clamp((int)(tint[1] * 255.0F), 0, 255);
+        int ib = Mth.clamp((int)(tint[2] * 255.0F), 0, 255);
+        int ia = Mth.clamp((int)alpha, 0, 255);
+        consumer.addVertex(pose, (float) p.x, (float) p.y, (float) p.z)
+                .setColor(ir, ig, ib, ia)
+                .setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(15728880)
+                .setNormal(pose, (float) d.x, (float) d.y, (float) d.z);
     }
 
     private static Vec3 sway(float phase, float timeSec, double bodyR) {
@@ -421,6 +514,21 @@ public final class McsmStormBlob {
                 }
             }
         }
+    }
+
+    /** Textured wide billboard with its own UVs. */
+    private static void quadVertsTex(Pose pose, VertexConsumer consumer, Vec3 at, Vec3 view,
+            double rx, double ry, int r, int g, int b, int a) {
+        if (a <= 2) return;
+        Vec3 upHint = Math.abs(view.y) > 0.98 ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 right = view.cross(upHint).normalize();
+        Vec3 up = right.cross(view).normalize();
+        Vec3 xv = right.scale(rx);
+        Vec3 yv = up.scale(ry);
+        vertex(pose, consumer, at.subtract(xv).subtract(yv), 0.0F, 1.0F, r, g, b, a);
+        vertex(pose, consumer, at.add(xv).subtract(yv), 1.0F, 1.0F, r, g, b, a);
+        vertex(pose, consumer, at.add(xv).add(yv), 1.0F, 0.0F, r, g, b, a);
+        vertex(pose, consumer, at.subtract(xv).add(yv), 0.0F, 0.0F, r, g, b, a);
     }
 
     private static float fract(float x) {
