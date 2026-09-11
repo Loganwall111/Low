@@ -122,8 +122,8 @@ def main():
         g = groups[ti]
         uv = norm[ti]
         name = texname.get(ti, 'vortex_%d.png' % ti)
-        pc = chunks(['%.5fF' % v for v in g['pos']])
-        uc = chunks(['%.5fF' % v for v in uv])
+        pc = chunks(['%.5f' % v for v in g['pos']])
+        uc = chunks(['%.5f' % v for v in uv])
         ic = chunks([str(v) for v in g['idx']], 512, '')
         body.append('    private static Group g%d() {\n' % n2)
         body.append('        return new Group("%s", pos%d(), uv%d(), idx%d());\n' % (name, n2, n2, n2))
