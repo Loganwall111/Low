@@ -283,7 +283,7 @@
                     // Flat story-mode blue, opaque, rough: reflections cannot
                     // shine and the lake reads bright against the dark storm.
                     float shallow = clamp(blockDepth * 0.060, 0.0, 1.0);
-                    material.albedo.rgb = mix(vec3(0.085, 0.21, 0.36), vec3(0.13, 0.29, 0.47), shallow);
+                    material.albedo.rgb = mix(vec3(0.105, 0.245, 0.415), vec3(0.16, 0.335, 0.53), shallow);
                     material.albedo.a = max(material.albedo.a, 0.96);
                     material.metallic = 0.0;
                     material.smoothness = 0.0;

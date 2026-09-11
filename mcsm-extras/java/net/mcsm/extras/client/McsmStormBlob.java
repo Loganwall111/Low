@@ -43,59 +43,15 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class McsmStormBlob {
 
-    private static final Identifier BLUE4 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/backdrop_phase4_blue.png");
-    private static final Identifier BLACK = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/backdrop_black.png");
-    private static final Identifier TURQUOISE = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/backdrop_turquoise.png");
-    private static final Identifier PURPLE = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/backdrop_purple.png");
-    private static final Identifier PURPLE_PINK = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/backdrop_purple_pink.png");
-    private static final Identifier EMBER = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/backdrop_ember.png");
-    private static final Identifier STORM_FACE = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/storm_face.png");
     // mega-phase 5c: the reference frames exposed how the original game
     // builds the glare - a plain soft gradient quad BEHIND the silhouette,
     // plus flat emissive squares for the mouth details. The old hard ring
     // glare is gone.
-    private static final Identifier GLARE = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/storm_glare.png");
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
     // 1.9.201: the extracted multi-colour glare discs (rebuilt by
     // ci/make_glare_from_sky.py from the OG sky strips).  The flat one-colour
     // wash is replaced by these textured domes.
-    private static final Identifier GLARE4 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase4.png");
-    private static final Identifier GLARE5 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase5.png");
-    private static final Identifier GLARE54 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase54.png");
-    private static final Identifier GLARE55 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase55.png");
-    private static final Identifier GLARE6 = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase6.png");
-
-    /** Glare disc texture for the phase, matching the extracted sky decks. */
-    private static Identifier glareTex(float phase) {
-        if (phase >= 6.0F) {
-            return GLARE6;
-        }
-        if (phase >= 5.48F) {
-            return GLARE55;
-        }
-        if (phase >= 5.25F) {
-            return GLARE54;
-        }
-        if (phase >= 4.9F) {
-            return GLARE5;
-        }
-        return GLARE4;
-    }
-
     /** The three beam mouths, in billboard units of baseR (x right, y up). */
     private static final float[] MOUTH_X = { -0.30F, 0.00F, 0.30F };
     private static final float[] MOUTH_Y = { -0.04F, -0.14F, -0.02F };

@@ -1,3 +1,12 @@
+# 1.9.210 — phase-crossing voice lines, structured glare baked into assets, brighter story water
+
+- **The cast now has phase-crossing VOICE LINES.** When the storm crosses phase 4, 5, 6, 7 or 8, a nearby character shouts in-character (with talk animation + villager voice sound) and the line lands in chat attributed to them: "It split its heads! THREE of them!", "The sky is BURNING...", "Stay OUT of the light!" etc. — three variants per phase, chosen at random.
+- **Structured glare baked into the assets.** The five phase glare textures (plus a new phase 8-9 ember glare) are no longer soft radial mist discs — they now carry the rigid design directly: hard-edged three-band slab, 15 crisp alternating rays, saturated core, transparent background. Whatever code path samples them (including the shader) gets the rigid Telltale glare, never a fuzzy sphere.
+- **Dead soft-glare code removed.** The old body-glued soft-volume pass (McsmPhaseSky) and every unused backdrop-wash texture reference in the blob are gone from the jar — the fuzzy sphere path cannot come back.
+- **Water brightened again** toward story-mode mid blue (shader), still opaque, still zero reflections.
+
+Everything from 1.9.208/1.9.209 carries: shader embedded + auto-selected by default, vanilla look permanently disabled, per-phase model growth + Storm Model Scale slider, settings now stick across sessions, opaque dome with no circle, cube rings 6/7 + the 8-9 layered vortex, glacier tornado flakes, max debris, ember phase 8-9 sky.
+
 # 1.9.209 — settings actually stick, storm models grow per phase
 
 - **"Settings not activating" fixed.** The MCSM gate was silently re-forcing its look over any value you had saved in the base mod's own config screen at every session start, so a clicked toggle looked dead. The gate now reads `config/dabywitherstormmod-client.json` once and NEVER touches a key you have explicitly persisted to a different value. Fresh installs still get the full Story Mode default; every click you make now sticks across sessions.
