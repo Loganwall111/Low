@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.ArrayList;
 import java.util.List;
+import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.dabicco.witherstormmod.network.WitherStormPositionPacket;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
@@ -126,7 +127,9 @@ public final class StormShieldFX {
 
    public static void submit(LevelRenderContext ctx) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.level == null || ClientDistantStormManager.all().isEmpty()) {
+      // The MCSM look has no dome covering the sky: the sphere only renders
+      // when the legacy toggle is explicitly switched back on.
+      if (mc.level == null || ClientDistantStormManager.all().isEmpty() || !DabyWSClientConfig.shieldDome) {
          return;
       }
       float gt = (float)(mc.level.getGameTime() % 240000L) + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);

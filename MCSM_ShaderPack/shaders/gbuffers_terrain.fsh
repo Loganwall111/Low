@@ -55,12 +55,12 @@ void main() {
     float normalShade = clamp(normal.y * 0.35 + 0.65, 0.35, 1.0);
     tex.rgb *= normalShade;
 
-    // ---- Shiny material pass: soft specular metallic sheen over the active
-    // witherFlesh / tornFlesh voxel sheets ----
-    // The black voxel sheets catch light highlights dynamically: a soft
-    // Blinn-Phong key light sheen plus a fresnel rim, gated by a material
-    // match against the bound custom textures (colour identity test on the
-    // block's sampled albedo vs the custom texture's average texel).
+    // ---- Matte material pass: the active witherFlesh / tornFlesh voxel
+    // sheets grade to charcoal-indigo and catch one restrained edge light.
+    // MCSM flesh is flat dark matter with crisp rims, never glossy metal.
+    // Gated by a material match against the bound custom textures (colour
+    // identity test on the block's sampled albedo vs the custom texture's
+    // average texel).
     vec3 witherAvg = texture2D(witherFlesh, vec2(0.5, 0.5)).rgb;
     vec3 tornAvg = texture2D(tornFlesh, vec2(0.5, 0.5)).rgb;
     float witherMatch = 1.0 - smoothstep(0.0, 0.30, length(tex.rgb - witherAvg));
@@ -72,11 +72,15 @@ void main() {
         vec3 halfVec = normalize(viewDir + keyLight);
         float ndotl = clamp(dot(normal, keyLight), 0.0, 1.0);
         float spec = pow(clamp(dot(normal, halfVec), 0.0, 1.0), 28.0);
+        // charcoal grade toward blue-violet instead of pure black
+        tex.rgb = max(tex.rgb, vec3(0.028, 0.030, 0.062));
+        tex.rgb *= mix(vec3(1.0), vec3(0.86, 0.90, 1.10), fleshMask);
+        // faint key-light kiss only: no specular lobe on MCSM flesh
         float sheen = spec * (0.25 + 0.75 * skyLight) + 0.05 * ndotl;
-        tex.rgb += vec3(0.75, 0.66, 1.05) * sheen * fleshMask * 0.55;
-        // metallic fresnel rim so the sheets read as dark metal, not matte paint
+        tex.rgb += vec3(0.75, 0.66, 1.05) * sheen * fleshMask * 0.10;
+        // restrained indigo edge light so the sheets keep crisp rims
         float fres = pow(1.0 - clamp(dot(normal, viewDir), 0.0, 1.0), 3.0);
-        tex.rgb += vec3(0.55, 0.48, 0.95) * fres * fleshMask * 0.22;
+        tex.rgb += vec3(0.10, 0.12, 0.30) * fres * fleshMask * 0.35;
     }
 
     // ---- Live sun shadow (moves with the time of day) ----

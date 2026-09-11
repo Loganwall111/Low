@@ -121,9 +121,9 @@ public class WitherStormHeadRenderer extends EntityRenderer<WitherStormHeadEntit
    }
 
    public static int glowTint() {
-      int r = (int)(Mth.clamp(DabyWSClientConfig.eyeColorR, 0.0, 1.0) * 255.0);
-      int g = (int)(Mth.clamp(DabyWSClientConfig.eyeColorG, 0.0, 1.0) * 255.0);
-      int b = (int)(Mth.clamp(DabyWSClientConfig.eyeColorB, 0.0, 1.0) * 255.0);
+      int r = (int)(Mth.clamp(DabyWSClientConfig.teethColorR, 0.0, 1.0) * 255.0);
+      int g = (int)(Mth.clamp(DabyWSClientConfig.teethColorG, 0.0, 1.0) * 255.0);
+      int b = (int)(Mth.clamp(DabyWSClientConfig.teethColorB, 0.0, 1.0) * 255.0);
       r = (int)((float)r * 0.96F);
       g = Math.min(255, (int)((float)g * 1.02F));
       b = Math.min(255, (int)((float)b * 1.03F));
@@ -131,9 +131,9 @@ public class WitherStormHeadRenderer extends EntityRenderer<WitherStormHeadEntit
    }
 
    public static int eyeTint() {
-      int r = (int)(Mth.clamp(DabyWSClientConfig.beamColorR, 0.0, 1.0) * 255.0);
-      int g = (int)(Mth.clamp(DabyWSClientConfig.beamColorG, 0.0, 1.0) * 255.0);
-      int b = (int)(Mth.clamp(DabyWSClientConfig.beamColorB, 0.0, 1.0) * 255.0);
+      int r = (int)(Mth.clamp(DabyWSClientConfig.eyeColorR, 0.0, 1.0) * 255.0);
+      int g = (int)(Mth.clamp(DabyWSClientConfig.eyeColorG, 0.0, 1.0) * 255.0);
+      int b = (int)(Mth.clamp(DabyWSClientConfig.eyeColorB, 0.0, 1.0) * 255.0);
       int mx = Math.max(1, Math.max(r, Math.max(g, b)));
       float lift = 226.0F / (float)mx;
       r = Math.min(255, (int)((float)r * lift) + 18);

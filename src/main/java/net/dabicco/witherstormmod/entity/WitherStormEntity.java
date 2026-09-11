@@ -882,7 +882,14 @@ public class WitherStormEntity extends WitherBoss implements StormHeadHost {
    }
 
    public float headScaleFor(int index) {
-      return !this.isPhase4() ? 1.35F : Mth.lerp(this.hatchProgress(), 1.35F, 6.0F);
+      if (!this.isPhase4()) {
+         return 1.35F;
+      }
+      float base = Mth.lerp(this.hatchProgress(), 1.35F, 6.0F);
+      // The heads keep growing with the storm: 6.0 at phase 4, up to ~7.5 by
+      // phase 7, plus a devourer bonus so phase 6 reads dramatically bigger.
+      float grown = (float)Math.min(Math.max(this.phase - (double)4.0F, 0.0), 3.0) * 0.5F;
+      return (base + grown) * (this.isDevourer() ? 1.06F : 1.0F);
    }
 
    public float hatchProgress() {

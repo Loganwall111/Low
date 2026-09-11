@@ -127,6 +127,10 @@ public final class StormDebris {
       submit(poseStack, collector, timeTicks, light, phase5Ticks, phase58Ticks, stormId, settle, devourer ? 5880 : 2500, devourer, 2500, 1.0F, preview);
    }
 
+   public static void submit(PoseStack poseStack, SubmitNodeCollector collector, float timeTicks, int light, float phase5Ticks, float phase58Ticks, int stormId, boolean devourer, float settle, boolean preview, float phase) {
+      submit(poseStack, collector, timeTicks, light, phase5Ticks, phase58Ticks, stormId, settle, devourer ? 5880 : 2500, devourer, 2500, 1.0F, preview, phase);
+   }
+
    public static void submitEarly(PoseStack poseStack, SubmitNodeCollector collector, float timeTicks, int light, float phase, int stormId) {
       if (!(phase < 0.5F)) {
          float ph = displayPhase(stormId, phase);
@@ -192,10 +196,14 @@ public final class StormDebris {
    }
 
    private static void submit(PoseStack poseStack, SubmitNodeCollector collector, float timeTicks, int light, float phase5Ticks, float phase58Ticks, int stormId, float settle, int drawCount, boolean violet, int glowFrom, float cubeBoost) {
-      submit(poseStack, collector, timeTicks, light, phase5Ticks, phase58Ticks, stormId, settle, drawCount, violet, glowFrom, cubeBoost, false);
+      submit(poseStack, collector, timeTicks, light, phase5Ticks, phase58Ticks, stormId, settle, drawCount, violet, glowFrom, cubeBoost, false, 6.0F);
    }
 
    private static void submit(PoseStack poseStack, SubmitNodeCollector collector, float timeTicks, int light, float phase5Ticks, float phase58Ticks, int stormId, float settle, int drawCount, boolean violet, int glowFrom, float cubeBoost, boolean preview) {
+      submit(poseStack, collector, timeTicks, light, phase5Ticks, phase58Ticks, stormId, settle, drawCount, violet, glowFrom, cubeBoost, preview, 6.0F);
+   }
+
+   private static void submit(PoseStack poseStack, SubmitNodeCollector collector, float timeTicks, int light, float phase5Ticks, float phase58Ticks, int stormId, float settle, int drawCount, boolean violet, int glowFrom, float cubeBoost, boolean preview, float phase) {
       boolean ringActive = phase5Ticks >= 0.0F;
       float homeAmount = ringExtension(stormId, ringActive);
       float elapsedSec = ringActive ? phase5Ticks / 20.0F : 0.0F;
@@ -205,7 +213,12 @@ public final class StormDebris {
          Vector3f cam = camLocal(pose);
          beginBatch(pose);
          float amount = (float)Mth.clamp(DabyWSClientConfig.debrisAmount, (double)0.0F, (double)2.0F);
-         int keepOf100 = (int)(amount * 50.0F);
+         // Debris reaches its configured maximum only once the storm is at its
+         // biggest: a thin veil at phase 4 that thickens into the full swarm
+         // as the storm climbs toward phase 6+.
+         float phaseRamp = Mth.clamp((phase - 3.6F) / 2.4F, 0.12F, 1.0F);
+         phaseRamp = phaseRamp * phaseRamp * (3.0F - 2.0F * phaseRamp);
+         int keepOf100 = (int)(amount * 50.0F * phaseRamp);
 
          for(int i = 0; i < drawCount; ++i) {
             if (keepOf100 >= 100 || i * 61 % 100 < keepOf100) {

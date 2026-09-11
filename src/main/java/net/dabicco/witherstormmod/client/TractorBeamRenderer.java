@@ -6,6 +6,7 @@ import com.mojang.math.Axis;
 import java.util.HashMap;
 import java.util.Map;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -82,13 +83,20 @@ public final class TractorBeamRenderer {
       return new Vec3((double)p.x(), (double)p.y(), (double)p.z());
    }
 
+   /** Night multiplier for beam brightness: 1 by day, beamNightBoost at full night. */
+   private static float nightGain() {
+      Minecraft mc = Minecraft.getInstance();
+      float night = mc.level == null ? 0.0F : StormGlowRenderer.nightFactor(mc.level);
+      return Mth.lerp(night, 1.0F, (float)Mth.clamp(DabyWSClientConfig.beamNightBoost, (double)1.0F, (double)2.0F));
+   }
+
    public static void submitBeam(PoseStack poseStack, SubmitNodeCollector collector, Vec3 apex, Vec3 relEnd, float groundRadius, float timeTicks) {
       submitBeam(poseStack, collector, apex, relEnd, groundRadius, timeTicks, 1.0F);
    }
 
    public static void submitBeam(PoseStack poseStack, SubmitNodeCollector collector, Vec3 apex, Vec3 relEnd, float groundRadius, float timeTicks, float beamScale) {
       float pulse = 0.85F + 0.15F * Mth.sin((double)(timeTicks * 0.25F));
-      float opacity = (float)Mth.clamp(DabyWSClientConfig.beamOpacity, (double)0.0F, (double)2.0F);
+      float opacity = (float)Mth.clamp(DabyWSClientConfig.beamOpacity, (double)0.0F, (double)2.0F) * nightGain();
       int alpha = (int)(50.0F * pulse * opacity);
       if (alpha > 1) {
          int topAlpha = Math.min(255, alpha + (int)(30.0F * opacity));
@@ -147,7 +155,7 @@ public final class TractorBeamRenderer {
 
    public static void submitPreviewMotes(PoseStack poseStack, SubmitNodeCollector collector, Vec3 apex, Vec3 relEnd, float groundRadius, float timeTicks, float beamScale) {
       float baseHalf = baseHalfWidth(groundRadius) * beamScale;
-      float alpha = (float)Mth.clamp(DabyWSClientConfig.beamOpacity, (double)0.0F, (double)1.0F);
+      float alpha = Math.min(1.0F, (float)Mth.clamp(DabyWSClientConfig.beamOpacity, (double)0.0F, (double)1.0F) * nightGain());
       if (!(alpha <= 0.01F)) {
          collector.submitCustomGeometry(poseStack, FoglessRenderTypes.entityTranslucentEmissive(TEXTURE), (pose, consumer) -> {
             for(int i = 0; i < 34; ++i) {

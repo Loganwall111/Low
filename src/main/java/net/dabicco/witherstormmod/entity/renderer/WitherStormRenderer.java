@@ -106,7 +106,7 @@ public class WitherStormRenderer extends MobRenderer<WitherStormEntity, WitherSt
    private static final float FRONT_TENTACLE_SPROUT_TICKS = 70.0F;
    private static final float FRONT_TENTACLE_UP = -1.1F;
    private static final float FRONT_TENTACLE_FORWARD = -0.5F;
-   private static final float FRONT_TENTACLE_SIZE = 0.42F;
+   private static final float FRONT_TENTACLE_SIZE = 0.5F;
    private static final float FRONT_TENTACLE_TURN_IN = -14.0F;
    private static final float FRONT_TENTACLE_ANGLE_OUT = 36.0F;
    private boolean previewShadowPass = false;
@@ -571,7 +571,8 @@ public class WitherStormRenderer extends MobRenderer<WitherStormEntity, WitherSt
                   state.stormId,
                   state.devourer,
                   debrisSettle(state.phase),
-                  state.preview != null
+                  state.preview != null,
+                  (float)state.phase
                );
             }
 
@@ -648,7 +649,7 @@ public class WitherStormRenderer extends MobRenderer<WitherStormEntity, WitherSt
          poseStack.translate(0.0, -1.1F, -0.5);
          poseStack.mulPose(Axis.YP.rotationDegrees(-14.0F));
          poseStack.mulPose(Axis.XP.rotationDegrees(36.0F));
-         poseStack.scale(0.42F, 0.42F, 0.42F);
+         poseStack.scale(FRONT_TENTACLE_SIZE, FRONT_TENTACLE_SIZE, FRONT_TENTACLE_SIZE);
          submitNodeCollector.submitModel(
             tentacle, state, poseStack, this.pieceType(StormSkins.phase4()), state.lightCoords, OverlayTexture.NO_OVERLAY, this.pieceTint(), null, 0, null
          );
@@ -672,7 +673,7 @@ public class WitherStormRenderer extends MobRenderer<WitherStormEntity, WitherSt
       int count = previewHeadCount(state.phase);
       if (count > 0) {
          boolean early = !state.phase4;
-         float scale = early ? 1.35F : 6.0F;
+         float scale = early ? 1.35F : (6.0F + (float)Math.min(Math.max(state.phase - 4.0, 0.0), 3.0) * 0.5F) * (state.devourer ? 1.06F : 1.0F);
          Vec3[] offsets = new Vec3[count];
          float[] scales = new float[count];
          float[] restYaw = new float[count];
@@ -843,9 +844,9 @@ public class WitherStormRenderer extends MobRenderer<WitherStormEntity, WitherSt
       if (state.devourer) {
          float DEV_UP = -9.0F;
          float DEV_BACK = -2.0F;
-         float DEV_SCALE = 0.8022922F;
+         float DEV_SCALE = 0.98F;
          poseStack.translate(0.0, -9.0, -2.0);
-         poseStack.scale(-0.8022922F, -0.8022922F, 0.8022922F);
+         poseStack.scale(-0.98F, -0.98F, 0.98F);
          WitherStormTentaclesDevourer devTentacles = this.previewShadowPass ? this.devourerTentaclesShadowModel : this.devourerTentaclesModel;
          devTentacles.setupAnim(state);
          if (state.preview == null) {
@@ -858,7 +859,7 @@ public class WitherStormRenderer extends MobRenderer<WitherStormEntity, WitherSt
          );
       } else {
          poseStack.translate(0.0, 6.0, 1.25);
-         float ts = 5.0F;
+         float ts = 6.25F;
          poseStack.scale(-ts, -ts, ts);
          if (state.preview == null) {
             StormShadowMap.capture(poseStack, this.tentacles5Model);
@@ -949,7 +950,8 @@ public class WitherStormRenderer extends MobRenderer<WitherStormEntity, WitherSt
             poseStack.translate(0.0, 17.0, 0.0);
          }
 
-         float bodyScale = (state.devourer ? 1.1009175F : 2.0F) * state.hatch;
+         float phaseGrowth = state.devourer ? 1.35F : 2.0F + (float)Math.min(Math.max(state.phase - 4.0, 0.0), 2.0) * 0.3F;
+         float bodyScale = phaseGrowth * state.hatch;
          poseStack.scale(bodyScale, bodyScale, bodyScale);
          poseStack.translate(0.0, 6.0, 0.0);
       } else {

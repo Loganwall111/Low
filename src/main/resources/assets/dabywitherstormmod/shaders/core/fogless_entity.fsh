@@ -62,6 +62,14 @@ void main() {
 #ifndef NO_OVERLAY
     color.rgb = mix(overlayColor.rgb, color.rgb, overlayColor.a);
 #endif
+#ifdef CHARCOAL_SKIN
+    // MATTE CHARCOAL-INDIGO SKIN: near-black texels grade toward a dark
+    // blue-violet charcoal instead of pure black, so the block mass keeps
+    // detail in shadow with a soft dim sheen and no glossy highlight.
+    float skinLuma = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+    float charcoal = 1.0 - smoothstep(0.0, 0.22, skinLuma);
+    color.rgb = mix(color.rgb, color.rgb * vec3(0.72, 0.78, 1.12) + vec3(0.012, 0.012, 0.030), charcoal);
+#endif
 #ifndef EMISSIVE
     color *= lightMapColor;
 #endif

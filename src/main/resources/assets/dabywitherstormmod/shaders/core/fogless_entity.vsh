@@ -108,6 +108,26 @@ void main() {
 #endif
 #endif
 
+#ifdef STORM_RIM
+    // CRISP EDGE HIGHLIGHTS (matte MCSM skin, never glossy). A tight fresnel
+    // term in view space: faces turning edge-on to the camera catch a sharp
+    // indigo edge light, which is what makes the dark block mass read as
+    // solid and faintly luminous instead of a flat black void. No specular
+    // lobe, no sweeping glint band: matte charcoal, not polished armour.
+    vec3 rimViewNormal = normalize((ModelViewMat * vec4(Normal, 0.0)).xyz);
+    vec3 rimViewPos = (ModelViewMat * vec4(Position, 1.0)).xyz;
+    float rimLen = max(length(rimViewPos), 1e-4);
+    vec3 rimViewDir = -rimViewPos / rimLen;
+    float rim = pow(1.0 - abs(dot(rimViewNormal, rimViewDir)), 3.0);
+    vec3 rimLight = vec3(0.10, 0.12, 0.26) * rim;
+#ifdef PER_FACE_LIGHTING
+    vertexPerFaceColorBack.rgb += rimLight;
+    vertexPerFaceColorFront.rgb += rimLight;
+#else
+    vertexColor.rgb += rimLight;
+#endif
+#endif
+
 #ifndef EMISSIVE
     lightMapColor = sample_lightmap(Sampler2, UV2);
 #endif

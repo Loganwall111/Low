@@ -24,18 +24,20 @@ import net.minecraft.world.phys.Vec3;
  *    atmosphere, not the body — it is bigger than the body, slowly wobbles
  *    around it and pulses on its own clock. Phase 5.8+ hardens it toward a
  *    deeper purple.
- *  - Cataclysm halos (phase 5.8+): a blue-purple halo ring around the whole
- *    area plus the original white halo underneath the body.
- *  - Black glare: a dark glare ring hugging the silhouette (the sky goes
- *    black-purple right next to the rim), with turquoise/green block clusters
- *    ejecting from the ring and raining back down.
+ *  - Black glare: a dark crisp glare ring hugging the silhouette (the sky
+ *    goes black-purple right next to the rim), with turquoise/green block
+ *    clusters ejecting from the ring and raining back down.
  *  - Heartbeat: an optional deep thump synced to the pulse peak.
+ *
+ * <p>The glowing halo discs used to live here as soft billboard quads; they
+ * are gone. MCSM halos are thin hard rings, so they are drawn as real
+ * block-built cube geometry by {@link StormHaloRings} instead.
  */
 public final class StormPresenceFX {
    private static final Identifier SOFT = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/tractor_beam.png");
    private static final Identifier PIECE_TEX = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/misc/broken_piece.png");
    private static final String[] PIECES = {"broken_piece_a", "broken_piece_b", "broken_piece_c", "broken_piece_d"};
-   private static final Identifier HALO = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/misc/halo_ring.png");
+   private static final Identifier HALO = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/misc/halo_ring_crisp.png");
    private static final int FULL_BRIGHT = 15728880;
 
    /** pulse glow layers fed into StormGlowRenderer.submitLight */
@@ -132,31 +134,8 @@ public final class StormPresenceFX {
             }
          }
 
-         /* ---- blue halo for phase 4+ (anchored to storm centre) ---- */
-         if (DabyWSClientConfig.cataclysmHalos && phase >= 4.0F) {
-            float ramp = Mth.clamp((phase - 3.8F) / 0.5F, 0.0F, 1.0F);
-            float amount = (float)DabyWSClientConfig.haloStrength * ramp;
-            if (amount > 0.004F) {
-               Vec3 view = centre.subtract(cam).normalize();
-               // Blue halo anchored right at the middle/centre of the Wither Storm
-               StormPalettes.haloUnderColor(col);
-               int aHalo = (int)(Mth.clamp(amount * 0.95F * (0.8F + 0.2F * pulseWave(d.entityId, nowSec)), 0.0F, 1.0F) * 255.0F);
-               quad(poseStack, collector, GlowRenderTypes.glow(HALO), cam, centre, view, bodyR * 1.6, (int)(col[0] * 255.0F), (int)(col[1] * 255.0F), (int)(col[2] * 255.0F), aHalo);
-               if (phase >= 5.1F) {
-                  // outer cataclysm ring (phase 5.1+)
-                  StormPalettes.haloRingColor(col);
-                  int aOuter = (int)(Mth.clamp(amount * 0.75F, 0.0F, 1.0F) * 255.0F);
-                  quad(poseStack, collector, GlowRenderTypes.glow(HALO), cam, centre, view, bodyR * 2.1, (int)(col[0] * 255.0F), (int)(col[1] * 255.0F), (int)(col[2] * 255.0F), aOuter);
-
-                  // dark roiling shroud anchored strictly to the storm's head / upper mass
-                  Vec3 shroudCentre = centre.add(0.0, bodyR * 0.65, 0.0);
-                  Vec3 shroudView = shroudCentre.subtract(cam).normalize();
-                  int aDark = (int)(Mth.clamp(amount * 0.82F, 0.0F, 1.0F) * 215.0F);
-                  quad(poseStack, collector, GlowRenderTypes.translucent(HALO), cam, shroudCentre, shroudView, bodyR * 2.7, 12, 6, 22, aDark);
-                  quad(poseStack, collector, GlowRenderTypes.translucent(HALO), cam, shroudCentre, shroudView, bodyR * 3.5, 8, 4, 15, (int)(aDark * 0.60F));
-               }
-            }
-         }
+         // (Halo discs were here: MCSM halos are thin hard rings now, drawn as
+         // real cube geometry by StormHaloRings instead of billboard quads.)
       }
 
       /* ---- turquoise/green cluster ejecta ---- */

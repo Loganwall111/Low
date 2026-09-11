@@ -1,7 +1,7 @@
 #version 120
 
 // ============================================================================
-// MCSM gbuffers_water.fsh — translucent Story Mode water. The sun's cast
+// MCSM gbuffers_water.fsh — bright translucent Story Mode water. The sun's cast
 // shadow drifts across the surface as the sun moves through the day/night
 // cycle, and the surface carries a faint animated shimmer.
 // ============================================================================
@@ -32,9 +32,9 @@ void main() {
     float blockLight = clamp((lmcoord.x - 0.03) * 1.05, 0.0, 1.0);
     float skyLight   = clamp((lmcoord.y - 0.03) * 1.05, 0.0, 1.0);
 
-    vec3 sunLightColor = vec3(1.12, 1.02, 0.90);
-    vec3 ambientColor = vec3(0.66, 0.72, 0.90);
-    vec3 lighting = mix(ambientColor * 0.7, sunLightColor, pow(skyLight, 1.3));
+    vec3 sunLightColor = vec3(1.20, 1.10, 1.00);
+    vec3 ambientColor = vec3(0.80, 0.87, 1.00);
+    vec3 lighting = mix(ambientColor * 0.85, sunLightColor, pow(skyLight, 1.3));
     lighting += vec3(1.15, 0.75, 0.38) * pow(blockLight, 1.4) * 0.8;
     tex.rgb *= lighting;
 
@@ -44,13 +44,13 @@ void main() {
         vec3 sp = shadowPos.xyz * 0.5 + 0.5;
         if (sp.x >= 0.0 && sp.x <= 1.0 && sp.y >= 0.0 && sp.y <= 1.0 && sp.z <= 1.0) {
             float depth = texture2D(shadowtex0, sp.xy).x;
-            float shadow = (depth >= sp.z - 0.0030) ? 1.0 : 0.55;
-            tex.rgb = mix(tex.rgb, tex.rgb * vec3(0.60, 0.66, 0.85), (1.0 - shadow) * sunVis * 0.80);
+            float shadow = (depth >= sp.z - 0.0030) ? 1.0 : 0.72;
+            tex.rgb = mix(tex.rgb, tex.rgb * vec3(0.72, 0.78, 0.94), (1.0 - shadow) * sunVis * 0.80);
         }
     }
 
     // Faint moving shimmer so the surface reads as alive
-    float shim = 0.92 + 0.08 * sin(worldPos.x * 0.31 + frameTimeCounter * 0.9) *
+    float shim = 0.96 + 0.05 * sin(worldPos.x * 0.31 + frameTimeCounter * 0.9) *
                           sin(worldPos.z * 0.27 - frameTimeCounter * 0.7);
     tex.rgb *= shim;
 

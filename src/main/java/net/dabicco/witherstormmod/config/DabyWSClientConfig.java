@@ -60,6 +60,9 @@ public class DabyWSClientConfig {
    public static double eyeColorR = 0.75;
    public static double eyeColorG = 0.2;
    public static double eyeColorB = (double)1.0F;
+   public static double teethColorR = 0.45;
+   public static double teethColorG = (double)1.0F;
+   public static double teethColorB = (double)1.0F;
    public static double stormGlowStrength = (double)1.0F;
    public static boolean stormGlowFlip = false;
    public static double beamColorR = 0.35;
@@ -96,6 +99,7 @@ public class DabyWSClientConfig {
    public static double cloudColorG = 0.095;
    public static double cloudColorB = 0.105;
    public static double beamOpacity = 0.6;
+   public static double beamNightBoost = 1.35;
    public static boolean impactLight = true;
    public static double impactLightSize = (double)1.0F;
    public static double impactLightBrightness = (double)1.0F;
@@ -112,6 +116,8 @@ public class DabyWSClientConfig {
    public static final String[] PRESET_LABELS = new String[]{"Custom", "Minecraft: Story Mode OG", "Minecraft: Story Mode Netflix", "Legacy Java", "Cinematic"};
    public static boolean beamInnerFaces = false;
    public static double debrisSize = (double)1.0F;
+   public static boolean vortexDebris = true;
+   public static double vortexStrength = (double)1.0F;
    public static double stormSkin = (double)1.0F;
    public static final String[] SKIN_LABELS = new String[]{"Classic", "Minecraft: Story Mode OG (Default)", "Minecraft: Story Mode Netflix"};
    public static double stormStars = (double)1.0F;
@@ -132,6 +138,9 @@ public class DabyWSClientConfig {
    public static double pulseSize = (double)1.0F;
    public static boolean cataclysmHalos = true;
    public static double haloStrength = (double)1.0F;
+   public static boolean haloRings = true;
+   public static double haloRingStrength = (double)1.0F;
+   public static boolean shieldDome = false;
    public static boolean blackGlare = true;
    public static double blackGlareStrength = (double)1.0F;
    public static boolean glareEjecta = true;
@@ -179,7 +188,7 @@ public class DabyWSClientConfig {
    public static final String[] NAME_STYLE_LABELS = new String[]{"Classic", "Cracker's", "Legacy"};
    public static final Map<String, Key> KEYS = new LinkedHashMap();
    private static final Map<String, Double> DEFAULTS = new LinkedHashMap();
-   private static final int CONFIG_VERSION = 13;
+   private static final int CONFIG_VERSION = 14;
    private static int loadedVersion;
    public static final String RESET_VERSION = "Beta 1.9.33";
    private static final Map<String, Double> PRESET_MCSM;
@@ -391,6 +400,19 @@ public class DabyWSClientConfig {
             save();
          }
       }
+      if (loadedVersion < 14) {
+         for(String name : new String[]{"teethColorR", "teethColorG", "teethColorB", "haloRings", "haloRingStrength", "shieldDome", "beamNightBoost", "vortexDebris", "vortexStrength"}) {
+            Key key = (Key)KEYS.get(name);
+            if (key != null) {
+               key.set().accept(defaultOf(name));
+            }
+         }
+         if (farLandsDistance < (double)500.0F) {
+            farLandsDistance = defaultOf("farLandsDistance");
+         }
+         loadedVersion = 14;
+         save();
+      }
    }
 
    public static void save() {
@@ -402,7 +424,7 @@ public class DabyWSClientConfig {
 
       json.addProperty("effectsPreset", effectsPreset);
       json.addProperty("configOpened", configOpened);
-      json.addProperty("configVersion", 13);
+      json.addProperty("configVersion", 14);
 
       try {
          Files.writeString(file(), GSON.toJson(json));
@@ -488,6 +510,11 @@ public class DabyWSClientConfig {
       key("pulseSize", "How far the glow reaches past the body.", 0.5, (double)2.0F, false, () -> pulseSize, (v) -> pulseSize = v);
       key("cataclysmHalos", "From phase 5.8: the blue-purple halo ring around the area plus the original white halo under the body.", (double)0.0F, (double)1.0F, true, () -> cataclysmHalos ? (double)1.0F : (double)0.0F, (v) -> cataclysmHalos = v >= (double)0.5F);
       key("haloStrength", "Brightness of the cataclysm halo pair.", (double)0.0F, (double)2.0F, false, () -> haloStrength, (v) -> haloStrength = v);
+      key("haloRings", "Crisp cubic halo rings: the white under-halo from phase 4, the spiralling trio at phase 6, more at phase 7, and the three gigantic counter-rotating systems at phase 8-9.", (double)0.0F, (double)1.0F, true, () -> haloRings ? (double)1.0F : (double)0.0F, (v) -> haloRings = v >= (double)0.5F);
+      key("haloRingStrength", "Brightness of the cubic halo-ring system.", (double)0.0F, (double)2.0F, false, () -> haloRingStrength, (v) -> haloRingStrength = v);
+      key("shieldDome", "Draw the old blue shield dome over the storm. Off by default: the MCSM look has no dome covering the sky.", (double)0.0F, (double)1.0F, true, () -> shieldDome ? (double)1.0F : (double)0.0F, (v) -> shieldDome = v >= (double)0.5F);
+      key("vortexDebris", "Block pellets rip off the ground and spiral up into the storm from phase 4, thickening into a full tornado by phase 6.", (double)0.0F, (double)1.0F, true, () -> vortexDebris ? (double)1.0F : (double)0.0F, (v) -> vortexDebris = v >= (double)0.5F);
+      key("vortexStrength", "Density of the abduction vortex spiral.", (double)0.0F, (double)2.0F, false, () -> vortexStrength, (v) -> vortexStrength = v);
       key("blackGlare", "The black-purple glare ring hugging the storm's silhouette.", (double)0.0F, (double)1.0F, true, () -> blackGlare ? (double)1.0F : (double)0.0F, (v) -> blackGlare = v >= (double)0.5F);
       key("blackGlareStrength", "How dark the rim glare goes.", (double)0.0F, (double)2.0F, false, () -> blackGlareStrength, (v) -> blackGlareStrength = v);
       key("glareEjecta", "Turquoise and green cluster sparks ejecting from the glare ring.", (double)0.0F, (double)1.0F, true, () -> glareEjecta ? (double)1.0F : (double)0.0F, (v) -> glareEjecta = v >= (double)0.5F);
@@ -512,7 +539,7 @@ public class DabyWSClientConfig {
       key("stormFog", "Storm proximity fog: the closer you get to the storm, the thicker the purple haze closes in around you.", (double)0.0F, (double)1.0F, true, () -> stormFog ? (double)1.0F : (double)0.0F, (v) -> stormFog = v >= (double)0.5F);
       key("stormFogStrength", "How thick the storm's proximity fog gets up close (0 = no effect).", (double)0.0F, (double)1.0F, false, () -> stormFogStrength, (v) -> stormFogStrength = v);
       key("farLandsHaze", "Far-lands haze: the further you travel from the world origin, the thicker the purple haze closes in, giving that lonely Story-Mode far-lands feel.", (double)0.0F, (double)1.0F, true, () -> farLandsHaze ? (double)1.0F : (double)0.0F, (v) -> farLandsHaze = v >= (double)0.5F);
-      key("farLandsDistance", "Blocks from the world origin at which the far-lands haze starts to close in.", (double)500.0F, (double)100000.0F, true, () -> farLandsDistance, (v) -> farLandsDistance = v);
+      key("farLandsDistance", "Blocks from the world origin at which the far-lands haze starts to close in.", (double)500.0F, (double)100000.0F, false, () -> farLandsDistance, (v) -> farLandsDistance = v);
       key("farLandsStrength", "How thick the far-lands haze gets at extreme distance.", (double)0.0F, (double)1.0F, false, () -> farLandsStrength, (v) -> farLandsStrength = v);
       key("biomeFogTint", "Biome-tinted storm fog: the storm's purple fog takes on the colour of the biome it is devouring.", (double)0.0F, (double)1.0F, true, () -> biomeFogTint ? (double)1.0F : (double)0.0F, (v) -> biomeFogTint = v >= (double)0.5F);
       key("biomeFogStrength", "How strongly the storm fog blends toward the biome's colour.", (double)0.0F, (double)1.0F, false, () -> biomeFogStrength, (v) -> biomeFogStrength = v);
@@ -548,10 +575,14 @@ public class DabyWSClientConfig {
       key("eyeColorR", "", (double)0.0F, (double)1.0F, false, () -> eyeColorR, (v) -> eyeColorR = v);
       key("eyeColorG", "", (double)0.0F, (double)1.0F, false, () -> eyeColorG, (v) -> eyeColorG = v);
       key("eyeColorB", "", (double)0.0F, (double)1.0F, false, () -> eyeColorB, (v) -> eyeColorB = v);
+      key("teethColorR", "", (double)0.0F, (double)1.0F, false, () -> teethColorR, (v) -> teethColorR = v);
+      key("teethColorG", "", (double)0.0F, (double)1.0F, false, () -> teethColorG, (v) -> teethColorG = v);
+      key("teethColorB", "", (double)0.0F, (double)1.0F, false, () -> teethColorB, (v) -> teethColorB = v);
       key("stormGlowStrength", "How brightly the silhouette glows at night. 0 is off.", (double)0.0F, (double)2.0F, false, () -> stormGlowStrength, (v) -> stormGlowStrength = v);
       keyCycle("bloomStrength", "Screen-space glow over the finished image while a storm is near. Costs a few full-screen passes per frame.", BLOOM_LABELS, () -> bloomStrength, (v) -> bloomStrength = (double)Math.round(v));
       key("bloomMaskToStorm", "Keep the glow on the storm's teeth and eye. Off blooms every bright thing on screen.", (double)0.0F, (double)1.0F, true, () -> bloomMaskToStorm ? (double)1.0F : (double)0.0F, (v) -> bloomMaskToStorm = v >= (double)0.5F);
       key("beamOpacity", "How solid the beam is. Lower lets you see the world through it.", (double)0.0F, (double)2.0F, false, () -> beamOpacity, (v) -> beamOpacity = v);
+      key("beamNightBoost", "How much brighter the tractor beams burn at night. 1 leaves them unchanged.", (double)1.0F, (double)2.0F, false, () -> beamNightBoost, (v) -> beamNightBoost = v);
       key("beamEndFade", "How far the beam fades out where it meets the ground.", (double)0.0F, (double)1.0F, false, () -> beamEndFade, (v) -> beamEndFade = v);
       key("beamColorR", "", (double)0.0F, (double)1.0F, false, () -> beamColorR, (v) -> beamColorR = v);
       key("beamColorG", "", (double)0.0F, (double)1.0F, false, () -> beamColorG, (v) -> beamColorG = v);
@@ -605,11 +636,25 @@ public class DabyWSClientConfig {
          DEFAULTS.put(k.name(), k.get().getAsDouble());
       }
 
-      loadedVersion = 13;
-      PRESET_MCSM = Map.ofEntries(Map.entry("reverseShading", (double)1.0F), Map.entry("bloomStrength", (double)2.0F), Map.entry("beamOpacity", 0.6), Map.entry("beamColorR", 0.35), Map.entry("beamColorG", 0.1), Map.entry("beamColorB", 0.95), Map.entry("stormSkin", (double)1.0F), Map.entry("eyeColorR", 0.75), Map.entry("eyeColorG", 0.2), Map.entry("eyeColorB", (double)1.0F), Map.entry("stormStars", (double)1.0F), Map.entry("stormCloudDeck", (double)0.0F), Map.entry("atmospherePulse", (double)1.0F), Map.entry("cataclysmHalos", (double)1.0F), Map.entry("blackGlare", (double)1.0F), Map.entry("glareEjecta", (double)1.0F), Map.entry("debrisSize", 1.8), Map.entry("phaseFogPalettes", (double)1.0F));
-      PRESET_MCSM_NETFLIX = Map.ofEntries(Map.entry("reverseShading", (double)1.0F), Map.entry("bloomStrength", (double)1.8F), Map.entry("beamOpacity", 0.6), Map.entry("beamColorR", 0.35), Map.entry("beamColorG", 0.1), Map.entry("beamColorB", 0.95), Map.entry("stormSkin", (double)2.0F), Map.entry("eyeColorR", 0.0), Map.entry("eyeColorG", 0.85), Map.entry("eyeColorB", (double)1.0F), Map.entry("stormStars", (double)1.0F), Map.entry("stormCloudDeck", (double)0.0F), Map.entry("atmospherePulse", (double)1.0F), Map.entry("cataclysmHalos", (double)1.0F), Map.entry("blackGlare", (double)1.0F), Map.entry("glareEjecta", (double)1.0F), Map.entry("debrisSize", 1.5), Map.entry("phaseFogPalettes", (double)1.0F));
+      loadedVersion = 14;
+      PRESET_MCSM = Map.ofEntries(Map.entry("reverseShading", (double)1.0F), Map.entry("bloomStrength", (double)2.0F), Map.entry("beamOpacity", 0.6), Map.entry("beamColorR", 0.35), Map.entry("beamColorG", 0.1), Map.entry("beamColorB", 0.95), Map.entry("stormSkin", (double)1.0F), Map.entry("eyeColorR", 0.75), Map.entry("eyeColorG", 0.2), Map.entry("eyeColorB", (double)1.0F), Map.entry("teethColorR", 0.45), Map.entry("teethColorG", (double)1.0F), Map.entry("teethColorB", (double)1.0F), Map.entry("stormStars", (double)1.0F), Map.entry("stormCloudDeck", (double)0.0F), Map.entry("atmospherePulse", (double)1.0F), Map.entry("cataclysmHalos", (double)1.0F), Map.entry("haloRings", (double)1.0F), Map.entry("shieldDome", (double)0.0F), Map.entry("blackGlare", (double)1.0F), Map.entry("glareEjecta", (double)1.0F), Map.entry("debrisSize", 1.8), Map.entry("vortexDebris", (double)1.0F), Map.entry("phaseFogPalettes", (double)1.0F));
+      PRESET_MCSM_NETFLIX = Map.ofEntries(Map.entry("reverseShading", (double)1.0F), Map.entry("bloomStrength", (double)1.8F), Map.entry("beamOpacity", 0.6), Map.entry("beamColorR", 0.35), Map.entry("beamColorG", 0.1), Map.entry("beamColorB", 0.95), Map.entry("stormSkin", (double)2.0F), Map.entry("eyeColorR", 0.78), Map.entry("eyeColorG", 0.25), Map.entry("eyeColorB", (double)1.0F), Map.entry("teethColorR", 0.55), Map.entry("teethColorG", (double)1.0F), Map.entry("teethColorB", (double)1.0F), Map.entry("stormStars", (double)1.0F), Map.entry("stormCloudDeck", (double)0.0F), Map.entry("atmospherePulse", (double)1.0F), Map.entry("cataclysmHalos", (double)1.0F), Map.entry("haloRings", (double)1.0F), Map.entry("shieldDome", (double)0.0F), Map.entry("blackGlare", (double)1.0F), Map.entry("glareEjecta", (double)1.0F), Map.entry("debrisSize", 1.5), Map.entry("vortexDebris", (double)1.0F), Map.entry("phaseFogPalettes", (double)1.0F));
       PRESET_LEGACY = Map.of("reverseShading", (double)0.0F, "bloomStrength", (double)1.0F, "beamOpacity", 0.74, "beamColorR", 0.52, "beamColorG", 0.46, "beamColorB", (double)1.0F);
-      PRESET_CINEMATIC = Map.ofEntries(Map.entry("reverseShading", (double)1.0F), Map.entry("bloomStrength", (double)2.0F), Map.entry("beamOpacity", 0.6), Map.entry("beamColorR", 0.35), Map.entry("beamColorG", 0.1), Map.entry("beamColorB", 0.95), Map.entry("stormSkin", (double)1.0F), Map.entry("stormStars", (double)2.0F), Map.entry("stormCloudDeck", (double)2.0F), Map.entry("atmospherePulse", (double)1.0F), Map.entry("pulseStrength", 1.3), Map.entry("cataclysmHalos", (double)1.0F), Map.entry("haloStrength", 1.2), Map.entry("blackGlare", (double)1.0F), Map.entry("glareEjecta", (double)1.0F), Map.entry("ejectaRate", 1.4), Map.entry("pulseHeartbeat", (double)1.0F), Map.entry("debrisSize", (double)2.0F), Map.entry("phaseFogPalettes", (double)1.0F), Map.entry("paletteStrength", (double)1.0F));
+      PRESET_CINEMATIC = Map.ofEntries(Map.entry("reverseShading", (double)1.0F), Map.entry("bloomStrength", (double)2.0F), Map.entry("beamOpacity", 0.6), Map.entry("beamColorR", 0.35), Map.entry("beamColorG", 0.1), Map.entry("beamColorB", 0.95), Map.entry("stormSkin", (double)1.0F), Map.entry("teethColorR", 0.45), Map.entry("teethColorG", (double)1.0F), Map.entry("teethColorB", (double)1.0F), Map.entry("stormStars", (double)2.0F), Map.entry("stormCloudDeck", (double)2.0F), Map.entry("atmospherePulse", (double)1.0F), Map.entry("pulseStrength", 1.3), Map.entry("cataclysmHalos", (double)1.0F), Map.entry("haloStrength", 1.2), Map.entry("haloRings", (double)1.0F), Map.entry("shieldDome", (double)0.0F), Map.entry("blackGlare", (double)1.0F), Map.entry("glareEjecta", (double)1.0F), Map.entry("ejectaRate", 1.4), Map.entry("pulseHeartbeat", (double)1.0F), Map.entry("debrisSize", (double)2.0F), Map.entry("vortexDebris", (double)1.0F), Map.entry("phaseFogPalettes", (double)1.0F), Map.entry("paletteStrength", (double)1.0F));
+      GSON = (new GsonBuilder()).setPrettyPrinting().create();
+   }
+
+   public static record Key(String name, String description, double min, double max, boolean toggle, String[] cycleLabels, DoubleSupplier get, DoubleConsumer set) {
+      public double clamp(double v) {
+         return Math.max(this.min, Math.min(this.max, v));
+      }
+
+      public boolean cycle() {
+         return this.cycleLabels != null;
+      }
+   }
+}
+);
       GSON = (new GsonBuilder()).setPrettyPrinting().create();
    }
 

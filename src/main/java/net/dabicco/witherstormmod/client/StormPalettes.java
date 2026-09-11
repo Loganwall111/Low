@@ -16,6 +16,8 @@ import net.minecraft.util.Mth;
  *   phase  5.8+   the "cataclysm" palette: purple-black gloom, blue-purple
  *                 halo ring plus the white under-halo, black rim glare with
  *                 turquoise/green clusters ejecting from the silhouette.
+ *   phase  8-9    the "inferno" palette: the orange sky deepens into a
+ *                 red / dark-orange hellscape and the halos die out.
  *
  * The palette is only consulted when the client config allows it;
  * {@link #strength()} scales how far it overrides the user's manual colours.
@@ -52,6 +54,12 @@ public final class StormPalettes {
    private static final float[] BACKDROP_ORANGE_TOP = {1.00F, 0.43F, 0.00F};
    private static final float[] BACKDROP_ORANGE_HORIZON = {0.96F, 0.20F, 0.02F};
    private static final float[] BACKDROP_ORANGE_BOTTOM = {0.42F, 0.06F, 0.02F};
+
+   /** Phase 8-9 inferno: the orange sky collapses into red / dark-orange. */
+   private static final float[] FOG_INFERNO = {0.42F, 0.07F, 0.03F};
+   private static final float[] BACKDROP_INFERNO_TOP = {0.55F, 0.08F, 0.01F};
+   private static final float[] BACKDROP_INFERNO_HORIZON = {0.78F, 0.12F, 0.02F};
+   private static final float[] BACKDROP_INFERNO_BOTTOM = {0.22F, 0.03F, 0.02F};
 
    /** Cloud deck tint. */
    private static final float[] CLOUD_PURPLE = {0.115F, 0.095F, 0.135F};
@@ -118,7 +126,14 @@ public final class StormPalettes {
       }
       teal = new float[]{(float)DabyWSClientConfig.turquoiseFogR, (float)DabyWSClientConfig.turquoiseFogG, (float)DabyWSClientConfig.turquoiseFogB};
       cata = new float[]{(float)DabyWSClientConfig.cataclysmFogR, (float)DabyWSClientConfig.cataclysmFogG, (float)DabyWSClientConfig.cataclysmFogB};
-      return quad(phase, purple, FOG_GREEN, teal, cata, out);
+      quad(phase, purple, FOG_GREEN, teal, cata, out);
+      // Phase 8-9 inferno: burn the fog down to red / dark-orange.
+      float inferno = Mth.clamp((float)(phase - 7.0) / 1.0F, 0.0F, 1.0F);
+      inferno = inferno * inferno * (3.0F - 2.0F * inferno);
+      out[0] = Mth.lerp(inferno, out[0], FOG_INFERNO[0]);
+      out[1] = Mth.lerp(inferno, out[1], FOG_INFERNO[1]);
+      out[2] = Mth.lerp(inferno, out[2], FOG_INFERNO[2]);
+      return out;
    }
 
    /** Pulse shell colour for a phase. */
@@ -174,9 +189,14 @@ public final class StormPalettes {
          float[] top = BACKDROP_ORANGE_TOP;
          float[] horizon = BACKDROP_ORANGE_HORIZON;
          float[] bottom = BACKDROP_ORANGE_BOTTOM;
-         out[0] = (top[0] + horizon[0] + bottom[0]) / 3.0F;
-         out[1] = (top[1] + horizon[1] + bottom[1]) / 3.0F;
-         out[2] = (top[2] + horizon[2] + bottom[2]) / 3.0F;
+         float inferno = Mth.clamp((float)(phase - 7.0) / 1.0F, 0.0F, 1.0F);
+         inferno = inferno * inferno * (3.0F - 2.0F * inferno);
+         float[] iTop = BACKDROP_INFERNO_TOP;
+         float[] iHorizon = BACKDROP_INFERNO_HORIZON;
+         float[] iBottom = BACKDROP_INFERNO_BOTTOM;
+         out[0] = Mth.lerp(inferno, (top[0] + horizon[0] + bottom[0]) / 3.0F, (iTop[0] + iHorizon[0] + iBottom[0]) / 3.0F);
+         out[1] = Mth.lerp(inferno, (top[1] + horizon[1] + bottom[1]) / 3.0F, (iTop[1] + iHorizon[1] + iBottom[1]) / 3.0F);
+         out[2] = Mth.lerp(inferno, (top[2] + horizon[2] + bottom[2]) / 3.0F, (iTop[2] + iHorizon[2] + iBottom[2]) / 3.0F);
          return out;
       }
       return fogColor(phase, out);
@@ -185,6 +205,17 @@ public final class StormPalettes {
    /** True while the phase-6 orange backdrop override is active. */
    public static boolean isOrangeBackdrop(double phase) {
       return phase >= 6.0;
+   }
+
+   /** True once the sky has burned down into the phase 8-9 inferno. */
+   public static boolean isInfernoBackdrop(double phase) {
+      return phase >= 8.0;
+   }
+
+   /** 0..1 ramp of the phase 7..8 burn-down into the inferno palette. */
+   public static float infernoAmount(double phase) {
+      float t = Mth.clamp((float)(phase - 7.0) / 1.0F, 0.0F, 1.0F);
+      return t * t * (3.0F - 2.0F * t);
    }
 
    /** Phase-6 pulse flash colour: hot white-violet burst. */

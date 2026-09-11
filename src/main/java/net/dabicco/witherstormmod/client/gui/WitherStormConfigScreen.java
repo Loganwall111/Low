@@ -618,7 +618,7 @@ public class WitherStormConfigScreen extends Screen {
 
       }));
       this.header("Storm Rendering");
-      this.clientRow("stormSkin", "Storm Skin", (BooleanSupplier)null);
+      // (Storm Skin retired: the MCSM textures are permanently enabled.)
       this.clientRow("legacyHeads", "Legacy Heads", (BooleanSupplier)null);
       this.clientRow("distantStorms", "Distant Storms", (BooleanSupplier)null);
       this.clientRow("distantFog", "Distant Storm Haze", (BooleanSupplier)null);
@@ -667,9 +667,12 @@ public class WitherStormConfigScreen extends Screen {
       this.clientRow("sunGlowB", "Glow Colour: Blue", () -> !DabyWSClientConfig.sunGlow);
       this.header("Eye & Teeth Glow");
       this.clientRow("glowStrength", "Glow Strength", (BooleanSupplier)null);
-      this.clientRow("eyeColorR", "Glow Colour: Red", (BooleanSupplier)null);
-      this.clientRow("eyeColorG", "Glow Colour: Green", (BooleanSupplier)null);
-      this.clientRow("eyeColorB", "Glow Colour: Blue", (BooleanSupplier)null);
+      this.clientRow("eyeColorR", "Eye Colour: Red", (BooleanSupplier)null);
+      this.clientRow("eyeColorG", "Eye Colour: Green", (BooleanSupplier)null);
+      this.clientRow("eyeColorB", "Eye Colour: Blue", (BooleanSupplier)null);
+      this.clientRow("teethColorR", "Teeth Colour: Red", (BooleanSupplier)null);
+      this.clientRow("teethColorG", "Teeth Colour: Green", (BooleanSupplier)null);
+      this.clientRow("teethColorB", "Teeth Colour: Blue", (BooleanSupplier)null);
       this.header("Night Glow");
       this.clientRow("stormGlowStrength", "Silhouette Glow", (BooleanSupplier)null);
       this.header("Bloom");
@@ -682,6 +685,7 @@ public class WitherStormConfigScreen extends Screen {
       this.clientRow("beamColorG", "Beam Colour: Green", (BooleanSupplier)null);
       this.clientRow("beamColorB", "Beam Colour: Blue", (BooleanSupplier)null);
       this.clientRow("beamInnerFaces", "Show Inner Faces", (BooleanSupplier)null);
+      this.clientRow("beamNightBoost", "Night Brightness Boost", (BooleanSupplier)null);
       this.header("Beam Impact Light");
       this.clientRow("impactLight", "Light The Ground", (BooleanSupplier)null);
       this.clientRow("impactLightSize", "Light Size", () -> !DabyWSClientConfig.impactLight);
@@ -692,6 +696,8 @@ public class WitherStormConfigScreen extends Screen {
       this.clientRow("debrisAmount", "Debris Amount", (BooleanSupplier)null);
       this.clientRow("debrisSize", "Debris Size", (BooleanSupplier)null);
       this.clientRow("devourerDebrisGlow", "Devourer Debris Glow", (BooleanSupplier)null);
+      this.clientRow("vortexDebris", "Abduction Vortex", (BooleanSupplier)null);
+      this.clientRow("vortexStrength", "Vortex Strength", () -> !DabyWSClientConfig.vortexDebris);
       this.master("Sound & Interface");
       this.header("Audio: Storm");
       this.clientRow("stormAmbience", "Storm Ambience", (BooleanSupplier)null);
@@ -737,6 +743,10 @@ public class WitherStormConfigScreen extends Screen {
       this.header("Cataclysm Halos (Phase 5.8+)");
       this.clientRow("cataclysmHalos", "Cataclysm Halo Pair", (BooleanSupplier)null);
       this.clientRow("haloStrength", "Halo Strength", (BooleanSupplier)null);
+      this.header("MCSM Halo Rings & Dome");
+      this.clientRow("haloRings", "Cubic Halo Rings", (BooleanSupplier)null);
+      this.clientRow("haloRingStrength", "Ring Brightness", () -> !DabyWSClientConfig.haloRings);
+      this.clientRow("shieldDome", "Legacy Shield Dome", (BooleanSupplier)null);
       this.header("Black Glare & Ejecta");
       this.clientRow("blackGlare", "Black Glare Ring", (BooleanSupplier)null);
       this.clientRow("blackGlareStrength", "Glare Strength", (BooleanSupplier)null);
@@ -829,22 +839,29 @@ public class WitherStormConfigScreen extends Screen {
 
       DoubleSupplier get = () -> key.get().getAsDouble();
       String label = title != null ? title : prettify(name);
+      // Every commit re-evaluates locked/disabled states immediately, so master
+      // toggles that start OFF enable their dependent rows the moment they are
+      // clicked instead of waiting for a scroll or a tab switch.
+      Runnable commit = () -> {
+         DabyWSClientConfig.save();
+         this.repositionRows();
+      };
       Row row;
       if (key.cycle()) {
          row = WitherStormConfigScreen.Row.cycle(label, key.description(), key.cycleLabels(), get, (v) -> {
             key.set().accept(v);
             this.presetTouched(name);
-         }, DabyWSClientConfig::save);
+         }, commit);
       } else if (key.toggle()) {
          row = WitherStormConfigScreen.Row.toggle(label, key.description(), get, (v) -> {
             key.set().accept(v);
             this.presetTouched(name);
-         }, DabyWSClientConfig::save);
+         }, commit);
       } else {
          row = WitherStormConfigScreen.Row.slider(label, key.description(), key.min(), key.max(), key.max() >= (double)100.0F ? "%.0f" : (key.max() <= (double)0.5F ? "%.3f" : "%.2f"), get, (v) -> {
             key.set().accept(key.clamp(v));
             this.presetTouched(name);
-         }, DabyWSClientConfig::save);
+         }, commit);
       }
 
       row.locked = locked;
