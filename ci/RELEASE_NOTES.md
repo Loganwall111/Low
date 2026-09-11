@@ -1,3 +1,16 @@
+# 1.9.212 — the original oval glare is back (revamped), twilight pink gone, teeth brighter, block tornado
+
+- **THE ORIGINAL GLARE IS BACK, revamped.** The old structured slab/rays experiment is deleted. The glare is now the original style: a gigantic world-anchored OVAL billboard sitting at the storm's centre -- it follows the storm and its slow atmospheric sway, but does NOT move with the player, so you can walk around and behind it. The textures carry the spec exactly: black rim blending to dark purple, purple middle, blackness core, a little alpha overall. Per-phase palettes (blue / teal-green / purple / pink-purple / brown-pink / ember 8-9).
+- **Catalyst Halo re-enabled.** The base mod's own halo pass (black oval + breathing atmosphere pulses + cataclysm rings) was being cancelled by our patch; it now stays ON with a new oval halo_ring texture, layered inside the coloured oval for the blackness behind the silhouette. The fake sun-glow card is OFF (the shader draws the sun).
+- **Twilight pink deleted everywhere.** The dusk/dawn fog decks are now deep blues, and the frame fog colour is re-matched to the calm sky deck every frame -- the purple/pink night wash below the horizon cannot come back. Night = the midnight navy deck.
+- **Teeth glow much brighter** -- intensities raised to (p4 3.4 / p5 3.8 / p5.5-6 4.0 / p7 3.8) and the halo layers behind them are now at full strength.
+- **Water got its vanilla stripes back** -- slow diagonal flow bands over the opaque story-mode blue (shader), so the surface reads as moving water, still zero reflections.
+- **Block-matching tornado.** Phase 4 now summons a real tornado: particles emitted from the ACTUAL world blocks around the storm (sampled live, not random dust), pulled up and spiralling. From phase 6 the pull also comes off the ground under the storm, and crossing phase 4 fires an outward burst.
+- **Phase 6 body bigger** -- backdrop radius 55->62 base + 46/phase, model scale 1.60->1.90 base at 6 (cap 2.8x).
+- **Phase 7 rings cover the sky** -- a new giant flat ring high above the storm plus wider counter-spin sets; the phase 8-9 vortex rings grew to engulf the sky.
+
+Everything from 1.9.208-1.9.211 carries (shader default, settings fix, debris, glacier flakes, ember sky).
+
 # 1.9.211 — classic skin atlases finally recoloured (the phase 4-5.9 "original" look is gone)
 
 - **Why phases 4-5.9 still looked like the ORIGINAL storm:** the skin pass only ever recoloured the `_og` atlas set. The texture selector can resolve the CLASSIC atlases (phase_4_assets, devourer_assets, wither_storm), which were never touched -- so some phases kept the vanilla grey body. The charcoal-indigo v2 pass now covers ALL 18 atlases, so every phase reads as the matte dark-charcoal-indigo Telltale body with crisp edge highlights, obsidian only at the tentacle tips.

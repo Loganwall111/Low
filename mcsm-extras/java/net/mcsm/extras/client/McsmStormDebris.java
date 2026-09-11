@@ -3,12 +3,17 @@ package net.mcsm.extras.client;
 import net.dabicco.witherstormmod.client.ClientDistantStormManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.mcsm.extras.McsmExtrasConfig;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 1.9.208 -- DEBRIS OVERHAUL + GLACIER FLAKES.
@@ -46,12 +51,14 @@ public final class McsmStormDebris {
     private static final DustParticleOptions ICY_BLUE = new DustParticleOptions(0xFFB8E6FF, 0.8F);
 
     private static float spin = 0.0F;
+    /** previous phase per storm index -- phase-4 summon burst detection */
+    private static final Map<Integer, Float> LAST_PHASE = new HashMap<>();
 
     private static double radius(float phase) {
         if (phase < 4.0F) return 4.0D + 1.5D * phase;
         if (phase < 5.0F) return 10.0D + 8.0D * (phase - 4.0D);
         return phase < 6.0F ? 18.0D + 22.0D * (phase - 5.0D)
-                : Math.min(320.0D, 55.0D + 42.0D * (phase - 6.0D));
+                : Math.min(340.0D, 62.0D + 46.0D * (phase - 6.0D));
     }
 
     /** Call once per rendered frame. */
@@ -159,6 +166,49 @@ public final class McsmStormDebris {
                             level.addParticle(ICY, px, py, pz, vx, up * 0.8D, vz);
                         } else {
                             level.addParticle(ICY_BLUE, px, py + r * 0.4D, pz, vx * 0.5D, -0.04D, vz * 0.5D);
+                        }
+                    }
+                }
+
+                // ---- BLOCK-MATCHING TORNADO (1.9.212) ---------------------
+                // Phase 4 summons a tornado of particles that match the very
+                // blocks they tear off; later phases also pull from the
+                // ground under the storm. Not random dust -- the actual
+                // block states from the world, spiralling upward.
+                if (phase >= 4.0F) {
+                    int cols = phase >= 6.0F ? 12 : 6;
+                    for (int i = 0; i < cols; i++) {
+                        double ang = Math.random() * Math.PI * 2.0D;
+                        double rr = r * (0.35D + Math.random() * 0.65D);
+                        int bx = (int) Math.floor(d.dispX + Math.cos(ang) * rr);
+                        int bz = (int) Math.floor(d.dispZ + Math.sin(ang) * rr);
+                        // find the first solid block up from the ground
+                        int by = (int) Math.floor(d.dispY - r);
+                        BlockState st = level.getBlockState(new BlockPos(bx, by, bz));
+                        int scan = 0;
+                        while (st.isAir() && scan < 64) {
+                            by++;
+                            st = level.getBlockState(new BlockPos(bx, by, bz));
+                            scan++;
+                        }
+                        if (st.isAir()) {
+                            continue;
+                        }
+                        double tv = 0.10D + 0.14D * Math.random();
+                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, st),
+                                bx + 0.5D, by + 0.5D, bz + 0.5D,
+                                -Math.sin(ang) * tv, 0.30D + 0.25D * Math.random(), Math.cos(ang) * tv);
+                    }
+                    // phase-4 summon: one outward burst when the storm crosses 4
+                    Float prev = LAST_PHASE.put(d.entityId, phase);
+                    if (prev != null && prev < 4.0F) {
+                        for (int i = 0; i < 70; i++) {
+                            double ang = Math.random() * Math.PI * 2.0D;
+                            double rr2 = r * (0.5D + Math.random() * 0.9D);
+                            level.addParticle(OBSIDIAN,
+                                    d.dispX + Math.cos(ang) * rr2, d.dispY + (Math.random() - 0.5D) * r * 1.4D,
+                                    d.dispZ + Math.sin(ang) * rr2,
+                                    Math.cos(ang) * 0.5D, 0.15D + Math.random() * 0.5D, Math.sin(ang) * 0.5D);
                         }
                     }
                 }

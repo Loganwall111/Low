@@ -43,6 +43,18 @@ public final class McsmSkyDome {
     private McsmSkyDome() {
     }
 
+    /** 1.9.212: horizon colour of the calm deck -- the vanilla twilight fog
+     *  is pink/purple and it washed the night horizon below the dome, so the
+     *  frame fog colour is re-matched to this deck instead. */
+    public static void calmHorizon(long time, float[] out) {
+        float[] ramp = new float[McsmGlarePalettes.STOPS * 3];
+        calmRamp(time, ramp);
+        int last = (McsmGlarePalettes.STOPS - 1) * 3;
+        out[0] = ramp[last];
+        out[1] = ramp[last + 1];
+        out[2] = ramp[last + 2];
+    }
+
     private static float smooth(float t) {
         t = Mth.clamp(t, 0.0F, 1.0F);
         return t * t * (3.0F - 2.0F * t);

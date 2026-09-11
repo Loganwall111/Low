@@ -188,11 +188,15 @@ public final class McsmGate {
             changed += floorField(c, null, "beamOpacity", 1.35);
 
             // ---- the halo / glare the user has been chasing ----------------
-            changed += setBool(c, "sunGlow", true);
+            // 1.9.212: the fake sun-glow card is off (the shader draws its
+            // own sun); the ORIGINAL oval Catalyst Halo is back on.
+            changed += setBool(c, "sunGlow", false);
             changed += setBool(c, "blackGlare", true);
-            changed += setBool(c, "glareEjecta", false);
+            changed += setBool(c, "glareEjecta", true);
+            changed += setBool(c, "cataclysmHalos", true);
+            changed += setBool(c, "atmospherePulse", true);
             changed += setBool(c, "headEyeGlow", true);
-            changed += setBool(c, "devourerDebrisGlow", false);
+            changed += setBool(c, "devourerDebrisGlow", true);
 
             // ---- ground shadows for trees and mobs (user request) ---------
             changed += setBool(c, "trailerShadows", true);
@@ -225,7 +229,7 @@ public final class McsmGate {
             changed += ceilingField(c, null, "debrisAmount", 0.0);
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
-            changed += ceilingField(c, null, "sunGlowStrength", 0.45);
+            changed += ceilingField(c, null, "sunGlowStrength", 0.0);
             changed += ceilingField(c, null, "blackGlareStrength", 0.65);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);

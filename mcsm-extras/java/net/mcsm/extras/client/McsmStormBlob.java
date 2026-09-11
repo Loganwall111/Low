@@ -49,6 +49,29 @@ public final class McsmStormBlob {
     // glare is gone.
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
+    // 1.9.212 -- the ORIGINAL oval glare, revamped with the new banded
+    // textures (black rim -> dark purple -> purple middle -> black core).
+    private static final Identifier OVAL4 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase4.png");
+    private static final Identifier OVAL5 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase5.png");
+    private static final Identifier OVAL54 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase54.png");
+    private static final Identifier OVAL55 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase55.png");
+    private static final Identifier OVAL6 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase6.png");
+    private static final Identifier OVAL89 = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/glare/phase89.png");
+
+    private static Identifier ovalTex(float phase) {
+        if (phase >= 8.0F) return OVAL89;
+        if (phase >= 5.9F) return OVAL6;
+        if (phase >= 5.48F) return OVAL55;
+        if (phase >= 5.25F) return OVAL54;
+        if (phase >= 4.9F) return OVAL5;
+        return OVAL4;
+    }
     // 1.9.201: the extracted multi-colour glare discs (rebuilt by
     // ci/make_glare_from_sky.py from the OG sky strips).  The flat one-colour
     // wash is replaced by these textured domes.
@@ -76,7 +99,7 @@ public final class McsmStormBlob {
             return 10.0F + 8.0F * (phase - 4.0F);
         } else {
             return phase < 6.0F ? 18.0F + 22.0F * (phase - 5.0F)
-                    : Math.min(320.0F, 55.0F + 42.0F * (phase - 6.0F));
+                    : Math.min(340.0F, 62.0F + 46.0F * (phase - 6.0F));
         }
     }
 
@@ -112,6 +135,18 @@ public final class McsmStormBlob {
      * and without the MCSM Visual Shader.  At phase 8-9 the palette swaps to
      * the ember deck and the halo layers disappear (only the glare remains).
      */
+    /**
+     * 1.9.212 -- THE ORIGINAL GLARE, REVAMPED.
+     *
+     * A world-anchored 2D billboard (no dome, no camera-locked card): the
+     * oval sits at the storm's centre, follows the storm and its slow
+     * atmospheric sway, but stays put when the PLAYER moves -- so you can
+     * walk around it, go behind it, and it still reads as one gigantic oval
+     * atmosphere around the creature.  The texture carries the blended
+     * bands (black rim -> dark purple -> purple middle -> black core) with
+     * a little alpha; the base mod's Catalyst Halo black oval renders just
+     * inside it, giving the blackness behind the silhouette.
+     */
     private static void submitStructuredGlare(LevelRenderContext ctx) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || ClientDistantStormManager.all().isEmpty()) return;
@@ -131,91 +166,35 @@ public final class McsmStormBlob {
         float gt = (float)(mc.level.getGameTime() % 240000L)
                 + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float nowSec = gt * 0.05F;
-        Vec3 centre = new Vec3(best.dispX, best.dispY, best.dispZ)
-                .add(sway(phase, nowSec, bodyRadius(phase)));
-        Vec3 view = centre.subtract(cam).normalize();
+        double bodyR = bodyRadius(phase);
+        // anchored to the storm, riding its atmosphere sway -- NOT the camera
+        Vec3 at = new Vec3(best.dispX, best.dispY + bodyR * 0.10D, best.dispZ)
+                .add(sway(phase, nowSec, bodyR));
+        Vec3 view = at.subtract(cam).normalize();
         if (view.lengthSqr() < 1.0E-4D) return;
         float amp = ramp(phase, 3.95F, 4.25F)
                 * (1.0F - Mth.clamp((float)((dist - 1500.0D) / 1200.0D), 0.0F, 1.0F));
         if (amp <= 0.01F) return;
-        final float aa = Math.min(1.0F, amp * 1.45F);
-
-        // phase deck -> structured glare palette
-        float[][] deck = McsmGlarePalettes.P4;
-        if (phase >= 8.0F)      deck = McsmGlarePalettes.P89;
-        else if (phase >= 5.9F) deck = McsmGlarePalettes.P6;
-        else if (phase >= 5.48F) deck = McsmGlarePalettes.P55;
-        else if (phase >= 5.25F) deck = McsmGlarePalettes.P5_PURPLE;
-        else if (phase >= 4.9F) deck = McsmGlarePalettes.P5_TEAL;
-        final float[] hor = { deck[15][0], deck[15][1], deck[15][2] };
-        final float[] mid = { deck[8][0],  deck[8][1],  deck[8][2]  };
-        final float[] top = { deck[1][0],  deck[1][1],  deck[1][2]  };
-        // glare core: brighten the mid/horizon stop for the rays
-        final float[] core = {
-                Math.min(1.0F, hor[0] * 1.6F + 0.10F),
-                Math.min(1.0F, hor[1] * 1.6F + 0.10F),
-                Math.min(1.0F, hor[2] * 1.4F + 0.15F) };
-
+        float aa = Math.min(1.0F, amp * 1.45F);
         McsmExtrasConfig.load();
-        final double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-        final double wHalf = Math.min(70.0D, 30.0D + 22.0D * gs);   // slab half-width (deg)
-        final double slabTop = Math.min(68.0D, 30.0D + 24.0D * gs); // slab top elevation
-        final double slabBot = Math.min(34.0D, 14.0D + 12.0D * gs); // slab bottom depth
-
-        final Vec3 dir = view;
-        SubmitNodeCollector collector = ctx.submitNodeCollector();
+        double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
+        double ovalR = bodyR * (1.55D + 0.85D * gs);
         PoseStack poseStack = ctx.poseStack();
-
-        // ---- 1) structured three-band slab: hard edges, no falloff --------
-        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
-                (pose, consumer) -> {
-                    angQuad(pose, consumer, cam, dir, 512.0D, -wHalf, wHalf, -slabBot, slabTop,
-                            hor[0], hor[1], hor[2], aa * 78.0F);
-                    angQuad(pose, consumer, cam, dir, 509.0D, -wHalf * 0.94D, wHalf * 0.94D,
-                            slabTop * 0.18D, slabTop, top[0], top[1], top[2], aa * 88.0F);
-                    angQuad(pose, consumer, cam, dir, 506.0D, -wHalf * 0.86D, wHalf * 0.86D,
-                            -slabBot, slabTop * 0.30D, mid[0], mid[1], mid[2], aa * 96.0F);
-                });
-
-        // ---- 2) rigid rays: alternating long/short spokes, rotating --------
-        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
-                (pose, consumer) -> {
-                    final int N = 15;
-                    final double rot = nowSec * 0.016D; // slow, dignified
-                    for (int i = 0; i < N; i++) {
-                        double th = (2.0D * Math.PI * i / N) + rot;
-                        boolean longRay = (i % 2) == 0;
-                        double rIn = longRay ? slabTop * 0.30D : slabTop * 0.22D;
-                        double rOut = longRay ? slabTop * 1.30D : slabTop * 0.95D;
-                        double thk = longRay ? 2.4D : 1.6D;
-                        // ray as a thin angular quad along (cos,sin)
-                        double c0x = Math.cos(th) * rIn,  c0y = Math.sin(th) * rIn * 0.92D;
-                        double c1x = Math.cos(th) * rOut, c1y = Math.sin(th) * rOut * 0.92D;
-                        double px = -Math.sin(th) * thk,   py = Math.cos(th) * thk;
-                        angQuadRaw(pose, consumer, cam, dir, 504.0D,
-                                c0x + px, c0y + py, c0x - px, c0y - py,
-                                c1x - px, c1y - py, c1x + px, c1y + py,
-                                core[0], core[1], core[2], aa * 62.0F * (longRay ? 1.0F : 0.72F));
-                    }
-                });
-
-        // ---- 3) saturated core + foggy glow on the landscape below ---------
-        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
-                (pose, consumer) -> {
-                    double coreHalf = Math.min(16.0D, 5.0D + 6.0D * gs);
-                    angQuad(pose, consumer, cam, dir, 502.0D, -coreHalf, coreHalf,
-                            -coreHalf * 0.9D, coreHalf * 0.9D,
-                            core[0], core[1], core[2], aa * 150.0F);
-                });
-        // ground fog pool under the beams (a horizontal quad at the storm's
-        // feet; reads as geometric fog from the beam cones)
-        double groundY = best.dispY - bodyRadius(phase) * 1.15D;
+        SubmitNodeCollector collector = ctx.submitNodeCollector();
+        // the oval, coloured by the banded texture at "a little" alpha
+        quad(poseStack, collector, GlowRenderTypes.glow(ovalTex(phase)), at, view,
+                ovalR, 255, 255, 255, (int)(aa * 185.0F));
+        // a dimmer, larger echo for depth (still world-anchored)
+        quad(poseStack, collector, GlowRenderTypes.glow(ovalTex(phase)), at, view,
+                ovalR * 1.32D, 255, 255, 255, (int)(aa * 62.0F));
+        // faint purple fog pool cast onto the ground under the beams
+        double groundY = best.dispY - bodyR * 1.15D;
         Vec3 gAt = new Vec3(best.dispX, Math.max(groundY, best.dispY - 260.0D), best.dispZ);
-        double gr = bodyRadius(phase) * 2.4D;
+        double gr = bodyR * 2.2D;
         collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
                 (pose, consumer) -> {
                     quadVerts(pose, consumer, gAt, new Vec3(0.0D, 1.0D, 0.0D), gr,
-                            155, 90, 235, (int)(aa * 46.0F));
+                            150, 85, 230, (int)(aa * 42.0F));
                 });
     }
 
@@ -442,40 +421,6 @@ public final class McsmStormBlob {
                 }
             }
         }
-    }
-
-    /** Crisp angular quad: corners as angular offsets (degrees) from the
-     *  view axis; constant alpha -- no gaussian, no soft rim. */
-    private static void angQuad(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir,
-            double shell, double x0, double x1, double y0, double y1,
-            float r, float g, float b, float a) {
-        angQuadRaw(pose, consumer, cam, dir, shell, x0, y0, x1, y0, x1, y1, x0, y1, r, g, b, a);
-    }
-
-    private static void angQuadRaw(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir,
-            double shell, double ax0, double ay0, double ax1, double ay1,
-            double ax2, double ay2, double ax3, double ay3,
-            float r, float g, float b, float a) {
-        if (a <= 2) return;
-        Vec3 upHint = Math.abs(dir.y) > 0.96D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 right = dir.cross(upHint).normalize();
-        Vec3 up = right.cross(dir).normalize();
-        double d0x = Math.tan(Math.toRadians(ax0)), d0y = Math.tan(Math.toRadians(ay0));
-        double d1x = Math.tan(Math.toRadians(ax1)), d1y = Math.tan(Math.toRadians(ay1));
-        double d2x = Math.tan(Math.toRadians(ax2)), d2y = Math.tan(Math.toRadians(ay2));
-        double d3x = Math.tan(Math.toRadians(ax3)), d3y = Math.tan(Math.toRadians(ay3));
-        Vec3 p0 = cam.add(dir.add(right.scale(d0x)).add(up.scale(d0y)).normalize().scale(shell));
-        Vec3 p1 = cam.add(dir.add(right.scale(d1x)).add(up.scale(d1y)).normalize().scale(shell));
-        Vec3 p2 = cam.add(dir.add(right.scale(d2x)).add(up.scale(d2y)).normalize().scale(shell));
-        Vec3 p3 = cam.add(dir.add(right.scale(d3x)).add(up.scale(d3y)).normalize().scale(shell));
-        int ir = Mth.clamp((int)(r * 255.0F), 0, 255);
-        int ig = Mth.clamp((int)(g * 255.0F), 0, 255);
-        int ib = Mth.clamp((int)(b * 255.0F), 0, 255);
-        int ia = Mth.clamp((int)a, 0, 255);
-        vertex(pose, consumer, p0, 0.0F, 1.0F, ir, ig, ib, ia);
-        vertex(pose, consumer, p1, 1.0F, 1.0F, ir, ig, ib, ia);
-        vertex(pose, consumer, p2, 1.0F, 0.0F, ir, ig, ib, ia);
-        vertex(pose, consumer, p3, 0.0F, 0.0F, ir, ig, ib, ia);
     }
 
     private static float fract(float x) {

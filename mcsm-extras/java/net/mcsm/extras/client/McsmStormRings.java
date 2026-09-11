@@ -51,7 +51,7 @@ public final class McsmStormRings {
         if (phase < 6.0F) {
             return 18.0D + 22.0D * (phase - 5.0D);
         }
-        return Math.min(320.0D, 55.0D + 42.0D * (phase - 6.0D));
+        return Math.min(340.0D, 62.0D + 46.0D * (phase - 6.0D));
     }
 
     public static void submit(LevelRenderContext ctx) {
@@ -125,7 +125,7 @@ public final class McsmStormRings {
      *  counter-spinning diagonal set and grows the radii. */
     private static void drawPhase67(Pose pose, VertexConsumer consumer, Vec3 c, Vec3 cam,
             double bR, float tSec, float fade, boolean phase7, float cr, float cg, float cb) {
-        double grow = phase7 ? 1.18D : 1.0D;
+        double grow = phase7 ? 1.60D : 1.0D;
         int n = phase7 ? 32 : 26;
         double cube = bR * (phase7 ? 0.045D : 0.040D);
 
@@ -139,11 +139,15 @@ public final class McsmStormRings {
         ring(pose, consumer, c, cam, bR * 1.65D * grow, 35.0D, 24.0D, n, cube,
                 tSec * 0.050F, fade * 0.85F, cr, cg, cb, false);
         if (phase7) {
+            // 1.9.212: phase 7 rings grow to cover the whole sky -- a big
+            // flat horizontal ring high above the storm, thin at the top.
+            ring(pose, consumer, c.add(0.0D, bR * 0.95D, 0.0D), cam, bR * 2.6D, 6.0D, 30.0D, 40,
+                    cube * 0.7D, tSec * 0.030F, fade * 0.75F, cr, cg, cb, false);
             // ring 4: counter-clockwise diagonal, smaller, inner
-            ring(pose, consumer, c, cam, bR * 1.25D, -52.0D, 18.0D, 26, cube * 0.8D,
+            ring(pose, consumer, c, cam, bR * 1.45D, -52.0D, 18.0D, 26, cube * 0.8D,
                     -tSec * 0.040F, fade * 0.8F, cr, cg, cb, true);
             // ring 5: counter-clockwise horizontal below the body
-            ring(pose, consumer, c, cam, bR * 1.15D, 0.0D, 0.0D, 24, cube * 0.8D,
+            ring(pose, consumer, c, cam, bR * 1.30D, 0.0D, 0.0D, 24, cube * 0.8D,
                     -tSec * 0.048F, fade * 0.75F, cr, cg, cb, true);
         }
     }
@@ -155,7 +159,8 @@ public final class McsmStormRings {
         int n = 40;
         // major ring radii and heights (top rings thinner + smaller = vortex)
         for (int ringIdx = 0; ringIdx < 3; ringIdx++) {
-            double majorR = bR * (3.10D - 0.45D * ringIdx);
+            // 1.9.212: the vortex rings engulf the whole sky
+            double majorR = bR * (4.30D - 0.55D * ringIdx);
             boolean ccw = (ringIdx == 2);
             for (int layer = 0; layer < 10; layer++) {
                 // funnel: higher layers pull inward and thin out

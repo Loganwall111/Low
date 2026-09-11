@@ -44,9 +44,10 @@ public abstract class McsmTentacleGirthMixin {
             // so heads/body/tentacles all swell together.
             float s = 1.0F;
             if (phase >= 6.0F) {
-                s = Math.min(2.4F, 1.60F + 0.18F * (phase - 6.0F));
+                // 1.9.212: phase-6 body is notably bigger now
+                s = Math.min(2.8F, 1.90F + 0.20F * (phase - 6.0F));
             } else if (phase >= 5.0F) {
-                s = 1.30F + 0.30F * (phase - 5.0F);
+                s = 1.35F + 0.30F * (phase - 5.0F);
             } else if (phase >= 4.0F) {
                 s = 1.10F + 0.20F * (phase - 4.0F);
             } else if (phase >= 2.0F) {

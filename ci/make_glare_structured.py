@@ -1,74 +1,93 @@
 #!/usr/bin/env python3
-"""1.9.210: rebuild mcsm_atmosphere/glare/*.png as RIGID STRUCTURED glares.
+"""1.9.212: rebuild the glare assets as the ORIGINAL OVAL halo, revamped.
 
-The old textures were soft radial discs (fuzzy mist spheres -- exactly what
-the user keeps rejecting).  These bake the new structured design into the
-asset itself so ANY code path (legacy disc sampler, shader, preview screens)
-gets the rigid Telltale read:
+The user's spec: an OVAL (not a circle), not foggy, bands that BLEND:
+outer blackness -> dark purple -> purple middle -> blackness core, with a
+little alpha overall.  This bakes that design into:
 
-  * hard-edged vertical slab: three crisp bands (horizon / mid / zenith)
-    from the phase palette, sharp top and bottom cutoffs;
-  * 15 crisp rays alternating long/short radiating from the core;
-  * small saturated core, everything else transparent (additive-ready).
+  * mcsm_atmosphere/glare/phase{4,5,54,55,6,89}.png -- the coloured oval
+    billboards the mod's own glare pass draws (white-tinted, so the bands
+    are visible), per-phase palettes;
+  * textures/misc/halo_ring.png -- the SAME oval in ring form for the base
+    mod's Catalyst Halo pass (that pass multiplies by a near-black tint, so
+    here the shape/alpha does the work).
 
-Rendered at 512x512 with a transparent background.
+Wide horizontal oval (w:h = 1 : 0.72), smooth band blending, max alpha
+~205 (a little transparency, never glassy).
 """
 import math, os, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from pngutil import write_png
 
-SIZE = 512
+SIZE = 256
+CY = 0.72  # vertical squash -> horizontal oval
 
-# palette stops matching McsmGlarePalettes: (zenith, mid, horizon)
+# per-phase band palettes: (rim, dark, mid, core)
 PAL = {
-    'phase4':   ((0.50,0.53,0.92), (0.55,0.58,0.95), (0.42,0.78,0.92)),
-    'phase5':   ((0.02,0.28,0.25), (0.06,0.42,0.38), (0.63,0.82,0.68)),
-    'phase54':  ((0.26,0.10,0.36), (0.42,0.16,0.52), (0.70,0.45,0.80)),
-    'phase55':  ((0.22,0.09,0.30), (0.52,0.20,0.48), (0.80,0.53,0.55)),
-    'phase6':   ((0.35,0.20,0.31), (0.50,0.35,0.46), (0.73,0.54,0.60)),
-    'phase89':  ((0.118,0.016,0.008), (0.443,0.153,0.059), (0.729,0.529,0.337)),
+    'phase4':  ((8, 6, 24),  (30, 26, 90),  (95, 105, 220), (6, 6, 20)),
+    'phase5':  ((4, 16, 12), (10, 52, 46),  (48, 168, 150), (3, 12, 10)),
+    'phase54': ((16, 6, 26), (58, 22, 86),  (128, 48, 172), (12, 5, 20)),
+    'phase55': ((22, 8, 26), (80, 28, 84),  (190, 78, 130), (16, 6, 20)),
+    'phase6':  ((26, 12, 18), (86, 44, 62), (178, 96, 120), (20, 9, 14)),
+    'phase89': ((34, 8, 2),  (110, 34, 10), (216, 96, 34),  (28, 8, 3)),
 }
 
-def make(name, zen, mid, hor):
+def band(q, rim, dark, mid, core):
+    """q = 0..1 normalized ellipse radius -> (r,g,b,a)."""
+    if q > 1.0:
+        return (0, 0, 0, 0)
+    # outer rim: core->dark, dark->mid, mid->black core; all smoothstepped
+    def s(a, b, t):
+        t = max(0.0, min(1.0, (t - a) / (b - a)))
+        return t * t * (3.0 - 2.0 * t)
+    if q < 0.30:
+        c = mixc(mid, core, s(0.30, 0.16, q))
+        a = 150.0 + 55.0 * s(0.30, 0.16, q)
+    elif q < 0.58:
+        c = mixc(dark, mid, s(0.30, 0.58, q))
+        a = 205.0
+    elif q < 0.88:
+        c = mixc(rim, dark, s(0.58, 0.88, q))
+        a = 205.0 - 30.0 * s(0.58, 0.88, q)
+    else:
+        c = rim
+        a = 175.0 * (1.0 - s(0.88, 1.0, q))
+    return (c[0], c[1], c[2], int(min(255, a)))
+
+def mixc(a, b, t):
+    return (int(a[0] + (b[0] - a[0]) * t), int(a[1] + (b[1] - a[1]) * t), int(a[2] + (b[2] - a[2]) * t))
+
+def make_oval(pal, ring=False):
+    rim, dark, mid, core = pal
     px = [(0, 0, 0, 0)] * (SIZE * SIZE)
-    cx, cy = SIZE // 2, SIZE // 2
-    # crisp three-band slab: sharp edges, no falloff
-    band_h = SIZE // 3
     for y in range(SIZE):
-        band = y // band_h
-        c = (hor, mid, zen)[band] if band < 3 else zen
+        ny = (y - SIZE / 2) / (SIZE / 2)
         for x in range(SIZE):
-            px[y * SIZE + x] = (int(c[0]*255), int(c[1]*255), int(c[2]*255), 235)
-    # rays: alternating long/short spokes from the centre
-    core = (min(1.0, hor[0]*1.6+0.10), min(1.0, hor[1]*1.6+0.10), min(1.0, hor[2]*1.4+0.15))
-    for i in range(15):
-        th = 2.0 * math.pi * i / 15
-        long_ray = (i % 2) == 0
-        r_out = SIZE * (0.62 if long_ray else 0.46)
-        r_in = SIZE * (0.16 if long_ray else 0.11)
-        thick = 3.0 if long_ray else 2.0
-        for r in range(int(r_in), int(r_out)):
-            x = int(cx + math.cos(th) * r)
-            y = int(cy + math.sin(th) * r * 0.92)
-            for dx in range(-int(thick), int(thick) + 1):
-                for dy in range(-int(thick), int(thick) + 1):
-                    xx, yy = x + dx, y + dy
-                    if 0 <= xx < SIZE and 0 <= yy < SIZE:
-                        a = 200 if (abs(dx) + abs(dy)) <= 1 else 110
-                        px[yy * SIZE + xx] = (int(core[0]*255), int(core[1]*255), int(core[2]*255), a)
-    # saturated core disc
-    for y in range(cy - 14, cy + 14):
-        for x in range(cx - 14, cx + 14):
-            if (x - cx) ** 2 + (y - cy) ** 2 <= 14 * 14:
-                px[y * SIZE + x] = (int(core[0]*255), int(core[1]*255), int(core[2]*255), 255)
+            nx = (x - SIZE / 2) / (SIZE / 2)
+            q = math.sqrt(nx * nx + (ny / CY) * (ny / CY))
+            if ring:
+                # hollow centre so the storm silhouette owns the middle
+                if q < 0.16:
+                    continue
+                r, g, b, a = band(q, rim, dark, mid, core)
+                a = int(a * (0.35 + 0.65 * max(0.0, min(1.0, (q - 0.16) / 0.4))))
+            else:
+                r, g, b, a = band(q, rim, dark, mid, core)
+            px[y * SIZE + x] = (r, g, b, a)
     return px
 
 def main():
     base = 'jar-overrides/assets/dabywitherstormmod/textures/mcsm_atmosphere/glare'
     os.makedirs(base, exist_ok=True)
-    for name, (zen, mid, hor) in PAL.items():
-        write_png(os.path.join(base, name + '.png'), SIZE, SIZE, make(name, zen, mid, hor))
+    for name, pal in PAL.items():
+        write_png(os.path.join(base, name + '.png'), SIZE, SIZE, make_oval(pal))
         print(name)
+    misc = 'jar-overrides/assets/dabywitherstormmod/textures/misc'
+    os.makedirs(misc, exist_ok=True)
+    # halo ring override: the base pass tints it near-black, so only the
+    # oval shape + alpha matter; use the phase-5.5 purple as a base.
+    write_png(os.path.join(misc, 'halo_ring.png'), SIZE, SIZE, make_oval(PAL['phase55'], ring=True))
+    print('halo_ring')
 
 if __name__ == '__main__':
     main()
