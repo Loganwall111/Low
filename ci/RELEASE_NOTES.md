@@ -1,3 +1,37 @@
+# 1.9.218 — the glare is now Telltale's INFINITE SKYBOX BLOB (the real technique)
+
+You cracked it: the glare was never a 3D object, never a cloud layer, never
+fog -- it is an ANGULAR projection pinned behind the storm, the same trick as
+infinite hallways. This build implements exactly that:
+
+- **Infinite sky blob** in the MCSM Visual Shader (lib/mcsm/skyBlob.glsl,
+  painted on sky pixels in the lighting composite; the pack's own sky
+  programs stay untouched). The blob is a function of VIEW ANGLE around the
+  storm direction, not distance:
+  * fly up into the greenness/blackness -- it never ends;
+  * turn 180 degrees away -- it fades back to the normal sky (the vanilla
+    sky shines through the outer borders);
+  * it travels with uStormPos, always framing the boss's back;
+  * the center is a SOLID OPAQUE dark-matter core mask that replaces the
+    game sky; the border is a wide smooth smudged gradient flare with zero
+    blocky edges (per-fragment noise wobble + all smoothsteps).
+- **Exact hex gradients**, dynamically lerped by phase:
+  * P5: core #1A2223, mid #2E4544, outer #7C9885, beam accent #8493FF
+  * P5.5-5.9: core #0F0814, mid #3A1B54, high #5E2775, outer #7D4B91
+  * P6: zenith #171021, upper #44284D, lower #A36B73, burning bottom #D69776
+    (the four-colour sunset split becomes a vertical ramp inside the blob)
+  * plus the measured P4 teal, P7 green and P8-9 ember continuations.
+- **Heavy raymarching removed** -- the volumetric raymarch from 1.9.215 is
+  deleted from the pack; the blob is a flat angular projection (a fraction
+  of the cost).
+- **New Java driver class** McsmSkyBlob: every frame it finds the strongest
+  storm and pushes uStormPos / uStormPhase / uGlareSize into Iris
+  (reflective, no compile-time dependency). The Glare Size slider now
+  directly scales the blob.
+
+The full 1:1 Telltale model ladder (1.9.216), the glow fixes (1.9.217) and
+everything before carry.
+
 # 1.9.217 — teeth and eyes actually glow now (root cause found)
 
 ## Why the teeth looked dead

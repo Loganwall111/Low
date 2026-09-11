@@ -128,7 +128,7 @@
 
     #include "/lib/post/tonemap.glsl"
 
-    #include "/lib/mcsm/stormVolume.glsl"
+    #include "/lib/mcsm/skyBlob.glsl"
 
     void main(){
         // Screen texel coordinates
@@ -167,17 +167,17 @@
             #endif
         #endif
 
-        // MCSM 1.9.215 -- raymarched volumetric storm deck: blends the sky
-        // into the phase profile and scatters atmosphere onto the terrain.
+        // MCSM 1.9.218 -- the INFINITE SKYBOX BLOB (Telltale's real glare):
+        // a flat angular projection pinned behind the storm. The core is an
+        // opaque dark-matter mask that replaces the game sky; the border is
+        // a wide smooth gradient flare that lets the vanilla sky bleed
+        // through the outer edges. Sky pixels only.
         #ifdef MCSM_STORM_VOLUME
         {
             float sceneDepth = textureLod(depthtex0, texCoord, 0).x;
-            bool skyPixel = sceneDepth >= 0.99998;
-            vec4 vol = mcsmStormVolume(texCoord);
-            if (skyPixel) {
-                postColOut = mix(postColOut, vol.rgb * 2.6, clamp(vol.a * 2.4, 0.0, 0.94));
-            } else {
-                postColOut += vol.rgb * vol.a * 0.30;
+            if (sceneDepth >= 0.99998) {
+                vec4 blob = mcsmSkyBlob(texCoord);
+                postColOut = mix(postColOut, blob.rgb, blob.a);
             }
         }
         #endif
