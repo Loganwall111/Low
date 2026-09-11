@@ -128,6 +128,8 @@
 
     #include "/lib/post/tonemap.glsl"
 
+    #include "/lib/mcsm/stormVolume.glsl"
+
     void main(){
         // Screen texel coordinates
         ivec2 screenTexelCoord = ivec2(gl_FragCoord.xy);
@@ -163,6 +165,21 @@
             #else
                 if(isSky) postColOut += getLensFlare(texCoord - 0.5, shdLightDirScreenSpace.xy - 0.5) * (1.0 - blindness) * (1.0 - darknessFactor) * (1.0 - rainStrength);
             #endif
+        #endif
+
+        // MCSM 1.9.215 -- raymarched volumetric storm deck: blends the sky
+        // into the phase profile and scatters atmosphere onto the terrain.
+        #ifdef MCSM_STORM_VOLUME
+        {
+            float sceneDepth = textureLod(depthtex0, texCoord, 0).x;
+            bool skyPixel = sceneDepth >= 0.99998;
+            vec4 vol = mcsmStormVolume(texCoord);
+            if (skyPixel) {
+                postColOut = mix(postColOut, vol.rgb * 2.6, clamp(vol.a * 2.4, 0.0, 0.94));
+            } else {
+                postColOut += vol.rgb * vol.a * 0.30;
+            }
+        }
         #endif
 
         #ifdef AUTO_EXPOSURE

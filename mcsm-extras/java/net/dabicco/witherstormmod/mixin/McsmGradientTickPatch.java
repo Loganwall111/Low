@@ -2,6 +2,7 @@ package net.dabicco.witherstormmod.mixin;
 
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+import net.dabicco.witherstormmod.client.ClientDistantStormManager;
 import net.dabicco.witherstormmod.client.StormSkins;
 import net.dabicco.witherstormmod.client.StormSkyGradient;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
@@ -121,8 +122,103 @@ public abstract class McsmGradientTickPatch {
             // dim to a faint purple shaft. Written live every frame so the
             // base renderer picks the value up as it draws.
             mcsm$beamDayNight(cameraState);
+            // 1.9.215 -- push the storm position/phase into the MCSM Visual
+            // Shader's volumetric cloud deck (uStormPos / uStormPhase) via
+            // the Iris uniform API, reflectively so no compile-time dep.
+            mcsm$pushStormUniforms();
         } catch (Throwable ignored) {
             // Never let a visual helper break the frame.
+        }
+    }
+
+    /** Reflection to Iris: uStormPos + uStormPhase for the volumetric deck. */
+    private static Object mcsmIrisUniforms;
+    private static boolean mcsmIrisUniformsTried;
+
+    private static void mcsm$pushStormUniforms() {
+        try {
+            if (!mcsmIrisUniformsTried) {
+                mcsmIrisUniformsTried = true;
+                Object api = Class.forName("net.irisshaders.iris.api.v0.IrisApi")
+                        .getMethod("getInstance").invoke(null);
+                if (api != null) {
+                    try {
+                        mcsmIrisUniforms = api.getClass().getMethod("getIrisUniforms").invoke(api);
+                    } catch (Throwable ignoredApiShape) {
+                    }
+                }
+            }
+            if (mcsmIrisUniforms == null) {
+                return;
+            }
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.level == null) {
+                return;
+            }
+            float phase = 0.0F;
+            double sx = 0.0D, sy = -100000.0D, sz = 0.0D;
+            for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
+                if (d.phase > phase) {
+                    phase = d.phase;
+                    sx = d.dispX;
+                    sy = d.dispY;
+                    sz = d.dispZ;
+                }
+            }
+            mcsm$irisVec3(mcsmIrisUniforms, "uStormPos", sx, sy, sz);
+            mcsm$irisFloat(mcsmIrisUniforms, "uStormPhase", phase);
+        } catch (Throwable ignored) {
+            // shader still runs with its calm defaults
+        }
+    }
+
+    private static void mcsm$irisVec3(Object holder, String name, double x, double y, double z) {
+        // try flat setter shapes first
+        for (String m : new String[]{"setVector3d", "setVec3d", "set"}) {
+            try {
+                holder.getClass().getMethod(m, String.class, double.class, double.class, double.class)
+                        .invoke(holder, name, x, y, z);
+                return;
+            } catch (Throwable ignoredFlat) {
+            }
+        }
+        // then holder style: uniforms.uniform(name).set(...)
+        try {
+            Object u = holder.getClass().getMethod("uniform", String.class).invoke(holder, name);
+            if (u != null) {
+                for (String m : new String[]{"set", "setVector3", "setVec3", "setValue"}) {
+                    try {
+                        u.getClass().getMethod(m, double.class, double.class, double.class)
+                                .invoke(u, x, y, z);
+                        return;
+                    } catch (Throwable ignoredSet) {
+                    }
+                }
+            }
+        } catch (Throwable ignoredHolder) {
+        }
+    }
+
+    private static void mcsm$irisFloat(Object holder, String name, float v) {
+        for (String m : new String[]{"setFloat", "set"}) {
+            try {
+                holder.getClass().getMethod(m, String.class, float.class).invoke(holder, name, v);
+                return;
+            } catch (Throwable ignoredFlat) {
+            }
+        }
+        try {
+            Object u = holder.getClass().getMethod("uniform", String.class).invoke(holder, name);
+            if (u != null) {
+                for (String m : new String[]{"set", "setValue"}) {
+                    try {
+                        u.getClass().getMethod(m, float.class).invoke(u, v);
+                        return;
+                    } catch (Throwable ignoredSet) {
+                    }
+                }
+            }
+        } catch (Throwable ignoredHolder) {
         }
     }
 

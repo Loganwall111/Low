@@ -1,3 +1,38 @@
+# 1.9.215 — TRUE 1:1 Telltale models (first wave) + the volumetric GLSL storm deck
+
+## The model swap has begun (real Telltale meshes)
+The mod's CEM pipeline now carries REAL Telltale geometry, voxelised from the
+extracted bbmodel meshes (repo gggggrff, Telltale meshes/textures):
+- **phase 2.0-4.49** = the real Stage A storm (three-headed small form),
+- **phase 5.0-5.49** = the real Stage B storm (1:1 flesh model),
+- **severed storm** = the real Deadass mesh.
+`ci/bbmodel_convert.py` converts the triangle meshes (40k-80k vertices) into
+the JEM cube models: every vertex/edge/centroid marks its voxel, the shell is
+filled solid, and each voxel becomes a box with textureOffsets derived from
+the real per-vertex UVs. Stage C (massive) and the Stage D heads convert
+next wave.
+
+## The volumetric cloud shader (pure GLSL, per your formula)
+The MCSM Visual Shader now contains a **code-driven raymarched storm deck**
+(`/lib/mcsm/stormVolume.glsl`, wired into the lighting composite):
+- no billboards, no textures: 3D simplex-noise fbm, ray-box isolated sky
+  volume, stepped raymarch;
+- the cloud box is permanently centered on the camera (always enveloped);
+- **uStormPos** + **uStormPhase** uniforms are pushed from the mod every
+  frame (Iris uniform API, reflective so it can't break on other loaders):
+  density scales up exponentially near the storm and the noise swirls around
+  the storm axis (the churn);
+- the exact hex ramps you gave, lerped by phase:
+  - P5: sky #1A2E30, fog #3D6266, aura #2DE0D7, beam #D2FCFA
+  - P5.5-5.9: sky #2A153D, fog #52297A, aura #8E44AD, beam #B976FF
+  - P6: sky #120D1A, burning horizon #D98353, aura #4B2766, edge #F0B38A
+  - plus the measured P4 teal deck, P7 green and P8-9 ember;
+- beam pierce: a bright shaft where the ray crosses the storm column;
+- calm/night stays the neutral navy haze (no purple unless a storm is live);
+- sky pixels blend into the phase deck, terrain picks up scattered glow.
+
+Everything from 1.9.208-1.9.214 carries.
+
 # 1.9.214 — THE REAL TELLTALE ASSETS DROP (repo Loganwall111/gggggrff)
 
 The asset pack finally landed: original MCSM/Telltale meshes and textures extracted for Blockbench, with traced 1:1 "shaded" textures. Everything below uses those REAL assets -- no more invented textures.
