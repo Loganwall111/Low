@@ -1,3 +1,9 @@
+# 1.9.209 — settings actually stick, storm models grow per phase
+
+- **"Settings not activating" fixed.** The MCSM gate was silently re-forcing its look over any value you had saved in the base mod's own config screen at every session start, so a clicked toggle looked dead. The gate now reads `config/dabywitherstormmod-client.json` once and NEVER touches a key you have explicitly persisted to a different value. Fresh installs still get the full Story Mode default; every click you make now sticks across sessions.
+- **Bigger models per phase.** The whole storm MODEL now scales up each phase on top of its native growth (1.10x at 4, 1.30x at 5, up to 2.4x by 6+), not just the backdrop — heads, body and tentacles swell together. New "Storm Model Scale" slider (0.50-2.50x) in the Control Panel multiplies it globally.
+- Also in this build: the sky texture folder from 1.9.208 (day/night/sunset/midnight + phase 5 / 5.5-5.9 / 6 / 7 fog + phase 8-9 ember strips), shader-as-default, the structured glare, cube rings, glacier flakes and max debris remain exactly as shipped in 1.9.208.
+
 # 1.9.208 — shader is the default, glare rebuilt, rings, glacier flakes, ember apocalypse
 
 - **The MCSM Visual Shader is now the DEFAULT.** `shaderPackGate` + `auto_select_shader_pack` are ON out of the box (existing installs flip on migration): the pack self-installs into `shaderpacks/` and Iris auto-selects it — no clicks, no resource packs, ever. The "Force MCSM Look / World" kill-switches are gone from the Control Panel (the vanilla look is permanently disabled); the in-game briefing now says the shader is the default.

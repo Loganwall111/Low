@@ -39,6 +39,24 @@ public abstract class McsmTentacleGirthMixin {
             // early storm keeps thinner limbs; full girth from phase ~4.
             float phase = (float) state.phase;
             g = 1.0F + (g - 1.0F) * Mth.clamp((phase - 1.5F) / 2.5F, 0.35F, 1.0F);
+            // 1.9.209 -- the whole MODEL grows with each phase, on top of the
+            // native growth. Scales the root ModelPart; children inherit it,
+            // so heads/body/tentacles all swell together.
+            float s = 1.0F;
+            if (phase >= 6.0F) {
+                s = Math.min(2.4F, 1.60F + 0.18F * (phase - 6.0F));
+            } else if (phase >= 5.0F) {
+                s = 1.30F + 0.30F * (phase - 5.0F);
+            } else if (phase >= 4.0F) {
+                s = 1.10F + 0.20F * (phase - 4.0F);
+            } else if (phase >= 2.0F) {
+                s = 1.00F + 0.05F * (phase - 2.0F);
+            }
+            s *= (float) Mth.clamp(McsmExtrasConfig.stormModelScale, 0.25, 3.0);
+            root.xScale *= s;
+            root.yScale *= s;
+            root.zScale *= s;
+
             List<ModelPart> roots = MCSM_ROOTS.computeIfAbsent(root, McsmTentacleGirthMixin::mcsm$discover);
             for (ModelPart b : roots) {
                 // The renderer resets every ModelPart to its base pose each

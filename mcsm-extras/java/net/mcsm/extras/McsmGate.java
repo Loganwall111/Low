@@ -3,11 +3,17 @@ package net.mcsm.extras;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.dabicco.witherstormmod.config.WitherStormConfigs;
 import net.dabicco.witherstormmod.config.WitherStormWorldConfig;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * MCSM 1.9.100 -- the "it's already written, it's just switched off" gate.
@@ -60,6 +66,55 @@ public final class McsmGate {
     /** Forget every recorded value; the next gate run forces the look again. */
     public static void clearMemory() {
         LAST_SET.clear();
+    }
+
+    // ---------------------------------------------------------------------
+    // 1.9.209 -- "some settings are not activating when I click on them".
+    //
+    // The base mod persists its screen into config/dabywitherstormmod-client.json
+    // and every gate run was stomping those choices back at session start, so a
+    // clicked setting looked dead. Now the gate reads that file once and NEVER
+    // forces any key the player has explicitly persisted to a different value.
+    // Fresh installs (no file yet) still get the full MCSM default.
+    // ---------------------------------------------------------------------
+    private static Map<String, Double> persisted = null;
+
+    private static Map<String, Double> persistedOverrides() {
+        if (persisted != null) {
+            return persisted;
+        }
+        persisted = new HashMap<>();
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.gameDirectory == null) {
+                return persisted;
+            }
+            Path p = mc.gameDirectory.resolve("config").resolve("dabywitherstormmod-client.json");
+            if (!Files.exists(p)) {
+                return persisted;
+            }
+            String text = Files.readString(p);
+            String[] keys = { "tentaclePhysics", "glareEjecta", "devourerDebrisGlow",
+                    "stormShadowHeightmap", "bloomStrength", "sunGlowStrength",
+                    "blackGlareStrength", "debrisAmount", "debrisDustParticles",
+                    "stormShadow", "sunGlow", "blackGlare", "headEyeGlow" };
+            for (String k : keys) {
+                Matcher m = Pattern.compile("\"" + k + "\"\\s*:\\s*(true|false|-?[0-9.]+)").matcher(text);
+                if (m.find()) {
+                    String v = m.group(1);
+                    persisted.put(k, "true".equals(v) ? 1.0 : "false".equals(v) ? 0.0 : Double.parseDouble(v));
+                }
+            }
+        } catch (Throwable ignored) {
+            // a moved config dir must cost the respect pass, never the gate
+        }
+        return persisted;
+    }
+
+    /** True when the player has persisted their own value for this key. */
+    private static boolean playerOwns(String name, double ourValue) {
+        Double v = persistedOverrides().get(name);
+        return v != null && Math.abs(v - ourValue) > 1e-9;
     }
 
     private static String memKey(Class<?> owner, Object instance, String name) {
@@ -253,6 +308,9 @@ public final class McsmGate {
             if (prev instanceof Boolean b && cur != b) {
                 return 0;   // changed after us (preset/player): leave it alone
             }
+            if (playerOwns(name, value ? 1.0 : 0.0)) {
+                return 0;   // 1.9.209: persisted player choice wins
+            }
             f.setBoolean(null, value);
             LAST_SET.put(key, value);
             return 1;
@@ -271,6 +329,9 @@ public final class McsmGate {
             if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
                 return 0;   // changed after us (preset/player): respect it
             }
+            if (playerOwns(name, Math.max(cur, min))) {
+                return 0;   // 1.9.209: persisted player choice wins
+            }
             double nv = writeNum(f, instance, Math.max(cur, min));
             LAST_SET.put(key, nv);
             return 1;
@@ -288,6 +349,9 @@ public final class McsmGate {
             Object prev = LAST_SET.get(key);
             if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
                 return 0;
+            }
+            if (playerOwns(name, Math.min(cur, max))) {
+                return 0;   // 1.9.209: persisted player choice wins
             }
             double nv = writeNum(f, instance, Math.min(cur, max));
             LAST_SET.put(key, nv);

@@ -187,6 +187,7 @@ public final class McsmExtrasConfig {
             p.setProperty("smudge_scale", String.valueOf(smudgeScale));
             p.setProperty("glare_size", String.valueOf(glareSize));
             p.setProperty("tentacle_girth", String.valueOf(tentacleGirth));
+            p.setProperty("storm_model_scale", String.valueOf(stormModelScale));
             p.setProperty("aurora_enabled", String.valueOf(auroraEnabled));
             p.setProperty("shader_pack_gate", String.valueOf(shaderPackGate));
             p.setProperty("death_cinematic", String.valueOf(deathCinematic));
@@ -265,6 +266,7 @@ public final class McsmExtrasConfig {
             smudgeScale        = dbl(p, "smudge_scale", smudgeScale);
             glareSize          = dbl(p, "glare_size", glareSize);
             tentacleGirth      = dbl(p, "tentacle_girth", tentacleGirth);
+            stormModelScale   = dbl(p, "storm_model_scale", stormModelScale);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
                 // 1.9.201: users on the old too-small defaults get the new
                 // bigger glare unless they explicitly moved the slider.

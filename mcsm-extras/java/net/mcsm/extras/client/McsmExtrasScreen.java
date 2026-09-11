@@ -67,6 +67,8 @@ public final class McsmExtrasScreen extends Screen {
         int r1 = 1;
         addSlider(0, r1++, fColW, gap, left, top, rowH, "Glare Size", "%.2fx",
                 0.25, 3.05, () -> McsmExtrasConfig.glareSize, v -> McsmExtrasConfig.glareSize = v);
+        addSlider(0, r1++, fColW, gap, left, top, rowH, "Storm Model Scale", "%.2fx",
+                0.50, 2.50, () -> McsmExtrasConfig.stormModelScale, v -> McsmExtrasConfig.stormModelScale = v);
         addSlider(0, r1++, fColW, gap, left, top, rowH, "Smudge Scale", "%.2fx",
                 0.10, 2.00, () -> McsmExtrasConfig.smudgeScale, v -> McsmExtrasConfig.smudgeScale = v);
         addToggle(0, r1++, fColW, gap, left, top, rowH, "Non-Euclidean Glare",
