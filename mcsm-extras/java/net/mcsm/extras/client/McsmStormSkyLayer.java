@@ -38,10 +38,11 @@ import net.minecraft.world.phys.Vec3;
  *     you can never fly out of it, which is the infinite-skybox property;
  *   * the full phase dome (three-stop zenith/mid/horizon gradient) using the
  *     CORRECTED 2026-09-11 hex decks, opaque while a storm is near;
- *   * the smeared oval infinite blob projected on the same shell, pinned to
- *     the storm bearing (u_StormPos) with the same angular field math as
- *     mcsm_blob() in mcsm_visuals.glsl (1.55x0.90 ellipse, 0.18 rad tilt,
- *     dark core, smoothstep smudge, outer flare);
+ *   * the organic storm SMEAR on the same shell, pinned to the storm
+ *     bearing: a separate infinite skybox layer attached to the vanilla
+ *     sky (McsmBlobShape) -- a noise-warped oval with side lobes, feathered
+ *     edges, uniform body alpha, the corrected deck banding smeared over
+ *     a noise-jittered radius -- never a clean disc, never a world object;
  *   * distance fade 700..1600 blocks: the shell alpha falls to zero and the
  *     regular sky (vanilla or FabricSkyBoxes) slowly returns ("go extremely
  *     far away and the sky changes back to vanilla");
@@ -49,10 +50,14 @@ import net.minecraft.world.phys.Vec3;
  *     (translucent pipeline, depth compare >=, no depth write), exactly
  *     like the sky-behind-terrain read of the reference frames.
  *
- * It runs whenever NO shader pack owns the sky -- plain vanilla AND
- * FabricSkyBoxes mode. With a shader pack loaded (Iris / OptiFine /
- * Canvas), the pack's sky pass plus McsmBlobOval take over, so this layer
- * steps aside and never doubles the blob.
+ * It runs whenever NO shader pack OWNS the sky -- plain vanilla,
+ * FabricSkyBoxes mode, and iris/other shader mods with the pack turned
+ * OFF (a shader mod merely being installed must not push the blob onto
+ * world-anchored geometry; that was the "disc floating in mid air" the
+ * 1.9.302-1.9.304 builds drew). With a shader pack ACTIVE, the pack's
+ * sky pass plus McsmBlobOval (same McsmBlobShape smear, drawn at the
+ * storm's distance) take over, so this layer steps aside and never
+ * doubles the blob.
  */
 public final class McsmStormSkyLayer {
 
@@ -119,7 +124,7 @@ public final class McsmStormSkyLayer {
     }
 
     private static boolean shaderPackLoaded() {
-        return modLoaded("iris") || modLoaded("optifine") || modLoaded("optifabric") || modLoaded("canvas");
+        return McsmBlobShape.packInUse();
     }
 
     private static ClientDistantStormManager.StormData nearestStorm(double maxDist) {
@@ -165,9 +170,10 @@ public final class McsmStormSkyLayer {
             // shader uniforms (FogSkyEnd etc.) that only shader packs bind,
             // so in vanilla the sky pass always saw "no storm". This layer
             // therefore runs whenever no shader pack owns the sky -- plain
-            // vanilla AND FabricSkyBoxes mode. When a shader pack (Iris /
-            // OptiFine / Canvas) is loaded, its sky pass draws the dome and
-            // McsmBlobOval draws the blob, so this layer steps aside.
+            // vanilla AND FabricSkyBoxes mode. 1.9.305: "no pack owns the
+            // sky" now means the pack is INACTIVE (IrisApi), not that iris
+            // is merely installed; a shader mod with its pack turned off
+            // renders the vanilla pipeline and this layer draws for it too.
             boolean fbsSky = fabricSkyboxesLoaded() && DabyWSClientConfig.customSkyboxes;
             if (shaderPackLoaded() && !fbsSky) {
                 return;
@@ -213,6 +219,7 @@ public final class McsmStormSkyLayer {
             final float w6f = w6 / tot;
 
             SubmitNodeCollector collector = ctx.submitNodeCollector();
+            // the full phase dome: smooth sky gradient over the whole shell
             collector.submitCustomGeometry(ctx.poseStack(), GlowRenderTypes.translucent(WHITE),
                     (pose, consumer) -> {
                         for (int i = 0; i < BANDS; i++) {
@@ -225,10 +232,10 @@ public final class McsmStormSkyLayer {
                                 Vec3 p01 = dir(e0, a1).scale(SHELL).add(cam);
                                 Vec3 p10 = dir(e1, a0).scale(SHELL).add(cam);
                                 Vec3 p11 = dir(e1, a1).scale(SHELL).add(cam);
-                                float[] c00 = color(dir(e0, a0), bearing, outer, zen, mid, hor, w55f, w6f);
-                                float[] c01 = color(dir(e0, a1), bearing, outer, zen, mid, hor, w55f, w6f);
-                                float[] c10 = color(dir(e1, a0), bearing, outer, zen, mid, hor, w55f, w6f);
-                                float[] c11 = color(dir(e1, a1), bearing, outer, zen, mid, hor, w55f, w6f);
+                                float[] c00 = color(dir(e0, a0), zen, mid, hor);
+                                float[] c01 = color(dir(e0, a1), zen, mid, hor);
+                                float[] c10 = color(dir(e1, a0), zen, mid, hor);
+                                float[] c11 = color(dir(e1, a1), zen, mid, hor);
                                 vtx(pose, consumer, p10, c10, alpha);
                                 vtx(pose, consumer, p00, c00, alpha);
                                 vtx(pose, consumer, p01, c01, alpha);
@@ -236,6 +243,18 @@ public final class McsmStormSkyLayer {
                             }
                         }
                     });
+            // 1.9.305 -- the organic smear: a SEPARATE infinite skybox layer
+            // tethered to the storm bearing, drawn just in front of the dome
+            // shell (399 < 400, so the depth test keeps it on top). The
+            // vanilla sky stays visible above and around the smear through
+            // its feathered alpha edge.
+            final float[] core = blend(D5_Z, D55_Z, D6_Z, 1.0F - w55 - w6, w55, w6, 1.0F);
+            final float[] midc = blend(D5_M, D55_M, D6_UM, 1.0F - w55 - w6, w55, w6, 1.0F);
+            final float[] edge = blend(D5_H, D55_H, D6_LM, 1.0F - w55 - w6, w55, w6, 1.0F);
+            final McsmBlobShape.Patch patch = McsmBlobShape.patchFor(bearing, phase,
+                    outer, presence, core, midc, edge, D55_HIGH, w55f, w6f);
+            collector.submitCustomGeometry(ctx.poseStack(), GlowRenderTypes.translucent(WHITE),
+                    (pose, consumer) -> McsmBlobShape.stream(pose, consumer, patch, cam, 399.0));
 
         } catch (Throwable ignored) {
             // a missing surface must never break a frame
@@ -251,11 +270,12 @@ public final class McsmStormSkyLayer {
     }
 
     /**
-     * Full colour for a shell direction: the phase dome gradient plus the
-     * infinite oval blob (same angular math as the GLSL blob).
+     * Dome gradient for a shell direction: zenith/mid/horizon stops by
+     * elevation, darkening below the horizon. The blob no longer lives in
+     * the shell colour -- it is its own separate skybox layer now
+     * (McsmBlobShape), drawn over the dome by the smear patch.
      */
-    private static float[] color(Vec3 d, Vec3 b, double outer, float[] zen, float[] mid,
-                                 float[] hor, float w55, float w6) {
+    private static float[] color(Vec3 d, float[] zen, float[] mid, float[] hor) {
         float ty = (float) Mth.clamp(d.y, -1.0, 1.0);
         float t = (float) Math.pow(1.0 - Mth.clamp(ty, 0.0F, 1.0F), 1.35);
         float[] base = mix3(zen, mid, ss(0.04F, 0.45F, t));
@@ -263,62 +283,7 @@ public final class McsmStormSkyLayer {
         // below the horizon, keep darkening instead of holding one colour
         float dark = (float) Mth.clamp(ty * 4.0 + 1.0, 0.0, 1.0);
         base = scale(base, 0.62F + 0.38F * dark);
-
-        // ---- the infinite blob, projected behind the storm bearing ----
-        double cd = Math.max(d.dot(b), 0.02);
-        Vec3 up = Math.abs(b.y) > 0.985 ? new Vec3(0.0, 0.0, 1.0) : new Vec3(0.0, 1.0, 0.0);
-        Vec3 ex = up.cross(b).normalize();
-        Vec3 ey = b.cross(ex);
-        double ct = Math.cos(0.18), st = Math.sin(0.18);
-        Vec3 exT = ex.scale(ct).add(ey.scale(st));
-        Vec3 eyT = ey.scale(ct).subtract(ex.scale(st));
-        double k = cd * Math.tan(Math.toRadians(outer));
-        double sx = d.dot(exT) / k;
-        double sy = d.dot(eyT) / k;
-        float u = (float) Math.sqrt((sx / 1.55) * (sx / 1.55) + (sy / 0.90) * (sy / 0.90));
-        if (u >= 1.85F) {
-            return base; // beyond the bleed: plain dome (vanilla sky at the rim)
-        }
-
-        float coreW = 1.0F - ss(0.10F, 0.42F, u);
-        float midW = ss(0.16F, 0.46F, u) * (1.0F - ss(0.58F, 0.95F, u));
-        float edgeW = ss(0.50F, 0.88F, u) * (1.0F - ss(0.95F, 1.32F, u));
-        float bleedW = ss(0.85F, 1.32F, u) * (1.0F - ss(1.30F, 1.85F, u));
-
-        float[] core = blend(D5_Z, D55_Z, D6_Z, 1.0F - w55 - w6, w55, w6, 1.0F);
-        float[] midc = blend(D5_M, D55_M, D6_UM, 1.0F - w55 - w6, w55, w6, 1.0F);
-        float[] edge = blend(D5_H, D55_H, D6_LM, 1.0F - w55 - w6, w55, w6, 1.0F);
-
-        float[] blob = new float[3];
-        for (int i = 0; i < 3; i++) {
-            blob[i] = core[i] * coreW + midc[i] * midW + edge[i] * edgeW
-                    + edge[i] * bleedW * 0.55F;
-        }
-        // 5.5-5.9: richer royal magenta overhead
-        float upness = (float) Mth.clamp((sy / 0.90) * 0.5 + 0.5, 0.0, 1.0);
-        for (int i = 0; i < 3; i++) {
-            blob[i] += (midc[i] + (D55_HIGH[i] - midc[i]) * 0.6F) * midW * upness * w55 * 0.5F;
-        }
-        // phase 6: the four-colour sunset split owns the gradient
-        if (w6 > 0.0F) {
-            float[] split = p6Split(ty);
-            float heart = 0.62F + 0.38F * coreW;
-            for (int i = 0; i < 3; i++) {
-                blob[i] = blob[i] + (split[i] * heart - blob[i]) * w6;
-            }
-        }
-
-        float blendW = 1.0F - ss(1.32F, 1.85F, u);
-        return mix3(base, blob, blendW);
-    }
-
-    /** phase 6: #1A1226 / #462A52 / #966173 / #D89874 keyed to elevation */
-    private static float[] p6Split(float ty) {
-        float u = Mth.clamp(ty * 0.5F + 0.5F, 0.0F, 1.0F);
-        float[] c = mix3(D6_H, D6_LM, ss(0.02F, 0.30F, u));
-        c = mix3(c, D6_UM, ss(0.26F, 0.55F, u));
-        c = mix3(c, D6_Z, ss(0.52F, 0.95F, u));
-        return c;
+        return base;
     }
 
     private static float[] mix3(float[] a, float[] b, float t) {

@@ -1,24 +1,37 @@
-# Devouring Storms 1.9.304 -- crash fix: towns auto-start once (no more server overload)
+# Devouring Storms 1.9.305 -- the blob becomes a true infinite skybox smear
 
-**Why 1.9.304:** hotfix for the 1.9.302 crash.
+**Why 1.9.305:** the blob looked like a flat disc floating in the world.
 
-**The crash:** the town auto-start guard compared the last ticked dimension
-against the current one, but the world tick runs for EVERY loaded dimension
-(overworld, nether, end and the mod's bowels dimension). The guard therefore
-tripped on every call: the structure queue was wiped every tick and the
-three Episode-1 schematics were re-enqueued endlessly -- the server overloaded
-("Can't keep up! ... ticks behind"), chunks timed out and the game hung.
+**The problem:** on profiles where iris (or another shader mod) is merely
+INSTALLED with its pack turned off, the mod routed the blob to
+McsmBlobOval's four world-anchored oval quads -- 2D cards pinned at the
+storm's 3D position. That is exactly the "giant purple disc with a dark
+centre floating in mid air, extremely far away" you reported. A shader
+mod being present is not the same as a shader pack being IN USE.
 
-**The fix:** the worldgen patch now manages the OVERWORLD only, keyed by the
-world's own identity, exactly once per world load, and it probes each site
-first so an already-built town is never rebuilt. Bonus: this same flaw was
-why `/ds towns build` appeared to do nothing -- the queue was being cleared
-before it could place. Towns now actually build, and they build once.
+**The fix -- the blob is now a separate infinite skybox layer:**
+* the pack gate now asks IrisApi whether a pack is actually rendering the
+  sky, so vanilla pipelines (including iris with shaders disabled and
+  FabricSkyBoxes) always get the true sky layer;
+* the world-anchored quads are GONE on every path. The blob is painted as
+  an organic, noise-warped smear (an oval with two warped side lobes,
+  feathered edges, uniform body alpha, internal streak shading) on a
+  camera-centred sky sphere -- the sunrise-band / aurora construction you
+  described: infinite, tethered to the storm's bearing, gliding with it,
+  never approaching, with the vanilla sky visible above and around it;
+* the corrected 2026-09-11 hex decks (dark core, phase-5 greenish rim,
+  phase-5.5 royal magenta, phase-6 sunset split) are baked into the smear
+  on a noise-jittered radius, so the bands read as smeared paint, not
+  clean rings;
+* with a real shader pack active, the same smear draws at the storm's
+  distance (skybox depth), so every configuration now shows one identical
+  sky-blob.
 
-**After updating:** load a NEW world (or delete the half-built one from
-1.9.302). The log should print the towns message exactly ONCE, then the
-Episode-1 cluster (Wilderness Treehouse, The Wilderness, EnderCon Town
-Fair) builds over a few seconds and the cast appears when you walk in.
+**After updating:** load any world during phases 5.0-6.95 and look at the
+storm. The blob is a huge messy purple smear across the sky behind the
+storm -- walk sideways and it stays glued to the storm; fly at it and it
+never gets closer (that is the infinite-skybox tell). Beyond ~1600 blocks
+from the storm it fades out and the regular sky returns.
 
 ## 1. Everything from the other line (1.9.201-1.9.220) is IN
 - **Story Mode NPCs (McsmNpcs)**: the canonical cast spawns at towns and
@@ -56,22 +69,22 @@ Fair) builds over a few seconds and the cast appears when you walk in.
   to black.
 
 ## 3. Version
-Mods screen shows **1.9.304-26.2-beta-ds**; title screen, config screens
-and `/ds` show build **1.9.304**. Verified by CI annotation on the build.
+Mods screen shows **1.9.305-26.2-beta-ds**; title screen, config screens
+and `/ds` show build **1.9.305**. Verified by CI annotation on the build.
 
 ## Assets
-- `devouringstorms-1.9.304-26.2-beta-ds.jar` — the mod
-- `devouringstorms-shaderpack-v5-1.9.304.zip` — Iris shader pack
-- `devouringstorms-storylook-1.9.304.zip` — Story Look resource pack
-- `devouringstorms-superduper-default-1.9.304.zip` — Super Duper pack
+- `devouringstorms-1.9.305-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.305.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.305.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.305.zip` — Super Duper pack
 - `.sha256` checksums for verification
 
 ## Installing (so the old jar/pack can never win again)
 1. Delete EVERY `devouringstorms-*.jar` from your `mods/` folder.
-2. Download `devouringstorms-1.9.304-26.2-beta-ds.jar` from this release
+2. Download `devouringstorms-1.9.305-26.2-beta-ds.jar` from this release
    and put it in `mods/` alone.
 3. Delete the old pack folders from `shaderpacks/` (any folder starting
    with `devouringstorms`), then toggle "Built-in Shader Pack" OFF and ON
    once in the MCSM Control Panel -- the new pack reinstalls.
-4. In game: the mods screen must show `1.9.304-26.2-beta-ds`. If it shows
+4. In game: the mods screen must show `1.9.305-26.2-beta-ds`. If it shows
    ANY other number, that jar is not this build.
