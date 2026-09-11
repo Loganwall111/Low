@@ -76,8 +76,6 @@ public final class McsmStormSkyLayer {
     private static final float[] D6_LM = hex(0x96, 0x61, 0x73);
     private static final float[] D6_H = hex(0xD8, 0x98, 0x74);
 
-    private static boolean reported = false;
-
     private McsmStormSkyLayer() {
     }
 
@@ -192,11 +190,9 @@ public final class McsmStormSkyLayer {
             final float w55f = w55 / tot;
             final float w6f = w6 / tot;
 
-            Pose pose = ctx.poseStack().last();
             SubmitNodeCollector collector = ctx.submitNodeCollector();
             collector.submitCustomGeometry(ctx.poseStack(), GlowRenderTypes.translucent(WHITE),
-                    (stack, consumer) -> {
-                        Pose p = stack.last();
+                    (pose, consumer) -> {
                         for (int i = 0; i < BANDS; i++) {
                             double e0 = -12.0 + i * (100.0 / BANDS);
                             double e1 = -12.0 + (i + 1) * (100.0 / BANDS);
@@ -211,17 +207,14 @@ public final class McsmStormSkyLayer {
                                 float[] c01 = color(dir(e0, a1), bearing, outer, zen, mid, hor, w55f, w6f);
                                 float[] c10 = color(dir(e1, a0), bearing, outer, zen, mid, hor, w55f, w6f);
                                 float[] c11 = color(dir(e1, a1), bearing, outer, zen, mid, hor, w55f, w6f);
-                                vtx(p, consumer, p10, c10, alpha);
-                                vtx(p, consumer, p00, c00, alpha);
-                                vtx(p, consumer, p01, c01, alpha);
-                                vtx(p, consumer, p11, c11, alpha);
+                                vtx(pose, consumer, p10, c10, alpha);
+                                vtx(pose, consumer, p00, c00, alpha);
+                                vtx(pose, consumer, p01, c01, alpha);
+                                vtx(pose, consumer, p11, c11, alpha);
                             }
                         }
                     });
 
-            if (!reported) {
-                reported = true;
-            }
         } catch (Throwable ignored) {
             // a missing surface must never break a frame
         }
