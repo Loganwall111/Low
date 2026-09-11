@@ -1,3 +1,28 @@
+# 1.9.220 — phase textures un-swapped, teeth colour fixed, REAL vortex ported
+
+- **Phase texture mapping fixed.** Phases 4.0-5.9 now wear the PHASE 4 TEAL
+  look (dark teal body, turquoise sheen, avg (12,39,42)) and the BLUE
+  devourer texture only comes in at phase 6+ (avg (0,9,20)) -- the exact
+  split you asked for, instead of everything reading as the blue phase-6
+  skin from phase 4 up.
+- **Teeth colour + emissive corrected.** The glow masks were too blue; they
+  are now near-white cyan for phases 4 / 5.5 / 6 ((232,255,252), p4 a touch
+  deeper), pure white stays phase 5 only, and phase 7 green got brighter
+  (150,255,188). The tint moved from (0.72,1,1) to (0.82,1,0.96) -- cyan
+  WHITE, not blue -- with a small intensity lift (p4 3.6, p5 4.0, p7 4.0).
+  A bit more emissive, not blown out.
+- **The REAL vortex is ported.** My procedural swirls are now the under-layer:
+  on top of them the actual Telltale Vortex.bbmodel geometry renders -- the
+  backdrop funnel strip (720 triangles), the alpha swirl (80 tris) and the
+  black cube ring (200 tris), lathed around the storm centre, spinning
+  clockwise with the swirl counter, phase-tinted (ember at 8-9, fainter at
+  phase 7). ci/make_vortex_data.py extracts the mesh + its three textures
+  from the asset repo into the jar; the data lives in McsmVortexMesh.java
+  (method-split so no initializer crosses the JVM 64KB cap).
+
+The infinite sky blob (1.9.218), optional raymarch layer (1.9.219), glow
+hard-floors (1.9.217) and the 1:1 model ladder (1.9.216) all carry.
+
 # 1.9.219 — the volumetric cloud deck returns as an OPTIONAL layer (blob stays default)
 
 - **The full 1:1 model swap** (asked for at the top of this round) was already
