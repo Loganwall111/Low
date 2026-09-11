@@ -163,7 +163,7 @@ public final class McsmStormSkyLayer {
             double dy = storm.dispY - cam.y;
             double dz = storm.dispZ - cam.z;
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            float presence = 1.0F - ss(FULL_RANGE, MAX_RANGE, (float) dist);
+            float presence = 1.0F - ss((float) FULL_RANGE, (float) MAX_RANGE, (float) dist);
             if (presence <= 0.005F) {
                 return;
             }
