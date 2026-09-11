@@ -94,10 +94,11 @@ public final class McsmGate {
         }
         McsmExtrasConfig.load();
         clientDone = true;
-        if (!McsmExtrasConfig.forceMcsmLook) {
-            McsmDiag.say("MCSM client gate disabled by mcsm_storm_extras.properties");
-            return;
-        }
+        // 1.9.208: the vanilla look is permanently disabled -- there is no
+        // "regular" presentation to fall back to any more. The MCSM gate
+        // always opens.
+        McsmExtrasConfig.forceMcsmLook = true;
+        McsmExtrasConfig.shaderPackGate = true;
         int changed = 0;
         try {
             Class<?> c = DabyWSClientConfig.class;
@@ -113,6 +114,9 @@ public final class McsmGate {
             changed += setBool(c, "scaledSubphaseGrowth", true);
             // simulated tentacles look wrong per user feedback; off by default
             changed += setBool(c, "tentaclePhysics", false);
+            // 1.9.208: the shader is the default. Everything the mod draws
+            // (sun glow, shadow map, teeth/eye glow) ports over the Iris
+            // program list via the ShaderPackCompat gate above.
             changed += setBool(c, "optimizeDistantAnimations", true);
             changed += setBool(c, "flatbackFlipFix", true);
             // Obsidian Gloss is the mod's built-in OG/MCSM texture set. The

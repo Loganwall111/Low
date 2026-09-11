@@ -77,52 +77,79 @@ public final class McsmNpcs {
                 "That thing in the sky... it keeps getting bigger. Tell me you see it too.",
                 "The Order of the Stone would know what to do. They have to.",
                 "Reuben, stay close. I mean it.",
-                "We built this place. I'm not letting it get eaten." });
+                "We built this place. I'm not letting it get eaten." 
+        "It ate the whole horizon. It can eat the rest if we do nothing.",
+        "When it talks, it sounds like a whole world breaking."
+});
         LINES.put("Petra", new String[] {
                 "You're staring at it. Everyone stares at it.",
                 "I've fought a lot of things. Nothing that size.",
                 "If you're going out there, take a sword. Take two.",
-                "Don't get command-blocked into standing still. Move." });
+                "Don't get command-blocked into standing still. Move." 
+        "First light's the only time it looks almost calm."
+});
         LINES.put("Axel", new String[] {
                 "Griefing a storm. Now THAT'S a plan.",
                 "I've got TNT. I always have TNT.",
-                "You look about as calm as I feel. Which is not calm." });
+                "You look about as calm as I feel. Which is not calm." 
+        "It has a TRACTOR BEAM. Who puts a tractor beam on a storm?!"
+});
         LINES.put("Olivia", new String[] {
                 "Redstone won't fix this one. I already tried the math.",
                 "It's pulling blocks off the ground. Whole chunks of it.",
-                "Someone built that thing. On purpose. Think about that." });
+                "Someone built that thing. On purpose. Think about that." 
+        "The command block is the brain. Take the brain, take the storm."
+});
         LINES.put("Lukas", new String[] {
                 "The Ocelots are gone. Everyone's gone.",
                 "I keep writing it all down. Someone should remember this.",
-                "Stay near the beacon. The light helps." });
+                "Stay near the beacon. The light helps." 
+        "I saw it smile. Storms do not smile."
+});
         LINES.put("Radar", new String[] {
                 "Sir! Ma'am! Whichever! I have a clipboard and I'm ready!",
                 "I have scheduled the evacuation. Twice. Nobody signed it.",
-                "Beacon Town needs you. I need you. Mostly Beacon Town." });
+                "Beacon Town needs you. I need you. Mostly Beacon Town." 
+        "Statistically speaking, sir, we should be running."
+});
         LINES.put("Ivor", new String[] {
                 "It was a command block. It was ALWAYS a command block.",
                 "You want to know how to stop it? So does everyone.",
-                "Do not approach the tractor beam. I will not repeat that." });
+                "Do not approach the tractor beam. I will not repeat that." 
+        "The Formidi-Bomb was never the answer. It was the fuse."
+});
         LINES.put("Gabriel", new String[] {
                 "The Order stands. Whatever comes.",
                 "I have faced the Ender Dragon. This... this is different.",
-                "Keep your people together. That is the whole of it." });
+                "Keep your people together. That is the whole of it." 
+        "Stand your ground. The Order has never run."
+});
         LINES.put("Ellegaard", new String[] {
                 "Redstone engineering, not luck. That's what saves a town.",
-                "Bring me components and I'll bring you a chance." });
+                "Bring me components and I'll bring you a chance." 
+        "If it consumes a beacon, I want to know exactly how bright."
+});
         LINES.put("Magnus", new String[] {
                 "Blow it up! What? It's a strategy!",
-                "Boom Town would have loved this. Boom Town is gone." });
+                "Boom Town would have loved this. Boom Town is gone." 
+        "Boom Town was loud. This thing is louder."
+});
         LINES.put("Soren", new String[] {
                 "I built a machine to send us somewhere it isn't. It didn't work.",
                 "The formidi-bomb. It is the only answer I have left.",
-                "Do not tell the others I ran. Please." });
+                "Do not tell the others I ran. Please." 
+        "I did not mean for ANY of this. You must believe that."
+});
         LINES.put("Harper", new String[] {
                 "PAMA learned. That was the mistake. Everything after was consequence.",
-                "The terminal still answers. I wish it wouldn't." });
+                "The terminal still answers. I wish it wouldn't." 
+        "PAMA counted every block it took. One hundred and four thousand and two."
+});
         LINES.put("Stella", new String[] {
                 "Champion City would have handled this better. Obviously.",
-                "Do not touch my llama." });
+                "Do not touch my llama." 
+        "Champion City does not panic. We pose dramatically."
+});
         LINES.put("Nurm", new String[] { "Hrrm.", "Hrmmm!", "Hrm. Hrm hrm." });
         LINES.put("PAMA Terminal", new String[] {
                 "YOU WILL BE USEFUL.", "COMPLIANCE IS EFFICIENT.", "THE STORM IS NOT IN MY PARAMETERS." });

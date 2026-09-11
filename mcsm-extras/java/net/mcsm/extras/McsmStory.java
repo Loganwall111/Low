@@ -35,6 +35,8 @@ public final class McsmStory {
         line(ChatFormatting.DARK_PURPLE, "Survive until the tear closes. That is the whole story."),
         line(ChatFormatting.AQUA, "The story starts at the treehouse outside EnderCon:"),
         line(ChatFormatting.AQUA, "/ds towns start -- or /ds towns for all 35 sites + coords."),
+        line(ChatFormatting.YELLOW, "The MCSM Visual Shader is the DEFAULT and self-installs."),
+        line(ChatFormatting.YELLOW, "No resource packs, no downloads -- everything is in the mod."),
     };
 
     /** Brief a player once. Cheap: a set lookup after the first call. */

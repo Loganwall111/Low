@@ -1,3 +1,19 @@
+# 1.9.208 — shader is the default, glare rebuilt, rings, glacier flakes, ember apocalypse
+
+- **The MCSM Visual Shader is now the DEFAULT.** `shaderPackGate` + `auto_select_shader_pack` are ON out of the box (existing installs flip on migration): the pack self-installs into `shaderpacks/` and Iris auto-selects it — no clicks, no resource packs, ever. The "Force MCSM Look / World" kill-switches are gone from the Control Panel (the vanilla look is permanently disabled); the in-game briefing now says the shader is the default.
+- **Glare complete revamp.** The old gaussian "sphere" dome patches and every soft circular billboard wash are DELETED. The new glare is rigid and structured, built from the same phase palettes as the sky: a hard-edged three-band gradient slab locked behind the creature, 15 crisp rotating rays, a saturated core, and a faint purple fog pool cast on the ground under the tractor beams. Rendered as additive geometry, so it draws identically under the shader.
+- **Debris overhaul.** Debris density is pinned at MAXIMUM by default (`debrisAlwaysMax`, toggleable); dark block fragments + purple dust vortex now wrap the storm at full count from phase 2 up. Real orbiting CUBE rings (horizontal / vertical / diagonal, pure tangential velocity) circle the body.
+- **Glacier flakes (phase 4+).** Icy-white ice/snow block fragments rip off the body blocks and spiral UPWARD around the storm like a tornado, exactly the Telltale read.
+- **Cubed storm rings (phase 6+, toggleable).** Not skybox layers — real rings of chunky cubes in the world: clockwise horizontal + vertical + diagonal at phase 6, a second counter-spinning set at phase 7. Phase 8-9 goes full vortex: three gigantic major rings, each 10 thin layered sub-rings funneled thin-at-the-top, outer clockwise / inner counter-clockwise.
+- **Phase 8-9 apocalypse.** The whole sky burns dark-orange/ember (new P89 palette drives sky dome + fog), the halo disappears, and only the glare and the giant rings remain.
+- **Sky texture set rebuilt.** `textures/sky/` now carries exactly the user set — day, night, sunset, midnight, phase 5 fog, 5.5-5.9 fog, phase 6 fog, phase 7 fog, phase 8-9 ember — as clean zenith→horizon strips generated from the runtime palettes.
+- **Water is Story Mode now.** The shader's water albedo was near-black; it is a flat bright opaque story-mode blue (no reflections, no mirror).
+- **Body skin v2 — matte charcoal-indigo, NOT obsidian.** Atlases remapped to dark indigo with crisp thresholded blue-white edge highlights (shiny without gloss); jagged obsidian restricted to the tentacle tips (bottom of the atlas). Saturated command-block orange/magenta preserved.
+- **Storm is bigger at phase 6+** (55+42/phase, cap 320 blocks), tentacle girth 2.2→2.8.
+- **Beams are volumetric day/night.** Tractor-beam opacity/colour now modulate live with the sun: hardest near noon, dim purple shafts at midnight.
+- **Sky dome is fully opaque** (no more visible "circle" edge) and starts flush at the horizon.
+- Story cast: more in-character dialogue lines for Jesse, Petra, Axel, Olivia, Lukas, Radar, Ivor, the Order, Harper, Stella.
+
 # 1.9.207 — teeth colours per the corrected spec
 
 - **Pure white ONLY at phase 5.** Phase 4, 5.5 and 6 are cyan-white (0.72/1.0/1.0); phase 7+ is GREEN (0.45/1.0/0.62). The 5.5/6/7 emissive masks were repainted to the same colours (recolour only, pixels never moved) so the atlas no longer fights the tint.

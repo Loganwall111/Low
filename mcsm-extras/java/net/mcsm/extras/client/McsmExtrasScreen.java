@@ -148,16 +148,19 @@ public final class McsmExtrasScreen extends Screen {
                 () -> McsmExtrasConfig.enableRiseFx, v -> McsmExtrasConfig.enableRiseFx = v);
         addToggle(1, r2++, fColW, gap, left, top, rowH, "Counterclockwise Spiral",
                 () -> McsmExtrasConfig.spiralCounterClockwise, v -> McsmExtrasConfig.spiralCounterClockwise = v);
-        addToggle(1, r2++, fColW, gap, left, top, rowH, "Force MCSM Look",
-                () -> McsmExtrasConfig.forceMcsmLook, v -> McsmExtrasConfig.forceMcsmLook = v);
-        addToggle(1, r2++, fColW, gap, left, top, rowH, "Force MCSM World",
-                () -> McsmExtrasConfig.forceMcsmWorld, v -> McsmExtrasConfig.forceMcsmWorld = v);
+        addFixed(1, r2++, fColW, gap, left, top, rowH, "MCSM Look: ALWAYS ON (vanilla removed)");
+        addFixed(1, r2++, fColW, gap, left, top, rowH, "MCSM World: ALWAYS ON");
         addToggle(1, r2++, fColW, gap, left, top, rowH, "Command Block Wire",
                 () -> McsmExtrasConfig.commandWire, v -> McsmExtrasConfig.commandWire = v);
         addToggle(1, r2++, fColW, gap, left, top, rowH, "MCSM Instructions",
                 () -> McsmExtrasConfig.mcsmInstructions, v -> McsmExtrasConfig.mcsmInstructions = v);
-        addToggle(1, r2++, fColW, gap, left, top, rowH, "Shader Pack Gate",
-                () -> McsmExtrasConfig.shaderPackGate, v -> McsmExtrasConfig.shaderPackGate = v);
+        addFixed(1, r2++, fColW, gap, left, top, rowH, "MCSM Shader: DEFAULT (auto-selected)");
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Glacier Flakes (p4+)",
+                () -> McsmExtrasConfig.glacierFlakes, v -> McsmExtrasConfig.glacierFlakes = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Storm Cube Rings (p6+)",
+                () -> McsmExtrasConfig.stormRings, v -> McsmExtrasConfig.stormRings = v);
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Debris Max Density",
+                () -> McsmExtrasConfig.debrisAlwaysMax, v -> McsmExtrasConfig.debrisAlwaysMax = v);
 
         // Re-apply button
         Button reapply = Button.builder(Component.literal("Re-apply MCSM Look now"), b -> {
@@ -176,6 +179,18 @@ public final class McsmExtrasScreen extends Screen {
                 .bounds(this.width / 2 - 100, this.height - 28, 200, 20).build();
         this.addWidget(done);
         this.chrome.add(done);
+    }
+
+    private void addFixed(int col, int row, int colW, int gap, int left, int top, int rowH, String label) {
+        int x = left + col * (colW + gap) + col * 18;
+        int y = top + row * rowH + col * 14;
+        Button b = Button.builder(Component.literal("\u00a78" + label), btn -> { })
+                .bounds(x, y, colW, 20).build();
+        b.active = false;
+        this.addWidget(b);
+        this.chrome.add(b);
+        this.baseY.put(b, y);
+        this.contentBottom = Math.max(this.contentBottom, y + 20);
     }
 
     private static Component toggleLabel(String label, boolean on) {
@@ -282,7 +297,7 @@ public final class McsmExtrasScreen extends Screen {
         g.fillGradient(0, this.height - 3, this.width, this.height, 0xFF3F255A, 0xFF6A8FF7);
         applyScrollLayout();
         g.text(this.font, "§bStory Mode Controls §8· §7" + McsmExtrasConfig.BUILD_VERSION, 26, 12, 0xFFEAF2FF, false);
-        g.text(this.font, "§8Scroll wheel moves panel. Shift+C opens this anywhere.", 26, 24, 0xFFA0A0A0, false);
+        g.text(this.font, "§8Scroll wheel moves panel. Shift+C opens this anywhere. §7The MCSM Visual Shader is the default — no packs needed.", 26, 24, 0xFFA0A0A0, false);
         if (this.contentBottom > this.height - 36) {
             g.centeredText(this.font, "scroll " + this.scrollPx + "/" + Math.max(0, this.contentBottom - (this.height - 36)), this.width - 62, 12, 0xA0A0A0);
         }

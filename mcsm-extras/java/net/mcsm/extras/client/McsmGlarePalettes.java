@@ -203,4 +203,45 @@ public final class McsmGlarePalettes {
             {0.730F, 0.540F, 0.604F},
             {0.765F, 0.569F, 0.627F},
     };
+    /** MIDNIGHT (1.9.208) — deep navy zenith, cold blue horizon; slightly
+     *  darker top than NIGHT so midnight reads as its own deck. */
+    public static final float[][] MIDNIGHT = {
+            {0.030F, 0.030F, 0.160F},
+            {0.036F, 0.038F, 0.196F},
+            {0.042F, 0.048F, 0.235F},
+            {0.048F, 0.057F, 0.275F},
+            {0.055F, 0.067F, 0.314F},
+            {0.061F, 0.077F, 0.353F},
+            {0.068F, 0.086F, 0.392F},
+            {0.074F, 0.096F, 0.431F},
+            {0.081F, 0.106F, 0.471F},
+            {0.088F, 0.117F, 0.510F},
+            {0.098F, 0.133F, 0.557F},
+            {0.114F, 0.161F, 0.620F},
+            {0.130F, 0.188F, 0.682F},
+            {0.146F, 0.216F, 0.745F},
+            {0.162F, 0.243F, 0.808F},
+            {0.137F, 0.208F, 0.720F},
+    };
+    /** P89 (1.9.208) — phase 8-9: the sky goes completely dark-orange/ember
+     *  from zenith to horizon and the halo disappears; only the glare and the
+     *  gigantic layered rings remain. */
+    public static final float[][] P89 = {
+            {0.118F, 0.016F, 0.008F},
+            {0.137F, 0.020F, 0.010F},
+            {0.169F, 0.027F, 0.012F},
+            {0.212F, 0.039F, 0.016F},
+            {0.263F, 0.055F, 0.020F},
+            {0.314F, 0.075F, 0.027F},
+            {0.361F, 0.098F, 0.035F},
+            {0.404F, 0.125F, 0.047F},
+            {0.443F, 0.153F, 0.059F},
+            {0.478F, 0.184F, 0.075F},
+            {0.522F, 0.231F, 0.106F},
+            {0.573F, 0.294F, 0.145F},
+            {0.620F, 0.357F, 0.188F},
+            {0.663F, 0.420F, 0.235F},
+            {0.702F, 0.482F, 0.286F},
+            {0.729F, 0.529F, 0.337F},
+    };
 }

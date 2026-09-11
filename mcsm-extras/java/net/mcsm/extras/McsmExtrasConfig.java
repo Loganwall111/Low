@@ -36,7 +36,8 @@ public final class McsmExtrasConfig {
      * MCSM reference frames. */
     public static double  glareSize = 1.35;
     /** 1.9.204: cross-axis scale of every tentacle chain (Story Mode heavy block limbs). */
-    public static double  tentacleGirth = 2.2;
+    /** 1.9.208: raised 2.2 -> 2.8 -- colossal, heavy segmented limbs. */
+    public static double  tentacleGirth = 2.8;
     /** Mod-side aurora borealis at night (cold-biome biased). */
     public static boolean auroraEnabled = true;
     /** Full death cinematic: distortion -> white cracks -> implosion flash ->
@@ -56,6 +57,16 @@ public final class McsmExtrasConfig {
     public static boolean obliterateFlash = true;
     /** Prank variant: also kicks players. Default OFF (grief-safe). */
     public static boolean obliterateKick = false;
+    // ---- 1.9.208 batch: debris overhaul, glacier flakes, storm rings -------
+    /** Debris vortex pinned at maximum density by default (user: "the storm
+     *  should only have debris all the way to the max by default"). */
+    public static boolean debrisAlwaysMax = true;
+    /** Phase 4+: icy-white glacier flakes torn off the body blocks, spiralling
+     *  upward like a tornado. */
+    public static boolean glacierFlakes = true;
+    /** Phase 6+: real cubed rings orbiting the storm (clockwise + diagonal +
+     *  vertical), growing into the gigantic layered vortex at phase 8-9. */
+    public static boolean stormRings = true;
 
     // ---- MCSM 1.9.100 batch: the gates ------------------------------------
     /** Force the client's Story Mode look on (shadows, glare, smoke screen,
@@ -65,7 +76,10 @@ public final class McsmExtrasConfig {
      *  particles, structure raids, withered mobs, cave rumble. */
     public static boolean forceMcsmWorld = true;
 
-    public static boolean shaderPackGate = false;
+    /** 1.9.208: the MCSM shader is the DEFAULT look -- the gate that ports the
+     *  mod's own storm pipelines (sun glow, shadow map, teeth/eye glow) over
+     *  the shader is ON out of the box. */
+    public static boolean shaderPackGate = true;
     /** Taut glowing wire from the storm's core down to its ground anchor. */
     public static boolean commandWire = true;
     /** Brief a player the first time they get close to a live storm. */
@@ -133,7 +147,9 @@ public final class McsmExtrasConfig {
     /** Ship + auto-install the Devouring Storms Iris shader pack.
      *  Default OFF after native/GL out-of-memory reports; players can turn it
      *  back on from Shift+C once the world is stable. */
-    public static boolean autoSelectShaderPack = false; // 1.9.203: write Iris shaderPack= line (opt-in, GL-safety)
+    /** 1.9.208: the embedded "MCSM Visual Shader" is the default; the install
+     *  writes the Iris shaderPack= line so it is ACTIVE without any clicks. */
+    public static boolean autoSelectShaderPack = true;
     public static boolean embeddedShaderPack = true; // 1.9.203: pack installs into shaderpacks/ by default (never auto-selected)
 
     private static boolean loaded = false;
@@ -204,6 +220,9 @@ public final class McsmExtrasConfig {
             p.setProperty("infinite_back_growth_speed", String.valueOf(infiniteBackGrowthSpeed));
             p.setProperty("embedded_shader_pack", String.valueOf(embeddedShaderPack));
             p.setProperty("auto_select_shader_pack", String.valueOf(autoSelectShaderPack));
+            p.setProperty("debris_always_max", String.valueOf(debrisAlwaysMax));
+            p.setProperty("glacier_flakes", String.valueOf(glacierFlakes));
+            p.setProperty("storm_rings", String.valueOf(stormRings));
             try (OutputStream out = new FileOutputStream(f)) {
                 p.store(out, "MCSM - storm gameplay patches + visuals + gates. config_version below is the build that wrote this file.");
             }
@@ -269,14 +288,9 @@ public final class McsmExtrasConfig {
             precipitationIntensity = dbl(p, "precipitation_intensity", precipitationIntensity);
             auroraEnabled      = bool(p, "aurora_enabled", auroraEnabled);
             shaderPackGate     = bool(p, "shader_pack_gate", shaderPackGate);
-            if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
-                // 1.9.200: do not force custom storm pipelines while Iris is
-                // running an external shaderpack; Iris reports those custom
-                // programs missing from its override list and memory pressure
-                // climbs. No-shader play is unaffected because Iris reports
-                // inactive naturally.
-                shaderPackGate = false;
-            }
+            // 1.9.208: the shader is the default look now -- never force the
+            // gate off on config migration. Players who want the vanilla
+            // pipeline can still toggle it in the Control Panel.
             deathCinematic     = bool(p, "death_cinematic", deathCinematic);
             supernovaRings     = bool(p, "supernova_rings", supernovaRings);
             smokeScreen        = bool(p, "smoke_screen", smokeScreen);
@@ -308,6 +322,9 @@ public final class McsmExtrasConfig {
             infiniteBackGrowthSpeed = dbl(p, "infinite_back_growth_speed", infiniteBackGrowthSpeed);
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
             autoSelectShaderPack = bool(p, "auto_select_shader_pack", autoSelectShaderPack);
+            debrisAlwaysMax    = bool(p, "debris_always_max", debrisAlwaysMax);
+            glacierFlakes      = bool(p, "glacier_flakes", glacierFlakes);
+            stormRings         = bool(p, "storm_rings", stormRings);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
                 // 1.9.196 migration: old configs wrote embedded_shader_pack=true,
                 // which kept auto-selecting the heavy Iris pack and caused
@@ -317,6 +334,11 @@ public final class McsmExtrasConfig {
                 // see/select "MCSM Visual Shader" in Iris; selection itself
                 // stays manual (selectIris only writes the pack line on opt-in).
                 embeddedShaderPack = true;
+                // 1.9.208: the shader is the default look. Upgrade migration
+                // flips the gate + auto-select on so existing installs get
+                // the shader without touching anything.
+                shaderPackGate = true;
+                autoSelectShaderPack = true;
                 save();
             }
         } catch (Throwable t) {

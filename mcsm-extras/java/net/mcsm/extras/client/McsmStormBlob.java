@@ -119,7 +119,8 @@ public final class McsmStormBlob {
         } else if (phase < 5.0F) {
             return 10.0F + 8.0F * (phase - 4.0F);
         } else {
-            return phase < 6.0F ? 18.0F + 22.0F * (phase - 5.0F) : 40.0F + 30.0F * (phase - 6.0F);
+            return phase < 6.0F ? 18.0F + 22.0F * (phase - 5.0F)
+                    : Math.min(320.0F, 55.0F + 42.0F * (phase - 6.0F));
         }
     }
 
@@ -128,19 +129,34 @@ public final class McsmStormBlob {
             // 1.9.201: the extracted OG sky gradients render every frame
             // (calm decks + storm decks) before the storm glare volume.
             McsmSkyDome.submit(ctx);
-            submitSkyVolume(ctx);
+            // 1.9.208: structured glare (no sphere) + real orbiting cube rings
+            submitStructuredGlare(ctx);
+            McsmStormRings.submit(ctx);
         } catch (Throwable ignored) {
             // an unexpected base-jar surface degrades to no blob, never a crash
         }
     }
 
     /**
-     * MCSM-style storm backdrop: a curved sky-volume/wash, not a flat card.
-     * The reference frames read like a storm-bearing skybox layer: the colour
-     * is locked to the direction of the storm, blacks out the horizon behind
-     * it, and forms a broad foggy lobe above/behind the body.
+     * 1.9.208 -- GLARE COMPLETE REVAMP.
+     *
+     * The old construction (gaussian dome patches + soft circular billboards)
+     * read as a fuzzy sphere sitting in the world, so it is GONE.  The new
+     * glare is rigid and structured, built from the same 16-stop phase decks
+     * the sky uses:
+     *
+     *   1. a hard-edged three-band gradient slab locked behind the creature
+     *      (horizon / mid / zenith colours, crisp top and bottom cutoffs);
+     *   2. sharp angular rays radiating from the storm core, alternating
+     *      long/short, slowly rotating -- the "glare" itself;
+     *   3. a small saturated core plus a faint purple fog glow cast onto the
+     *      landscape beneath the tractor beams.
+     *
+     * Everything is additive glow geometry, so it renders identically with
+     * and without the MCSM Visual Shader.  At phase 8-9 the palette swaps to
+     * the ember deck and the halo layers disappear (only the glare remains).
      */
-    private static void submitSkyVolume(LevelRenderContext ctx) {
+    private static void submitStructuredGlare(LevelRenderContext ctx) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || ClientDistantStormManager.all().isEmpty()) return;
         Vec3 cam = ctx.levelState().cameraRenderState.pos;
@@ -158,65 +174,92 @@ public final class McsmStormBlob {
         if (dist < 1.0D || dist > 2800.0D) return;
         float gt = (float)(mc.level.getGameTime() % 240000L)
                 + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float nowSec = gt * 0.05F;
         Vec3 centre = new Vec3(best.dispX, best.dispY, best.dispZ)
-                .add(sway(phase, gt * 0.05F, bodyRadius(phase)));
-        Vec3 dir = centre.subtract(cam).normalize();
-        if (dir.lengthSqr() < 1.0E-4D) return;
+                .add(sway(phase, nowSec, bodyRadius(phase)));
+        Vec3 view = centre.subtract(cam).normalize();
+        if (view.lengthSqr() < 1.0E-4D) return;
         float amp = ramp(phase, 3.95F, 4.25F)
                 * (1.0F - Mth.clamp((float)((dist - 1500.0D) / 1200.0D), 0.0F, 1.0F));
         if (amp <= 0.01F) return;
+        final float aa = Math.min(1.0F, amp * 1.45F);
 
-        // Palettes pulled from the uploaded gradient references by phase:
-        // phase 5 turquoise+black, phase 5.5 pink/purple/orange+black,
-        // phase 5.9 purple/blue/pink, phase 6 brown-pink/purple/black.
-        float wP5 = ramp(phase, 4.90F, 5.08F) * (1.0F - ramp(phase, 5.24F, 5.38F));
-        float w55 = ramp(phase, 5.28F, 5.48F) * (1.0F - ramp(phase, 5.78F, 5.92F));
-        float w59 = ramp(phase, 5.72F, 5.90F) * (1.0F - ramp(phase, 5.95F, 6.08F));
-        float w6 = ramp(phase, 5.95F, 6.22F);
-        float wEarly = Math.max(0.0F, 1.0F - Math.min(1.0F, wP5 + w55 + w59 + w6));
-        float sum = Math.max(0.001F, wEarly + wP5 + w55 + w59 + w6);
-        final float rr = (0.05F*wEarly + 0.02F*wP5 + 0.42F*w55 + 0.30F*w59 + 0.34F*w6) / sum;
-        final float gg = (0.10F*wEarly + 0.34F*wP5 + 0.13F*w55 + 0.10F*w59 + 0.15F*w6) / sum;
-        final float bb = (0.30F*wEarly + 0.30F*wP5 + 0.36F*w55 + 0.44F*w59 + 0.28F*w6) / sum;
-        final float aa = Math.min(1.0F, amp * 1.55F);
-        final Vec3 bearing = dir;
-        final Identifier gtex = glareTex(phase);
+        // phase deck -> structured glare palette
+        float[][] deck = McsmGlarePalettes.P4;
+        if (phase >= 8.0F)      deck = McsmGlarePalettes.P89;
+        else if (phase >= 5.9F) deck = McsmGlarePalettes.P6;
+        else if (phase >= 5.48F) deck = McsmGlarePalettes.P55;
+        else if (phase >= 5.25F) deck = McsmGlarePalettes.P5_PURPLE;
+        else if (phase >= 4.9F) deck = McsmGlarePalettes.P5_TEAL;
+        final float[] hor = { deck[15][0], deck[15][1], deck[15][2] };
+        final float[] mid = { deck[8][0],  deck[8][1],  deck[8][2]  };
+        final float[] top = { deck[1][0],  deck[1][1],  deck[1][2]  };
+        // glare core: brighten the mid/horizon stop for the rays
+        final float[] core = {
+                Math.min(1.0F, hor[0] * 1.6F + 0.10F),
+                Math.min(1.0F, hor[1] * 1.6F + 0.10F),
+                Math.min(1.0F, hor[2] * 1.4F + 0.15F) };
+
         McsmExtrasConfig.load();
         final double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-        // 1.9.201 -- the glare was a single flat colour and too small.  It is
-        // now the textured multi-colour disc rebuilt from the extracted sky
-        // strips, at roughly 1.6-2x the old angular size and riding the Glare
-        // Size slider (default raised to 1.35).  Black cap + saturated core
-        // stay so the silhouette still reads against it.
-        // half-angles grow with the slider but stay inside the tangent-space
-        // dome (never near 90 degrees or the projection blows up).
-        final double hx = Math.min(80.0D, 40.0D + 28.0D * gs);
-        final double hy = Math.min(72.0D, 34.0D + 24.0D * gs);
-        final double sx2 = Math.min(85.0D, 52.0D + 30.0D * gs);
-        final double sy2 = Math.min(78.0D, 42.0D + 26.0D * gs);
+        final double wHalf = Math.min(70.0D, 30.0D + 22.0D * gs);   // slab half-width (deg)
+        final double slabTop = Math.min(68.0D, 30.0D + 24.0D * gs); // slab top elevation
+        final double slabBot = Math.min(34.0D, 14.0D + 12.0D * gs); // slab bottom depth
+
+        final Vec3 dir = view;
         SubmitNodeCollector collector = ctx.submitNodeCollector();
         PoseStack poseStack = ctx.poseStack();
-        // MAIN multi-colour glare wash: textured dome patch in the bearing.
-        collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(gtex),
+
+        // ---- 1) structured three-band slab: hard edges, no falloff --------
+        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
                 (pose, consumer) -> {
-                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.14D, 0.0D)).normalize(),
-                            505.0D, hx * 0.72D, hy * 0.72D, 1.0F, 1.0F, 1.0F, aa * 125.0F, 0.06F);
-                    // outer atmospheric skirt: same disc, bigger and dimmer
-                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.22D, 0.0D)).normalize(),
-                            515.0D, sx2 * 0.8D, sy2 * 0.8D, 1.0F, 1.0F, 1.0F, aa * 45.0F, 0.14F);
+                    angQuad(pose, consumer, cam, dir, 512.0D, -wHalf, wHalf, -slabBot, slabTop,
+                            hor[0], hor[1], hor[2], aa * 78.0F);
+                    angQuad(pose, consumer, cam, dir, 509.0D, -wHalf * 0.94D, wHalf * 0.94D,
+                            slabTop * 0.18D, slabTop, top[0], top[1], top[2], aa * 88.0F);
+                    angQuad(pose, consumer, cam, dir, 506.0D, -wHalf * 0.86D, wHalf * 0.86D,
+                            -slabBot, slabTop * 0.30D, mid[0], mid[1], mid[2], aa * 96.0F);
                 });
-        collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(WHITE),
+
+        // ---- 2) rigid rays: alternating long/short spokes, rotating --------
+        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
                 (pose, consumer) -> {
-                    // Deep black upper cap like the references: darkness curls over the body.
-                    // 1.9.202: fade it in only once the storm is big.  On small
-                    // phases it hung as a floating black blob above the mini
-                    // storm and read as "the small phase is completely glitched".
-                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.38D, 0.0D)).normalize(),
-                            548.0D, 30.0D, 17.0D, 0.010F, 0.010F, 0.022F,
-                            aa * 185.0F * ramp(phase, 4.55F, 5.25F), 0.22F);
-                    // Saturated colour core behind the heads/tractor beams.
-                    emitDomePatch(pose, consumer, cam, bearing.add(new Vec3(0.0D, 0.06D, 0.0D)).normalize(),
-                            520.0D, 26.0D, 22.0D, Math.min(1.0F, rr * 1.35F), Math.min(1.0F, gg * 1.20F), Math.min(1.0F, bb * 1.45F), aa * 70.0F, -0.02F);
+                    final int N = 15;
+                    final double rot = nowSec * 0.016D; // slow, dignified
+                    for (int i = 0; i < N; i++) {
+                        double th = (2.0D * Math.PI * i / N) + rot;
+                        boolean longRay = (i % 2) == 0;
+                        double rIn = longRay ? slabTop * 0.30D : slabTop * 0.22D;
+                        double rOut = longRay ? slabTop * 1.30D : slabTop * 0.95D;
+                        double thk = longRay ? 2.4D : 1.6D;
+                        // ray as a thin angular quad along (cos,sin)
+                        double c0x = Math.cos(th) * rIn,  c0y = Math.sin(th) * rIn * 0.92D;
+                        double c1x = Math.cos(th) * rOut, c1y = Math.sin(th) * rOut * 0.92D;
+                        double px = -Math.sin(th) * thk,   py = Math.cos(th) * thk;
+                        angQuadRaw(pose, consumer, cam, dir, 504.0D,
+                                c0x + px, c0y + py, c0x - px, c0y - py,
+                                c1x - px, c1y - py, c1x + px, c1y + py,
+                                core[0], core[1], core[2], aa * 62.0F * (longRay ? 1.0F : 0.72F));
+                    }
+                });
+
+        // ---- 3) saturated core + foggy glow on the landscape below ---------
+        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
+                (pose, consumer) -> {
+                    double coreHalf = Math.min(16.0D, 5.0D + 6.0D * gs);
+                    angQuad(pose, consumer, cam, dir, 502.0D, -coreHalf, coreHalf,
+                            -coreHalf * 0.9D, coreHalf * 0.9D,
+                            core[0], core[1], core[2], aa * 150.0F);
+                });
+        // ground fog pool under the beams (a horizontal quad at the storm's
+        // feet; reads as geometric fog from the beam cones)
+        double groundY = best.dispY - bodyRadius(phase) * 1.15D;
+        Vec3 gAt = new Vec3(best.dispX, Math.max(groundY, best.dispY - 260.0D), best.dispZ);
+        double gr = bodyRadius(phase) * 2.4D;
+        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(WHITE),
+                (pose, consumer) -> {
+                    quadVerts(pose, consumer, gAt, new Vec3(0.0D, 1.0D, 0.0D), gr,
+                            155, 90, 235, (int)(aa * 46.0F));
                 });
     }
 
@@ -228,51 +271,8 @@ public final class McsmStormBlob {
                 Mth.sin(timeSec * 0.16F + 1.3F) * amp * 0.45F);
     }
 
-    private static void emitDomePatch(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir,
-            double shell, double halfDegX, double halfDegY, float r, float g, float b, float alpha, float yBias) {
-        Vec3 upHint = Math.abs(dir.y) > 0.96D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 right = dir.cross(upHint).normalize();
-        Vec3 up = right.cross(dir).normalize();
-        int sx = 18, sy = 12;
-        double hx = Math.toRadians(halfDegX), hy = Math.toRadians(halfDegY);
-        for (int iy = 0; iy < sy; iy++) {
-            for (int ix = 0; ix < sx; ix++) {
-                domeQuad(pose, consumer, cam, dir, right, up, shell, hx, hy,
-                        ix / (float)sx, iy / (float)sy, (ix + 1) / (float)sx, (iy + 1) / (float)sy,
-                        r, g, b, alpha, yBias);
-            }
-        }
-    }
 
-    private static void domeQuad(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir, Vec3 right, Vec3 up,
-            double shell, double hx, double hy, float u0, float v0, float u1, float v1,
-            float r, float g, float b, float alpha, float yBias) {
-        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u0, v1, r, g, b, alpha, yBias);
-        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u1, v1, r, g, b, alpha, yBias);
-        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u1, v0, r, g, b, alpha, yBias);
-        domeVtx(pose, consumer, cam, dir, right, up, shell, hx, hy, u0, v0, r, g, b, alpha, yBias);
-    }
 
-    private static void domeVtx(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir, Vec3 right, Vec3 up,
-            double shell, double hx, double hy, float u, float v, float r, float g, float b, float alpha, float yBias) {
-        double x = (u * 2.0D - 1.0D) * hx;
-        double y = (v * 2.0D - 1.0D) * hy;
-        Vec3 d = dir.add(right.scale(Math.tan(x))).add(up.scale(Math.tan(y + yBias * hy))).normalize();
-        double rx = (u * 2.0D - 1.0D), ry = (v * 2.0D - 1.0D);
-        // 1.9.203: gaussian falloff. The old polynomial edge stayed near-opaque
-        // almost to the rim, so the patch read as a giant hard-edged sphere
-        // sitting in the world instead of atmospheric glare.
-        double rr2 = rx * rx + ry * ry;
-        double fall = Math.exp(-3.2D * rr2) - Math.exp(-3.2D);
-        fall = Math.max(0.0D, fall / (1.0D - Math.exp(-3.2D)));
-        fall = fall * fall;
-        int a = Mth.clamp((int)(alpha * fall), 0, 255);
-        Vec3 p = cam.add(d.scale(shell));
-        vertex(pose, consumer, p, u, v,
-                Mth.clamp((int)(r * 255.0F), 0, 255),
-                Mth.clamp((int)(g * 255.0F), 0, 255),
-                Mth.clamp((int)(b * 255.0F), 0, 255), a);
-    }
 
     private static void submitInner(LevelRenderContext ctx) {
         Minecraft mc = Minecraft.getInstance();
@@ -350,7 +350,9 @@ public final class McsmStormBlob {
             // giant texture. Teeth now come from the real storm model/tint path;
             // this pass is only a soft atmospheric halo.
             float wFace = 0.0F;
-            float wGlare = ramp(phase, 3.95F, 4.3F);
+            // 1.9.208: phase 8-9 the halo disappears entirely; only the
+            // structured glare and the gigantic rings remain.
+            float wGlare = ramp(phase, 3.95F, 4.3F) * (1.0F - ramp(phase, 7.5F, 8.0F));
             float wMouth = 0.0F;
             float mouthBoost = phase >= 7.0F ? 1.85F : (phase >= 6.0F ? 1.70F : (phase >= 5.5F ? 1.45F : 0.82F));
             float mouthAlphaScale = phase >= 7.0F ? 1.18F : (phase >= 6.0F ? 1.12F : (phase >= 5.5F ? 1.0F : (phase >= 5.0F ? 0.36F : 0.48F)));
@@ -358,67 +360,9 @@ public final class McsmStormBlob {
             int mouthG = phase >= 7.0F ? 255 : (phase >= 6.0F ? 210 : 255);
             int mouthB = phase >= 7.0F ? 224 : (phase >= 6.0F ? 255 : 245);
 
-            // THE GLARE, FIRST: one soft gradient billboard hung behind the
-            // silhouette, exactly as the original frames expose it - wide
-            // purple aura at 5.5+, blue at phase 4-5, teal in the green
-            // phase. Terrain draws later, so trees and buildings occlude it
-            // for free. Scale rides the Glare Size slider (default 0.58).
-            if (key == mainKey && wGlare > 0.004F) {
-                McsmExtrasConfig.load();
-                double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-                float gr = (float) (baseR * (0.95D + 0.92D * gs));
-                float wr = 0.30F * wBlue + 0.35F * wTurq + 0.48F * wViolet
-                        + 0.55F * wPurp + 0.72F * wPink;
-                float wg = 0.45F * wBlue + 0.85F * wTurq + 0.28F * wViolet
-                        + 0.22F * wPurp + 0.32F * wPink;
-                float wb = 0.92F * wBlue + 0.85F * wTurq + 0.80F * wViolet
-                        + 0.78F * wPurp + 0.62F * wPink;
-                float wsum = wBlue + wTurq + wViolet + wPurp + wPink;
-                if (wsum > 0.004F) {
-                    wr /= wsum; wg /= wsum; wb /= wsum;
-                } else {
-                    wr = 0.48F; wg = 0.28F; wb = 0.80F;
-                }
-                quad(poseStack, collector, GlowRenderTypes.glow(GLARE), at, view,
-                        gr, (int) (wr * 255.0F), (int) (wg * 255.0F), (int) (wb * 255.0F),
-                        (int) (a * wGlare * 68.0F));
-            }
-            if (wPink > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE_PINK), at, view,
-                        baseR * 1.55, 255, 205, 225, (int) (a * wPink * 245.0F));
-            }
-            if (wPurp > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE), at, view,
-                        baseR * 1.18, 236, 200, 255, (int) (a * wPurp * 250.0F));
-            }
-            if (wViolet > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.translucent(PURPLE_PINK), at, view,
-                        baseR * 1.35, 255, 214, 236, (int) (a * wViolet * 240.0F));
-            }
-            if (wTurq > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.translucent(TURQUOISE), at, view,
-                        baseR * 1.1, 255, 255, 255, (int) (a * wTurq * 250.0F));
-            }
-            if (phase >= 6.5F) {
-                quad(poseStack, collector, GlowRenderTypes.translucent(EMBER), at, view,
-                        baseR * 1.34, 255, 255, 255, (int) (a * 60.0F));
-            }
-            if (wCore > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.translucent(BLACK), at, view,
-                        baseR * 0.85, 255, 255, 255, (int) (a * wCore * 235.0F));
-            }
-            // the purple overlay: additive fringe on the silhouette plus a
-            // faint violet wash across the whole face, 5.5 and up
-            if (key == mainKey && wFace > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.glow(STORM_FACE), at, view,
-                        baseR * 1.06, 255, 255, 255, (int) (a * wFace * 140.0F));
-                quad(poseStack, collector, GlowRenderTypes.translucent(STORM_FACE), at, view,
-                        baseR * 0.92, 255, 255, 255, (int) (a * wFace * 55.0F));
-            }
-            if (wBlue > 0.004F) {
-                quad(poseStack, collector, GlowRenderTypes.glow(BLUE4), at, view,
-                        baseR * 0.95, 190, 215, 255, (int) (a * wBlue * 235.0F));
-            }
+            // 1.9.208: the soft circular billboard glare and every blurry
+            // backdrop wash are deleted (they read as fuzzy mist spheres).
+            // submitStructuredGlare draws the rigid slab + rays instead.
             // PHASE-6 PARTICLE FIELD (batched into two draws): black cubes
             // peeling off the body edge, sparkle dots travelling down inside
             // the beam cones, faint motes orbiting the whole storm and mist
@@ -542,6 +486,40 @@ public final class McsmStormBlob {
                 }
             }
         }
+    }
+
+    /** Crisp angular quad: corners as angular offsets (degrees) from the
+     *  view axis; constant alpha -- no gaussian, no soft rim. */
+    private static void angQuad(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir,
+            double shell, double x0, double x1, double y0, double y1,
+            float r, float g, float b, float a) {
+        angQuadRaw(pose, consumer, cam, dir, shell, x0, y0, x1, y0, x1, y1, x0, y1, r, g, b, a);
+    }
+
+    private static void angQuadRaw(Pose pose, VertexConsumer consumer, Vec3 cam, Vec3 dir,
+            double shell, double ax0, double ay0, double ax1, double ay1,
+            double ax2, double ay2, double ax3, double ay3,
+            float r, float g, float b, float a) {
+        if (a <= 2) return;
+        Vec3 upHint = Math.abs(dir.y) > 0.96D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 right = dir.cross(upHint).normalize();
+        Vec3 up = right.cross(dir).normalize();
+        double d0x = Math.tan(Math.toRadians(ax0)), d0y = Math.tan(Math.toRadians(ay0));
+        double d1x = Math.tan(Math.toRadians(ax1)), d1y = Math.tan(Math.toRadians(ay1));
+        double d2x = Math.tan(Math.toRadians(ax2)), d2y = Math.tan(Math.toRadians(ay2));
+        double d3x = Math.tan(Math.toRadians(ax3)), d3y = Math.tan(Math.toRadians(ay3));
+        Vec3 p0 = cam.add(dir.add(right.scale(d0x)).add(up.scale(d0y)).normalize().scale(shell));
+        Vec3 p1 = cam.add(dir.add(right.scale(d1x)).add(up.scale(d1y)).normalize().scale(shell));
+        Vec3 p2 = cam.add(dir.add(right.scale(d2x)).add(up.scale(d2y)).normalize().scale(shell));
+        Vec3 p3 = cam.add(dir.add(right.scale(d3x)).add(up.scale(d3y)).normalize().scale(shell));
+        int ir = Mth.clamp((int)(r * 255.0F), 0, 255);
+        int ig = Mth.clamp((int)(g * 255.0F), 0, 255);
+        int ib = Mth.clamp((int)(b * 255.0F), 0, 255);
+        int ia = Mth.clamp((int)a, 0, 255);
+        vertex(pose, consumer, p0, 0.0F, 1.0F, ir, ig, ib, ia);
+        vertex(pose, consumer, p1, 1.0F, 1.0F, ir, ig, ib, ia);
+        vertex(pose, consumer, p2, 1.0F, 0.0F, ir, ig, ib, ia);
+        vertex(pose, consumer, p3, 0.0F, 0.0F, ir, ig, ib, ia);
     }
 
     private static float fract(float x) {

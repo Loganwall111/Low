@@ -48,22 +48,39 @@ public final class McsmSkyDome {
         return t * t * (3.0F - 2.0F * t);
     }
 
-    /** calm deck mix for the time of day, written into out[3]. */
+    /** calm deck mix for the time of day, written into out[3].
+     *  1.9.208: night splits into NIGHT and deep MIDNIGHT (user's midnight
+     *  skybox) around 18000 ticks. */
     private static void calmRamp(long time, float[] out) {
         float t = (float) (time % 24000L);
         float wDay = smooth((t - 23000.0F) / 2000.0F) * (1.0F - smooth((t - 11500.0F) / 1500.0F));
         float wSunset = smooth((t - 11500.0F) / 1200.0F) * (1.0F - smooth((t - 13300.0F) / 1200.0F));
         float wNight = smooth((t - 13000.0F) / 1500.0F) * (1.0F - smooth((t - 22700.0F) / 1800.0F));
+        float wMidnight = smooth((t - 17500.0F) / 1500.0F) * (1.0F - smooth((t - 22700.0F) / 1800.0F));
         float tot = Math.max(0.001F, wDay + wSunset + wNight);
+        // build NIGHT base then blend down toward MIDNIGHT
         mix(McsmGlarePalettes.DAY, McsmGlarePalettes.SUNSET, McsmGlarePalettes.NIGHT,
                 wDay / tot, wSunset / tot, wNight / tot, out);
+        float wm = Math.min(1.0F, wMidnight);
+        for (int i = 0; i < McsmGlarePalettes.STOPS; i++) {
+            out[i * 3]     += (McsmGlarePalettes.MIDNIGHT[i][0] - out[i * 3]) * wm;
+            out[i * 3 + 1] += (McsmGlarePalettes.MIDNIGHT[i][1] - out[i * 3 + 1]) * wm;
+            out[i * 3 + 2] += (McsmGlarePalettes.MIDNIGHT[i][2] - out[i * 3 + 2]) * wm;
+        }
     }
 
     /** storm deck for a phase; returns 0 when calm owns the sky. */
     private static float stormRamp(float phase, float[] out) {
         float[][] deck;
         float w;
-        if (phase >= 5.9F) {
+        if (phase >= 8.0F) {
+            // 1.9.208: phase 8-9 -- the whole sky burns dark-orange/ember.
+            deck = McsmGlarePalettes.P89;
+            w = smooth((phase - 8.0F) / 0.5F);
+        } else if (phase >= 7.0F) {
+            deck = McsmGlarePalettes.P6;
+            w = 1.0F; // held until phase 8 hands over to P89
+        } else if (phase >= 5.9F) {
             deck = McsmGlarePalettes.P6;
             w = smooth((phase - 5.9F) / 0.3F);
         } else if (phase >= 5.48F) {
@@ -161,21 +178,24 @@ public final class McsmSkyDome {
         for (int i = 0; i < ramp.length; i++) {
             ramp[i] = calm[i] + (storm[i] - calm[i]) * blend;
         }
-        // 1.9.202: much less see-through — 175..235 so the vanilla sunset can no
-        // longer tint the dome; the sun/moon/stars still show around it.
-        final int alpha = (int) (175.0F + 60.0F * blend);
+        // 1.9.208: fully opaque — the "circle dome" edge is gone for good.
+        // The sky is the sky: terrain always draws in front of it, the sun
+        // glow billboard draws over it, and nothing shows through it.
+        final int alpha = 255;
 
         Vec3 cam = ctx.levelState().cameraRenderState.pos;
         SubmitNodeCollector collector = ctx.submitNodeCollector();
         collector.submitCustomGeometry(ctx.poseStack(), RenderTypes.entityTranslucentEmissive(WHITE),
                 (pose, consumer) -> {
-                    // elevation bands from -18deg (below horizon, fog seam)
-                    // to +90; per-vertex colour sampled from the blended ramp.
+                    // elevation bands from 0deg (horizon, flush with the fog
+                    // colour) to +90; per-vertex colour sampled from the
+                    // blended ramp. 1.9.208: no band below the horizon any
+                    // more — that seam read as the "circle" in screenshots.
                     float[] c0 = new float[3];
                     float[] c1 = new float[3];
                     for (int b = 0; b < BANDS; b++) {
-                        double e0 = -18.0D + (108.0D * b / BANDS);
-                        double e1 = -18.0D + (108.0D * (b + 1) / BANDS);
+                        double e0 = (90.0D * b / BANDS);
+                        double e1 = (90.0D * (b + 1) / BANDS);
                         // elevation -> ramp position: 90deg=0(zenith) 0deg=1(horizon)
                         float p0 = (float) ((90.0D - e1) / 90.0D);
                         float p1 = (float) ((90.0D - e0) / 90.0D);
