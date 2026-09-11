@@ -1,14 +1,27 @@
-# Devouring Storms 1.9.301 — THE definitive merged build (both lines, newest everything)
+# Devouring Storms 1.9.302 — Story Mode starts itself + command block tools + the sky stays NEW
 
-**Why 1.9.301:** a number that has never existed, created right now, higher
-than every release on the page. This build is the FIRST to contain BOTH
-lines of work in one jar -- the other agent's newest feature line (Story
-Mode NPCs, the real Telltale model revamp, the vortex mesh, teeth/bloom
-fixes, pack auto-select) MERGED with this line's sky work (the Infinite
-Skybox Blob with corrected hexes, navy night, FabricSkyBoxes support,
-opaque alpha-blended blob, phase-coloured teeth/eye glow). Previous builds
-from this line were assembled without the other agent's newer code, which
-is why the sky looked old and the NPCs never spawned. Not anymore.
+**Why 1.9.302:** newest build, brand-new number, created right now.
+
+**The sky situation, solved:** earlier builds got confused with the OTHER
+line's releases (ds-1.9.216-1.9.220), which still draw the OLD orange sky,
+the old volumetric halo and the cube rings. THIS build has none of that:
+navy night, lavender-blue day, the corrected-hex storm dome, and the
+INFINITE SKYBOX BLOB on every render path (vanilla core shader,
+FabricSkyBoxes layer, Iris shader-pack oval). If you ever see an orange
+sky or a big halo shell behind the storm, the game is loading an old jar
+or an old shaderpack folder — see "Installing" below.
+
+New in 1.9.302:
+- **Story Mode auto-start**: the Episode-1 opening cluster (Wilderness
+  Treehouse, The Wilderness, EnderCon Town Fair) builds itself on the
+  first load of a fresh overworld -- no /ds towns start needed. The NPC
+  cast spawns as soon as you approach a built town. (Toggle:
+  `auto_start_towns` in the config.)
+- **Command block tool textures**: the lost command block tools set (axe,
+  hoe, pickaxe, shovel, sword, book + emissive layers + particles) is
+  ported from the orphan experiment branch into the built-in Story Look
+  pack, mapped onto the mod's real `cmdblockascension` item textures --
+  the command block weapons now show their command block skins in game.
 
 ## 1. Everything from the other line (1.9.201-1.9.220) is IN
 - **Story Mode NPCs (McsmNpcs)**: the canonical cast spawns at towns and
@@ -46,12 +59,22 @@ is why the sky looked old and the NPCs never spawned. Not anymore.
   to black.
 
 ## 3. Version
-Mods screen shows **1.9.301-26.2-beta-ds**; title screen, config screens
-and `/ds` show build **1.9.301**. Verified by CI annotation on the build.
+Mods screen shows **1.9.302-26.2-beta-ds**; title screen, config screens
+and `/ds` show build **1.9.302**. Verified by CI annotation on the build.
 
 ## Assets
-- `devouringstorms-1.9.301-26.2-beta-ds.jar` — the mod
-- `devouringstorms-shaderpack-v5-1.9.301.zip` — Iris shader pack
-- `devouringstorms-storylook-1.9.301.zip` — Story Look resource pack
-- `devouringstorms-superduper-default-1.9.301.zip` — Super Duper pack
+- `devouringstorms-1.9.302-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.302.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.302.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.302.zip` — Super Duper pack
 - `.sha256` checksums for verification
+
+## Installing (so the old jar/pack can never win again)
+1. Delete EVERY `devouringstorms-*.jar` from your `mods/` folder.
+2. Download `devouringstorms-1.9.302-26.2-beta-ds.jar` from this release
+   and put it in `mods/` alone.
+3. Delete the old pack folders from `shaderpacks/` (any folder starting
+   with `devouringstorms`), then toggle "Built-in Shader Pack" OFF and ON
+   once in the MCSM Control Panel -- the new pack reinstalls.
+4. In game: the mods screen must show `1.9.302-26.2-beta-ds`. If it shows
+   ANY other number, that jar is not this build.

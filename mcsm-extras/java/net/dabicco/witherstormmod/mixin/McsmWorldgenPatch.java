@@ -8,9 +8,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.dabicco.witherstormmod.structures.McsmSchematic;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
+import net.mcsm.extras.McsmDiag;
+import net.mcsm.extras.McsmExtrasConfig;
 import net.mcsm.extras.McsmNpcs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 
 /**
  * Mega-phase 7 / 7b / 9 / 12: structures land WHOLE, Sky City goes up among
@@ -39,7 +42,15 @@ import net.minecraft.server.level.ServerLevel;
 public abstract class McsmWorldgenPatch {
 
     private static ServerLevel lastLevel;
+    private static boolean autoTownsDone = false;
     private static final ThreadLocal<Boolean> RAISING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    // 1.9.302 -- the story starts itself: the Episode-1 opening cluster
+    // (treehouse, wilderness, EnderCon fair) is queued on the first tick of
+    // a fresh overworld, so structures + NPCs appear without /ds towns start.
+    private static final String[] EPISODE_ONE_TOWNS = {
+            "Wilderness Treehouse", "The Wilderness", "EnderCon Town Fair",
+    };
 
     /** tick(ServerLevel) -> int. CIR required (MCSM crash fix). */
     @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 0)
@@ -48,6 +59,39 @@ public abstract class McsmWorldgenPatch {
             if (lastLevel != level) {
                 lastLevel = level;
                 McsmWorldgen.clear();
+                autoTownsDone = false;
+            }
+            // 1.9.302: automatic Story Mode start (config-gated, once per world).
+            if (!autoTownsDone) {
+                autoTownsDone = true;
+                try {
+                    McsmExtrasConfig.load();
+                    if (McsmExtrasConfig.autoStartTowns && level.dimension() == Level.OVERWORLD) {
+                        int built = 0;
+                        for (String want : EPISODE_ONE_TOWNS) {
+                            for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
+                                if (!s.label().equalsIgnoreCase(want)) {
+                                    continue;
+                                }
+                                try {
+                                    McsmSchematic sch = McsmSchematic.load(
+                                            level.getServer().getResourceManager(), s.path());
+                                    McsmWorldgen.enqueue(sch,
+                                            new BlockPos(s.x(), s.y(), s.z()), s.label());
+                                    built++;
+                                } catch (Throwable ignored) {
+                                    // one town failing to load never stops the rest
+                                }
+                                break;
+                            }
+                        }
+                        McsmDiag.say("[ds] Story Mode towns are building (" + built
+                                + "/" + EPISODE_ONE_TOWNS.length
+                                + "). The cast spawns when you get near.");
+                    }
+                } catch (Throwable ignored) {
+                    // auto-start must never take the world tick down
+                }
             }
             // 1.9.194 native-memory fix: placing hundreds of thousands of
             // structure blocks in one tick forces Sodium/Iris to rebuild too

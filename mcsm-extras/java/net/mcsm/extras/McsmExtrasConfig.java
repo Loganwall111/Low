@@ -17,6 +17,10 @@ import java.util.Properties;
 public final class McsmExtrasConfig {
     public static final String BUILD_VERSION = "1.9.200";
     public static boolean enableTentacleGrab = true;
+    // 1.9.302: build the Episode-1 Story Mode towns automatically on world
+    // load (no /ds towns start needed); the NPC cast populates once a town
+    // is built and a player is near it.
+    public static boolean autoStartTowns = true;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
     public static double  beaconCooldownSeconds = 30.0;
@@ -169,6 +173,7 @@ public final class McsmExtrasConfig {
             Properties p = new Properties();
             p.setProperty("config_version", BUILD_VERSION);
             p.setProperty("enable_tentacle_grab", String.valueOf(enableTentacleGrab));
+            p.setProperty("auto_start_towns", String.valueOf(autoStartTowns));
             p.setProperty("grab_interval_seconds", String.valueOf(grabIntervalSeconds));
             p.setProperty("enable_beacon_storm", String.valueOf(enableBeaconStorm));
             p.setProperty("beacon_cooldown_seconds", String.valueOf(beaconCooldownSeconds));
@@ -254,6 +259,7 @@ public final class McsmExtrasConfig {
                 return;
             }
             enableTentacleGrab = bool(p, "enable_tentacle_grab", enableTentacleGrab);
+            autoStartTowns     = bool(p, "auto_start_towns", autoStartTowns);
             grabIntervalSeconds = dbl(p, "grab_interval_seconds", grabIntervalSeconds);
             enableBeaconStorm  = bool(p, "enable_beacon_storm", enableBeaconStorm);
             beaconCooldownSeconds = dbl(p, "beacon_cooldown_seconds", beaconCooldownSeconds);
