@@ -1,14 +1,22 @@
-# Devouring Storms 1.9.215 — canonical build (Telltale models + Infinite Skybox Blob)
+# Devouring Storms 1.9.221 — Infinite Skybox Blob, corrected decks, glow + version fixes
 
-This release is the **1.9.215** build you know, rebuilt with the
-**Infinite Skybox Blob** sky overhaul folded in, plus **Sky Fix R2**
-(2026-09-11): corrected hex decks, navy night, and FabricSkyBoxes
-compatibility -- and **Fix R3**: the in-game version is always stamped
-correctly (the mods screen previously kept showing the base jar's old
-number) and the Wither Storm teeth + eyes now glow with the phase colours.
-It supersedes the earlier `ds-1.9.215` uploads (original commit archived as
-`archive-ds-1.9.215-2b054e1`, first blob port as
-`archive-ds-1.9.215-r1-b48b7d2`, Sky Fix R2 as `archive-ds-1.9.215-r2-81f20ad`).
+**Why the number jumped to 1.9.221:** the previous releases kept re-using
+the tag `ds-1.9.215`, so the game kept showing `1.9.215` and read it as an
+old build (the other line's releases 1.9.216-1.9.220 looked "newer" even
+though they are older builds without the skybox blob). This release moves
+the canonical build to a fresh number -- **1.9.221** -- so the mods screen,
+the title screen and the config screen can never again be confused with an
+old jar. Everything below is included. (The other line's 1.9.216-1.9.220
+releases are left untouched; they simply are not this build.)
+
+New in this build on top of the blob overhaul:
+- **Fix R3**: teeth + eyes glow per phase (5 = pure white with white aura,
+  5.5-5.9 cyan-white, 6 = greenish-blue, 7+ = green-white).
+- **Fix R4**: the blob now ALSO renders on the Iris shader-pack path (the
+  built-in pack, which is ON by default -- this is the path the game
+  actually uses): a Java layer draws the same infinite oval behind the
+  storm with ALPHA blending, opaque core, smoothstep smudge, and zero fog.
+- Blob opacity strengthened (opaque cinematic mass, no see-through haze).
 
 ## 1. The glare is now Telltale's INFINITE SKYBOX BLOB
 The Wither Storm glare is not a 3D volume, not a billboard and not a cloud
@@ -33,7 +41,17 @@ sky pass (`gbuffers_sky`):
   1600 blocks it recedes, and beyond that the sky returns to regular
   vanilla ("go extremely far away and it slowly changes back");
 - no raymarching, no volumetric fog, no transparent horizon-fog variables —
-  pure angular dome-plane projection, fully procedural (zero pixel edges).
+  pure angular dome-plane projection, fully procedural (zero pixel edges);
+- **no vanilla distance fog**: the storm sky path never calls the linear or
+  exponential fog formulas -- the blob and dome are an opaque cinematic
+  layer (the calm vanilla sky keeps its normal fog, by design);
+- **multiple colours, blended**: each phase blends its full palette -- the
+  radial smudge layers the core / mid / edge / bleed stops with smoothstep,
+  the phase windows crossfade them, and phase 6 adds the vertical four-colour
+  sunset split keyed to look elevation. One colour is never used alone;
+- **GL_LINEAR by construction**: the blob is fully procedural (no texture
+  sampling), so there are no pixels to filter -- nothing can ever look
+  blocky, on any path.
 
 ## 2. The white thing is GONE
 The world-anchored white halo shell (the weird white circular/square mass
@@ -72,8 +90,8 @@ that silently did nothing unless the old value was shaped exactly like
 `1.9.200-26.2-beta` -- so the mods screen kept showing the base jar's old
 number and the game looked like it had loaded a build from before this
 release. The build now rewrites the version field as JSON (works for any
-old format), stamps **`1.9.215-26.2-beta-ds`**, and the title screen,
-config screens and `/ds` chat line all show build **1.9.215** -- the
+old format), stamps **`1.9.221-26.2-beta-ds`**, and the title screen,
+config screens and `/ds` chat line all show build **1.9.221** -- the
 number of THIS release.
 
 ## 3b. FabricSkyBoxes compatibility (NEW)
@@ -88,7 +106,7 @@ replaced with the corrected reference decks — so the storm sky renders
 with FabricSkyBoxes ENABLED. No vanilla distance fog touches the storm
 sky in any path (fully procedural, opaque cinematic layer).
 
-## 4. Everything from the original 1.9.215 carries
+## 5. Everything from the original 1.9.215 carries
 - **True 1:1 Telltale models**: Stage A (phase 2.0–4.49), Stage B
   (phase 5.0–5.49) and the severed Deadass mesh, voxelised from the
   extracted bbmodel meshes via `ci/bbmodel_convert.py`;
@@ -97,9 +115,21 @@ sky in any path (fully procedural, opaque cinematic layer).
 - every fix from 1.9.208–1.9.214 (structured glare era, cube rings,
   mouth/teeth work, phase textures).
 
+## 4. The blob on the shader-pack path (Fix R4)
+The built-in Iris pack is ON by default, and that path paints the sky with
+its own pass -- the core GLSL blob never runs there, which is why the storm
+background read as a flat washed-out fog with no oval. New in 1.9.221:
+`McsmBlobOval` draws the same infinite skybox blob as a Java layer on that
+path -- a stack of four tilted oval quads (bleed / edge / mid / core) pinned
+at the storm position, tinted with the corrected hexes, shaped by the new
+`core/mcsm_blob_oval.fsh` (smoothstep smudge), blended with ALPHA
+(BlendFunction.TRANSLUCENT): the dark core is near-opaque and truly darkens
+the sky behind the storm, the outer rings are translucent. No fog, no
+pixels, and it tracks the storm so you can never fly out of it.
+
 ## Assets
-- `devouringstorms-1.9.215-26.2-beta-ds.jar` — the mod
-- `devouringstorms-shaderpack-v5-1.9.215.zip` — Iris shader pack
-- `devouringstorms-storylook-1.9.215.zip` — Story Look resource pack
-- `devouringstorms-superduper-default-1.9.215.zip` — Super Duper pack
+- `devouringstorms-1.9.221-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.221.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.221.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.221.zip` — Super Duper pack
 - `.sha256` checksums for verification

@@ -87,6 +87,11 @@ public final class McsmStormBlob {
 
     public static void submit(LevelRenderContext ctx) {
         try {
+            // 1.9.221: the infinite skybox blob also exists as a Java layer
+            // for the Iris shader-pack path (the built-in pack), where the
+            // core GLSL sky pass never runs -- alpha-blended oval stack
+            // pinned behind the storm, same corrected hexes.
+            McsmBlobOval.submit(ctx);
             // 1.9.201: the extracted OG sky gradients render every frame
             // (calm decks + storm decks) before the storm glare volume.
             McsmSkyDome.submit(ctx);

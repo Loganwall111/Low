@@ -606,7 +606,10 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
 
     // Occlusion: the core fully masks the vanilla sky, the mid ring mostly,
     // the rim barely -- that is the "separate skybox behind the storm".
-    float occ = clamp(0.97 * coreW + 0.45 * midW + 0.10 * edgeW, 0.0, 1.0);
+    // 1.9.221: strengthened per the user (opaque cinematic layer, no see-
+    // through haze): core 1.00, mid 0.60, edge 0.16 + a bleed contribution
+    // so the sky never shows through the smudge.
+    float occ = clamp(1.00 * coreW + 0.60 * midW + 0.16 * edgeW + 0.10 * bleedW, 0.0, 1.0);
 
     // slow roar pulse, kept subtle so the gradient stays a clean smudge
     c *= 0.96 + 0.04 * sin(clock * 1.3);

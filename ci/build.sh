@@ -268,6 +268,7 @@ chmod +x glslcheck/bin/glslang || true
 GLSL_LOG=/tmp/mcsm-glsl.log
 if python3 glslcheck/shimcheck.py mcsm-core-shaders \
      jar-overrides/assets/dabywitherstormmod/shaders/core/storm_glow.fsh \
+     jar-overrides/assets/dabywitherstormmod/shaders/core/mcsm_blob_oval.fsh \
      jar-overrides/assets/dabywitherstormmod/shaders/post/storm_sun_glow.fsh \
      > "$GLSL_LOG" 2>&1; then
   tail -2 "$GLSL_LOG"
