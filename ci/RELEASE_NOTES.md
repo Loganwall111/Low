@@ -1,3 +1,31 @@
+# 1.9.219 — the volumetric cloud deck returns as an OPTIONAL layer (blob stays default)
+
+- **The full 1:1 model swap** (asked for at the top of this round) was already
+  shipped in 1.9.216: Stage A -> Stage D across every phase, plus the severed
+  wreck and head -- all voxelised from the real Telltale meshes. Nothing
+  model-side was left undone except the items that need entity mappings the
+  API dump doesn't expose (skull block, shrine, command block, frozen withers).
+- **The volumetric raymarch spec is back in the pack, but as an OPTIONAL
+  layer.** Your infinite-skybox breakthrough said "do NOT write heavy
+  volumetric raymarching", so the infinite sky blob (1.9.218) stays the
+  default glare. The original raymarch formula now lives beside it in
+  lib/mcsm/stormVolume.glsl -- camera-centered cloud box, ray-box isolated
+  stepped raymarch, storm-warped simplex turbulence with exponential density
+  near uStormPos, and the exact hex ramps from the spec:
+  * P5: #1A2E30 / #3D6266 / #2DE0D7 / #D2FCFA
+  * P5.5-5.9: #2A153D / #52297A / #8E44AD / #B976FF
+  * P6: #120D1A / #D98353 / #4B2766 / #F0B38A
+  plus the measured P4 teal, P7 green and P8-9 ember.
+  To enable it, uncomment the single line in composite6.glsl:
+      // #define MCSM_STORM_VOLUME_EXTRA
+  Both variants pass the offline GLSL gate (blob-only and blob+volume).
+- Shared uniforms got an include guard and the two libs no longer redeclare
+  each other's helpers (mcsmHex / msVolHex), so both layers can coexist in
+  one program.
+
+The glow fixes (1.9.217), the infinite blob (1.9.218) and everything before
+carry unchanged.
+
 # 1.9.218 — the glare is now Telltale's INFINITE SKYBOX BLOB (the real technique)
 
 You cracked it: the glare was never a 3D object, never a cloud layer, never

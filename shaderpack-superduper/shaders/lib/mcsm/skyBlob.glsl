@@ -24,12 +24,16 @@
 =============================================================================================
 */
 
+#ifndef MCSM_SHARED_UNIFORMS
+#define MCSM_SHARED_UNIFORMS
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferProjectionInverse;
 uniform vec3 cameraPosition;
 uniform vec3 uStormPos;
 uniform float uStormPhase;
+#endif
 uniform float uGlareSize;
+
 
 vec3 mcsmHex(float r, float g, float b){ return vec3(r, g, b) / 255.0; }
 

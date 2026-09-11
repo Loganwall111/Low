@@ -130,6 +130,12 @@
 
     #include "/lib/mcsm/skyBlob.glsl"
 
+    // MCSM 1.9.219 -- optional volumetric cloud deck (the original raymarch
+    // formula). OFF by default: the infinite sky blob is the Telltale look.
+    // Uncomment the line below to layer the swirling volume on top.
+    // #define MCSM_STORM_VOLUME_EXTRA
+    #include "/lib/mcsm/stormVolume.glsl"
+
     void main(){
         // Screen texel coordinates
         ivec2 screenTexelCoord = ivec2(gl_FragCoord.xy);
@@ -178,6 +184,23 @@
             if (sceneDepth >= 0.99998) {
                 vec4 blob = mcsmSkyBlob(texCoord);
                 postColOut = mix(postColOut, blob.rgb, blob.a);
+            }
+        }
+        #endif
+
+        // MCSM 1.9.219 -- OPTIONAL volumetric cloud deck (off by default):
+        // ray-box isolated raymarch around the camera-centered cloud box,
+        // storm-warped simplex turbulence with exponential density near
+        // uStormPos and the exact P5/P5.5/P6 hex ramps.
+        #ifdef MCSM_STORM_VOLUME_EXTRA
+        {
+            float sceneDepth = textureLod(depthtex0, texCoord, 0).x;
+            bool skyPixel = sceneDepth >= 0.99998;
+            vec4 vol = mcsmStormVolume(texCoord);
+            if (skyPixel) {
+                postColOut = mix(postColOut, vol.rgb * 2.6, clamp(vol.a * 2.4, 0.0, 0.94));
+            } else {
+                postColOut += vol.rgb * vol.a * 0.30;
             }
         }
         #endif
