@@ -1,3 +1,34 @@
+# 1.9.217 — teeth and eyes actually glow now (root cause found)
+
+## Why the teeth looked dead
+The head renderer's glow tint runs through `shaderGlowGain()`, which with a
+shader pack active maps `round(bloomStrength)` to 0.75x-2.1x brightness.
+Our gate floored bloom at 0.35 -- which ROUNDS TO ZERO, i.e. the minimum
+0.75x gain, and a stale persisted `glowStrength: 0` switched the whole
+emitter overlay off. Both are fixed:
+- **bloomStrength now hard-floored at 2.5** -> full 2.1x gain (the aura),
+- **glowStrength hard-floored at 1.0** -> the teeth/eye emitter overlays
+  can never switch off again,
+- `turquoiseTeeth` + `headEyeGlow` forced on,
+- the hard floors respect only player values that are ALREADY higher --
+  stale low values from old sessions get raised, so the glow survives
+  config migration.
+- the mini-storm face atlas keeps its lit teeth (the 1.9.214 remap had
+  dimmed them to grey), and the body atlases stay at the true measured
+  1:1 values.
+
+## Why the eyes went black / wrong colour
+`beamColor*` feeds `eyeTint()` -- the eyeball itself. It had been driven
+toward cyan and day-dimmed, and the same zeroed glow pass killed the rest.
+Now the eye colour is **neon purple at all times** (the beam-colour
+constraint), with day/night only nudging brightness, never hue, and the
+phase-7+ eye stays the brightest.
+
+The full 1:1 Telltale model ladder from 1.9.216 and everything before it
+carries. (The remaining pack items -- skull block, shrine, command block,
+frozen withers, standalone tentacle pieces -- are extracted and staged;
+they need entity-type mapping that is not in the API dump yet.)
+
 # 1.9.216 — the FULL 1:1 model ladder (all phases now real Telltale meshes)
 
 Every phase now renders a voxelised TRUE Telltale mesh instead of the

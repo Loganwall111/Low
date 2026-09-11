@@ -196,6 +196,7 @@ public final class McsmGate {
             changed += setBool(c, "cataclysmHalos", true);
             changed += setBool(c, "atmospherePulse", true);
             changed += setBool(c, "headEyeGlow", true);
+            changed += setBool(c, "turquoiseTeeth", true);
             changed += setBool(c, "devourerDebrisGlow", true);
 
             // ---- ground shadows for trees and mobs (user request) ---------
@@ -228,17 +229,22 @@ public final class McsmGate {
             changed += ceilingField(c, null, "debrisDustParticles", 0.0);
             changed += ceilingField(c, null, "debrisAmount", 0.0);
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
-            changed += floorField(c, null, "stormGlowStrength", 1.0);
+            changed += hardFloorNum(c, null, "stormGlowStrength", 1.0);
             changed += ceilingField(c, null, "sunGlowStrength", 0.0);
             // 1.9.213: less black cover so the purple middle of the oval reads
             changed += ceilingField(c, null, "blackGlareStrength", 0.45);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
-            changed += floorField(c, null, "glowStrength", 1.0);
+            // 1.9.217: the teeth/eye emitter overlays MUST stay on -- a stale
+            // persisted 0 is what killed the emissiveness
+            changed += hardFloorNum(c, null, "glowStrength", 1.0);
             // 1.9.213: the teeth read flat because the mod's bloom pass was
             // zeroed -- the glow needs it. A moderate floor (raise-only, the
             // player can push it higher) gives the teeth the emissive halo
             // from the reference frames without the old full-res memory blowout.
-            changed += floorField(c, null, "bloomStrength", 0.35);
+            // 1.9.217: with the shader active this integer rounds into
+            // shaderGlowGain (0->0.75x .. 3->2.1x). Floor at 2.5 so the
+            // teeth get the full 2.1x gain and the aura comes back.
+            changed += hardFloorNum(c, null, "bloomStrength", 2.5);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
@@ -302,6 +308,35 @@ public final class McsmGate {
         } catch (Throwable t) {
             McsmDiag.say("MCSM world gate failed before field loop: " + t);
         }
+    }
+
+    /** 1.9.217: hard variant for LOOK-CRITICAL keys (teeth/eye glow).  The
+     *  player's choice wins only when it is already at or above our floor --
+     *  stale low values from old sessions get raised so the glow can never
+     *  silently die again. */
+    private static int hardFloorNum(Class<?> owner, Object instance, String name, double min) {
+        try {
+            Field f = owner.getField(name);
+            String key = memKey(owner, instance, name);
+            double cur = readNum(f, instance);
+            Object prev = LAST_SET.get(key);
+            if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
+                return 0;
+            }
+            if (persistedAtLeast(name, min)) {
+                return 0;   // player already has it this high or higher: theirs
+            }
+            double nv = writeNum(f, instance, Math.max(cur, min));
+            LAST_SET.put(key, nv);
+            return 1;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static boolean persistedAtLeast(String name, double min) {
+        Double v = persistedOverrides().get(name);
+        return v != null && v >= min - 1e-9;
     }
 
     private static int setBool(Class<?> owner, String name, boolean value) {

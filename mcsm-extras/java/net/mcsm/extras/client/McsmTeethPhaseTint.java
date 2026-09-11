@@ -60,15 +60,15 @@ public final class McsmTeethPhaseTint {
             DabyWSClientConfig.turquoiseTeethIntensity = inten;
             DabyWSClientConfig.turquoiseTeeth = glow;
 
-            // Tractor beams should follow the same sky/storm family instead of
-            // staying solid pink-purple all day. Keep them soft but phase-aware.
-            float day = 0.55F + 0.45F * (float)Math.sin((mc.level.getGameTime() % 24000L) / 24000.0D * Math.PI * 2.0D);
-            float br = phase >= 7.0F ? 0.42F : (phase >= 6.0F ? 0.30F : (phase >= 5.5F ? 0.78F : 0.62F));
-            float bg = phase >= 7.0F ? 0.96F : (phase >= 6.0F ? 0.64F : (phase >= 5.5F ? 0.52F : 0.30F));
-            float bb = phase >= 7.0F ? 0.86F : (phase >= 6.0F ? 1.00F : (phase >= 5.5F ? 1.00F : 0.95F));
-            DabyWSClientConfig.beamColorR = br * (0.82F + 0.18F * day);
-            DabyWSClientConfig.beamColorG = bg * (0.82F + 0.18F * day);
-            DabyWSClientConfig.beamColorB = bb;
+            // 1.9.217 -- beamColor tints the EYEBALL itself (WitherStormHeadRenderer.eyeTint).
+            // The eyes must read neon PURPLE, the beam colour constraint, not the
+            // teeth colours; day/night only nudges the brightness, never the hue.
+            float day = 0.30F + 0.70F * (0.5F + 0.5F * (float)Math.sin(
+                    (mc.level.getGameTime() % 24000L) / 24000.0D * Math.PI * 2.0D - Math.PI / 2.0D));
+            float eyef = phase >= 7.0F ? 0.55F : (phase >= 6.0F ? 0.78F : (phase >= 5.5F ? 0.92F : 0.66F));
+            DabyWSClientConfig.beamColorR = 0.62F * (0.55F + 0.45F * day) * eyef;
+            DabyWSClientConfig.beamColorG = 0.26F * (0.55F + 0.45F * day) * eyef;
+            DabyWSClientConfig.beamColorB = 1.00F * (0.62F + 0.38F * day);
         } catch (Throwable ignored) {
         }
     }

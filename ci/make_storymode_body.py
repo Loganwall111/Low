@@ -46,6 +46,8 @@ def ramp_body(l):
 
 def ramp_face_grey(l):
     """stage A small storm: light warm grey (96,80,80) with dark detail."""
+    if l > 150:
+        return (232, 234, 240)   # teeth stay lit on the mini storm
     if l < 45:
         return (20, 17, 17)
     g = int(0.60 * l + 42)
@@ -69,6 +71,8 @@ def process(path, ramp):
         # so a global threshold would crush everything to black.
         l = min(255, max(0, (lums[i] - lo) * 255 // span))
         nr, ng, nb = ramp(l)
+        # (the real 1:1 atlases carry no white teeth in the base texture --
+        #  the teeth are the additive emissive overlay; keep the base dark)
         # keep saturated accents (command-block orange, magenta) intact --
         # except on the stage-A face, where the real small storm is grey
         # with only its purple eye kept.
