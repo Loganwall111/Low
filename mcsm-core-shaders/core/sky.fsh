@@ -19,6 +19,11 @@
 //  Transitions are hard-ish (0.08-0.14 phase windows), matching how the
 //  Story Mode cutscene snaps colours between beats.
 //
+//  1.9.215.1 (port): day/night vaults retuned to the 2026-09-11 references
+//  (vivid mid-blue day with lilac horizon; PURPLE night, not blue). The
+//  storm glare is now the INFINITE SKYBOX BLOB (see mcsm_visuals.glsl)
+//  running through 5.00-6.95, and phase 6 uses the four-color sunset split.
+//
 //  Bodies (sun/moon) fade OUT as the storm matures - "the sun shining
 //  through the storm dome" was the wrong look; Story Mode kills it at 5.
 // ============================================================================
@@ -35,12 +40,16 @@ in vec3 mcsmCamRay;
 out vec4 fragColor;
 
 // ---- story gradients: index 0 = zenith, 5 = horizon (sampled) -------------
+// 1.9.215.1 (port) -- day revamped: clear vivid mid-blue zenith falling to
+// the pale-lilac horizon of the reference stills (was too lavender-heavy at
+// the top). Night is PURPLE now (user 2026-09-11: "the night time sky is
+// purple not blue"): indigo-violet vault, soft lavender-purple horizon glow.
 const vec3 SKY_DAY[6] = vec3[](
-    vec3(0.514, 0.478, 0.906), vec3(0.580, 0.529, 0.980), vec3(0.651, 0.580, 0.984),
-    vec3(0.710, 0.616, 0.988), vec3(0.749, 0.643, 0.984), vec3(0.796, 0.659, 0.988));
+    vec3(0.300, 0.470, 0.940), vec3(0.380, 0.530, 0.965), vec3(0.470, 0.590, 0.985),
+    vec3(0.560, 0.645, 0.995), vec3(0.650, 0.700, 1.000), vec3(0.760, 0.760, 1.000));
 const vec3 SKY_NIGHT[6] = vec3[](
-    vec3(0.067, 0.067, 0.278), vec3(0.082, 0.082, 0.345), vec3(0.098, 0.106, 0.431),
-    vec3(0.133, 0.153, 0.565), vec3(0.176, 0.224, 0.714), vec3(0.247, 0.318, 0.871));
+    vec3(0.045, 0.028, 0.105), vec3(0.060, 0.040, 0.150), vec3(0.085, 0.060, 0.220),
+    vec3(0.120, 0.090, 0.310), vec3(0.170, 0.135, 0.420), vec3(0.240, 0.200, 0.560));
 const vec3 SKY_DUSK[6] = vec3[](
     vec3(0.388, 0.122, 0.196), vec3(0.520, 0.150, 0.220), vec3(0.660, 0.200, 0.250),
     vec3(0.820, 0.290, 0.220), vec3(0.933, 0.400, 0.180), vec3(0.980, 0.560, 0.280));
@@ -70,7 +79,12 @@ vec3 mcsm_storm_dome(float up, float p) {
     // MCSM 1.9.71: every stop rescaled x0.46. Measured against the Story Mode
     // reference frames: build read ~(0.60,0.51,0.79) at zenith where the refs
     // read ~(0.15,0.10,0.18). Hue was already right; brightness was ~2.2x high.
-    vec3 d = mcsm_col(up, vec3(0.023, 0.138, 0.184), vec3(0.074, 0.267, 0.285), vec3(0.138, 0.396, 0.391)); // 5.0 turquoise
+    // 1.9.215.1 (port) -- 5.0 re-keyed to the 2026-09-11 turquoise deck
+    // (#1A2223 core / #2E4544 mid / #7C9885 edge -> pale mint horizon), the
+    // same stops the phase-5 infinite blob smudge is painted from. Luminance
+    // per stop lands within 4% of the previous fitted column, so the
+    // brightness calibration survives while the hue tracks the hexes exactly.
+    vec3 d = mcsm_col(up, vec3(0.102, 0.133, 0.137), vec3(0.180, 0.271, 0.267), vec3(0.540, 0.620, 0.560)); // 5.0 turquoise
     d = mix(d, mcsm_col(up, vec3(0.138, 0.037, 0.193), vec3(0.239, 0.083, 0.239), vec3(0.331, 0.138, 0.285)),
             mcsm_ramp(p, 5.04, 5.12));                                                                // 5.1 pink-purple
     d = mix(d, mcsm_col(up, vec3(0.184, 0.046, 0.202), vec3(0.304, 0.110, 0.276), vec3(0.423, 0.193, 0.359)),
@@ -99,8 +113,11 @@ vec3 mcsm_storm_dome(float up, float p) {
     // the sky does not snap back to pink the moment phase crosses 5.7.
     d = mix(d, mcsm_col(up, vec3(0.108, 0.032, 0.151), vec3(0.238, 0.076, 0.270), vec3(0.428, 0.152, 0.452)),
             mcsm_ramp(p, 5.70, 5.90));                                                                // 1.9.99 5.7-5.9: dark violet-pink end
-    d = mix(d, mcsm_col(up, vec3(0.099, 0.067, 0.108), vec3(0.162, 0.108, 0.159), vec3(0.265, 0.170, 0.207)),
-            mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 grey + bit of purple
+    // 1.9.215.1 (port) -- phase 6 is the FOUR-COLOR APOCALYPTIC SUNSET SPLIT
+    // (#171021 zenith / #44284D upper-mid / #A36B73 lower-mid / #D69776
+    // bottom), not the old grey wash. The phase-6 blob paints the same split.
+    d = mix(d, mcsm_col(up, vec3(0.090, 0.063, 0.129), vec3(0.471, 0.301, 0.375), vec3(0.839, 0.592, 0.463)),
+            mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 four-color sunset split
     // MCSM 1.9.81: retargeted from a REAL rendered frame (Screenshot
     // 2026-09-03 131242) measured against reference 144855. The 1.9.71 values
     // were right in average brightness but wrong in two ways:
@@ -255,21 +272,20 @@ void main() {
               * vec3(0.82, 0.66, 1.0) * 0.46;
     }
 
-    // The glare blob: follows the storm, punches a dark core, rims it.
+    // 1.9.215.1 (port) -- THE INFINITE SKYBOX BLOB. The glare is a separate
+    // skybox layer tethered to the storm (u_StormPos), not a 3D volume: the
+    // dark-matter core masks the vanilla sky, the smudge bleeds over it, and
+    // rays outside the oval fall back to the plain dome ("looking the
+    // opposite direction fades back to normal"). Runs 5.00-6.95 (5 / 5.5-5.9
+    // / 6, the user's phase windows). The Java driver (McsmInfiniteSkyboxBlob)
+    // fades the aim carrier out with distance, so far-away skies return to
+    // vanilla on their own.
     vec3 camWorld = vec3(CameraBlockPos) + CameraOffset;
     vec4 aim = mcsm_boss_dir(camWorld);
-    // MCSM 1.9.90: the sky-dome blob now lives ONLY in its r1 window,
-    // 5.10-5.90 (INSTRUCTIONS.md phase table: "giant colour-shifting centre
-    // blob, 5.1-5.9"). Below that the phase-4 light-blue halo quad and the
-    // turquoise sky carry the look; above it the purple/crimson rear-fog
-    // quads and the storm dome do. The storm-attached backdrop quads
-    // (McsmStormBackdropPatch) own the mass now -- a dome-wide blob at every
-    // phase was reading as "a fog in the sky", the user's standing complaint.
-    if (aim.w > 0.5 && mcsmP >= 5.10 && mcsmP <= 5.90) {
+    if (aim.w > 0.5 && mcsmP >= 5.00 && mcsmP <= 6.95) {
         vec4 blob = mcsm_blob(worldDir, aim.xyz, mcsmP, clock, dome);
-        // 1.9.76: blob.w is now a full occlusion factor (already includes its
-        // own strength curve), so it multiplies the dome directly. The extra
-        // 0.85 that used to be applied here is folded into mcsm_blob().
+        // blob.w is the full occlusion factor (the dark core replaces the
+        // sky); blob.rgb is the premultiplied smudge emission layered over.
         dome = dome * (1.0 - blob.w) + blob.rgb;
     }
 

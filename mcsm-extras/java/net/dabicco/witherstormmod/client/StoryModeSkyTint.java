@@ -10,19 +10,23 @@ import net.mcsm.extras.client.McsmStormAtmosphere;
  * Purple NEVER on calm night — only McsmStormAtmosphere when storm phase >= 5.
  */
 public final class StoryModeSkyTint {
-   // user skyday strip — soft blue-lavender (NOT purple night)
-   private static final float[] SKY_DAY = new float[]{0.28F, 0.38F, 0.68F};
-   // user midnight strip — deep NAVY only (Hd0wX still)
-   private static final float[] SKY_NIGHT = new float[]{0.005F, 0.012F, 0.140F};
+   // 1.9.215.1 (port) -- user 2026-09-11: revamp the day sky (clear vivid
+   // mid-blue) and make the NIGHT sky PURPLE, not blue (matches the
+   // midnight reference PNG). Purple only on the night strip; day stays
+   // blue-lavender and storm purple still comes from McsmStormAtmosphere.
+   private static final float[] SKY_DAY = new float[]{0.26F, 0.42F, 0.80F};
+   // user midnight strip -- deep indigo-violet now (was navy 0.005/0.012/0.140)
+   private static final float[] SKY_NIGHT = new float[]{0.030F, 0.020F, 0.100F};
    private static final float[] SKY_DUSK = new float[]{0.090F, 0.100F, 0.340F};
    private static final float[] SKY_DAWN = new float[]{0.160F, 0.200F, 0.460F};
    private static final float[] LIGHT_DAY = new float[]{0.92F, 0.90F, 0.85F};
-   private static final float[] LIGHT_NIGHT = new float[]{0.22F, 0.35F, 0.88F};
+   // 1.9.215.1 (port): night light leans indigo-violet to match the purple sky
+   private static final float[] LIGHT_NIGHT = new float[]{0.28F, 0.20F, 0.62F};
    private static final float[] LIGHT_DUSK = new float[]{0.55F, 0.62F, 0.92F};
    private static final float[] LIGHT_DAWN = new float[]{0.72F, 0.76F, 0.95F};
-   private static final float[] HORIZON_DAY = new float[]{0.48F, 0.54F, 0.72F};
+   private static final float[] HORIZON_DAY = new float[]{0.55F, 0.60F, 0.80F};
    private static final float[] HORIZON_DUSK = new float[]{0.100F, 0.120F, 0.400F};
-   private static final float[] HORIZON_NIGHT = new float[]{0.03F, 0.10F, 0.48F};
+   private static final float[] HORIZON_NIGHT = new float[]{0.10F, 0.07F, 0.36F};
    private static final float[] HORIZON_DAWN = new float[]{0.200F, 0.240F, 0.520F};
 
    private static final float[] TMP = new float[3];

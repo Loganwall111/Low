@@ -10,14 +10,17 @@ import net.minecraft.world.phys.Vec3;
  * is phase-locked to the user strips.
  */
 public final class StormSkyDome {
+   // 1.9.215.1 (port) -- decks aligned with the 2026-09-11 hex palettes so
+   // the mod's own storm fog tint tracks the new shader dome:
+   //   TEAL #1A2223/#7C9885, PURP #3A1B54, PINK #5E2775/#7D4B91, SIX #A36B73
    // phase 5 teal
-   private static final float[] TEAL = new float[]{0.060F, 0.280F, 0.270F};
+   private static final float[] TEAL = new float[]{0.100F, 0.270F, 0.270F};
    // phase 5.4 purple
-   private static final float[] PURP = new float[]{0.220F, 0.070F, 0.320F};
+   private static final float[] PURP = new float[]{0.230F, 0.110F, 0.330F};
    // phase 5.5 pink-magenta, restrained so normal night does not become purple
-   private static final float[] PINK = new float[]{0.380F, 0.120F, 0.320F};
-   // phase 6+ storm-grey with only a little purple undertone
-   private static final float[] SIX = new float[]{0.190F, 0.170F, 0.210F};
+   private static final float[] PINK = new float[]{0.370F, 0.150F, 0.460F};
+   // phase 6+ four-color sunset split (mauve base, amber horizon glow)
+   private static final float[] SIX = new float[]{0.640F, 0.420F, 0.450F};
    private static final double RANGE = 900.0;
    private static float displayed;
    private static float displayedCore;

@@ -43,7 +43,9 @@ void main() {
         // the mass is opaque: the very top of the storm goes black and the
         // clouds stop showing through it. Only inside the 5.10-5.90 window the
         // dome blob itself lives in, so nothing changes in any other phase.
-        if (mcsmP >= 5.10 && mcsmP <= 5.90) {
+        // 1.9.215.1 (port): the window matches the infinite blob's 5.00-6.95
+        // lifetime, so nothing changes in any other phase.
+        if (mcsmP >= 5.00 && mcsmP <= 6.95) {
             vec4 aimC = mcsm_boss_dir(vec3(CameraBlockPos) + CameraOffset);
             if (aimC.w > 0.5) {
                 vec3 wdC = normalize(transpose(mat3(ModelViewMat)) * normalize(mcsmCloudRay));
