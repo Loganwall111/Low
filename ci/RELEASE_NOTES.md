@@ -1,13 +1,13 @@
-# Devouring Storms 1.9.221 — Infinite Skybox Blob, corrected decks, glow + version fixes
+# Devouring Storms 1.9.222 — Infinite Skybox Blob, corrected decks, glow + version fixes
 
-**Why the number jumped to 1.9.221:** the previous releases kept re-using
-the tag `ds-1.9.215`, so the game kept showing `1.9.215` and read it as an
-old build (the other line's releases 1.9.216-1.9.220 looked "newer" even
-though they are older builds without the skybox blob). This release moves
-the canonical build to a fresh number -- **1.9.221** -- so the mods screen,
-the title screen and the config screen can never again be confused with an
-old jar. Everything below is included. (The other line's 1.9.216-1.9.220
-releases are left untouched; they simply are not this build.)
+**Why 1.9.222:** the previous blob release (`ds-1.9.221`) had been sitting
+on the releases page since an EARLIER porting attempt and still served that
+old jar -- the newest build never got its own number. This release is the
+newest build under a fresh tag, created now, so the mods screen, the title
+screen and the config screen show **1.9.222** and there is exactly ONE blob
+release on the page. (The other line's 1.9.216-1.9.220 releases are a
+different agent's work and are left untouched; they do not contain this
+blob build.)
 
 New in this build on top of the blob overhaul:
 - **Fix R3**: teeth + eyes glow per phase (5 = pure white with white aura,
@@ -90,8 +90,8 @@ that silently did nothing unless the old value was shaped exactly like
 `1.9.200-26.2-beta` -- so the mods screen kept showing the base jar's old
 number and the game looked like it had loaded a build from before this
 release. The build now rewrites the version field as JSON (works for any
-old format), stamps **`1.9.221-26.2-beta-ds`**, and the title screen,
-config screens and `/ds` chat line all show build **1.9.221** -- the
+old format), stamps **`1.9.222-26.2-beta-ds`**, and the title screen,
+config screens and `/ds` chat line all show build **1.9.222** -- the
 number of THIS release.
 
 ## 3b. FabricSkyBoxes compatibility (NEW)
@@ -118,7 +118,7 @@ sky in any path (fully procedural, opaque cinematic layer).
 ## 4. The blob on the shader-pack path (Fix R4)
 The built-in Iris pack is ON by default, and that path paints the sky with
 its own pass -- the core GLSL blob never runs there, which is why the storm
-background read as a flat washed-out fog with no oval. New in 1.9.221:
+background read as a flat washed-out fog with no oval. New in 1.9.222:
 `McsmBlobOval` draws the same infinite skybox blob as a Java layer on that
 path -- a stack of four tilted oval quads (bleed / edge / mid / core) pinned
 at the storm position, tinted with the corrected hexes, shaped by the new
@@ -128,8 +128,8 @@ the sky behind the storm, the outer rings are translucent. No fog, no
 pixels, and it tracks the storm so you can never fly out of it.
 
 ## Assets
-- `devouringstorms-1.9.221-26.2-beta-ds.jar` — the mod
-- `devouringstorms-shaderpack-v5-1.9.221.zip` — Iris shader pack
-- `devouringstorms-storylook-1.9.221.zip` — Story Look resource pack
-- `devouringstorms-superduper-default-1.9.221.zip` — Super Duper pack
+- `devouringstorms-1.9.222-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.222.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.222.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.222.zip` — Super Duper pack
 - `.sha256` checksums for verification
