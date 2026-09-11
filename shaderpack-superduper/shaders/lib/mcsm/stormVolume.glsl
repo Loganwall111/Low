@@ -1,47 +1,45 @@
 /*
-================================ MCSM STORM VOLUME 1.9.215 ================================
+================================ MCSM STORM VOLUME (OPTIONAL LAYER) 1.9.219 ================================
 
-    Pure code-driven volumetric cloud deck for the Wither Storm.
+    Pure code-driven volumetric cloud deck for the Wither Storm, per the
+    original formula:
 
-    NO billboard particles, NO texture sheets: a math-based 3D raymarched
-    volume.  A massive cloud box is permanently centered on the camera so
-    the player is always enveloped; inside it, 3D simplex noise forms the
-    storm deck.  The deck is warped by the storm entity position (uStormPos,
-    pushed from the mod every frame): density scales up exponentially near
-    the storm and the sampling coords swirl around the storm axis, so the
-    sky churns exactly where the creature is.
+      * NO billboard particles, NO texture sheets -- a math-based 3D
+        raymarched volume;
+      * a massive bounding cloud box permanently centered on the camera
+        (always enveloped);
+      * uStormPos warps the 3D simplex turbulence: density scales up
+        exponentially as the ray approaches the storm;
+      * phase-driven dynamic colour lerp with the exact hex profiles below.
 
-    Colour mapping is a dynamic lerp driven by the storm phase (uStormPhase)
-    using the exact Telltale hex profiles:
-
-      PHASE 5     sky #1A2E30   fog #3D6266   aura #2DE0D7   beam #D2FCFA
-      PHASE 5.5   sky #2A153D   fog #52297A   aura #8E44AD   beam #B976FF
-      PHASE 6     sky #120D1A   fog #D98353   aura #4B2766   edge #F0B38A
-      PHASE 8-9   ember (measured from the mod's phase-8/9 deck)
-
-    Calm (phase 0, uniforms unset) renders a neutral deep-navy haze -- never
-    purple; the purple/pink/teal profiles only exist while a storm owns the
-    sky.
+    IMPORTANT: this is now an OPTIONAL layer. The default glare is the
+    INFINITE SKYBOX BLOB (lib/mcsm/skyBlob.glsl, 1.9.218), which matches the
+    Telltale technique. Enable this deck by defining
+    MCSM_STORM_VOLUME_EXTRA in main/composite6.glsl.
 =============================================================================================
 */
 
+#ifndef MCSM_SHARED_UNIFORMS
+#define MCSM_SHARED_UNIFORMS
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferProjectionInverse;
 uniform vec3 cameraPosition;
 uniform vec3 uStormPos;
 uniform float uStormPhase;
+#endif
 uniform float frameTime;
 uniform sampler2D depthtex0;
 
-vec3 mcsmHex(float r, float g, float b){ return vec3(r, g, b) / 255.0; }
+
+vec3 msVolHex(float r, float g, float b){ return vec3(r, g, b) / 255.0; }
 
 /* ---- Ashima 3D simplex noise (code-driven turbulence) ---- */
-vec3 mcsmMod289(vec3 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
-vec4 mcsmMod289(vec4 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
-vec4 mcsmPermute(vec4 x){ return mcsmMod289(((x * 34.0) + 1.0) * x); }
-vec4 mcsmTaylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+vec3 msVolMod289(vec3 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 msVolMod289(vec4 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 msVolPermute(vec4 x){ return msVolMod289(((x * 34.0) + 1.0) * x); }
+vec4 msVolTaylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
 
-float mcsmSnoise(vec3 v){
+float msVolSnoise(vec3 v){
     const vec2 C = vec2(1.0 / 6.0, 1.0 / 3.0);
     const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
     vec3 i  = floor(v + dot(v, C.yyy));
@@ -53,8 +51,8 @@ float mcsmSnoise(vec3 v){
     vec3 x1 = x0 - i1 + C.xxx;
     vec3 x2 = x0 - i2 + C.yyy;
     vec3 x3 = x0 - D.yyy;
-    i = mcsmMod289(i);
-    vec4 p = mcsmPermute(mcsmPermute(mcsmPermute(
+    i = msVolMod289(i);
+    vec4 p = msVolPermute(msVolPermute(msVolPermute(
         i.z + vec4(0.0, i1.z, i2.z, 1.0))
         + i.y + vec4(0.0, i1.y, i2.y, 1.0))
         + i.x + vec4(0.0, i1.x, i2.x, 1.0));
@@ -77,56 +75,56 @@ float mcsmSnoise(vec3 v){
     vec3 p1 = vec3(a0.zw, h.y);
     vec3 p2 = vec3(a1.xy, h.z);
     vec3 p3 = vec3(a1.zw, h.w);
-    vec4 norm = mcsmTaylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+    vec4 norm = msVolTaylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
     p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
     vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
     m = m * m;
     return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
 }
 
-float mcsmFbm(vec3 p){
-    return mcsmSnoise(p) * 0.55
-         + mcsmSnoise(p * 2.03 + vec3(11.5, 7.3, 3.1)) * 0.27
-         + mcsmSnoise(p * 4.07 + vec3(23.0, 13.7, 9.2)) * 0.18;
+float msVolFbm(vec3 p){
+    return msVolSnoise(p) * 0.55
+         + msVolSnoise(p * 2.03 + vec3(11.5, 7.3, 3.1)) * 0.27
+         + msVolSnoise(p * 4.07 + vec3(23.0, 13.7, 9.2)) * 0.18;
 }
 
-/* ---- phase colour profile: the exact hex ramps, lerped by phase ---- */
-void mcsmStormProfile(float phase, out vec3 skyC, out vec3 horC, out vec3 auraC, out vec3 beamC){
+/* ---- phase colour profiles: the exact hex ramps, lerped by phase ---- */
+void msVolProfile(float phase, out vec3 skyC, out vec3 horC, out vec3 auraC, out vec3 beamC){
     // calm / unset: neutral navy haze (never purple at night)
     vec3 s0 = vec3(0.012, 0.028, 0.075);
     vec3 h0 = vec3(0.055, 0.085, 0.165);
     vec3 a0 = vec3(0.0);
     vec3 b0 = vec3(0.0);
     // phase 4: measured teal-blue deck
-    vec3 s4 = mcsmHex(14.0, 42.0, 74.0);
-    vec3 h4 = mcsmHex(66.0, 150.0, 180.0);
-    vec3 a4 = mcsmHex(45.0, 200.0, 210.0);
-    vec3 b4 = mcsmHex(200.0, 240.0, 255.0);
+    vec3 s4 = msVolHex(14.0, 42.0, 74.0);
+    vec3 h4 = msVolHex(66.0, 150.0, 180.0);
+    vec3 a4 = msVolHex(45.0, 200.0, 210.0);
+    vec3 b4 = msVolHex(200.0, 240.0, 255.0);
     // PHASE 5 -- #1A2E30 / #3D6266 / #2DE0D7 / #D2FCFA
-    vec3 s5 = mcsmHex(0x1A, 0x2E, 0x30);
-    vec3 h5 = mcsmHex(0x3D, 0x62, 0x66);
-    vec3 a5 = mcsmHex(0x2D, 0xE0, 0xD7);
-    vec3 b5 = mcsmHex(0xD2, 0xFC, 0xFA);
+    vec3 s5 = msVolHex(0x1A, 0x2E, 0x30);
+    vec3 h5 = msVolHex(0x3D, 0x62, 0x66);
+    vec3 a5 = msVolHex(0x2D, 0xE0, 0xD7);
+    vec3 b5 = msVolHex(0xD2, 0xFC, 0xFA);
     // PHASE 5.5-5.9 -- #2A153D / #52297A / #8E44AD / #B976FF
-    vec3 s55 = mcsmHex(0x2A, 0x15, 0x3D);
-    vec3 h55 = mcsmHex(0x52, 0x29, 0x7A);
-    vec3 a55 = mcsmHex(0x8E, 0x44, 0xAD);
-    vec3 b55 = mcsmHex(0xB9, 0x76, 0xFF);
+    vec3 s55 = msVolHex(0x2A, 0x15, 0x3D);
+    vec3 h55 = msVolHex(0x52, 0x29, 0x7A);
+    vec3 a55 = msVolHex(0x8E, 0x44, 0xAD);
+    vec3 b55 = msVolHex(0xB9, 0x76, 0xFF);
     // PHASE 6 -- #120D1A / burning horizon #D98353 / #4B2766 / #F0B38A
-    vec3 s6 = mcsmHex(0x12, 0x0D, 0x1A);
-    vec3 h6 = mcsmHex(0xD9, 0x83, 0x53);
-    vec3 a6 = mcsmHex(0x4B, 0x27, 0x66);
-    vec3 b6 = mcsmHex(0xF0, 0xB3, 0x8A);
+    vec3 s6 = msVolHex(0x12, 0x0D, 0x1A);
+    vec3 h6 = msVolHex(0xD9, 0x83, 0x53);
+    vec3 a6 = msVolHex(0x4B, 0x27, 0x66);
+    vec3 b6 = msVolHex(0xF0, 0xB3, 0x8A);
     // phase 7: green-torn storm
     vec3 s7 = vec3(0.020, 0.055, 0.045);
     vec3 h7 = vec3(0.165, 0.330, 0.255);
-    vec3 a7 = mcsmHex(115.0, 255.0, 158.0);
-    vec3 b7 = mcsmHex(180.0, 255.0, 210.0);
+    vec3 a7 = msVolHex(115.0, 255.0, 158.0);
+    vec3 b7 = msVolHex(180.0, 255.0, 210.0);
     // phase 8-9: ember
-    vec3 s8 = mcsmHex(30.0, 4.0, 2.0);
-    vec3 h8 = mcsmHex(186.0, 135.0, 86.0);
-    vec3 a8 = mcsmHex(217.0, 89.0, 31.0);
-    vec3 b8 = mcsmHex(255.0, 128.0, 51.0);
+    vec3 s8 = msVolHex(30.0, 4.0, 2.0);
+    vec3 h8 = msVolHex(186.0, 135.0, 86.0);
+    vec3 a8 = msVolHex(217.0, 89.0, 31.0);
+    vec3 b8 = msVolHex(255.0, 128.0, 51.0);
 
     skyC  = mix(mix(s0, s4, smoothstep(0.0, 4.2, phase)), s5, smoothstep(4.2, 5.0, phase));
     skyC  = mix(skyC, s55, smoothstep(5.0, 5.5, phase));
@@ -151,7 +149,7 @@ void mcsmStormProfile(float phase, out vec3 skyC, out vec3 horC, out vec3 auraC,
 }
 
 /* ---- standard ray-box intersection to isolate the sky volume ---- */
-vec2 mcsmRayBox(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax){
+vec2 msVolRayBox(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax){
     vec3 inv = 1.0 / max(abs(rd), vec3(1.0E-6));
     vec3 t0 = (bmin - ro) * inv;
     vec3 t1 = (bmax - ro) * inv;
@@ -166,7 +164,7 @@ vec2 mcsmRayBox(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax){
 vec4 mcsmStormVolume(vec2 texCoord){
     float phase = uStormPhase;
     vec3 skyC, horC, auraC, beamC;
-    mcsmStormProfile(phase, skyC, horC, auraC, beamC);
+    msVolProfile(phase, skyC, horC, auraC, beamC);
     float stormActive = clamp(phase - 3.5, 0.0, 1.0);
     vec3 stormPos = uStormPos;
     float stormR = 14.0 + 12.0 * clamp(phase - 4.0, 0.0, 4.0);
@@ -183,7 +181,7 @@ vec4 mcsmStormVolume(vec2 texCoord){
     // the cloud deck: a massive box permanently centered on the camera
     vec3 bmin = ro + vec3(-360.0, -160.0, -360.0);
     vec3 bmax = ro + vec3( 360.0,  620.0,  360.0);
-    vec2 tb = mcsmRayBox(ro, rd, bmin, bmax);
+    vec2 tb = msVolRayBox(ro, rd, bmin, bmax);
     if (tb.y <= tb.x) return vec4(0.0);
 
     vec3 acc = vec3(0.0);
@@ -199,7 +197,7 @@ vec4 mcsmStormVolume(vec2 texCoord){
         float band = smoothstep(-40.0, 12.0, hgt) * (1.0 - smoothstep(150.0, 520.0, hgt));
         if (band > 0.002){
             vec3 sp = p * 0.006 + vec3(0.0, frameTime * 0.012, 0.0);
-            float dens = max(0.0, mcsmFbm(sp) * 0.55 + 0.45) * band;
+            float dens = max(0.0, msVolFbm(sp) * 0.55 + 0.45) * band;
             if (stormActive > 0.01){
                 float sd = distance(p, stormPos);
                 // exponential density ramp toward the storm core
@@ -213,7 +211,7 @@ vec4 mcsmStormVolume(vec2 texCoord){
                 csp = mat2(cs, -sn, sn, cs) * csp;
                 vec3 swp = vec3(csp.x + stormPos.x, p.y, csp.y + stormPos.z) * 0.006
                          + vec3(0.0, frameTime * 0.02, 0.0);
-                dens += max(0.0, mcsmFbm(swp)) * 0.30 * warp;
+                dens += max(0.0, msVolFbm(swp)) * 0.30 * warp;
             }
             dens = clamp(dens, 0.0, 1.8);
             if (dens > 0.004){

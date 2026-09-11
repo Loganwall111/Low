@@ -20,9 +20,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 from pngutil import read_png, write_png
 
 ROOTS = ['jar-overrides/assets/dabywitherstormmod/textures/entity']
-BODY_NAMES = ['phase_4_assets', 'phase_4_assets_og',
-              'phase_4_assets_p55', 'phase_4_assets_og_p55',
-              'phase_4_assets_p6', 'phase_4_assets_og_p6',
+# 1.9.220 -- the user's phase mapping, now explicit:
+#   phases 4.0-5.9  -> the PHASE 4 TEAL look  (phase_4_assets + _p55)
+#   phases 6.0+     -> the PHASE 6 BLUE look  (devourer + _p6/_p7, and the
+#                      phase_4_assets_p6/_p7 spares)
+TEAL_NAMES = ['phase_4_assets', 'phase_4_assets_og',
+              'phase_4_assets_p55', 'phase_4_assets_og_p55']
+BLUE_NAMES = ['phase_4_assets_p6', 'phase_4_assets_og_p6',
               'phase_4_assets_p7', 'phase_4_assets_og_p7',
               'devourer_assets', 'devourer_assets_og',
               'devourer_assets_p55', 'devourer_assets_og_p55',
@@ -33,7 +37,7 @@ BODY_NAMES = ['phase_4_assets', 'phase_4_assets_og',
 FACE_NAMES = ['wither_storm', 'wither_storm_og']
 
 def ramp_body(l):
-    """black -> dark blue sheen, per the measured stage B/C clusters."""
+    """phase 6+ blue: black -> dark blue sheen (measured stage B/C)."""
     if l < 36:
         return (0, 0, 0)
     if l < 90:
@@ -44,8 +48,23 @@ def ramp_body(l):
         return (0, 8, 24)
     return (0, 16, 32)
 
+def ramp_teal(l):
+    """phases 4-5.9: the teal/turquoise storm -- dark teal body with a
+    turquoise sheen, matching the phase 5 turquoise sky era."""
+    if l < 36:
+        return (2, 4, 6)
+    if l < 90:
+        return (0, 10, 14)
+    if l < 140:
+        return (8, 28, 32)
+    if l < 195:
+        return (14, 44, 48)
+    return (22, 64, 66)
+
 def ramp_face_grey(l):
     """stage A small storm: light warm grey (96,80,80) with dark detail."""
+    if l > 150:
+        return (232, 234, 240)   # teeth stay lit on the mini storm
     if l < 45:
         return (20, 17, 17)
     g = int(0.60 * l + 42)
@@ -69,6 +88,8 @@ def process(path, ramp):
         # so a global threshold would crush everything to black.
         l = min(255, max(0, (lums[i] - lo) * 255 // span))
         nr, ng, nb = ramp(l)
+        # (the real 1:1 atlases carry no white teeth in the base texture --
+        #  the teeth are the additive emissive overlay; keep the base dark)
         # keep saturated accents (command-block orange, magenta) intact --
         # except on the stage-A face, where the real small storm is grey
         # with only its purple eye kept.
@@ -84,7 +105,12 @@ def process(path, ramp):
 def main():
     n = 0
     for root in ROOTS:
-        for name in BODY_NAMES:
+        for name in TEAL_NAMES:
+            p = os.path.join(root, name + '.png')
+            if os.path.isfile(p):
+                process(p, ramp_teal)
+                n += 1
+        for name in BLUE_NAMES:
             p = os.path.join(root, name + '.png')
             if os.path.isfile(p):
                 process(p, ramp_body)

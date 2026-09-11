@@ -48,6 +48,8 @@ public final class McsmStormRings {
             "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_darkpurple.png");
     private static final Identifier BLOCK_BLACK = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_black.png");
+    private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/misc/storm_white.png");
 
     private static float ramp(float v, float lo, float hi) {
         if (hi <= lo) {
@@ -125,6 +127,11 @@ public final class McsmStormRings {
                                 drawPhase67(pose, consumer, c, cam, bR, tSec, fade, phase7, cr, cg, cb);
                             }
                         });
+                // 1.9.220 -- the REAL Telltale vortex model (ported from
+                // Vortex.bbmodel): the funnel backdrop strip, the alpha
+                // swirl and the black cube ring, lathed around the storm.
+                drawVortexMeshes(poseStack, collector, c, bR, tSec, fade,
+                        cr, cg, cb, vortex ? 1.0F : 0.34F);
             }
         } catch (Throwable ignored) {
             // a visual must never break a frame
@@ -166,20 +173,18 @@ public final class McsmStormRings {
      *  (thin at the top), outer clockwise / inner counter-clockwise. */
     private static void drawVortex(Pose pose, VertexConsumer consumer, Vec3 c, Vec3 cam,
             double bR, float tSec, float fade, float cr, float cg, float cb) {
+        // keep the procedural cube rings as the under-layer of the vortex
         int n = 40;
-        // major ring radii and heights (top rings thinner + smaller = vortex)
         for (int ringIdx = 0; ringIdx < 3; ringIdx++) {
-            // 1.9.212: the vortex rings engulf the whole sky
             double majorR = bR * (4.30D - 0.55D * ringIdx);
             boolean ccw = (ringIdx == 2);
             for (int layer = 0; layer < 10; layer++) {
-                // funnel: higher layers pull inward and thin out
-                double h = (layer - 4.5D) / 4.5D;             // -1 (low) .. +1 (high)
+                double h = (layer - 4.5D) / 4.5D;
                 double r = majorR * (1.0D - 0.16D * Math.max(0.0D, h));
                 double yOff = bR * h * 0.55D * (1.0D + 0.25D * ringIdx);
                 double cube = bR * (0.030D + 0.020D * layer / 9.0D);
                 if (h > 0.0D) {
-                    cube *= (1.0D - 0.55D * h);               // thin at the top
+                    cube *= (1.0D - 0.55D * h);
                 }
                 double speed = (ccw ? -1.0D : 1.0D) * (0.030D + 0.010D * ringIdx);
                 double tilt = (ringIdx == 1) ? 14.0D : 0.0D;
@@ -188,6 +193,68 @@ public final class McsmStormRings {
                 ring(pose, consumer, c.add(0.0D, yOff, 0.0D), cam, r, tilt, azim, n, cube,
                         tSec * (float) speed, a, cr, cg, cb, ccw);
             }
+        }
+    }
+
+    /** The REAL Telltale vortex (Vortex.bbmodel ported to static arrays). */
+    private static void drawVortexMeshes(PoseStack poseStack, SubmitNodeCollector collector,
+            Vec3 c, double bR, float tSec, float fade, float cr, float cg, float cb,
+            float strength) {
+        if (strength <= 0.01F) {
+            return;
+        }
+        for (McsmVortexMesh.Group g : McsmVortexMesh.GROUPS) {
+            boolean cubes = g.texture.contains("color_000");
+            boolean backdrop = g.texture.contains("Backdrop") && !g.texture.contains("alp");
+            double scale = bR * (backdrop ? 3.60D : 3.30D) * (cubes ? 1.0D : strength);
+            if (!cubes) {
+                scale *= 0.55D + 0.45D * strength;
+            }
+            double spin = tSec * (cubes ? 0.070D : (backdrop ? 0.045D : -0.055D));
+            Identifier tex = cubes
+                    ? Identifier.fromNamespaceAndPath("dabywitherstormmod",
+                            "textures/mcsm_atmosphere/" + g.texture)
+                    : Identifier.fromNamespaceAndPath("dabywitherstormmod",
+                            "textures/mcsm_atmosphere/" + g.texture);
+            float scaleF = (float) scale;
+            float spinF = (float) spin;
+            float fadeF = fade * strength;
+            float r = cubes ? 1.0F : (backdrop ? cr / 255.0F : Math.min(1.0F, cr / 200.0F));
+            float gg = cubes ? 1.0F : (backdrop ? cg / 255.0F : Math.min(1.0F, cg / 200.0F));
+            float bb = cubes ? 1.0F : (backdrop ? cb / 255.0F : Math.min(1.0F, cb / 200.0F));
+            int alpha = cubes ? (int)(fadeF * 210.0F) : (backdrop ? (int)(fadeF * 150.0F) : (int)(fadeF * 95.0F));
+            if (alpha <= 2) {
+                continue;
+            }
+            final Identifier ftex = tex;
+            final int falpha = alpha;
+            final float fr = r, fg = gg, fb = bb;
+            collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(ftex),
+                    (pose, consumer) -> {
+                        int ir = Mth.clamp((int)(fr * 255.0F), 0, 255);
+                        int ig = Mth.clamp((int)(fg * 255.0F), 0, 255);
+                        int ib = Mth.clamp((int)(fb * 255.0F), 0, 255);
+                        double cs = Math.cos(spinF);
+                        double sn = Math.sin(spinF);
+                        float[] pos = g.pos;
+                        float[] uv = g.uv;
+                        for (int i = 0; i < g.idx.length; i++) {
+                            int vi = g.idx[i] * 3;
+                            int ui = g.idx[i] * 2;
+                            float x = pos[vi];
+                            float y = pos[vi + 1];
+                            float z = pos[vi + 2];
+                            double wx = (x * cs - z * sn) * scaleF;
+                            double wy = y * scaleF;
+                            double wz = (x * sn + z * cs) * scaleF;
+                            consumer.addVertex(pose, (float)(c.x + wx), (float)(c.y + wy), (float)(c.z + wz))
+                                    .setColor(ir, ig, ib, falpha)
+                                    .setUv(uv[ui], uv[ui + 1])
+                                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                                    .setLight(15728880)
+                                    .setNormal(pose, 0.0F, 1.0F, 0.0F);
+                        }
+                    });
         }
     }
 
