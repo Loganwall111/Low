@@ -90,6 +90,10 @@ public final class McsmStormBlob {
             // 1.9.201: the extracted OG sky gradients render every frame
             // (calm decks + storm decks) before the storm glare volume.
             McsmSkyDome.submit(ctx);
+            // 1.9.215 R2: with FabricSkyBoxes active the mod's own skybox
+            // covers the shader sky, so the storm dome + infinite blob are
+            // drawn as a far camera-centred layer on top of it.
+            McsmStormSkyLayer.submit(ctx);
             // 1.9.208: structured glare (no sphere) + real orbiting cube rings
             submitStructuredGlare(ctx);
             McsmStormRings.submit(ctx);

@@ -428,14 +428,14 @@ vec3 mcsm_sky_color(float height, float p, float clock) {
 }
 
 // ---------------------------------------------------------------- blob (glare)
-// 1.9.215.1 (port) -- retuned to the 2026-09-11 infinite-skybox decks. This
-// is the ground-rim tint under the storm column (terrain.fsh), so it tracks
-// the same palettes the sky blob paints: 5 teal-green, 5.5-5.9 velvet
-// violet, 6 mauve-amber, 7/8 ember.
+// Retuned to the CORRECTED 2026-09-11 decks. This is the ground-rim tint
+// under the storm column (terrain.fsh), so it tracks the same palettes the
+// sky blob paints: 5 moss-green, 5.5-5.9 velvet violet, 6 dusty rose/amber,
+// 7/8 ember.
 vec3 mcsm_blob_color(float p, float clock) {
-    vec3 teal = mix(vec3(46.0, 69.0, 68.0),  vec3(124.0, 152.0, 133.0), 0.55) / 255.0; // #2E4544 -> #7C9885
-    vec3 purp = mix(vec3(58.0, 27.0, 84.0),  vec3(125.0, 75.0, 145.0), 0.45) / 255.0; // #3A1B54 -> #7D4B91
-    vec3 six  = mix(vec3(163.0, 107.0, 115.0), vec3(214.0, 151.0, 118.0), 0.35) / 255.0; // #A36B73 -> #D69776
+    vec3 teal = mix(vec3(45.0, 66.0, 63.0),  vec3(106.0, 154.0, 120.0), 0.55) / 255.0; // #2D423F -> #6A9A78
+    vec3 purp = mix(vec3(45.0, 20.0, 66.0),  vec3(135.0, 82.0, 156.0), 0.45) / 255.0; // #2D1442 -> #87529C
+    vec3 six  = mix(vec3(150.0, 97.0, 115.0), vec3(216.0, 152.0, 116.0), 0.35) / 255.0; // #966173 -> #D89874
     vec3 ember = vec3(0.720, 0.180, 0.100);
     vec3 c = teal;
     c = mix(c, purp,  mcsm_ramp(p, 5.42, 5.52));
@@ -472,29 +472,29 @@ vec3 mcsm_blob_color(float p, float clock) {
 //  edges, so no texture sampling is needed at all).
 // ============================================================================
 
-// Exact artist hexes (user 2026-09-11). x/255 -> display space.
-// PHASE 5 -- THE CYAN / GREEN EMERGENCE BLOB
-const vec3 P5_CORE  = vec3(26.0, 34.0, 35.0) / 255.0;    // #1A2223 deep charcoal teal-black
-const vec3 P5_MID   = vec3(46.0, 69.0, 68.0) / 255.0;    // #2E4544 muted jade green-grey
-const vec3 P5_EDGE  = vec3(124.0, 152.0, 133.0) / 255.0; // #7C9885 cinematic dusty green flare
-const vec3 P5_BEAM  = vec3(132.0, 147.0, 255.0) / 255.0; // #8493FF bright pale blue-lavender
-// PHASE 5.5-5.9 -- THE DEEP PURPLE & PINK CORRUPTION BLOB
-const vec3 P55_CORE = vec3(15.0, 8.0, 20.0) / 255.0;     // #0F0814 pitch black-void purple
-const vec3 P55_MID  = vec3(58.0, 27.0, 84.0) / 255.0;    // #3A1B54 saturated dark velvet violet
-const vec3 P55_HIGH = vec3(94.0, 39.0, 117.0) / 255.0;   // #5E2775 deep rich royal magenta
-const vec3 P55_EDGE = vec3(125.0, 75.0, 145.0) / 255.0;  // #7D4B91 glowing lavender-pink mist
-// PHASE 6 -- THE FOUR-COLOR APOCALYPTIC SUNSET SPLIT BLOB (vertical)
-const vec3 P6_TOP   = vec3(23.0, 16.0, 33.0) / 255.0;    // #171021 near-black midnight purple (zenith)
-const vec3 P6_UMID  = vec3(68.0, 40.0, 77.0) / 255.0;    // #44284D muted dark burgundy-pink
-const vec3 P6_LMID  = vec3(163.0, 107.0, 115.0) / 255.0; // #A36B73 dusty cinematic mauve-pink
-const vec3 P6_BOT   = vec3(214.0, 151.0, 118.0) / 255.0; // #D69776 toxic amber orange-peach
+// CORRECTED artist hexes (user 2026-09-11, re-measured from the reference
+// screenshots). x/255 -> display space.
+// PHASE 5 -- GREEN SKYBOX BLOB
+const vec3 P5_CORE  = vec3(22.0, 26.0, 29.0) / 255.0;    // #161A1D near-black charcoal
+const vec3 P5_MID   = vec3(45.0, 66.0, 63.0) / 255.0;    // #2D423F muted jade-teal green
+const vec3 P5_EDGE  = vec3(106.0, 154.0, 120.0) / 255.0; // #6A9A78 cinematic pastel moss green
+// PHASE 5.5-5.9 -- PURPLE & PINK VOID BLOB
+const vec3 P55_CORE = vec3(11.0, 4.0, 16.0) / 255.0;     // #0B0410 deep void black-purple
+const vec3 P55_MID  = vec3(45.0, 20.0, 66.0) / 255.0;    // #2D1442 thick velvet violet
+const vec3 P55_HIGH = vec3(88.0, 28.0, 110.0) / 255.0;   // #581C6E vibrant royal magenta
+const vec3 P55_EDGE = vec3(135.0, 82.0, 156.0) / 255.0;  // #87529C glowing soft pink-lavender
+// PHASE 6 -- THE FOUR-COLOR SUNSET SPLIT BLOB (vertical)
+const vec3 P6_TOP   = vec3(26.0, 18.0, 38.0) / 255.0;    // #1A1226 midnight void purple (zenith)
+const vec3 P6_UMID  = vec3(70.0, 42.0, 82.0) / 255.0;    // #462A52 muted dark burgundy
+const vec3 P6_LMID  = vec3(150.0, 97.0, 115.0) / 255.0;  // #966173 cinematic dusty rose-pink
+const vec3 P6_BOT   = vec3(216.0, 152.0, 116.0) / 255.0; // #D89874 toxic opaque amber orange-peach
 
 // Oval proportions: wide sideways, slightly short vertically, tilted so the
 // silhouette reads as a SMEARED form (user: "not an oval, not a circle --
 // smeared, but kind of circular").
-const float MCSM_INF_X    = 1.90;
-const float MCSM_INF_Y    = 0.95;
-const float MCSM_INF_TILT = 0.31;   // radians
+const float MCSM_INF_X    = 1.55;
+const float MCSM_INF_Y    = 0.90;
+const float MCSM_INF_TILT = 0.18;   // radians
 
 // Dome-plane oval field for the infinite blob.
 //   .x = u      0 centre .. 1 oval silhouette
@@ -524,20 +524,20 @@ float mcsm_inf_u(vec3 wd, vec3 bd, float outer, float ang) {
     return 1.0 + max(ang - outer, 0.0) / (outer * 0.85);
 }
 
-// Per-phase radial palette (core / mid / edge) + the teal beam accent.
+// Per-phase radial palette (core / mid / edge / high).
 void mcsm_inf_palette(float p, out vec3 core, out vec3 mid, out vec3 edge,
-                      out vec3 beam, out float beamW) {
-    core = P5_CORE; mid = P5_MID; edge = P5_EDGE; beam = P5_BEAM; beamW = 1.0;
+                      out vec3 high) {
+    core = P5_CORE; mid = P5_MID; edge = P5_EDGE; high = P5_MID;
     float w55 = mcsm_ramp(p, 5.42, 5.52);
     core = mix(core, P55_CORE, w55);
     mid  = mix(mid,  P55_MID,  w55);
     edge = mix(edge, P55_EDGE, w55);
-    beam = mix(beam, P55_HIGH, w55);
-    beamW = 1.0 - w55;                       // the beam only exists in the teal phase
+    high = mix(high, P55_HIGH, w55);
     float w6 = mcsm_ramp(p, 5.92, 6.08);     // hand the radial stops off to
     core = mix(core, P6_TOP, w6);            // the phase-6 vertical split
     mid  = mix(mid,  P6_UMID, w6);
     edge = mix(edge, mix(P6_LMID, P6_BOT, 0.5), w6);
+    high = mix(high, P6_UMID, w6);
 }
 
 // Phase 6: the four-colour split is keyed to RAY ELEVATION, not the oval.
@@ -580,8 +580,8 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     float uu = mcsm_inf_u(wd, bd, outer, ang);
     float upness = fld.y;
 
-    vec3 core, mid, edge, beam; float beamW;
-    mcsm_inf_palette(p, core, mid, edge, beam, beamW);
+    vec3 core, mid, edge, high;
+    mcsm_inf_palette(p, core, mid, edge, high);
 
     // Radial smudge stops -- the centre is a solid dark-matter mask, the
     // mid ring is the dense bleed, the rim is the flare, and beyond the
@@ -596,18 +596,13 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     c += edge * bleedW * 0.55;   // the smudge keeps bleeding past the oval
 
     // 5.5-5.9: the high-altitude bleed pushes richer royal magenta overhead.
-    c += mix(mid, P55_HIGH, 0.6) * midW * upness * mcsm_ramp(p, 5.42, 5.52) * 0.5;
+    c += mix(mid, high, 0.6) * midW * upness * mcsm_ramp(p, 5.42, 5.52) * 0.5;
 
     // Phase 6: the four-colour sunset split owns the gradient; the radial
     // field only shapes its strength (dark centre, blending rim).
     float w6 = mcsm_ramp(p, 5.92, 6.08);
     c = mix(c, mcsm_inf_p6_split(wd.y), w6);
     c *= mix(1.0, 0.62 + 0.38 * coreW, w6);              // keep the dark heart in 6
-
-    // Phase 5: the energy-beam accent -- a hot blue-lavender smudge just
-    // above centre, breathing slowly.
-    float beamSpot = (1.0 - smoothstep(0.0, 0.18, uu)) * (0.55 + 0.45 * sin(clock * 1.7));
-    c += beam * beamSpot * beamW * 0.85;
 
     // Occlusion: the core fully masks the vanilla sky, the mid ring mostly,
     // the rim barely -- that is the "separate skybox behind the storm".

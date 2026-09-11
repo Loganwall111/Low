@@ -40,16 +40,16 @@ in vec3 mcsmCamRay;
 out vec4 fragColor;
 
 // ---- story gradients: index 0 = zenith, 5 = horizon (sampled) -------------
-// 1.9.215.1 (port) -- day revamped: clear vivid mid-blue zenith falling to
-// the pale-lilac horizon of the reference stills (was too lavender-heavy at
-// the top). Night is PURPLE now (user 2026-09-11: "the night time sky is
-// purple not blue"): indigo-violet vault, soft lavender-purple horizon glow.
+// 1.9.215 R2 -- sampled from the reference PNGs (skyday + sky 2 midnight):
+// day = clear lavender-blue vault -> pale lilac horizon; night = DEEP NAVY
+// BLUE (the user flagged the night sky as wrongly purple -- it now matches
+// the midnight reference, never purple).
 const vec3 SKY_DAY[6] = vec3[](
-    vec3(0.300, 0.470, 0.940), vec3(0.380, 0.530, 0.965), vec3(0.470, 0.590, 0.985),
-    vec3(0.560, 0.645, 0.995), vec3(0.650, 0.700, 1.000), vec3(0.760, 0.760, 1.000));
+    vec3(0.478, 0.455, 0.878), vec3(0.494, 0.490, 0.898), vec3(0.525, 0.555, 0.935),
+    vec3(0.584, 0.575, 0.937), vec3(0.664, 0.618, 0.941), vec3(0.753, 0.667, 0.949));
 const vec3 SKY_NIGHT[6] = vec3[](
-    vec3(0.045, 0.028, 0.105), vec3(0.060, 0.040, 0.150), vec3(0.085, 0.060, 0.220),
-    vec3(0.120, 0.090, 0.310), vec3(0.170, 0.135, 0.420), vec3(0.240, 0.200, 0.560));
+    vec3(0.031, 0.039, 0.204), vec3(0.055, 0.067, 0.306), vec3(0.106, 0.125, 0.471),
+    vec3(0.153, 0.192, 0.627), vec3(0.200, 0.263, 0.800), vec3(0.267, 0.361, 0.961));
 const vec3 SKY_DUSK[6] = vec3[](
     vec3(0.388, 0.122, 0.196), vec3(0.520, 0.150, 0.220), vec3(0.660, 0.200, 0.250),
     vec3(0.820, 0.290, 0.220), vec3(0.933, 0.400, 0.180), vec3(0.980, 0.560, 0.280));
@@ -79,44 +79,29 @@ vec3 mcsm_storm_dome(float up, float p) {
     // MCSM 1.9.71: every stop rescaled x0.46. Measured against the Story Mode
     // reference frames: build read ~(0.60,0.51,0.79) at zenith where the refs
     // read ~(0.15,0.10,0.18). Hue was already right; brightness was ~2.2x high.
-    // 1.9.215.1 (port) -- 5.0 re-keyed to the 2026-09-11 turquoise deck
-    // (#1A2223 core / #2E4544 mid / #7C9885 edge -> pale mint horizon), the
-    // same stops the phase-5 infinite blob smudge is painted from. Luminance
-    // per stop lands within 4% of the previous fitted column, so the
-    // brightness calibration survives while the hue tracks the hexes exactly.
-    vec3 d = mcsm_col(up, vec3(0.102, 0.133, 0.137), vec3(0.180, 0.271, 0.267), vec3(0.540, 0.620, 0.560)); // 5.0 turquoise
+    // 1.9.215 R2 -- 5.0 re-keyed to the CORRECTED green deck
+    // (#161A1D core / #2D423F mid / #6A9A78 edge), the same stops the
+    // phase-5 infinite blob smudge is painted from.
+    vec3 d = mcsm_col(up, vec3(0.086, 0.102, 0.114), vec3(0.176, 0.259, 0.247), vec3(0.416, 0.604, 0.471)); // 5.0 green
     d = mix(d, mcsm_col(up, vec3(0.138, 0.037, 0.193), vec3(0.239, 0.083, 0.239), vec3(0.331, 0.138, 0.285)),
             mcsm_ramp(p, 5.04, 5.12));                                                                // 5.1 pink-purple
     d = mix(d, mcsm_col(up, vec3(0.184, 0.046, 0.202), vec3(0.304, 0.110, 0.276), vec3(0.423, 0.193, 0.359)),
             mcsm_ramp(p, 5.15, 5.23));                                                                // 5.2 pinker
     d = mix(d, mcsm_col(up, vec3(0.028, 0.005, 0.064), vec3(0.074, 0.018, 0.110), vec3(0.138, 0.037, 0.175)),
             mcsm_ramp(p, 5.26, 5.34));                                                                // 5.3 dark purple
-    // MCSM 1.9.99 -- 5.5 stop RETUNED BY FIT against the reference frame
-    // (uploads/Screenshot 2026-09-04 182220). Measured per-cell on an 8x6 grid
-    // of the upper sky, our dome read too bright AND too red vs the reference:
-    // mean |dLum| 0.032, mean |dHue| 0.45. Grid search on (brightness, blue)
-    // put the optimum at 0.80x mid brightness / 1.50-1.80x blue -> dHue 0.34.
-    //   was: zenith (0.150,0.055,0.175) mid (0.330,0.118,0.282)
-    //        horizon (0.505,0.235,0.392)   -- lum 0.084 / 0.174 / 0.303
-    //   now: zenith (0.067,0.022,0.134) mid (0.099,0.032,0.150)
-    //        horizon (0.505,0.205,0.580)   -- lum 0.040 / 0.054 / 0.298
-    // The MID stop is the one that mattered: it alone drives elevations
-    // 10-45 deg, and it was 3.2x brighter than the reference there. The
-    // horizon stop keeps its brightness (its blue/red only goes 0.78 -> 1.15,
-    // so the low band stays pink-dominant) and the zenith is pushed darker
-    // still so looking straight up reads black. Fit score over 32 sky cells:
-    // mean |dLum| 0.0324 -> 0.0279, mean |dHue| 0.4529 -> 0.396.
-    // REVERT by restoring the "was" line if the pinker 1.9.96 sky is preferred.
-    d = mix(d, mcsm_col(up, vec3(0.067, 0.022, 0.134), vec3(0.099, 0.032, 0.150), vec3(0.505, 0.205, 0.580)),
-            mcsm_ramp(p, 5.42, 5.52));                                                                // 5.5 violet-pink, near-black overhead (1.9.99 fit to reference)
-    // 5.7-5.9 keeps the user's "dark pink end" but takes a milder 1.3x blue so
-    // the sky does not snap back to pink the moment phase crosses 5.7.
-    d = mix(d, mcsm_col(up, vec3(0.108, 0.032, 0.151), vec3(0.238, 0.076, 0.270), vec3(0.428, 0.152, 0.452)),
-            mcsm_ramp(p, 5.70, 5.90));                                                                // 1.9.99 5.7-5.9: dark violet-pink end
-    // 1.9.215.1 (port) -- phase 6 is the FOUR-COLOR APOCALYPTIC SUNSET SPLIT
-    // (#171021 zenith / #44284D upper-mid / #A36B73 lower-mid / #D69776
+    // 1.9.215 R2 -- 5.5-5.9 re-keyed to the CORRECTED purple & pink deck
+    // (#0B0410 core / #2D1442 mid / #87529C horizon), replacing the 1.9.99
+    // fitted stops (the user's corrected palette supersedes the old fit).
+    d = mix(d, mcsm_col(up, vec3(0.043, 0.016, 0.063), vec3(0.176, 0.078, 0.259), vec3(0.529, 0.322, 0.612)),
+            mcsm_ramp(p, 5.42, 5.52));                                                                // 5.5 purple & pink void
+    // 1.9.215 R2 -- 5.7-5.9 holds the SAME corrected deck (one palette across
+    // the whole 5.5-5.9 window, matching the reference strips).
+    d = mix(d, mcsm_col(up, vec3(0.043, 0.016, 0.063), vec3(0.176, 0.078, 0.259), vec3(0.529, 0.322, 0.612)),
+            mcsm_ramp(p, 5.70, 5.90));                                                                // 5.7-5.9 same deck
+    // 1.9.215 R2 -- phase 6 = the CORRECTED four-color sunset split
+    // (#1A1226 zenith / #462A52 upper-mid / #966173 lower-mid / #D89874
     // bottom), not the old grey wash. The phase-6 blob paints the same split.
-    d = mix(d, mcsm_col(up, vec3(0.090, 0.063, 0.129), vec3(0.471, 0.301, 0.375), vec3(0.839, 0.592, 0.463)),
+    d = mix(d, mcsm_col(up, vec3(0.102, 0.071, 0.149), vec3(0.431, 0.272, 0.386), vec3(0.847, 0.596, 0.455)),
             mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 four-color sunset split
     // MCSM 1.9.81: retargeted from a REAL rendered frame (Screenshot
     // 2026-09-03 131242) measured against reference 144855. The 1.9.71 values

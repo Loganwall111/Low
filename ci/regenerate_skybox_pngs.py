@@ -32,53 +32,71 @@ ROOTS = [
 ]
 
 # vertical strips, top (zenith) -> bottom (horizon), 1024x1024
+# 1.9.215 R2: CORRECTED 2026-09-11 hex decks + reference day/midnight strips.
 SKY_STRIPS = {
     'sky/day.png': [
-        (76, 120, 240), (97, 135, 246), (120, 150, 251),
-        (143, 164, 254), (166, 178, 255), (194, 194, 255)],
+        (122, 116, 224), (126, 125, 229), (133, 135, 236),
+        (143, 147, 239), (163, 158, 241), (192, 170, 242)],
     'sky/night.png': [
-        (11, 7, 27), (15, 10, 38), (22, 15, 56),
-        (31, 23, 79), (43, 34, 107), (61, 51, 143)],
+        (8, 10, 52), (14, 17, 78), (27, 32, 120),
+        (39, 49, 159), (51, 67, 204), (68, 92, 245)],
     'sky/phase5_teal.png': [
-        (26, 34, 35), (40, 52, 52), (66, 88, 84),
-        (104, 130, 120), (140, 164, 150), (170, 200, 170)],
+        (22, 26, 29), (30, 38, 39), (45, 66, 63),
+        (75, 108, 90), (90, 130, 104), (106, 154, 120)],
     'sky/phase5_purple.png': [
-        (17, 6, 34), (28, 9, 50), (58, 27, 84),
-        (94, 39, 117), (149, 76, 169), (230, 140, 165)],
+        (11, 4, 16), (22, 9, 32), (45, 20, 66),
+        (88, 28, 110), (112, 56, 135), (135, 82, 156)],
     'sky/phase54.png': [
-        (30, 25, 45), (55, 30, 70), (90, 40, 100),
-        (130, 60, 120), (180, 110, 140), (220, 150, 160)],
+        (26, 14, 38), (45, 20, 66), (88, 28, 110),
+        (112, 56, 135), (135, 82, 156), (135, 82, 156)],
     'sky/phase55.png': [
-        (10, 4, 28), (26, 9, 50), (58, 27, 84),
-        (94, 39, 117), (125, 75, 145), (230, 140, 165)],
+        (11, 4, 16), (22, 9, 32), (45, 20, 66),
+        (88, 28, 110), (112, 56, 135), (135, 82, 156)],
     'sky/phase6.png': [
-        (23, 16, 33), (68, 40, 77), (163, 107, 115), (214, 151, 118)],
+        (26, 18, 38), (70, 42, 82), (150, 97, 115), (216, 152, 116)],
 }
 
 # radial smudge discs, (radius 0..1, (r, g, b, a)), 256x256
 GLARE_DISCS = {
     'glare/phase5.png': [
-        (0.00, (132, 147, 255, 235)),
-        (0.22, (46, 69, 68, 190)),
-        (0.55, (124, 152, 133, 110)),
-        (1.00, (124, 152, 133, 0))],
+        (0.00, (22, 26, 29, 235)),
+        (0.22, (45, 66, 63, 200)),
+        (0.55, (106, 154, 120, 110)),
+        (1.00, (106, 154, 120, 0))],
     'glare/phase54.png': [
-        (0.00, (30, 20, 50, 230)),
-        (0.30, (70, 40, 100, 180)),
-        (0.70, (130, 70, 130, 90)),
-        (1.00, (130, 70, 130, 0))],
+        (0.00, (11, 4, 16, 230)),
+        (0.30, (45, 20, 66, 180)),
+        (0.70, (112, 56, 135, 90)),
+        (1.00, (112, 56, 135, 0))],
     'glare/phase55.png': [
-        (0.00, (15, 8, 20, 235)),
-        (0.20, (58, 27, 84, 200)),
-        (0.50, (94, 39, 117, 150)),
-        (0.80, (125, 75, 145, 80)),
-        (1.00, (125, 75, 145, 0))],
+        (0.00, (11, 4, 16, 235)),
+        (0.20, (45, 20, 66, 200)),
+        (0.50, (88, 28, 110, 150)),
+        (0.80, (135, 82, 156, 80)),
+        (1.00, (135, 82, 156, 0))],
     'glare/phase6.png': [
-        (0.00, (23, 16, 33, 235)),
-        (0.25, (68, 40, 77, 200)),
-        (0.55, (163, 107, 115, 140)),
-        (0.80, (214, 151, 118, 80)),
-        (1.00, (214, 151, 118, 0))],
+        (0.00, (26, 18, 38, 235)),
+        (0.25, (70, 42, 82, 200)),
+        (0.55, (150, 97, 115, 140)),
+        (0.80, (216, 152, 116, 80)),
+        (1.00, (216, 152, 116, 0))],
+}
+
+# FabricSkyBoxes skybox textures (the base mod's own skyboxes; jar-overrides
+# replace them in the built jar so the FBS-on look matches the references).
+FBS_STRIPS = {
+    'assets/fabricskyboxes/textures/sky/day.png': SKY_STRIPS['sky/day.png'],
+    'assets/fabricskyboxes/textures/sky/night.png': SKY_STRIPS['sky/night.png'],
+    'assets/fabricskyboxes/textures/sky/sky_twilight.png': [
+        (22, 70, 86), (66, 81, 87), (201, 77, 46), (184, 54, 38), (92, 20, 50)],
+    'assets/dabywitherstormmod/textures/sky/day.png': SKY_STRIPS['sky/day.png'],
+    'assets/dabywitherstormmod/textures/sky/night.png': SKY_STRIPS['sky/night.png'],
+    'assets/dabywitherstormmod/textures/sky/sunset.png': [
+        (22, 70, 86), (66, 81, 87), (201, 77, 46), (184, 54, 38), (92, 20, 50)],
+    'assets/dabywitherstormmod/textures/environment/storymode_sky_day.png': SKY_STRIPS['sky/day.png'],
+    'assets/dabywitherstormmod/textures/environment/storymode_sky_night.png': SKY_STRIPS['sky/night.png'],
+    'assets/dabywitherstormmod/textures/environment/storymode_sky_sunset.png': [
+        (22, 70, 86), (66, 81, 87), (201, 77, 46), (184, 54, 38), (92, 20, 50)],
 }
 
 
@@ -155,6 +173,12 @@ def main():
             path = os.path.join(root, name)
             write_png(path, 256, 256, disc_fn(anchors, 256, 256))
             print('wrote', path)
+    # jar-overrides: FabricSkyBoxes skybox textures + the mod's own sky
+    # textures and Story Mode environment strips (all replaced in the jar).
+    for name, anchors in FBS_STRIPS.items():
+        path = os.path.join('jar-overrides', name)
+        write_png(path, 1024, 1024, strip_fn(anchors, 1024))
+        print('wrote', path)
 
 
 if __name__ == '__main__':

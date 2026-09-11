@@ -232,15 +232,17 @@ vec3 storyCalmSky(vec3 dirS) {
     float day, dusk, night;
     timeWeights(day, dusk, night);
 
-    vec3 zen = day   * vec3(0.216, 0.394, 0.716)
+    // 1.9.215 R2 -- decks sampled from the reference PNGs: lavender-blue
+    // day, DEEP NAVY night (never purple).
+    vec3 zen = day   * vec3(0.478, 0.455, 0.878)
              + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.005, 0.012, 0.140);
-    vec3 mid = day   * vec3(0.394, 0.578, 0.806)
+             + night * vec3(0.031, 0.039, 0.204);
+    vec3 mid = day   * vec3(0.584, 0.575, 0.937)
              + dusk  * vec3(0.620, 0.560, 0.810)
-             + night * vec3(0.008, 0.018, 0.120);
-    vec3 hor = day   * vec3(0.870, 0.745, 0.690)
+             + night * vec3(0.106, 0.125, 0.471);
+    vec3 hor = day   * vec3(0.880, 0.780, 0.945)
              + dusk  * vec3(0.890, 0.680, 0.730)
-             + night * vec3(0.019, 0.031, 0.130);
+             + night * vec3(0.267, 0.361, 0.961);
 
     float gk = clamp((fogColor.g - max(fogColor.r, fogColor.b)) * 3.0, 0.0, 0.6) * day;
     float wk = clamp((fogColor.r - fogColor.b) * 1.2, 0.0, 0.6) * day * (1.0 - dusk);
@@ -287,22 +289,23 @@ vec3 storyStormSky(vec3 dirS) {
         magK = 1.0;
         wsum = 1.0;
     }
-    // 5.5-5.9 pinkish-violet (salmon-pink horizon)
-    vec3 z1 = vec3(0.055, 0.022, 0.130);
-    vec3 m1 = vec3(0.200, 0.060, 0.230);
-    vec3 h1 = vec3(0.640, 0.300, 0.310);
-    // green-teal
-    vec3 z2 = vec3(0.050, 0.110, 0.095);
-    vec3 m2 = vec3(0.120, 0.220, 0.180);
-    vec3 h2 = vec3(0.440, 0.560, 0.360);
-    // sunset-orange
+    // 1.9.215 R2 -- corrected 2026-09-11 hex decks:
+    // 5.5-5.9 purple & pink void: #0B0410 / #2D1442 / #87529C
+    vec3 z1 = vec3(0.043, 0.016, 0.063);
+    vec3 m1 = vec3(0.176, 0.078, 0.259);
+    vec3 h1 = vec3(0.529, 0.322, 0.612);
+    // phase 5 green: #161A1D / #2D423F / #6A9A78
+    vec3 z2 = vec3(0.086, 0.102, 0.114);
+    vec3 m2 = vec3(0.176, 0.259, 0.247);
+    vec3 h2 = vec3(0.416, 0.604, 0.471);
+    // sunset-orange (kept)
     vec3 z3 = vec3(0.120, 0.060, 0.080);
     vec3 m3 = vec3(0.350, 0.140, 0.110);
     vec3 h3 = vec3(0.780, 0.280, 0.100);
-    // deep purple
-    vec3 z4 = vec3(0.070, 0.022, 0.120);
-    vec3 m4 = vec3(0.230, 0.055, 0.220);
-    vec3 h4 = vec3(0.560, 0.220, 0.320);
+    // phase 6 four-color split: #1A1226 / #462A52+#966173 / #D89874
+    vec3 z4 = vec3(0.102, 0.071, 0.149);
+    vec3 m4 = vec3(0.431, 0.272, 0.386);
+    vec3 h4 = vec3(0.847, 0.596, 0.455);
     vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
     vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
     vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
