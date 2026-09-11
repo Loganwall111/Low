@@ -99,11 +99,15 @@ public final class McsmStormAtmosphere {
         if (tot < 0.02F) {
             return 0.0F;
         }
-        float[] teal = {0.02F, 0.28F, 0.25F};
-        float[] purp = {0.26F, 0.10F, 0.36F};
-        float[] pink = {0.48F, 0.16F, 0.40F};
-        float[] late = {0.34F, 0.12F, 0.48F};
-        float[] six  = {0.32F, 0.16F, 0.26F};
+        // 1.9.221 (port) -- decks re-keyed to the 2026-09-11 hex palettes:
+        //   5   #1A2223 / #2E4544 / #7C9885 (turquoise emergence)
+        //   5.5 #3A1B54 / #5E2775 / #7D4B91 (deep purple & pink corruption)
+        //   6   #A36B73 / #D69776                (four-color sunset split)
+        float[] teal = {0.10F, 0.27F, 0.27F};
+        float[] purp = {0.23F, 0.11F, 0.33F};
+        float[] pink = {0.37F, 0.15F, 0.46F};
+        float[] late = {0.49F, 0.29F, 0.57F};
+        float[] six  = {0.64F, 0.42F, 0.45F};
         float[] e89  = {0.62F, 0.30F, 0.13F};
         out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + late[0] * wLate + six[0] * wSix + e89[0] * w89) / tot;
         out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + late[1] * wLate + six[1] * wSix + e89[1] * w89) / tot;

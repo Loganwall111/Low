@@ -6,6 +6,7 @@ import net.mcsm.extras.McsmDiag;
 import net.mcsm.extras.McsmExtrasConfig;
 import net.mcsm.extras.McsmFxDriver;
 import net.mcsm.extras.client.McsmClientChat;
+import net.mcsm.extras.client.McsmInfiniteSkyboxBlob;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.fog.FogData;
@@ -150,6 +151,15 @@ public abstract class McsmBlobCarrierPatch {
         }
 
         mcsm$driveDeathCinematic(data, gradient, sizeIdx);
+
+        // 1.9.221 (port) -- the infinite skybox blob carrier gets the LAST
+        // word: it folds the distance fade (700..1600 blocks) into the aim
+        // band so the tethered sky layer recedes with range, exactly like
+        // Telltale's. Skipped while the death cinematic runs -- that owns
+        // the band for its duration.
+        if (mcsm$deathStartNs == 0L) {
+            McsmInfiniteSkyboxBlob.stamp(data);
+        }
     }
 
     /** Latch, advance and stamp the dying sequence. Never throws. */

@@ -160,38 +160,21 @@ public final class McsmStormBlob {
         if (amp <= 0.01F) return;
         float aa = Math.min(1.0F, amp * 1.45F);
 
-        // phase deck tint (the purple middle of the oval)
-        float[][] deck = McsmGlarePalettes.P4;
-        if (phase >= 8.0F)      deck = McsmGlarePalettes.P89;
-        else if (phase >= 5.9F) deck = McsmGlarePalettes.P6;
-        else if (phase >= 5.48F) deck = McsmGlarePalettes.P55;
-        else if (phase >= 5.25F) deck = McsmGlarePalettes.P5_PURPLE;
-        else if (phase >= 4.9F) deck = McsmGlarePalettes.P5_TEAL;
-        final float[] tint = {
-                Math.min(1.0F, deck[8][0] * 1.45F + 0.06F),
-                Math.min(1.0F, deck[8][1] * 1.45F + 0.06F),
-                Math.min(1.0F, deck[8][2] * 1.45F + 0.10F) };
-
+        // 1.9.221 (port) -- THE WHITE THING IS GONE. The world-anchored
+        // volumetric halo shell (two nested ellipsoid layers drawn additively
+        // behind the storm) is what read as the weird white circular/square
+        // mass in the distance. The glare is NOT a 3D shell, a billboard or
+        // a cloud layer: it is the INFINITE SKYBOX BLOB, painted in the sky
+        // pass by mcsm_blob() (sky.fsh / mcsm_visuals.glsl) with the exact
+        // 2026-09-11 hex decks, driven by McsmInfiniteSkyboxBlob. The shell
+        // stays in the source as dormant code (emitHaloShell) but draws
+        // nothing.
         McsmExtrasConfig.load();
-        double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-        final double aH = bodyR * (1.45D + 0.55D * gs);  // oval: wide
-        final double aV = bodyR * (0.98D + 0.34D * gs);  // oval: shorter
-        final double aMaxAng = Math.atan2(aH, Math.max(dist, 1.0D));
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
         final Vec3 centre = c;
         final Vec3 bearing = b;
         final float fade = aa;
-        final float tSec = nowSec;
-
-        // the volumetric shell: two nested thin ellipsoid layers, additive
-        collector.submitCustomGeometry(poseStack, GlowRenderTypes.glow(HALO_TEX),
-                (pose, consumer) -> {
-                    emitHaloShell(pose, consumer, cam, centre, bearing, aH, aV,
-                            1.00D, tSec * 0.012D, aMaxAng, tint, fade * 122.0F);
-                    emitHaloShell(pose, consumer, cam, centre, bearing, aH, aV,
-                            0.93D, -tSec * 0.008D, aMaxAng, tint, fade * 84.0F);
-                });
 
         // the vortex backdrop: the game's own black swirl strip behind the
         // lower body, darkening the sky like the original silhouette band

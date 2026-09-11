@@ -18,6 +18,10 @@
 //               rim + void-purple top (img 5-6)
 //    7.00-8.05  dark red sky, orange low band, near-black top (img 7)
 //
+//  1.9.221 (port): the glare is rebuilt as the INFINITE SKYBOX BLOB (user
+//  spec 2026-09-11): a separate infinite skybox layer tethered to the storm,
+//  painted with the exact hex decks for phase 5 / 5.5-5.9 / 6 below.
+//
 //  CARRIERS (Java writes these as plain fields on FogRenderer's FogData —
 //  see McsmFogCarrierMixin; no buffer surgery needed):
 //    FogSkyEnd   = 1000 + phase*100                    (4.45 -> 1445 .. 8.05 -> 1805)
@@ -423,193 +427,195 @@ vec3 mcsm_sky_color(float height, float p, float clock) {
 }
 
 // ---------------------------------------------------------------- blob (glare)
-// Colour keys from StormSkyDome.java's sampled palette; "4 types" at
-// 5.1 purple / 5.25 pink / 5.3 red / 5.4 magenta, then tracking the sky.
+// 1.9.221 (port) -- retuned to the 2026-09-11 infinite-skybox decks. This is
+// the ground-rim tint under the storm column (terrain.fsh), so it tracks the
+// same palettes the sky blob paints: 5 teal-green, 5.5-5.9 velvet violet,
+// 6 mauve-amber, 7/8 ember.
 vec3 mcsm_blob_color(float p, float clock) {
-    vec3 green  = vec3(0.150, 0.650, 0.420);
-    vec3 purp   = vec3(0.220, 0.145, 0.325);
-    vec3 pink   = vec3(0.639, 0.180, 0.573);
-    vec3 red    = vec3(0.400, 0.075, 0.145);
-    vec3 mage   = vec3(0.463, 0.102, 0.404);
-    vec3 grey   = vec3(0.300, 0.270, 0.310);
-    vec3 ember  = vec3(0.720, 0.180, 0.100);
-    vec3 c = green;
-    c = mix(c, purp, mcsm_ramp(p, 5.05, 5.12));
-    c = mix(c, pink, mcsm_ramp(p, 5.22, 5.28));
-    c = mix(c, red,  mcsm_ramp(p, 5.28, 5.34));
-    c = mix(c, mage, mcsm_ramp(p, 5.36, 5.44));
-    c = mix(c, pink, mcsm_ramp(p, 5.44, 5.60));
-    c = mix(c, mage, mcsm_ramp(p, 5.90, 6.00));
-    c = mix(c, grey, mcsm_ramp(p, 6.00, 6.06));
-    c = mix(c, vec3(0.800, 0.200, 0.550), mcsm_ramp(p, 6.06, 6.14));  // overload magenta
-    c = mix(c, ember, mcsm_ramp(p, 6.90, 7.10));                        // 7/8 dark red
-    c *= 0.92 + 0.08 * sin(clock * 3.0);                                // roar pulse
+    vec3 teal = mix(vec3(46.0, 69.0, 68.0),  vec3(124.0, 152.0, 133.0), 0.55) / 255.0; // #2E4544 -> #7C9885
+    vec3 purp = mix(vec3(58.0, 27.0, 84.0),  vec3(125.0, 75.0, 145.0), 0.45) / 255.0; // #3A1B54 -> #7D4B91
+    vec3 six  = mix(vec3(163.0, 107.0, 115.0), vec3(214.0, 151.0, 118.0), 0.35) / 255.0; // #A36B73 -> #D69776
+    vec3 ember = vec3(0.720, 0.180, 0.100);
+    vec3 c = teal;
+    c = mix(c, purp,  mcsm_ramp(p, 5.42, 5.52));
+    c = mix(c, six,   mcsm_ramp(p, 5.92, 6.08));
+    c = mix(c, ember, mcsm_ramp(p, 6.90, 7.10));
+    c *= 0.92 + 0.08 * sin(clock * 3.0);   // roar pulse
     return c;
 }
 
-// Premultiplied emission + coverage. Grows with the storm, 15% smaller than
-// the Java StormBackdrop ever rendered ("shrunk just a bit"), pinned to the
-// boss's sky direction so it stalks with the creature.
-// MCSM 1.9.89 -- the user's colour schedule (2026-09-03 voice note):
-//     green        4.45-4.95  (green-fog era; the blob first appears at the
-//                              sky gate 4.95 still green -- the "green glare")
-//     turquoise    5.00-5.15  ("5.0 turquoise"; frame 144558 is the only
-//                              reference with G-R positive, so green drops
-//                              away after 5.0 and never returns -- the 5.3+
-//                              "no turquoise" rule holds)
-//     purple & pink 5.20-5.50
-//     purple       5.50-5.90  ("phase 5.5 to 5.9 purple")
-//     dark crimson 6.00-6.90
-//     black at the top 7.0-8.0 (black heart, blood rim)
-vec3 mcsm_halo_color(float p) {
-    vec3 c = vec3(0.032, 0.105, 0.062);                                  // 4.45 green glare
-    c = mix(c, vec3(0.026, 0.082, 0.088), mcsm_ramp(p, 4.95, 5.04));     // 5.00 turquoise
-    c = mix(c, vec3(0.045, 0.020, 0.075), mcsm_ramp(p, 5.15, 5.24));     // 5.20 purple snap
-    c = mix(c, vec3(0.088, 0.026, 0.098), mcsm_ramp(p, 5.30, 5.44));     // purple & pink
-    c = mix(c, vec3(0.108, 0.028, 0.155), mcsm_ramp(p, 5.48, 5.60));     // 1.9.99 pink-magenta, blue note lifted
-    // MCSM 1.9.99 -- hue matched to the reference frame (2026-09-04 182220).
-    // Sampled glows there: #3e1256 / #321772 / #472fbe, i.e. hue ~ (0.44, 0.20,
-    // 1.0) once normalised to unit luminance -- a blue-leaning violet. The old
-    // key normalised to (0.56, 0.18, 1.0), reading pinker than the reference.
-    // Never orange: red stays the smallest channel by a wide margin.
-    c = mix(c, vec3(0.082, 0.030, 0.185), mcsm_ramp(p, 5.65, 5.90));     // 1.9.99 5.5-5.9: purple + a tinsy blue (user: "dark red pink purple magenta ... and a tinsy blue"; never orange)
-    c = mix(c, vec3(0.150, 0.032, 0.058), mcsm_ramp(p, 6.00, 6.35));     // 6.0 dark crimson
-    c = mix(c, vec3(0.165, 0.038, 0.060), mcsm_ramp(p, 6.35, 6.90));     // crimson holds
-    c = mix(c, vec3(0.055, 0.012, 0.028), mcsm_ramp(p, 7.20, 7.90));     // 8.0 black top
-    return c;
-}
-
-// MCSM 1.9.102 -- halo section. Older comments here described the temporary
-// heart/map-pin reconstruction; that has deliberately been removed. The storm
-// backdrop now uses the round/oval halo again, with measured per-phase colour
-// gradients from the user's reference images.
-// ------------------------------------------------------- oval/circle halo
-// MCSM 1.9.102 -- SHAPE CORRECTION. The previous build changed the storm halo
-// into a fitted map-pin / heart-like silhouette. The user asked to put it back
-// to the way it read better: a round halo again, with only a tiny cinematic
-// oval bias. This field is therefore just a soft ellipse in the dome plane --
-// no flat top, no notch, no bottom point.
+// ============================================================================
+//  1.9.221 (port of MCSM 1.9.201) -- THE INFINITE SKYBOX BLOB  (user spec,
+//  2026-09-11)
 //
-// The colour keys below were measured from the provided reference images:
-//   * phase 5.5-5.9 reference halo: centre #6A8FF7, mid #627FE3/#3D58A5,
-//     outside falloff #263165, then black.
-//   * phase 4 / 5.3 in-game frame: storm-side purple #140B1B, sky halo
-//     #291740/#2D1C41, lifted rim #3F255A.
-// They stay as RGB triples here because the rest of this shader's Story Mode
-// grading works in the same artist-space constants.
-const float MCSM_OVAL_X = 1.22;  // wider on the sides so it wraps the storm
-const float MCSM_OVAL_Y = 0.82;  // shorter vertically; no more giant phase-5/6 wall
+//  Telltale's glare is NOT a 3D volume, NOT a billboard and NOT a cloud
+//  layer. It is a separate INFINITE skybox projection tethered to the Wither
+//  Storm -- the same trick as the infinite-hallway portals: a flat, smeared
+//  oval gradient mass painted into the sky pass (gbuffers_sky / sky.fsh),
+//  centred behind u_StormPos (witherstorm_BossPos / the aim carrier).
+//
+//    * looking at the storm: the gradient never ends. Every ray inside the
+//      oval is blob colour -- fly up into it, through it, around it, and it
+//      never terminates or reveals a back face;
+//    * the vanilla skybox stays "in front" at the outer edges: the smudge
+//      blends over it and the ordinary sky shines through the soft borders;
+//    * looking away from the storm: the field falls off to zero and the
+//      regular sky returns untouched;
+//    * distance: the Java driver (McsmInfiniteSkyboxBlob) fades the aim
+//      carrier out between 700 and 1600 blocks, so far away the sky slowly
+//      changes back to vanilla.
+//
+//  No raymarching, no volumetric fog, no transparent horizon-fog variables:
+//  pure angular dome-plane projection. The gradients are procedural
+//  (infinitely smooth -- the GL_LINEAR-smudge look with zero pixelated
+//  edges, so no texture sampling is needed at all).
+// ============================================================================
 
-// Dome-plane oval field for a view ray.
-//   .x = u      0 at the centre .. 1 on the oval silhouette edge
-//   .y = upness 0 bottom .. 1 top, used only for very mild vertical shading
-//   .z = inside 1 inside the silhouette, 0 outside
-// outer = the old circular radius in DEGREES (keeps the size slider working).
-vec3 mcsm_mass_field(vec3 wd, vec3 bd, float outer) {
+// Exact artist hexes (user 2026-09-11). x/255 -> display space.
+// PHASE 5 -- THE CYAN / GREEN EMERGENCE BLOB
+const vec3 P5_CORE  = vec3(26.0, 34.0, 35.0) / 255.0;    // #1A2223 deep charcoal teal-black
+const vec3 P5_MID   = vec3(46.0, 69.0, 68.0) / 255.0;    // #2E4544 muted jade green-grey
+const vec3 P5_EDGE  = vec3(124.0, 152.0, 133.0) / 255.0; // #7C9885 cinematic dusty green flare
+const vec3 P5_BEAM  = vec3(132.0, 147.0, 255.0) / 255.0; // #8493FF bright pale blue-lavender
+// PHASE 5.5-5.9 -- THE DEEP PURPLE & PINK CORRUPTION BLOB
+const vec3 P55_CORE = vec3(15.0, 8.0, 20.0) / 255.0;     // #0F0814 pitch black-void purple
+const vec3 P55_MID  = vec3(58.0, 27.0, 84.0) / 255.0;    // #3A1B54 saturated dark velvet violet
+const vec3 P55_HIGH = vec3(94.0, 39.0, 117.0) / 255.0;   // #5E2775 deep rich royal magenta
+const vec3 P55_EDGE = vec3(125.0, 75.0, 145.0) / 255.0;  // #7D4B91 glowing lavender-pink mist
+// PHASE 6 -- THE FOUR-COLOR APOCALYPTIC SUNSET SPLIT BLOB (vertical)
+const vec3 P6_TOP   = vec3(23.0, 16.0, 33.0) / 255.0;    // #171021 near-black midnight purple (zenith)
+const vec3 P6_UMID  = vec3(68.0, 40.0, 77.0) / 255.0;    // #44284D muted dark burgundy-pink
+const vec3 P6_LMID  = vec3(163.0, 107.0, 115.0) / 255.0; // #A36B73 dusty cinematic mauve-pink
+const vec3 P6_BOT   = vec3(214.0, 151.0, 118.0) / 255.0; // #D69776 toxic amber orange-peach
+
+// Oval proportions: wide sideways, slightly short vertically, tilted so the
+// silhouette reads as a SMEARED form (user: "not an oval, not a circle --
+// smeared, but kind of circular").
+const float MCSM_INF_X    = 1.90;
+const float MCSM_INF_Y    = 0.95;
+const float MCSM_INF_TILT = 0.31;   // radians
+
+// Dome-plane oval field for the infinite blob.
+//   .x = u      0 centre .. 1 oval silhouette
+//   .y = upness 0 bottom .. 1 top (drives the 5.5 high-altitude bleed)
+//   .z = inside 1 inside the silhouette
+vec3 mcsm_inf_field(vec3 wd, vec3 bd, float outerDeg) {
     float cd = dot(wd, bd);
     if (cd <= 0.02) return vec3(2.0, 0.5, 0.0);
     vec3 upRef = abs(bd.y) > 0.985 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
-    vec3 ex = normalize(cross(upRef, bd));      // horizontal, perpendicular
-    vec3 ey = cross(bd, ex);                    // "up" along the dome
-    // gnomonic projection onto the dome plane, normalised so 1.0 == old radius
-    vec2 s = vec2(dot(wd, ex), dot(wd, ey)) / (cd * tan(radians(outer)));
-    vec2 e = vec2(s.x / MCSM_OVAL_X, s.y / MCSM_OVAL_Y);
+    vec3 ex = normalize(cross(upRef, bd));
+    vec3 ey = cross(bd, ex);
+    // smear tilt: rotate the ellipse axes inside the dome plane
+    float ct = cos(MCSM_INF_TILT), st = sin(MCSM_INF_TILT);
+    vec3 exT = ex * ct + ey * st;
+    vec3 eyT = ey * ct - ex * st;
+    vec2 s = vec2(dot(wd, exT), dot(wd, eyT)) / (cd * tan(radians(outerDeg)));
+    vec2 e = vec2(s.x / MCSM_INF_X, s.y / MCSM_INF_Y);
     float u = length(e);
-    float upness = clamp((s.y / MCSM_OVAL_Y) * 0.5 + 0.5, 0.0, 1.0);
+    float upness = clamp((s.y / MCSM_INF_Y) * 0.5 + 0.5, 0.0, 1.0);
     return vec3(u, upness, u <= 1.0 ? 1.0 : 0.0);
 }
 
-vec3 mcsm_measured_halo_core(float p) {
-    vec3 early = vec3(0.247, 0.145, 0.353); // #3F255A: phase 4 / 5.3 purple lift
-    vec3 late  = vec3(0.416, 0.561, 0.969); // #6A8FF7: phase 5.5-5.9 blue core
-    return mix(early, late, mcsm_ramp(p, 5.44, 5.58));
+// Normalised field distance: 0 centre .. 1 oval edge .. 1.85 far bleed.
+float mcsm_inf_u(vec3 wd, vec3 bd, float outer, float ang) {
+    vec3 fld = mcsm_inf_field(wd, bd, outer);
+    if (fld.z > 0.5) return clamp(fld.x, 0.0, 1.0);
+    return 1.0 + max(ang - outer, 0.0) / (outer * 0.85);
 }
 
-vec3 mcsm_measured_halo_mid(float p) {
-    vec3 early = vec3(0.176, 0.110, 0.255); // #2D1C41: measured mid purple
-    vec3 late  = vec3(0.384, 0.498, 0.890); // #627FE3: measured blue shoulder
-    return mix(early, late, mcsm_ramp(p, 5.44, 5.58));
+// Per-phase radial palette (core / mid / edge) + the teal beam accent.
+void mcsm_inf_palette(float p, out vec3 core, out vec3 mid, out vec3 edge,
+                      out vec3 beam, out float beamW) {
+    core = P5_CORE; mid = P5_MID; edge = P5_EDGE; beam = P5_BEAM; beamW = 1.0;
+    float w55 = mcsm_ramp(p, 5.42, 5.52);
+    core = mix(core, P55_CORE, w55);
+    mid  = mix(mid,  P55_MID,  w55);
+    edge = mix(edge, P55_EDGE, w55);
+    beam = mix(beam, P55_HIGH, w55);
+    beamW = 1.0 - w55;                       // the beam only exists in the teal phase
+    float w6 = mcsm_ramp(p, 5.92, 6.08);     // hand the radial stops off to
+    core = mix(core, P6_TOP, w6);            // the phase-6 vertical split
+    mid  = mix(mid,  P6_UMID, w6);
+    edge = mix(edge, mix(P6_LMID, P6_BOT, 0.5), w6);
 }
 
-vec3 mcsm_measured_halo_outer(float p) {
-    vec3 early = vec3(0.078, 0.043, 0.106); // #140B1B: storm-side purple black
-    vec3 late  = vec3(0.149, 0.192, 0.396); // #263165: measured navy falloff
-    return mix(early, late, mcsm_ramp(p, 5.44, 5.58));
-}
-
-vec3 mcsm_measured_halo_gradient(float p, float u) {
-    // Reconstruct the sampled radial gradient: bright centre, saturated middle,
-    // navy/purple edge, then a clean fade outside the oval.
-    vec3 outer = mcsm_measured_halo_outer(p);
-    vec3 mid   = mcsm_measured_halo_mid(p);
-    vec3 core  = mcsm_measured_halo_core(p);
-    vec3 c = mix(outer, mid, 1.0 - smoothstep(0.42, 0.98, u));
-    c = mix(c, core, 1.0 - smoothstep(0.02, 0.58, u));
+// Phase 6: the four-colour split is keyed to RAY ELEVATION, not the oval.
+vec3 mcsm_inf_p6_split(float height) {
+    float u = clamp(height * 0.5 + 0.5, 0.0, 1.0);   // 0 horizon .. 1 zenith
+    vec3 c = mix(P6_BOT, P6_LMID, smoothstep(0.02, 0.30, u));
+    c = mix(c, P6_UMID, smoothstep(0.26, 0.55, u));
+    c = mix(c, P6_TOP,  smoothstep(0.52, 0.95, u));
     return c;
 }
 
-// Coverage only (no colour): how much of the sky this ray hides. Shared with
-// the cloud pass so the deck disappears behind the mass exactly where the
-// dome blob is opaque (user: "you can't even see the clouds at the very top
-// of the storm").
+// How much of the sky this ray hides behind the infinite blob. Shared with
+// the cloud pass (rendertype_clouds.fsh) so the deck disappears exactly
+// where the dark-matter core is opaque.
 float mcsm_mass_cover(vec3 wd, vec3 bd, float p) {
-    float mcsmSize = mcsm_glare_size();
-    float outer = mix(9.5, 13.0, mcsm_ramp(p, 5.10, 5.90)) * mcsmSize;
+    float s = mcsm_glare_size();
+    float outer = mix(52.0, 76.0, mcsm_ramp(p, 5.0, 6.0)) * mix(0.80, 1.35, s);
     float ang = degrees(acos(clamp(dot(normalize(wd), normalize(bd)), -1.0, 1.0)));
-    if (ang >= outer * 3.0) return 0.0;
-    vec3 f = mcsm_mass_field(normalize(wd), normalize(bd), outer);
-    if (f.z < 0.5) return 0.0;
-    float u = clamp(f.x, 0.0, 1.0);
-    float core  = 1.0 - smoothstep(0.20, 0.72, u);
-    float skirt = smoothstep(0.22, 0.76, u) * (1.0 - smoothstep(0.80, 0.99, u));
-    float rim   = smoothstep(0.70, 0.92, u) * (1.0 - smoothstep(0.95, 1.0, u));
-    // Oval halo coverage: enough to keep clouds from cutting through the glow,
-    // but no map-pin black slab and no hard top edge.
-    return clamp(0.82 * core + 0.62 * skirt + 0.25 * rim, 0.0, 0.93);
+    if (ang >= outer * 1.85) return 0.0;
+    float uu = mcsm_inf_u(normalize(wd), normalize(bd), outer, ang);
+    float coreW = 1.0 - smoothstep(0.10, 0.42, uu);
+    float midW  = smoothstep(0.16, 0.46, uu) * (1.0 - smoothstep(0.58, 0.95, uu));
+    return clamp(0.95 * coreW + 0.42 * midW, 0.0, 0.96);
 }
 
+// The blob itself: premultiplied emission + sky occlusion. sky.fsh composes
+// it as  dome = dome * (1 - occ) + emis  -- the dark core REPLACES the sky,
+// the outer flare blends over it.
 vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     vec3 wd = normalize(worldDir);
     vec3 bd = normalize(bossDir);
+    float s = mcsm_glare_size();
+    // Huge angular radius: the blob owns a wide region behind the storm, so
+    // flying into it never finds an end. The user slider keeps its weight.
+    float outer = mix(52.0, 76.0, mcsm_ramp(p, 5.0, 6.0)) * mix(0.80, 1.35, s);
     float ang = degrees(acos(clamp(dot(wd, bd), -1.0, 1.0)));
-    // MCSM 1.9.102 -- circular/oval halo again. Size still comes from the wide
-    // carrier (mcsm_glare_size), but the base angular radius is now much smaller
-    // than 1.9.105; phase 5 should hug the storm instead of filling the sky.
-    float mcsmSize = mcsm_glare_size();
-    float outer = mix(9.5, 13.0, mcsm_ramp(p, 5.10, 5.90)) * mcsmSize;
-    if (ang >= outer * 3.0) return vec4(0.0, 0.0, 0.0, 0.0);
+    if (ang >= outer * 1.85) return vec4(0.0);          // vanilla sky beyond the bleed
 
-    vec3 fld = mcsm_mass_field(wd, bd, outer);
-    if (fld.z < 0.5) return vec4(0.0, 0.0, 0.0, 0.0);
-    float u = clamp(fld.x, 0.0, 1.0);   // 0 centre -> 1 oval edge
+    vec3 fld = mcsm_inf_field(wd, bd, outer);
+    float uu = mcsm_inf_u(wd, bd, outer, ang);
+    float upness = fld.y;
 
-    // Radial structure, measured to match the supplied references: strongest
-    // in the middle, coloured shoulder, dark falloff at the silhouette edge.
-    float core  = 1.0 - smoothstep(0.03, 0.58, u);
-    float mid   = smoothstep(0.22, 0.66, u) * (1.0 - smoothstep(0.72, 0.98, u));
-    float rim   = smoothstep(0.66, 0.90, u) * (1.0 - smoothstep(0.94, 1.0, u));
-    float fade  = 1.0 - smoothstep(0.92, 1.0, u);
+    vec3 core, mid, edge, beam; float beamW;
+    mcsm_inf_palette(p, core, mid, edge, beam, beamW);
 
-    vec3 grad = mcsm_measured_halo_gradient(p, u);
+    // Radial smudge stops -- the centre is a solid dark-matter mask, the
+    // mid ring is the dense bleed, the rim is the flare, and beyond the
+    // silhouette a soft glow carries on until it dies (the vanilla skybox
+    // shines through that outer band, "in front" of the infinite layer).
+    float coreW  = 1.0 - smoothstep(0.10, 0.42, uu);
+    float midW   = smoothstep(0.16, 0.46, uu) * (1.0 - smoothstep(0.58, 0.95, uu));
+    float edgeW  = smoothstep(0.50, 0.88, uu) * (1.0 - smoothstep(0.95, 1.32, uu));
+    float bleedW = smoothstep(0.85, 1.32, uu) * (1.0 - smoothstep(1.30, 1.85, uu));
 
-    // Adapt gently to the dome underneath. Bright day skies get slightly more
-    // occlusion/contrast; dark storm skies let the measured glow colour carry.
-    float domeLum = dot(dome, vec3(0.2126, 0.7152, 0.0722));
-    float dk = clamp(domeLum * 2.6, 0.0, 1.0);
-    float occl = clamp((0.58 + 0.20 * dk) * core
-                     + (0.36 + 0.16 * dk) * mid
-                     + (0.10 + 0.06 * dk) * rim, 0.0, 0.84);
+    vec3 c = core * coreW + mid * midW + edge * edgeW;
+    c += edge * bleedW * 0.55;   // the smudge keeps bleeding past the oval
 
-    // Use the sampled colours directly instead of hue-normalising them; this is
-    // what preserves the blue centre / navy edge and the purple phase-4/5.3
-    // falloff exactly instead of washing every phase into the same brightness.
-    float strength = (0.98 * core + 0.74 * mid + 0.50 * rim) * fade;
-    strength *= mix(1.08, 0.86, dk);
-    vec3 emis = grad * strength;
-    emis *= 0.94 + 0.06 * sin(clock * 3.0);   // slow roar pulse (~2.1 s)
-    return vec4(emis, occl);
+    // 5.5-5.9: the high-altitude bleed pushes richer royal magenta overhead.
+    c += mix(mid, P55_HIGH, 0.6) * midW * upness * mcsm_ramp(p, 5.42, 5.52) * 0.5;
+
+    // Phase 6: the four-colour sunset split owns the gradient; the radial
+    // field only shapes its strength (dark centre, blending rim).
+    float w6 = mcsm_ramp(p, 5.92, 6.08);
+    c = mix(c, mcsm_inf_p6_split(wd.y), w6);
+    c *= mix(1.0, 0.62 + 0.38 * coreW, w6);              // keep the dark heart in 6
+
+    // Phase 5: the energy-beam accent -- a hot blue-lavender smudge just
+    // above centre, breathing slowly.
+    float beamSpot = (1.0 - smoothstep(0.0, 0.18, uu)) * (0.55 + 0.45 * sin(clock * 1.7));
+    c += beam * beamSpot * beamW * 0.85;
+
+    // Occlusion: the core fully masks the vanilla sky, the mid ring mostly,
+    // the rim barely -- that is the "separate skybox behind the storm".
+    float occ = clamp(0.97 * coreW + 0.45 * midW + 0.10 * edgeW, 0.0, 1.0);
+
+    // slow roar pulse, kept subtle so the gradient stays a clean smudge
+    c *= 0.96 + 0.04 * sin(clock * 1.3);
+    return vec4(c, occ);
 }
-
 
 // ---------------------------------------------------------------- fog / tints
 vec3 mcsm_fog_color(float p, vec3 vanilla) {
