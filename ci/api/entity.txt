@@ -1052,17 +1052,9 @@ public abstract class net.minecraft.client.renderer.entity.AbstractZombieRendere
   public net.minecraft.resources.Identifier getTextureLocation(net.minecraft.client.renderer.entity.state.LivingEntityRenderState);
   public void extractRenderState(net.minecraft.world.entity.Entity, net.minecraft.client.renderer.entity.state.EntityRenderState, float);
 }
-Compiled from "EntityRendererRegistry.java"
-public final class net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry {
-  public static <E extends net.minecraft.world.entity.Entity> void register(net.minecraft.world.entity.EntityType<? extends E>, net.minecraft.client.renderer.entity.EntityRendererProvider<E>);
-}
+Error: class not found: net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
 Error: class not found: net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry
-Compiled from "FabricDefaultAttributeRegistry.java"
-public final class net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry {
-  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry$ModifyDefaultAttribute> MODIFY;
-  public static void register(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.LivingEntity>, net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder);
-  public static void register(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.LivingEntity>, net.minecraft.world.entity.ai.attributes.AttributeSupplier);
-}
+Error: class not found: net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry
 Error: class not found: net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder
 Compiled from "BuiltInRegistries.java"
 public class net.minecraft.core.registries.BuiltInRegistries {
