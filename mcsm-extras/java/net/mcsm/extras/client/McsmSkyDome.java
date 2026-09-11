@@ -142,91 +142,11 @@ public final class McsmSkyDome {
         out[2] = ramp[i * 3 + 2] + (ramp[(i + 1) * 3 + 2] - ramp[i * 3 + 2]) * fr;
     }
 
+    /** 1.9.213: the sky shell is DELETED -- it read as a weird dome under
+     *  the shader. The MCSM Visual Shader (or the base mod's Story Mode sky
+     *  tint) owns the sky now; this class only keeps the deck ramps for the
+     *  fog colour matching. */
     public static void submit(LevelRenderContext ctx) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.level == null || mc.player == null) {
-            return;
-        }
-        if (mc.level.dimension() != Level.OVERWORLD) {
-            return;
-        }
-        // 1.9.202: the calm decks also ride the customSkyboxes gate (forced on
-        // by the MCSM client gate), so the skies render even when a stale
-        // config left storyModeSky off.
-        boolean calmOn = DabyWSClientConfig.storyModeSky || DabyWSClientConfig.customSkyboxes;
-        float phase = 0.0F;
-        double bestD = Double.MAX_VALUE;
-        for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
-            if (d.phase > phase) {
-                phase = d.phase;
-            }
-            if (d.phase >= 3.9F) {
-                double dx = d.dispX - mc.player.getX();
-                double dy = d.dispY - mc.player.getY();
-                double dz = d.dispZ - mc.player.getZ();
-                bestD = Math.min(bestD, dx * dx + dy * dy + dz * dz);
-            }
-        }
-        float stormW = 0.0F;
-        if (phase >= 3.9F && bestD < 1700.0D * 1700.0D) {
-            stormW = smooth((phase - 3.9F) / 0.6F)
-                    * (1.0F - Mth.clamp((float) ((Math.sqrt(bestD) - 900.0D) / 800.0D), 0.0F, 1.0F));
-        }
-        if (!calmOn && stormW <= 0.01F) {
-            return;
-        }
-
-        float[] calm = new float[McsmGlarePalettes.STOPS * 3];
-        calmRamp(mc.level.getGameTime() + (long) (mc.getDeltaTracker().getGameTimeDeltaPartialTick(false) * 50.0F), calm);
-        float[] storm = new float[McsmGlarePalettes.STOPS * 3];
-        float stormDeck = stormW > 0.01F ? stormRamp(phase, storm) : 0.0F;
-        // 1.9.202: commit hard to the phase decks once a storm is near. The old
-        // 0.85 cap let vanilla's pink/orange sunset bleed through and wash out
-        // the teal vault the user wants (09-10 screenshots vs the 09-06 target).
-        float blend = Mth.clamp(stormW, 0.0F, 1.0F)
-                * Mth.clamp(0.40F + stormDeck, 0.0F, 1.0F) * 0.96F;
-
-        final float[] ramp = new float[McsmGlarePalettes.STOPS * 3];
-        for (int i = 0; i < ramp.length; i++) {
-            ramp[i] = calm[i] + (storm[i] - calm[i]) * blend;
-        }
-        // 1.9.208: fully opaque — the "circle dome" edge is gone for good.
-        // The sky is the sky: terrain always draws in front of it, the sun
-        // glow billboard draws over it, and nothing shows through it.
-        final int alpha = 255;
-
-        Vec3 cam = ctx.levelState().cameraRenderState.pos;
-        SubmitNodeCollector collector = ctx.submitNodeCollector();
-        collector.submitCustomGeometry(ctx.poseStack(), RenderTypes.entityTranslucentEmissive(WHITE),
-                (pose, consumer) -> {
-                    // elevation bands from 0deg (horizon, flush with the fog
-                    // colour) to +90; per-vertex colour sampled from the
-                    // blended ramp. 1.9.208: no band below the horizon any
-                    // more — that seam read as the "circle" in screenshots.
-                    float[] c0 = new float[3];
-                    float[] c1 = new float[3];
-                    for (int b = 0; b < BANDS; b++) {
-                        double e0 = (90.0D * b / BANDS);
-                        double e1 = (90.0D * (b + 1) / BANDS);
-                        // elevation -> ramp position: 90deg=0(zenith) 0deg=1(horizon)
-                        float p0 = (float) ((90.0D - e1) / 90.0D);
-                        float p1 = (float) ((90.0D - e0) / 90.0D);
-                        p0 = Mth.clamp(p0, 0.0F, 1.0F);
-                        p1 = Mth.clamp(p1, 0.0F, 1.0F);
-                        for (int s = 0; s < SECTORS; s++) {
-                            double a0 = Math.toRadians(360.0D * s / SECTORS);
-                            double a1 = Math.toRadians(360.0D * (s + 1) / SECTORS);
-                            rampAt(ramp, p0, c0);
-                            rampAt(ramp, p1, c1);
-                            Vec3 v00 = dir(e0, a0), v10 = dir(e0, a1);
-                            Vec3 v01 = dir(e1, a0), v11 = dir(e1, a1);
-                            vtx(pose, consumer, cam.add(v00.scale(SHELL)), c1, alpha);
-                            vtx(pose, consumer, cam.add(v10.scale(SHELL)), c1, alpha);
-                            vtx(pose, consumer, cam.add(v11.scale(SHELL)), c0, alpha);
-                            vtx(pose, consumer, cam.add(v01.scale(SHELL)), c0, alpha);
-                        }
-                    }
-                });
     }
 
     private static Vec3 dir(double elevDeg, double azim) {

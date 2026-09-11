@@ -183,7 +183,7 @@ public final class McsmStormBlob {
         SubmitNodeCollector collector = ctx.submitNodeCollector();
         // the oval, coloured by the banded texture at "a little" alpha
         quad(poseStack, collector, GlowRenderTypes.glow(ovalTex(phase)), at, view,
-                ovalR, 255, 255, 255, (int)(aa * 185.0F));
+                ovalR, 255, 255, 255, (int)(aa * 205.0F));
         // a dimmer, larger echo for depth (still world-anchored)
         quad(poseStack, collector, GlowRenderTypes.glow(ovalTex(phase)), at, view,
                 ovalR * 1.32D, 255, 255, 255, (int)(aa * 62.0F));
@@ -432,8 +432,8 @@ public final class McsmStormBlob {
         Vec3 upHint = Math.abs(view.y) > 0.98 ? new Vec3(1.0, 0.0, 0.0) : new Vec3(0.0, 1.0, 0.0);
         Vec3 right = view.cross(upHint).normalize();
         Vec3 up = right.cross(view).normalize();
-        Vec3 rx = right.scale(radius * 1.15);
-        Vec3 uy = up.scale(radius);
+        Vec3 rx = right.scale(radius * 1.32);
+        Vec3 uy = up.scale(radius * 0.92D);
         int fa = Math.min(Math.max(a, 0), 255);
         vertex(pose, consumer, at.subtract(rx).subtract(uy), 0.0F, 1.0F, r, g, b, fa);
         vertex(pose, consumer, at.add(rx).subtract(uy), 1.0F, 1.0F, r, g, b, fa);

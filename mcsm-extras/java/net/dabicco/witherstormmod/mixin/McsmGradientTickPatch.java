@@ -116,10 +116,6 @@ public abstract class McsmGradientTickPatch {
             McsmClientBlasts.tick();
             // 1.9.204 -- Story Mode debris/dust vortex around every storm.
             McsmStormDebris.tick();
-            // 1.9.212 -- the twilight pink fog is GONE: the frame fog colour
-            // is re-matched to the calm sky deck (blue night, lavender day),
-            // with the storm deck blended in when a storm owns the sky.
-            mcsm$fogMatch(fogColor, cameraState);
             // 1.9.208 -- volumetric beam strength rides the time of day:
             // near-noon the tractor beams flare hardest; deep night they
             // dim to a faint purple shaft. Written live every frame so the
@@ -127,32 +123,6 @@ public abstract class McsmGradientTickPatch {
             mcsm$beamDayNight(cameraState);
         } catch (Throwable ignored) {
             // Never let a visual helper break the frame.
-        }
-    }
-
-    /** Fog colour = the deck horizon, so vanilla twilight pink never shows. */
-    private static void mcsm$fogMatch(Vector4f fogColor, CameraRenderState cameraState) {
-        try {
-            if (fogColor == null) {
-                return;
-            }
-            Minecraft mc = Minecraft.getInstance();
-            if (mc == null || mc.level == null) {
-                return;
-            }
-            float[] h = new float[3];
-            net.mcsm.extras.client.McsmSkyDome.calmHorizon(mc.level.getGameTime(), h);
-            float[] storm = new float[3];
-            float b = net.mcsm.extras.client.McsmStormAtmosphere.skyBlend(storm);
-            if (b > 0.01F) {
-                h[0] += (storm[0] - h[0]) * b;
-                h[1] += (storm[1] - h[1]) * b;
-                h[2] += (storm[2] - h[2]) * b;
-            }
-            fogColor.x = h[0];
-            fogColor.y = h[1];
-            fogColor.z = h[2];
-        } catch (Throwable ignored) {
         }
     }
 

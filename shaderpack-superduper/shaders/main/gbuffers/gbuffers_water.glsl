@@ -284,11 +284,13 @@
                     // shine and the lake reads bright against the dark storm.
                     float shallow = clamp(blockDepth * 0.060, 0.0, 1.0);
                     material.albedo.rgb = mix(vec3(0.105, 0.245, 0.415), vec3(0.16, 0.335, 0.53), shallow);
-                    // 1.9.212: vanilla-style flow stripes -- slow diagonal
-                    // light bands so the surface still reads as moving water
-                    // instead of a flat blue sheet.
+                    // 1.9.212: vanilla-style flow stripes -- light diagonal
+                    // bands so the surface reads as moving water instead of a
+                    // flat blue sheet. 1.9.213: STATIC pattern -- the previous
+                    // version referenced frameTimeCounter, which this pack
+                    // never declares, and that broke the whole program.
                     vec3 wpos = vertexWorldPos;
-                    float flow = sin((wpos.x + wpos.z) * 0.55 + wpos.y * 0.9 + frameTimeCounter * 0.10);
+                    float flow = sin((wpos.x + wpos.z) * 0.55 + wpos.y * 0.9);
                     float band = smoothstep(0.55, 1.0, flow) * smoothstep(0.55, 0.0, -flow);
                     material.albedo.rgb = mix(material.albedo.rgb, material.albedo.rgb * 1.28, band * 0.22);
                     material.albedo.a = max(material.albedo.a, 0.96);

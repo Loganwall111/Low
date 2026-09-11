@@ -1,3 +1,13 @@
+# 1.9.213 — shader crash fixed, dome deleted, purple night gone, teeth glow restored
+
+- **THE SHADER IS FIXED.** 1.9.212's water-stripe edit referenced a time uniform this pack never declares, which broke the water program and degraded the whole pack under Iris -- that is why the shader "was failing". The stripes are now a static pattern (safe uniforms only); the pack loads clean again.
+- **The weird dome is DELETED.** The sky shell no longer renders at all -- the MCSM Visual Shader (or the base mod's Story Mode sky tint) owns the sky. No more circle/edge in the sky, ever.
+- **Purple night gone.** The frame fog-colour override (which blended storm purple into the calm night horizon) is removed. Calm night = midnight navy; purple/pink/teal/ember only appear when a storm actually owns the sky.
+- **Teeth emissive restored.** The mod's bloom pass had been zeroed for memory safety -- that is why the teeth looked flat instead of glowing. Bloom is now floored at 0.35 (raise-only), so the teeth/eyes get their emissive halo from the reference frames.
+- **Halo closer to the reference.** Less black cover (0.45) so the purple middle of the oval reads, the oval is more elliptical, and slightly stronger alpha.
+
+Everything else from 1.9.208-1.9.212 carries (world-anchored oval glare, Catalyst Halo, debris/rings/glacier flakes, block tornado, ember 8-9 sky, settings fix, character cast).
+
 # 1.9.212 — the original oval glare is back (revamped), twilight pink gone, teeth brighter, block tornado
 
 - **THE ORIGINAL GLARE IS BACK, revamped.** The old structured slab/rays experiment is deleted. The glare is now the original style: a gigantic world-anchored OVAL billboard sitting at the storm's centre -- it follows the storm and its slow atmospheric sway, but does NOT move with the player, so you can walk around and behind it. The textures carry the spec exactly: black rim blending to dark purple, purple middle, blackness core, a little alpha overall. Per-phase palettes (blue / teal-green / purple / pink-purple / brown-pink / ember 8-9).

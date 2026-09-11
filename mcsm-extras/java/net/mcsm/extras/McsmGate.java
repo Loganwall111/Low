@@ -230,14 +230,15 @@ public final class McsmGate {
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
             changed += floorField(c, null, "stormGlowStrength", 1.0);
             changed += ceilingField(c, null, "sunGlowStrength", 0.0);
-            changed += ceilingField(c, null, "blackGlareStrength", 0.65);
+            // 1.9.213: less black cover so the purple middle of the oval reads
+            changed += ceilingField(c, null, "blackGlareStrength", 0.45);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             changed += floorField(c, null, "glowStrength", 1.0);
-            // Full-res HDR storm bloom is the native-memory pressure point in
-            // the user's Iris/Sodium logs. Teeth/eyes stay emissive cyan through
-            // their render pass, but the expensive full-screen bloom buffer is
-            // off by default for stability.
-            changed += ceilingField(c, null, "bloomStrength", 0.0);
+            // 1.9.213: the teeth read flat because the mod's bloom pass was
+            // zeroed -- the glow needs it. A moderate floor (raise-only, the
+            // player can push it higher) gives the teeth the emissive halo
+            // from the reference frames without the old full-res memory blowout.
+            changed += floorField(c, null, "bloomStrength", 0.35);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
