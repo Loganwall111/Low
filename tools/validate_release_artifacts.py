@@ -6,7 +6,8 @@ assets are pushed to the v1.9.60 GitHub Release, but usable standalone.
 Checks (all hard failures):
   * Zips are FLAT: no single nested parent folder wrapping the pack contents.
   * MCSM_ResourcePack.zip contains the custom time-of-day skyboxes under
-    assets/minecraft/optifine/sky/world0/ (sky1..4 png+properties), split-range
+    assets/minecraft/optifine/sky/world0/ (sky_day/sunset/night/midnight/storm
+    png+properties, no Fabric skyboxes), split-range
     pack.mcmeta, and leak-free lang files. It must NOT ship any shaders/core
     cloud overrides (hidden the moment an Iris shaderpack loads — the shader
     pack owns the clouds) and must NOT ship a PNG clouds.png sheet.
@@ -94,17 +95,21 @@ def validate_rp(path: str) -> None:
                 fail(f"RP: pack.mcmeta split-range schema wrong: pack_format={pf} supported={sf}")
             else:
                 ok("RP: pack.mcmeta modern split range (46 / 42..50)")
-        for i in range(1, 5):
-            for ext in ("png", "properties"):
-                want = f"assets/minecraft/optifine/sky/world0/sky{i}.{ext}"
-                if want not in n:
-                    fail(f"RP: missing custom skybox file {want}")
-        if all(f"assets/minecraft/optifine/sky/world0/sky{i}.png" in n for i in range(1, 5)):
-            ok("RP: custom time-of-day skyboxes present (sky1..4 + properties)")
+        for leaf in ("sky_day.png", "sky_sunset.png", "sky_night.png", "sky_midnight.png", "sky_storm.png",
+                     "sky_day.properties", "sky_sunset_dusk.properties", "sky_sunset_dawn.properties",
+                     "sky_night.properties", "sky_midnight.properties", "sky_storm.properties"):
+            want = f"assets/minecraft/optifine/sky/world0/{leaf}"
+            if want not in n:
+                fail(f"RP: missing custom skybox file {want}")
+        if all(f"assets/minecraft/optifine/sky/world0/{leaf}" in n for leaf in ("sky_day.png", "sky_sunset.png", "sky_night.png", "sky_midnight.png", "sky_storm.png")):
+            ok("RP: custom time-of-day skyboxes present (day/sunset/night/midnight/storm + properties)")
+        if [x for x in n if "fabricskyboxes" in x]:
+            fail("RP: Fabric skyboxes must not ship - the world0 set is the only one")
         for key, must in {
-            "assets/minecraft/optifine/sky/world0/sky1.properties": "startFadeIn=5:30",
-            "assets/minecraft/optifine/sky/world0/sky3.properties": "startFadeIn=17:30",
-            "assets/minecraft/optifine/sky/world0/sky4.properties": "startFadeIn=20:30",
+            "assets/minecraft/optifine/sky/world0/sky_day.properties": "startFadeIn=6:00",
+            "assets/minecraft/optifine/sky/world0/sky_sunset_dusk.properties": "startFadeIn=17:00",
+            "assets/minecraft/optifine/sky/world0/sky_night.properties": "startFadeIn=19:30",
+            "assets/minecraft/optifine/sky/world0/sky_storm.properties": "weather=thunder",
         }.items():
             if key in n and must not in read(z, key).decode("utf-8"):
                 fail(f"RP: {key} missing fade spec '{must}'")
@@ -256,16 +261,17 @@ def validate_jar(path: str, expect_version: str) -> None:
         else:
             ok(f"JAR: {len(pe)} post_effect definitions bundled")
         jar_sky_fail = 0
-        for i in range(1, 5):
-            for ext in ("png", "properties"):
-                want = f"assets/minecraft/optifine/sky/world0/sky{i}.{ext}"
-                if want not in n:
-                    jar_sky_fail += 1
-                    fail(f"JAR: lavender/orange skybox asset {want} not bundled into the mod")
+        for leaf in ("sky_day.png", "sky_sunset.png", "sky_night.png", "sky_midnight.png", "sky_storm.png",
+                     "sky_day.properties", "sky_sunset_dusk.properties", "sky_sunset_dawn.properties",
+                     "sky_night.properties", "sky_midnight.properties", "sky_storm.properties"):
+            want = f"assets/minecraft/optifine/sky/world0/{leaf}"
+            if want not in n:
+                jar_sky_fail += 1
+                fail(f"JAR: MCSM skybox asset {want} not bundled into the mod")
         if jar_sky_fail == 0:
             ok("JAR: custom skyboxes bundled under assets/minecraft/optifine/sky/world0/")
-        if "assets/fabricskyboxes/sky/mcsm_twilight.json" not in n:
-            fail("JAR: FabricSkyboxes mcsm_twilight.json missing")
+        if [x for x in n if "fabricskyboxes" in x]:
+            fail("JAR: Fabric skyboxes must not ship - the world0 set is the only one")
         if "pack.mcmeta" not in n:
             fail("JAR: pack.mcmeta missing (mod assets will not merge as a resource tree)")
         fmj = json.loads(read(z, "fabric.mod.json").decode("utf-8"))

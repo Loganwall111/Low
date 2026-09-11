@@ -16,8 +16,6 @@ option.customTexture.witherFlesh.comment=Bound material for the black wither-fle
 option.customTexture.tornFlesh=Torn Flesh Material
 option.customTexture.tornFlesh.comment=Bound material for the torn withered-flesh sheets.
 
-option.customTexture.blueHalo=Blue Shield Halo
-option.customTexture.blueHalo.comment=Emissive blue shield halo texture.
 
 option.customTexture.darkBackdrop=Dark Backdrop
 option.customTexture.darkBackdrop.comment=Hardcoded dark purple-and-black atmosphere rendered behind the storm.

@@ -16,7 +16,7 @@ is published as an Actions artifact):
 | Package | File | Install into | What it is |
 | :--- | :--- | :--- | :--- |
 | **Wither Storm Mod** | `dabywitherstormmod-1.9.61-26.2-beta-r1.jar` | `.minecraft/mods/` | Mod with bundled skyboxes, procedural cloud vsh, Vortex mesh, storm atmosphere post-chain, OG shaded textures + `_e` emissive pairs. Renamed per build (`-r{run}`). |
-| **MCSM Resource Pack** | `MCSM_ResourcePack.zip` | `.minecraft/resourcepacks/` | Shaded OG Story Mode textures, 4-point time-of-day custom skyboxes (lavender → orange), `rendertype_clouds.vsh` (2.5x extrusion), `emissive.properties` for the turquoise teeth aura. |
+| **MCSM Resource Pack** | `MCSM_ResourcePack.zip` | `.minecraft/resourcepacks/` | Shaded OG Story Mode textures, Day/Sunset/Night/Midnight + thunder-storm skybox set, `rendertype_clouds.vsh` (2.5x extrusion), `emissive.properties` for the turquoise teeth aura. |
 | **MCSM Shader Pack** | `MCSM_ShaderPack.zip` | `.minecraft/shaderpacks/` | **100% procedural GLSL clouds** (no PNG sheets), sun-cast shadows on ground & water that sweep with the day/night clock, dynamic sky, colored lighting, turquoise teeth bloom. |
 
 Checksums: `docs/releases/r1/SHA256SUMS.txt`.
@@ -38,9 +38,11 @@ The cloud/sky stack now ships **inside the mod JAR itself** under
 * The dark purple-and-black backdrop is hardcoded in-pack under
   `shaders/textures/environment/sky/` and blended by `gbuffers_skytextured` on
   shader initialization, independent of the resource pack.
-* Phase timeline: blue 3D shield halos (Phase 4 → 7, duplicated across all
-  three split heads at Phase 6), pink/magenta post fog (Phases 5.1–5.9),
-  Phase 6 orange backdrop swap, maximized purple flares on Phase 7.
+* Phase timeline: crisp cubic halo rings (white under-halo 4+, cataclysm
+  ring 5.8+, clockwise trio 6+, counter-rotating 7+, triple inferno systems
+  8–9 — the old shield dome is OFF by default), pink/magenta post fog
+  (Phases 5.1–5.9), Phase 6 orange backdrop swap, maximized purple flares
+  on Phase 7, red/dark-orange inferno sky on Phase 8–9.
 
 ## ✨ What r1 actually changed
 
@@ -60,9 +62,10 @@ The cloud/sky stack now ships **inside the mod JAR itself** under
 * `SkyRendererMixin` re-tints the vanilla sky dome: **lavender zenith with a
   warm orange horizon** that follows the storm's phase — green at phase 4.5,
   turquoise at phase 5, purple/magenta/black through the cataclysm.
-* The 4-point OptiFine custom skyboxes (`sky1..4.png` + properties) ship in
-  both the resource pack and the mod jar; the world clock keeps running (never
-  frozen at tick 0).
+* The OptiFine custom skyboxes (`sky_day`, `sky_sunset`, `sky_night`,
+  `sky_midnight` + the thunder-keyed `sky_storm` for phases 4–7) ship in both
+  the resource pack and the mod jar; the world clock keeps running (never
+  frozen at tick 0). Fabric skyboxes are gone — this set is the only one.
 
 ### Storm atmosphere as a true post-effect
 * `post_effect/storm_atmosphere.json` + `shaders/post/storm_atmosphere.fsh`
@@ -73,15 +76,17 @@ The cloud/sky stack now ships **inside the mod JAR itself** under
   atmosphere element is translucent/glow geometry or a screen-space pass.
 
 ### Phase FX (all GLSL/shader-style, no 3D assets)
-* Light-blue centre halo at the storm core from phase 4 to the very end.
+* Thin white cubic under-halo beneath the storm from phase 4 (blue-purple
+  cataclysm ring joins at 5.8); both die out as phase 8 burns in.
 * Giant colour-shifting centre blob (phase 5.1 → 5.9): dark purple → magenta →
   pink/blue/black-purple nested soft shells.
 * Heavy magenta/purple/pink/black rear fog layer attached to the storm's back
   (phase 5.1+), moving with it.
 * Phase 6+: bright pulse **directly above the storm every 2 minutes**
   (2400-tick window, quick rise / slow fade).
-* Phases 7/8: the **Vortex model mesh** (converted from `Vortex.bbmodel`)
-  renders additively on top of the storm, rotating and tumbling.
+* Phase 4+: the **abduction vortex** — a 560-cube tornado helix plus real
+  block-crack particles ripped off the ground under the storm, thickening
+  into a full tornado by phase 6.
 
 ### Fog / sky per phase
 * Palette anchors: purple gloom → **green (4.5)** → turquoise (5+) →
@@ -103,10 +108,10 @@ The cloud/sky stack now ships **inside the mod JAR itself** under
 1. **Video Settings -> Quality -> Custom Sky**: `ON`
 2. **Video Settings -> Quality -> Sky / Sun & Moon**: `ON`
 3. **Video Settings -> Shader Packs -> MCSM_ShaderPack -> Shader Options**:
-   - **Story Mode Clouds**: `ON` (procedural)
-   - **Dynamic Skybox**: `ON`
-   - **Story Mode Lighting**: `ON`
-   - **Wither Storm Teeth Glow**: `ON`
+   - **Cloud Rendering**: `fast` (procedural GLSL)
+   - **Custom Skies**: `ON`
+   - Story Mode colored lighting, the turquoise teeth glow and the matte
+     charcoal skin grade are compiled into the pack — always ON.
 
 ---
 
@@ -119,6 +124,6 @@ The cloud/sky stack now ships **inside the mod JAR itself** under
   artifacts over the release tag.
 * `tools/build_mcsm_packs.py` packages the committed pack directories as flat
   zips and **fails hard if any PNG cloud sheet or `cloudTex` binding sneaks
-  back in**.
+  back in, or if the Day/Sunset/Night/Midnight/Storm skybox set is incomplete**.
 * `tools/merge_release_jar.py` produces the repo-staged r1 jar (original
   classes + merged resources, no `geo/` Blockbench sources, no `ffmpeg`).

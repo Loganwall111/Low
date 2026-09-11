@@ -63,9 +63,9 @@ def main() -> int:
         "filters + `post_effect` definitions **inside** the jar, so the Wither Storm shows its "
         "purple background backdrop without any extra download.",
         "2. **Original custom skyboxes restored & injected** — `assets/minecraft/optifine/sky/world0/` "
-        "in both the resource pack and the mod jar carries the authentic 1536x1024 time-of-day "
-        "skies `sky1..sky4.png` (lavender-to-orange day sky, purple sunset, twilight night) with "
-        "full 4-point fade specs and `blend=alpha`. `gbuffers_skybasic.fsh` / `gbuffers_skytextured.fsh` "
+        "in both the resource pack and the mod jar carries the authentic 1536x1024 rigid-glare "
+        "time-of-day skies `sky_day / sky_sunset / sky_night / sky_midnight` plus the thunder-keyed "
+        "`sky_storm` sheet for storm phases 4-7, with full fade specs and `blend=alpha`. `gbuffers_skybasic.fsh` / `gbuffers_skytextured.fsh` "
         "are hooked to those maps: they sample the `worldTime` uniform (declared `uniform long` for the "
         "modern engine) with a `sunAngle`/`sunPosition` fallback when a mod loader freezes tick 0, and "
         "skytextured now visibly tints sun/moon/sky quads warm-orange at sunrise/sunset and lavender at night.",

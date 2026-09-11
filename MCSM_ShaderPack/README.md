@@ -4,13 +4,13 @@ Standalone atmosphere shaderpack for **Iris** (Fabric) and **OptiFine** (Java Ed
 ## Namespace unification
 Every custom sky/environment asset resolves from ONE synchronized directory so
 Sodium and Iris can never flash between mismatched namespaces:
-- time-of-day skyboxes: `assets/minecraft/optifine/sky/world0/` (sky1-4);
+- time-of-day skyboxes: `assets/minecraft/optifine/sky/world0/` (`sky_day`, `sky_sunset`, `sky_night`, `sky_midnight`, thunder-keyed `sky_storm`);
 - the dark backdrop sheets live under the mod's own namespace
   (`assets/dabywitherstormmod/textures/environment/sky/`) and are bound into
   the pack via `customTexture.darkBackdrop`;
-- the protective shield halo is a fully procedural, untextured 3D sphere
-  (vertex-coloured emissive geometry + the mod's screen-space bloom chain) —
-  no flat 2D sprite icon is sampled anywhere.
+- the old protective shield sphere is retired (the mod gates it behind the
+  OFF-by-default `shieldDome` toggle; the dead `blueHalo` texture binding is
+  removed). MCSM halos are thin hard rings, drawn as cube geometry by the mod.
 `gbuffers_skybasic` + `gbuffers_skytextured` sample the LIVE `worldTime`
 uniform (with `sunAngle`/`sunPosition` fallbacks) so the clock never locks at
 tick 0. The pack ships a single lowercase `shaders/lang/en_us.lang` and a
@@ -36,17 +36,21 @@ The cloud and sky look is delivered by **two coordinated layers**:
 ## Features
 - **Iris Shader Options unlocked**: root `shaders.properties` + `shaders/shaders.properties`
   route the pipeline (`clouds=fast`, `customSkies=true`, `shadowMapResolution=2048`) and
-  bind the custom materials (`witherFlesh`, `tornFlesh`, `blueHalo`, `darkBackdrop`).
+  bind the custom materials (`witherFlesh`, `tornFlesh`, `darkBackdrop`).
 - **100% procedural clouds**: blocky fbm noise mapped over `worldPosCoord`, live
   `uniform long worldTime` day/night palettes, distance haze via `vertexDistance`.
 - **Dark backdrop hardcoded in-pack**: `gbuffers_skytextured` blends the bound
   dark purple-and-black atmosphere sheet (`shaders/textures/environment/sky/`) into
   the lower sky dome on shader initialization — no resource pack required.
-- **Shiny materials**: `gbuffers_terrain` paints a soft specular metallic sheen
-  + fresnel rim over the `witherFlesh` / `tornWitheredFlesh` voxel sheets, with
-  the 2048px sun shadow map (`shadowtex0`) sweeping across terrain and water.
-- **Story Mode Colored Lighting**: warm golden sunlight, lavender ambient
-  shadows, amber torchlight, emissive turquoise teeth aura on entities.
+- **Matte materials**: near-black `witherFlesh` / `tornWitheredFlesh` voxel
+  sheets and entity skins grade to charcoal-indigo and catch one restrained
+  indigo edge light — no specular lobe, no glint band. MCSM flesh is flat
+  dark matter with crisp rims, never glossy metal.
+- **Story Mode Colored Lighting** (always ON): warm golden sunlight,
+  lavender ambient shadows and amber torchlight across terrain, water AND
+  entities (`MCSM_LIGHTING`), with the emissive turquoise teeth aura
+  bypassing the lightmap so the teeth burn at night.
+- **Bright Story Mode water**: lifted ambient/sun terms and softer shadows.
 - **Hand item alpha masking**: `gbuffers_hand` discards transparent texels so
   held tools never render as solid black voids.
 

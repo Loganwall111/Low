@@ -39,13 +39,18 @@ Everything you need to install, verify, build, and publish the
    - `stormAtmosphere` = ON (full-screen storm post pass)
    - `stormBlobFX` = ON (phase-5 blob, halo, rear fog, flash, vortex)
    - `atmospherePulse` = ON (breathing glare)
-   - preset **MCSM** (default) — carries the Story-Mode beam/eye colours.
+   - `haloRings` = ON (crisp cubic halo-ring timeline, phases 4–9)
+   - `vortexDebris` = ON (block-pellet abduction vortex from phase 4)
+   - `shieldDome` = OFF (no dome over the sky — the MCSM look)
+   - preset **MCSM** (default) — carries the Story-Mode beam/eye/teeth colours.
 
 ### 2.3 Recommended settings
 
 - Video Settings → Quality → **Custom Sky: ON**, **Sky / Sun & Moon: ON**
-- Shader Pack → Shader Options → **Story Mode Clouds: ON** (procedural),
-  **Dynamic Skybox: ON**, **Story Mode Lighting: ON**, **Wither Storm Teeth Glow: ON**
+- Shader Pack → Shader Options → **Cloud Rendering: fast** (procedural GLSL),
+  **Custom Skies: ON**
+- Story Mode colored lighting, the turquoise teeth glow and the matte
+  charcoal skin grade are compiled into the pack — always ON, no toggles.
 
 ---
 
@@ -54,12 +59,13 @@ Everything you need to install, verify, build, and publish the
 | Phase | Expected look |
 | :--- | :--- |
 | Any | Lavender zenith → orange horizon skybox; clock keeps running |
-| 4.0+ | Light-blue halo at the storm centre (stays to the end) |
+| 4.0+ | Thin white **cubic under-halo**; block pellets rip off the ground and spiral up the **abduction vortex**; teeth burn **cyan-white** |
 | 4.5 | Sky/fog turns **green** |
 | 5.0 | Sky/fog turns **turquoise** |
 | 5.1–5.9 | Giant colour-shifting centre blob (dark purple → magenta → pink/blue/black), heavy magenta/purple/black fog layer on the storm's **back**, moving with it |
-| 6.0+ | Bright **flash directly above the storm every 2 minutes**; blue 3D shield halos duplicated across **all three split heads**; backdrop swaps to the **ORANGE** layout |
-| 7.0+ | **Maximized purple flares** pulsing over the storm + heads; **Vortex model mesh** rotating/tumbling on top |
+| 6.0+ | Storm grows into the bigger devourer; thin cube rings spiral **clockwise** (diagonal + vertical); backdrop swaps to the **ORANGE** layout; bright **flash above the storm every 2 minutes** |
+| 7.0+ | **More rings**, wide outer ones counter-rotating; **maximized purple flares** pulsing over the storm + heads |
+| 8.0–9 | Cosmetic halos **die out**; three gigantic **counter-rotating** ring systems (ten nested rings each) engulf the sky; sky/fog burn **red/dark-orange inferno** |
 | Day/night | Cloud colour shifts (white/coral → periwinkle); **sun-cast shadows sweep the ground and water** |
 
 The storm body is **100% shader/GLSL** — no 3D shells, no PNG cloud sheets.
@@ -80,7 +86,7 @@ gradle build --no-daemon --stacktrace
 
 Output: `build/libs/dabywitherstormmod-1.9.61-26.2-beta.jar`
 
-Rebuild the two packs from the committed directories (flat zips, PNG-free check):
+Rebuild the two packs from the committed directories (flat zips, PNG-cloud + skybox-set checks):
 
 ```bash
 python3 tools/build_mcsm_packs.py
@@ -166,4 +172,5 @@ in `docs/releases/r1/SHA256SUMS.txt`.
 | Shadows missing on water | Re-select the shader pack (program list refresh), enable **Dynamic Skybox**. |
 | Mod not loading | Confirm Fabric API is installed, loader ≥ 0.19.3, Minecraft 26.2. |
 | Old-looking storm | A stale jar may be cached — rename the jar (CI builds are already renamed per run) or clear `.minecraft/mods` of older `dabywitherstormmod-1.9.60*` jars. |
+| Teeth look dim purple | Teeth Colour R/G/B drifted — reset to ≈ 0.45/1.0/1.0 (MCSM preset), and keep **Wither Storm Teeth Glow** compiled in (it has no toggle). |
 | PNG cloud sheets reappear after a rebuild | `tools/build_mcsm_packs.py` hard-fails if any `cloudTex` binding or cloud PNG sneaks back — keep the cloud programs procedural. |
