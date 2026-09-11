@@ -1,23 +1,24 @@
-# Devouring Storms 1.9.303 — the blob now shows in PURE VANILLA (no shader pack needed)
+# Devouring Storms 1.9.304 -- crash fix: towns auto-start once (no more server overload)
 
-**Why 1.9.303:** newest build, brand-new number, created right now.
+**Why 1.9.304:** hotfix for the 1.9.302 crash.
 
-**THE BIG FIX -- vanilla mode:** until now the Infinite Skybox Blob only
-rendered when a shader pack (Iris/OptiFine/Canvas) or FabricSkyBoxes was
-loaded. In plain vanilla Minecraft with just the mod, the blob never
-appeared, because the core-shader version reads the storm phase from
-shader uniforms that only shader packs bind, and the Java blob layer was
-gated to shader packs. Now `McsmStormSkyLayer` draws the full storm sky --
-phase dome + the infinite oval blob (dark core, smudge, flare, corrected
-hexes, no fog, opaque while near, 700-1600 block fade) -- whenever NO
-shader pack is running: **plain vanilla AND FabricSkyBoxes**. So the blob
-shows in every configuration:
-- **vanilla, no pack** -> McsmStormSkyLayer shell (new in 1.9.303)
-- **Iris / OptiFine / Canvas pack** -> pack sky + McsmBlobOval quads
-- **FabricSkyBoxes on** -> McsmStormSkyLayer shell
+**The crash:** the town auto-start guard compared the last ticked dimension
+against the current one, but the world tick runs for EVERY loaded dimension
+(overworld, nether, end and the mod's bowels dimension). The guard therefore
+tripped on every call: the structure queue was wiped every tick and the
+three Episode-1 schematics were re-enqueued endlessly -- the server overloaded
+("Can't keep up! ... ticks behind"), chunks timed out and the game hung.
 
-To see it in vanilla: install this jar, no shader pack, storm at phase
-5.0-6.95 within 1600 blocks, look toward the storm.
+**The fix:** the worldgen patch now manages the OVERWORLD only, keyed by the
+world's own identity, exactly once per world load, and it probes each site
+first so an already-built town is never rebuilt. Bonus: this same flaw was
+why `/ds towns build` appeared to do nothing -- the queue was being cleared
+before it could place. Towns now actually build, and they build once.
+
+**After updating:** load a NEW world (or delete the half-built one from
+1.9.302). The log should print the towns message exactly ONCE, then the
+Episode-1 cluster (Wilderness Treehouse, The Wilderness, EnderCon Town
+Fair) builds over a few seconds and the cast appears when you walk in.
 
 ## 1. Everything from the other line (1.9.201-1.9.220) is IN
 - **Story Mode NPCs (McsmNpcs)**: the canonical cast spawns at towns and
@@ -55,22 +56,22 @@ To see it in vanilla: install this jar, no shader pack, storm at phase
   to black.
 
 ## 3. Version
-Mods screen shows **1.9.303-26.2-beta-ds**; title screen, config screens
-and `/ds` show build **1.9.303**. Verified by CI annotation on the build.
+Mods screen shows **1.9.304-26.2-beta-ds**; title screen, config screens
+and `/ds` show build **1.9.304**. Verified by CI annotation on the build.
 
 ## Assets
-- `devouringstorms-1.9.303-26.2-beta-ds.jar` — the mod
-- `devouringstorms-shaderpack-v5-1.9.303.zip` — Iris shader pack
-- `devouringstorms-storylook-1.9.303.zip` — Story Look resource pack
-- `devouringstorms-superduper-default-1.9.303.zip` — Super Duper pack
+- `devouringstorms-1.9.304-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.304.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.304.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.304.zip` — Super Duper pack
 - `.sha256` checksums for verification
 
 ## Installing (so the old jar/pack can never win again)
 1. Delete EVERY `devouringstorms-*.jar` from your `mods/` folder.
-2. Download `devouringstorms-1.9.303-26.2-beta-ds.jar` from this release
+2. Download `devouringstorms-1.9.304-26.2-beta-ds.jar` from this release
    and put it in `mods/` alone.
 3. Delete the old pack folders from `shaderpacks/` (any folder starting
    with `devouringstorms`), then toggle "Built-in Shader Pack" OFF and ON
    once in the MCSM Control Panel -- the new pack reinstalls.
-4. In game: the mods screen must show `1.9.303-26.2-beta-ds`. If it shows
+4. In game: the mods screen must show `1.9.304-26.2-beta-ds`. If it shows
    ANY other number, that jar is not this build.

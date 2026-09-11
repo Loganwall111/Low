@@ -41,8 +41,8 @@ import net.minecraft.world.level.Level;
 @Mixin(McsmWorldgen.class)
 public abstract class McsmWorldgenPatch {
 
-    private static ServerLevel lastLevel;
-    private static boolean autoTownsDone = false;
+    private static ServerLevel lastOverworld;
+    private static ServerLevel autoTownsFor;
     private static final ThreadLocal<Boolean> RAISING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     // 1.9.302 -- the story starts itself: the Episode-1 opening cluster
@@ -56,42 +56,26 @@ public abstract class McsmWorldgenPatch {
     @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 0)
     private static void dabyws$wholeStructures(ServerLevel level, CallbackInfoReturnable<Integer> cir) {
         try {
-            if (lastLevel != level) {
-                lastLevel = level;
-                McsmWorldgen.clear();
-                autoTownsDone = false;
+            // 1.9.304 CRASH FIX -- the base registers this tick for EVERY
+            // loaded ServerLevel (overworld, nether, end AND the mod's
+            // bowels dimension). Keying the logic on a bare
+            // "lastLevel != level" flipped true on every invocation, so the
+            // queue was wiped every tick and the Episode-1 schematics were
+            // re-enqueued forever: the server overloaded ("Can't keep up!
+            // ... ticks behind") and the game hung. Manage the OVERWORLD
+            // only, keyed by its identity, once per world load. This is the
+            // same flaw that made /ds towns build look like a no-op: the
+            // queue was cleared before anything could place.
+            if (level.dimension() != Level.OVERWORLD) {
+                return;
             }
-            // 1.9.302: automatic Story Mode start (config-gated, once per world).
-            if (!autoTownsDone) {
-                autoTownsDone = true;
-                try {
-                    McsmExtrasConfig.load();
-                    if (McsmExtrasConfig.autoStartTowns && level.dimension() == Level.OVERWORLD) {
-                        int built = 0;
-                        for (String want : EPISODE_ONE_TOWNS) {
-                            for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
-                                if (!s.label().equalsIgnoreCase(want)) {
-                                    continue;
-                                }
-                                try {
-                                    McsmSchematic sch = McsmSchematic.load(
-                                            level.getServer().getResourceManager(), s.path());
-                                    McsmWorldgen.enqueue(sch,
-                                            new BlockPos(s.x(), s.y(), s.z()), s.label());
-                                    built++;
-                                } catch (Throwable ignored) {
-                                    // one town failing to load never stops the rest
-                                }
-                                break;
-                            }
-                        }
-                        McsmDiag.say("[ds] Story Mode towns are building (" + built
-                                + "/" + EPISODE_ONE_TOWNS.length
-                                + "). The cast spawns when you get near.");
-                    }
-                } catch (Throwable ignored) {
-                    // auto-start must never take the world tick down
-                }
+            if (lastOverworld != level) {
+                lastOverworld = level;
+                McsmWorldgen.clear();
+            }
+            if (autoTownsFor != level) {
+                autoTownsFor = level;
+                autoStartTowns(level);
             }
             // 1.9.194 native-memory fix: placing hundreds of thousands of
             // structure blocks in one tick forces Sodium/Iris to rebuild too
@@ -106,6 +90,48 @@ public abstract class McsmWorldgenPatch {
             }
         } catch (Throwable ignored) {
             // never take the world tick down — budget/NPC fail soft
+        }
+    }
+
+    /** 1.9.304 -- the story starts itself, exactly once per world load, and
+     *  never rebuilds a site that is already there (older world, or the
+     *  base's own Episode-1 flow got there first). */
+    private static void autoStartTowns(ServerLevel level) {
+        try {
+            McsmExtrasConfig.load();
+            if (!McsmExtrasConfig.autoStartTowns) {
+                return;
+            }
+            int built = 0;
+            for (String want : EPISODE_ONE_TOWNS) {
+                for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
+                    if (!s.label().equalsIgnoreCase(want)) {
+                        continue;
+                    }
+                    BlockPos origin = new BlockPos(s.x(), s.y(), s.z());
+                    try {
+                        // already built? skip (probe keeps re-builds and
+                        // double-builds from ever stacking up).
+                        if (level.isLoaded(origin) && !level.getBlockState(origin).isAir()) {
+                            break;
+                        }
+                        McsmSchematic sch = McsmSchematic.load(
+                                level.getServer().getResourceManager(), s.path());
+                        McsmWorldgen.enqueue(sch, origin, s.label());
+                        built++;
+                    } catch (Throwable ignored) {
+                        // one town failing to load never stops the rest
+                    }
+                    break;
+                }
+            }
+            if (built > 0) {
+                McsmDiag.say("[ds] Story Mode towns queued (" + built
+                        + "/" + EPISODE_ONE_TOWNS.length
+                        + "). The cast spawns when you get near.");
+            }
+        } catch (Throwable ignored) {
+            // auto-start must never take the world tick down
         }
     }
 
