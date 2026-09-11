@@ -1,24 +1,18 @@
-# Devouring Storms 1.9.222 — Infinite Skybox Blob, corrected decks, glow + version fixes
+# Devouring Storms 1.9.300 — the definitive build (Infinite Skybox Blob + everything, newest everywhere)
 
-**Why 1.9.222:** the previous blob release (`ds-1.9.221`) had been sitting
-on the releases page since an EARLIER porting attempt and still served that
-old jar -- the newest build never got its own number. This release is the
-newest build under a fresh tag, created now, so the mods screen, the title
-screen and the config screen show **1.9.222** and there is exactly ONE blob
-release on the page. (The other line's 1.9.216-1.9.220 releases are a
-different agent's work and are left untouched; they do not contain this
-blob build.)
+**Why 1.9.300:** this version number has NEVER existed before -- forced per
+the user's request so the game can never again read the jar as an old
+build. This release is created fresh right now, and it is the newest thing
+on the page: mods screen, title screen and config screens all show
+**1.9.300**.
 
-New in this build on top of the blob overhaul:
-- **Fix R3**: teeth + eyes glow per phase (5 = pure white with white aura,
-  5.5-5.9 cyan-white, 6 = greenish-blue, 7+ = green-white).
-- **Fix R4**: the blob now ALSO renders on the Iris shader-pack path (the
-  built-in pack, which is ON by default -- this is the path the game
-  actually uses): a Java layer draws the same infinite oval behind the
-  storm with ALPHA blending, opaque core, smoothstep smudge, and zero fog.
-- Blob opacity strengthened (opaque cinematic mass, no see-through haze).
+**Newest textures included:** this build also carries the other agent's
+latest asset work (the OG look skins, phase atlases, teeth emissive masks
+and the Totally Accurate CEM models) -- the textures that were missing from
+the previous jar are in this one, verified by file sync from that line's
+branch. So the in-game looks are current on BOTH fronts: sky blob + models.
 
-## 1. The glare is now Telltale's INFINITE SKYBOX BLOB
+ The glare is now Telltale's INFINITE SKYBOX BLOB
 The Wither Storm glare is not a 3D volume, not a billboard and not a cloud
 layer — it is a **separate infinite skybox projection tethered to the
 storm** (the same trick as the infinite-hallway portals), painted inside the
@@ -90,8 +84,8 @@ that silently did nothing unless the old value was shaped exactly like
 `1.9.200-26.2-beta` -- so the mods screen kept showing the base jar's old
 number and the game looked like it had loaded a build from before this
 release. The build now rewrites the version field as JSON (works for any
-old format), stamps **`1.9.222-26.2-beta-ds`**, and the title screen,
-config screens and `/ds` chat line all show build **1.9.222** -- the
+old format), stamps **`1.9.300-26.2-beta-ds`**, and the title screen,
+config screens and `/ds` chat line all show build **1.9.300** -- the
 number of THIS release.
 
 ## 3b. FabricSkyBoxes compatibility (NEW)
@@ -128,8 +122,8 @@ the sky behind the storm, the outer rings are translucent. No fog, no
 pixels, and it tracks the storm so you can never fly out of it.
 
 ## Assets
-- `devouringstorms-1.9.222-26.2-beta-ds.jar` — the mod
-- `devouringstorms-shaderpack-v5-1.9.222.zip` — Iris shader pack
-- `devouringstorms-storylook-1.9.222.zip` — Story Look resource pack
-- `devouringstorms-superduper-default-1.9.222.zip` — Super Duper pack
+- `devouringstorms-1.9.300-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.300.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.300.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.300.zip` — Super Duper pack
 - `.sha256` checksums for verification
