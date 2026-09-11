@@ -17,6 +17,11 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 1.9.215 R2 -- FabricSkyBoxes compatibility layer for the storm sky.
+ * 1.9.303 -- extended to PURE VANILLA: this is now the storm-sky layer for
+ * every configuration WITHOUT a shader pack (plain vanilla and
+ * FabricSkyBoxes mode). The core-shader blob only works when a shader pack
+ * binds the FogSkyEnd carrier uniforms, so vanilla alone never showed the
+ * storm sky -- this layer fixes that.
  *
  * The base mod ships its own FabricSkyBoxes skyboxes (day / night / sunset,
  * customSkyboxes = true by default). When the FabricSkyBoxes mod is loaded
@@ -38,15 +43,16 @@ import net.minecraft.world.phys.Vec3;
  *     mcsm_blob() in mcsm_visuals.glsl (1.55x0.90 ellipse, 0.18 rad tilt,
  *     dark core, smoothstep smudge, outer flare);
  *   * distance fade 700..1600 blocks: the shell alpha falls to zero and the
- *     regular FabricSkyBoxes sky slowly returns ("go extremely far away and
- *     the sky changes back to vanilla");
+ *     regular sky (vanilla or FabricSkyBoxes) slowly returns ("go extremely
+ *     far away and the sky changes back to vanilla");
  *   * terrain closer than the shell occludes it through the depth test
  *     (translucent pipeline, depth compare >=, no depth write), exactly
  *     like the sky-behind-terrain read of the reference frames.
  *
- * It only runs when the FabricSkyBoxes mod is loaded AND the base mod's
- * customSkyboxes toggle is on -- otherwise the core shader already owns the
- * sky and this layer would double it.
+ * It runs whenever NO shader pack owns the sky -- plain vanilla AND
+ * FabricSkyBoxes mode. With a shader pack loaded (Iris / OptiFine /
+ * Canvas), the pack's sky pass plus McsmBlobOval take over, so this layer
+ * steps aside and never doubles the blob.
  */
 public final class McsmStormSkyLayer {
 
@@ -97,15 +103,23 @@ public final class McsmStormSkyLayer {
     }
 
     private static boolean fabricSkyboxesLoaded() {
+        return modLoaded("fabricskyboxes");
+    }
+
+    /** reflective isModLoaded so the layer works with or without Fabric API's loader wiring */
+    private static boolean modLoaded(String id) {
         try {
             Class<?> loaderCls = Class.forName("net.fabricmc.loader.api.FabricLoader");
             Object loader = loaderCls.getMethod("getInstance").invoke(null);
-            Object ans = loaderCls.getMethod("isModLoaded", String.class)
-                    .invoke(loader, "fabricskyboxes");
+            Object ans = loaderCls.getMethod("isModLoaded", String.class).invoke(loader, id);
             return Boolean.TRUE.equals(ans);
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    private static boolean shaderPackLoaded() {
+        return modLoaded("iris") || modLoaded("optifine") || modLoaded("optifabric") || modLoaded("canvas");
     }
 
     private static ClientDistantStormManager.StormData nearestStorm(double maxDist) {
@@ -146,8 +160,16 @@ public final class McsmStormSkyLayer {
 
     public static void submit(LevelRenderContext ctx) {
         try {
-            // Only while FabricSkyBoxes would otherwise cover the storm sky.
-            if (!fabricSkyboxesLoaded() || !DabyWSClientConfig.customSkyboxes) {
+            // 1.9.303 -- the blob must exist in PURE VANILLA too. It never
+            // did before: the core-shader blob reads the storm phase from
+            // shader uniforms (FogSkyEnd etc.) that only shader packs bind,
+            // so in vanilla the sky pass always saw "no storm". This layer
+            // therefore runs whenever no shader pack owns the sky -- plain
+            // vanilla AND FabricSkyBoxes mode. When a shader pack (Iris /
+            // OptiFine / Canvas) is loaded, its sky pass draws the dome and
+            // McsmBlobOval draws the blob, so this layer steps aside.
+            boolean fbsSky = fabricSkyboxesLoaded() && DabyWSClientConfig.customSkyboxes;
+            if (shaderPackLoaded() && !fbsSky) {
                 return;
             }
             Minecraft mc = Minecraft.getInstance();

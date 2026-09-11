@@ -1,27 +1,23 @@
-# Devouring Storms 1.9.302 — Story Mode starts itself + command block tools + the sky stays NEW
+# Devouring Storms 1.9.303 — the blob now shows in PURE VANILLA (no shader pack needed)
 
-**Why 1.9.302:** newest build, brand-new number, created right now.
+**Why 1.9.303:** newest build, brand-new number, created right now.
 
-**The sky situation, solved:** earlier builds got confused with the OTHER
-line's releases (ds-1.9.216-1.9.220), which still draw the OLD orange sky,
-the old volumetric halo and the cube rings. THIS build has none of that:
-navy night, lavender-blue day, the corrected-hex storm dome, and the
-INFINITE SKYBOX BLOB on every render path (vanilla core shader,
-FabricSkyBoxes layer, Iris shader-pack oval). If you ever see an orange
-sky or a big halo shell behind the storm, the game is loading an old jar
-or an old shaderpack folder — see "Installing" below.
+**THE BIG FIX -- vanilla mode:** until now the Infinite Skybox Blob only
+rendered when a shader pack (Iris/OptiFine/Canvas) or FabricSkyBoxes was
+loaded. In plain vanilla Minecraft with just the mod, the blob never
+appeared, because the core-shader version reads the storm phase from
+shader uniforms that only shader packs bind, and the Java blob layer was
+gated to shader packs. Now `McsmStormSkyLayer` draws the full storm sky --
+phase dome + the infinite oval blob (dark core, smudge, flare, corrected
+hexes, no fog, opaque while near, 700-1600 block fade) -- whenever NO
+shader pack is running: **plain vanilla AND FabricSkyBoxes**. So the blob
+shows in every configuration:
+- **vanilla, no pack** -> McsmStormSkyLayer shell (new in 1.9.303)
+- **Iris / OptiFine / Canvas pack** -> pack sky + McsmBlobOval quads
+- **FabricSkyBoxes on** -> McsmStormSkyLayer shell
 
-New in 1.9.302:
-- **Story Mode auto-start**: the Episode-1 opening cluster (Wilderness
-  Treehouse, The Wilderness, EnderCon Town Fair) builds itself on the
-  first load of a fresh overworld -- no /ds towns start needed. The NPC
-  cast spawns as soon as you approach a built town. (Toggle:
-  `auto_start_towns` in the config.)
-- **Command block tool textures**: the lost command block tools set (axe,
-  hoe, pickaxe, shovel, sword, book + emissive layers + particles) is
-  ported from the orphan experiment branch into the built-in Story Look
-  pack, mapped onto the mod's real `cmdblockascension` item textures --
-  the command block weapons now show their command block skins in game.
+To see it in vanilla: install this jar, no shader pack, storm at phase
+5.0-6.95 within 1600 blocks, look toward the storm.
 
 ## 1. Everything from the other line (1.9.201-1.9.220) is IN
 - **Story Mode NPCs (McsmNpcs)**: the canonical cast spawns at towns and
@@ -59,22 +55,22 @@ New in 1.9.302:
   to black.
 
 ## 3. Version
-Mods screen shows **1.9.302-26.2-beta-ds**; title screen, config screens
-and `/ds` show build **1.9.302**. Verified by CI annotation on the build.
+Mods screen shows **1.9.303-26.2-beta-ds**; title screen, config screens
+and `/ds` show build **1.9.303**. Verified by CI annotation on the build.
 
 ## Assets
-- `devouringstorms-1.9.302-26.2-beta-ds.jar` — the mod
-- `devouringstorms-shaderpack-v5-1.9.302.zip` — Iris shader pack
-- `devouringstorms-storylook-1.9.302.zip` — Story Look resource pack
-- `devouringstorms-superduper-default-1.9.302.zip` — Super Duper pack
+- `devouringstorms-1.9.303-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.303.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.303.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.303.zip` — Super Duper pack
 - `.sha256` checksums for verification
 
 ## Installing (so the old jar/pack can never win again)
 1. Delete EVERY `devouringstorms-*.jar` from your `mods/` folder.
-2. Download `devouringstorms-1.9.302-26.2-beta-ds.jar` from this release
+2. Download `devouringstorms-1.9.303-26.2-beta-ds.jar` from this release
    and put it in `mods/` alone.
 3. Delete the old pack folders from `shaderpacks/` (any folder starting
    with `devouringstorms`), then toggle "Built-in Shader Pack" OFF and ON
    once in the MCSM Control Panel -- the new pack reinstalls.
-4. In game: the mods screen must show `1.9.302-26.2-beta-ds`. If it shows
+4. In game: the mods screen must show `1.9.303-26.2-beta-ds`. If it shows
    ANY other number, that jar is not this build.
