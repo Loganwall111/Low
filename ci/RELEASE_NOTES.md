@@ -1,3 +1,26 @@
+# 1.9.216 — the FULL 1:1 model ladder (all phases now real Telltale meshes)
+
+Every phase now renders a voxelised TRUE Telltale mesh instead of the
+hand-built models:
+
+- **p2.0-4.49** Stage A (three-headed small storm)
+- **p4.5-4.99** Stage A with debris
+- **p5.0-5.49** Stage B -- the 1:1 flesh model
+- **p5.5-5.99** Stage C Small
+- **p6.0-6.49** Stage C Big (the phase-6 body you wanted bigger)
+- **p6.5-6.99** Stage C Massive
+- **p7.0+** Stage D Center Massive
+- **severed storm** the real Deadass wreck, **severed head** the Deadass Left piece
+
+The converter was upgraded for this wave: per-column shell closure plus a
+finer voxel step on the Stage C models (0.9-1.5 block cubes) so the giant
+forms read as SOLID MASSES, not hollow shells -- 2.8k-12.2k boxes per model,
+each with textureOffsets from the real per-vertex UVs. All nine models pass
+the structural check (part/id/translate/boxes).
+
+The volumetric GLSL deck, true palettes, real halo shell, beams, vortex
+backdrop and ring textures from 1.9.214-1.9.215 all carry.
+
 # 1.9.215 — TRUE 1:1 Telltale models (first wave) + the volumetric GLSL storm deck
 
 ## The model swap has begun (real Telltale meshes)

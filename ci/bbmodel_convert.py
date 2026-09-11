@@ -213,6 +213,33 @@ def convert(src, dst, target_height, layers, part, max_boxes=9000,
             vox.feed(verts, faces)
         filled = vox.flood_fill()
 
+    # union fill across ALL elements closes the body where per-element shells
+    # are open, so big Telltale meshes voxelise as a solid mass
+    union = Voxelizer(step)
+    for e in elements:
+        verts, faces = element_cloud(e)
+        union.feed(verts, faces)
+    unionFilled = union.flood_fill()
+    # every union cell that no element covered becomes a body box
+    covered = set()
+    for (i, j, k) in filled:
+        covered.add((i, j, k))
+    bodyExtra = [b for b in union.boxes(unionFilled, mn, cx, cy_off, cz, scale, atlas)
+                 for b in [b] if (lambda bb: False)(b) or True]  # placeholder, built below
+    bodyExtra = []
+    for (i, j, k) in unionFilled:
+        if (i, j, k) in covered:
+            continue
+        x = (mn[0] + (i + 0.5) * step - cx) * scale
+        y = (mn[1] + (j + 0.5) * step - cy_off) * scale
+        z = (mn[2] + (k + 0.5) * step - cz) * scale
+        sz = step * scale
+        bodyExtra.append({
+            "coordinates": [round(x, 3), round(y, 3), round(z, 3),
+                            round(sz, 3), round(sz, 3), round(sz, 3)],
+            "textureOffset": [0, 0],
+        })
+
     models = []
     seen = set()
     for path, origin, rot, els in groups:
@@ -248,6 +275,14 @@ def convert(src, dst, target_height, layers, part, max_boxes=9000,
         if boxes:
             m["boxes"] = boxes
             models.append(m)
+    if bodyExtra:
+        models.append({
+            "part": part,
+            "id": "bodyFill",
+            "invertAxis": "xy",
+            "translate": [0, 0, 0],
+            "boxes": bodyExtra,
+        })
 
     with open(dst, 'w') as f:
         f.write(JEM_HEAD)
@@ -271,11 +306,24 @@ if __name__ == '__main__':
     outroot = sys.argv[2] if len(sys.argv) > 2 else \
         '/home/user/Lowuuuuuu/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod'
     jobs = [
+        # phase ladder: 1=p2.0-4.49, 2=p4.5-4.99, 3=p5, 4=p5.5, 5=p6, 6=p6.5,
+        #               7=p7+, 8=torn, 9=dismantled (see wither_storm.properties)
         ('Stage_A/witherstormStageA.bbmodel', 'wither_storm1.jem', 22, 40, 'mass'),
+        ('Stage_A/witherstormStageA_with_debris.bbmodel', 'wither_storm2.jem', 24, 42, 'mass'),
         ('Traced_shading_Textures/witherstormStageB (with traced shading textures).bbmodel',
          'wither_storm3.jem', 56, 46, 'mass'),
+        ('Traced_shading_Textures/witherstormStageC_Small (with traced shading textures).bbmodel',
+         'wither_storm4.jem', 66, 74, 'mass'),
+        ('Traced_shading_Textures/witherstormStageC_Big (with traced shading textures).bbmodel',
+         'wither_storm5.jem', 82, 74, 'mass'),
+        ('Traced_shading_Textures/witherstormStageC_Massive (with traced shading textures).bbmodel',
+         'wither_storm6.jem', 110, 76, 'mass'),
+        ('Traced_shading_Textures/witherstormStageD_Center_Massive.bbmodel',
+         'wither_storm7.jem', 96, 46, 'mass'),
         ('Wither_Storm_Deadass/witherstorm_Deadass.bbmodel', 'severed_wither_storm.jem',
          36, 36, 'head'),
+        ('Wither_Storm_Deadass/witherstormStageD_Deadass_Left.bbmodel',
+         'wither_storm_head.jem', 30, 30, 'head'),
     ]
     for rel, out, th, layers, part in jobs:
         convert(os.path.join(root, rel), os.path.join(outroot, out), th, layers, part)
