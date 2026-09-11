@@ -21,9 +21,11 @@ from pngutil import read_png, write_png
 
 ROOTS = ['jar-overrides/assets/dabywitherstormmod/textures/entity']
 NAMES = ['phase_4_assets_og', 'phase_4_assets_og_p55', 'phase_4_assets_og_p6', 'phase_4_assets_og_p7',
+         'phase_4_assets', 'phase_4_assets_p55', 'phase_4_assets_p6', 'phase_4_assets_p7',
          'devourer_assets_og', 'devourer_assets_og_p55', 'devourer_assets_og_p6', 'devourer_assets_og_p7',
-         'wither_storm_og']
-BODY_ONLY = {'wither_storm_og'}  # face atlas: no tentacle-tip zone
+         'devourer_assets', 'devourer_assets_p55', 'devourer_assets_p6', 'devourer_assets_p7',
+         'wither_storm_og', 'wither_storm']
+BODY_ONLY = {'wither_storm_og', 'wither_storm'}  # face atlases: no tentacle-tip zone
 
 def lum(p):
     return (p[0] * 299 + p[1] * 587 + p[2] * 114) // 1000

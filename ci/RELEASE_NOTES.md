@@ -1,3 +1,10 @@
+# 1.9.211 — classic skin atlases finally recoloured (the phase 4-5.9 "original" look is gone)
+
+- **Why phases 4-5.9 still looked like the ORIGINAL storm:** the skin pass only ever recoloured the `_og` atlas set. The texture selector can resolve the CLASSIC atlases (phase_4_assets, devourer_assets, wither_storm), which were never touched -- so some phases kept the vanilla grey body. The charcoal-indigo v2 pass now covers ALL 18 atlases, so every phase reads as the matte dark-charcoal-indigo Telltale body with crisp edge highlights, obsidian only at the tentacle tips.
+- Everything from 1.9.208-1.9.210 carries unchanged.
+
+**IMPORTANT -- you are on 1.9.202.** Almost everything you asked for has been fixed since then (sphere deleted, structured glare, debris/rings/glacier flakes, characters, shader default, settings fix, model sizes). Delete EVERY devouringstorms-*.jar in mods/ and install ONLY this one.
+
 # 1.9.210 — phase-crossing voice lines, structured glare baked into assets, brighter story water
 
 - **The cast now has phase-crossing VOICE LINES.** When the storm crosses phase 4, 5, 6, 7 or 8, a nearby character shouts in-character (with talk animation + villager voice sound) and the line lands in chat attributed to them: "It split its heads! THREE of them!", "The sky is BURNING...", "Stay OUT of the light!" etc. — three variants per phase, chosen at random.
