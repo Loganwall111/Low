@@ -169,7 +169,7 @@ public final class McsmStormRings {
                 double speed = (ccw ? -1.0D : 1.0D) * (0.030D + 0.010D * ringIdx);
                 double tilt = (ringIdx == 1) ? 14.0D : 0.0D;
                 double azim = ringIdx * 40.0D;
-                float a = fade * (0.55F + 0.45F * (1.0F - Math.abs(h)));
+                float a = fade * (0.55F + 0.45F * (1.0F - (float) Math.abs(h)));
                 ring(pose, consumer, c.add(0.0D, yOff, 0.0D), cam, r, tilt, azim, n, cube,
                         tSec * (float) speed, a, cr, cg, cb, ccw);
             }
