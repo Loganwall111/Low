@@ -404,6 +404,25 @@ if [ "${#FRESH_CLASSES[@]}" -gt 0 ]; then
   cp -r "${FRESH_CLASSES[@]}" "$FX/cls/"
 fi
 sed -i "s/\"version\": \"[0-9.]*-26.2-beta[a-z-]*\"/\"version\": \"${JAR_ID}\"/" "$FX/cls/fabric.mod.json"
+# MCSM 1.9.215 R2 -- the sed above only rewrites versions shaped exactly like
+# "<digits>-26.2-beta<letters>"; if the base jar's fabric.mod.json carries any
+# other format the rewrite silently does nothing and the mods screen keeps
+# showing the BASE jar's old number -- which reads as "the game loaded the
+# build from before this release". A JSON rewrite always stamps the current
+# version no matter what the old value looked like, and the notice below
+# makes the stamped value visible as a check-run annotation.
+python3 - "$FX/cls/fabric.mod.json" "$JAR_ID" <<'PYVER'
+import json, sys
+p, ver = sys.argv[1], sys.argv[2]
+d = json.load(open(p, encoding="utf-8"))
+old = d.get("version")
+d["version"] = ver
+with open(p, "w", encoding="utf-8") as f:
+    json.dump(d, f, indent=2)
+    f.write("\n")
+print(f"[build] fabric.mod.json version: {old} -> {ver}")
+PYVER
+echo "::notice title=jar version::fabric.mod.json version = ${JAR_ID} (mods screen shows this)"
 # Devouring Storms rebrand -- the DISPLAY name changes; the mod id
 # (dabywitherstormmod) and every registry namespace stay, because those are
 # compiled into the base jar and changing them without the source would break
@@ -825,6 +844,7 @@ sha256sum "$OUT" | tee "$OUT.sha256"
 
 {
   echo "Devouring Storms build ${JAR_ID}"
+  echo "mod version: ${JAR_ID} (fabric.mod.json)"
   echo "date:        $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "run:         ${GITHUB_RUN_ID:-local} (#${GITHUB_RUN_NUMBER:-local})"
   echo "base jar:    ${BASE} ($(stat -c%s "$BASE") B)"

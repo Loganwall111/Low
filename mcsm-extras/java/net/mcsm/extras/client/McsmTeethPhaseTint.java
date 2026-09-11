@@ -39,18 +39,22 @@ public final class McsmTeethPhaseTint {
             float r, g, b, inten;
             boolean glow;
             if (phase >= 7.0F) {
-                r = 0.45F; g = 1.00F; b = 0.62F; inten = 3.80F; glow = true;   // phase 7+: GREEN
+                // phase 7+: GREEN-WHITE glow (user 2026-09-11: "green White glow")
+                r = 0.78F; g = 1.00F; b = 0.85F; inten = 4.20F; glow = true;
             } else if (phase >= 6.0F) {
-                r = 0.72F; g = 1.00F; b = 1.00F; inten = 4.00F; glow = true;   // phase 6: cyan-white
+                // phase 6: greenish-blue, MORE blue (user 2026-09-11)
+                r = 0.50F; g = 0.85F; b = 1.00F; inten = 4.20F; glow = true;
             } else if (phase >= 5.5F) {
                 r = 0.72F; g = 1.00F; b = 1.00F; inten = 4.00F; glow = true;   // phase 5.5: cyan-white
             } else if (phase >= 5.0F) {
                 // 1.9.202 regression fix: glow=false hid the teeth overlay
-                // entirely ("no glowing teeth"). Phase 5 must still RENDER —
-                // completely white, with the overlay switched on.
-                r = 1.00F; g = 1.00F; b = 1.00F; inten = 3.80F; glow = true;   // phase 5: the ONLY pure-white phase
+                // entirely ("no glowing teeth"). Phase 5 must still RENDER --
+                // completely white, with the aura around the glow (user
+                // 2026-09-11: "During 5 they're meant to glow just white with
+                // an aura around the glow").
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 4.40F; glow = true;   // phase 5: the ONLY pure-white phase
             } else if (phase >= 4.0F) {
-                r = 0.72F; g = 1.00F; b = 1.00F; inten = 3.40F; glow = true;   // phase 4: cyan-white
+                r = 0.72F; g = 1.00F; b = 1.00F; inten = 3.60F; glow = true;   // phase 4: cyan-white
             } else {
                 r = 0.98F; g = 0.98F; b = 0.86F; inten = 0.0F; glow = false;  // phase 3: no glowing teeth
             }

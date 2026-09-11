@@ -3,9 +3,12 @@
 This release is the **1.9.215** build you know, rebuilt with the
 **Infinite Skybox Blob** sky overhaul folded in, plus **Sky Fix R2**
 (2026-09-11): corrected hex decks, navy night, and FabricSkyBoxes
-compatibility. It supersedes the earlier `ds-1.9.215` uploads (original
-commit archived as `archive-ds-1.9.215-2b054e1`, first blob port as
-`archive-ds-1.9.215-r1`).
+compatibility -- and **Fix R3**: the in-game version is always stamped
+correctly (the mods screen previously kept showing the base jar's old
+number) and the Wither Storm teeth + eyes now glow with the phase colours.
+It supersedes the earlier `ds-1.9.215` uploads (original commit archived as
+`archive-ds-1.9.215-2b054e1`, first blob port as
+`archive-ds-1.9.215-r1-b48b7d2`, Sky Fix R2 as `archive-ds-1.9.215-r2-81f20ad`).
 
 ## 1. The glare is now Telltale's INFINITE SKYBOX BLOB
 The Wither Storm glare is not a 3D volume, not a billboard and not a cloud
@@ -50,6 +53,28 @@ ground fog pool are untouched.
   built-in Iris v5 pack, the Java sky/fog tints, and the skybox PNGs.
 - Skybox PNGs (`mcsm_atmosphere/sky/*` and `glare/*`) regenerated from the
   corrected decks.
+
+## 3c. Teeth & eye glow (Fix R3)
+- The glow around the teeth and eyes now uses the **phase palette** instead
+  of the old hard blue: **phase 5 = pure white with a white aura**,
+  phase 5.5-5.9 = cyan-white, **phase 6 = greenish-blue (more blue)**,
+  **phase 7+ = green-white**. The mod pushes these colours every tick and
+  the glow shader now honours them.
+- The eye glow no longer dims to black: the shader previously scaled the
+  light by the bound texture's luminance, and the eye atlas tile is dark --
+  that is exactly why the eyes read dark. Textures now only shape the light.
+- Teeth mark textures retuned: phase 6 marks are bluer, phase 7 marks are
+  green-white (classic + OG skins).
+
+## 3d. Version number fix (Fix R3)
+The old build stamped the jar's `fabric.mod.json` with a text replacement
+that silently did nothing unless the old value was shaped exactly like
+`1.9.200-26.2-beta` -- so the mods screen kept showing the base jar's old
+number and the game looked like it had loaded a build from before this
+release. The build now rewrites the version field as JSON (works for any
+old format), stamps **`1.9.215-26.2-beta-ds`**, and the title screen,
+config screens and `/ds` chat line all show build **1.9.215** -- the
+number of THIS release.
 
 ## 3b. FabricSkyBoxes compatibility (NEW)
 The mod ships its own FabricSkyBoxes skyboxes (day/night/sunset,
