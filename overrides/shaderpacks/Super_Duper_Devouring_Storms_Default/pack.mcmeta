@@ -1,7 +1,10 @@
 {
   "pack": {
     "pack_format": 88,
-    "supported_formats": [88, 88],
-    "description": "Devouring Storms Super Duper Default shaderpack - optional, not auto-enabled for GL stability"
+    "supported_formats": [
+      88,
+      88
+    ],
+    "description": "MCSM Visual Shader - Minecraft: Story Mode look for Devouring Storms (soft coloured light, shadows, opaque water, no reflections/god rays)"
   }
 }

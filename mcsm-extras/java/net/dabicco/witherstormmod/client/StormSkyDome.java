@@ -10,14 +10,17 @@ import net.minecraft.world.phys.Vec3;
  * is phase-locked to the user strips.
  */
 public final class StormSkyDome {
-   // phase 5 teal
-   private static final float[] TEAL = new float[]{0.060F, 0.280F, 0.270F};
+   // 1.9.215 R2 -- CORRECTED 2026-09-11 hex decks:
+   //   phase 5   #161A1D / #2D423F / #6A9A78 (green)
+   //   phase 5.5 #0B0410 / #2D1442 / #87529C (purple & pink void)
+   //   phase 6   #1A1226 / #966173 / #D89874 (four-color sunset split)
+   private static final float[] TEAL = new float[]{0.176F, 0.259F, 0.247F};
    // phase 5.4 purple
-   private static final float[] PURP = new float[]{0.220F, 0.070F, 0.320F};
+   private static final float[] PURP = new float[]{0.176F, 0.078F, 0.259F};
    // phase 5.5 pink-magenta, restrained so normal night does not become purple
-   private static final float[] PINK = new float[]{0.380F, 0.120F, 0.320F};
-   // phase 6+ storm-grey with only a little purple undertone
-   private static final float[] SIX = new float[]{0.190F, 0.170F, 0.210F};
+   private static final float[] PINK = new float[]{0.529F, 0.322F, 0.612F};
+   // phase 6+ four-color sunset split (dusty rose base, amber horizon glow)
+   private static final float[] SIX = new float[]{0.588F, 0.380F, 0.451F};
    private static final double RANGE = 900.0;
    private static float displayed;
    private static float displayedCore;

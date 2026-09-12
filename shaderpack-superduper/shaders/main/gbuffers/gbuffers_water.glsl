@@ -278,11 +278,21 @@
                 #endif
 
                 #ifdef MCSM_DARK_OPAQUE_WATER
-                    // Minecraft: Story Mode water: not mirror glass. Keep the
-                    // shader shadowing, but force a dark, opaque blue albedo
-                    // and rough material data so reflection passes cannot shine.
+                    // Minecraft: Story Mode water: not mirror glass and NOT
+                    // near-black (1.9.208 -- "the water is way too dark").
+                    // Flat story-mode blue, opaque, rough: reflections cannot
+                    // shine and the lake reads bright against the dark storm.
                     float shallow = clamp(blockDepth * 0.060, 0.0, 1.0);
-                    material.albedo.rgb = mix(vec3(0.020, 0.045, 0.135), vec3(0.035, 0.085, 0.235), shallow);
+                    material.albedo.rgb = mix(vec3(0.105, 0.245, 0.415), vec3(0.16, 0.335, 0.53), shallow);
+                    // 1.9.212: vanilla-style flow stripes -- light diagonal
+                    // bands so the surface reads as moving water instead of a
+                    // flat blue sheet. 1.9.213: STATIC pattern -- the previous
+                    // version referenced frameTimeCounter, which this pack
+                    // never declares, and that broke the whole program.
+                    vec3 wpos = vertexWorldPos;
+                    float flow = sin((wpos.x + wpos.z) * 0.55 + wpos.y * 0.9);
+                    float band = smoothstep(0.55, 1.0, flow) * smoothstep(0.55, 0.0, -flow);
+                    material.albedo.rgb = mix(material.albedo.rgb, material.albedo.rgb * 1.28, band * 0.22);
                     material.albedo.a = max(material.albedo.a, 0.96);
                     material.metallic = 0.0;
                     material.smoothness = 0.0;

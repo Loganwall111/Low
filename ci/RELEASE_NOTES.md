@@ -1,356 +1,113 @@
-# 1.9.200 — Infinite Skybox Angular Smudge, uploaded skybox set
-
-- Added the Infinite Skybox Angular Smudge (`mcsm_infinite_smudge.glsl`, wired into `core/sky.fsh`): a direction-only field at infinity — not a 3D shape, not a screen overlay — so the cloud wall can never be physically approached. Centred on the dot product of the player's view vector and the storm direction, crushed 2.5x along the horizontal look axis, with a 5-octave 2D fbm loop (+ domain warp) tearing the edge gradients into organic ink-smear.
-- Hard-coded the exact extracted phase colour profiles into the smudge path: `u_StormPhase` 5 (green/teal energy, #161A1D/#2D423F/#6A9A78), 55 (deep purple void 5.5-5.9, #0B0410/#2D1442/#581C6E/#87529C) and 6 (endgame sunset split, #1A1226/#462A52/#966173/#D89874).
-- `u_StormProximity` (0..1) now travels Java->shader on the FogRenderDistanceStart carrier band 9100..9299 (written by `McsmBlobCarrierPatch`, fog-safe via the existing `mcsm_rd_start()` guard; `witherstorm_Proximity` uniform works on bound custom pipelines). The smudge lerps from a horizon ink-smear to a total 360-degree eclipse of the vanilla sky once fully inside the core.
-- Replaced the shipped main-world + phase skybox/sky gradients with the user's uploaded references: day ("skyday day"), midnight ("sky 2 midnight"), sunset ("storymode_sky_sunset"), phase 5 turquoise, phase 5.5-5.9 purple void, and the phase 6 sunset split — in both `textures/sky` and `textures/mcsm_atmosphere/sky`, in `src` and `jar-overrides`.
-
-# 1.9.200 (prior) — Sky City haze included in verified build
-
-- Includes the high-altitude Sky City blue haze blend in the published jar, ramping in above tall build heights without changing normal ground-level play.
-- Carries forward 1.9.199's thick storm-top oval halo/backdrop, command-block controls, OGS texture fallback, shader reflection/god-ray trim, and skybox audit.
-
-# 1.9.199 — thick MCSM storm halo, command-block controls, Story Mode shader trim
-
-- Reworked the storm wash into a thick storm-bearing oval/top-cap halo: a black upper shell plus saturated phase-colored core now wraps the Wither Storm sides/top instead of reading as thin horizon fog.
-- Added uploaded-reference-style day, midnight, sunset, phase 5, phase 5.5/5.9, and phase 6 sky/glare gradients into both mod assets and jar override assets.
-- Copied the OGS Wither Storm texture set directly into the mod namespace as a fallback in addition to the default-enabled OGS CEM resource pack, so the OG look is no longer dependent only on pack ordering.
-- Added command-block interactions: crouch/use opens the Devouring Storms control panel; normal use snaps nearby non-player entities out with DISCARDED removal instead of damage/death.
-- Shrunk and re-anchored the left inventory rail closer to the screen edge.
-- Added high-altitude Sky City blue haze blending and kept storm phase sky/fog distance-limited.
-- Stripped the packaged Super Duper default further toward Story Mode defaults: reflections/god-rays stay disabled while shadows, lighting, and dynamic sky remain.
-
-# Devouring Storms 1.9.198 — storm-anchored sky-volume glare, OGS default, shader safety
-
-This build follows the 1.9.197 test and the new MCSM references. The important correction is that the storm glare should not be a texture billboard/card: it should behave like a storm-attached skybox/fog volume behind the storm.
-
-* **Replaced the flat glare billboard with a curved sky-volume wash**: layered dome patches are projected onto a far sky shell around the camera in the storm's direction, creating a foggy MCSM backdrop/blob instead of a visible 2D card.
-* **Removed edge sparkle/dot fields from the glare** so the backdrop reads as atmospheric darkness/colour, not particles stuck to a rectangle.
-* **Uses vanilla translucent-emissive rendering for the sky volume** to avoid Iris custom pipeline warnings like missing `dabywitherstormmod:pipeline/storm_glow` / `storm_translucent` when external shaderpacks are active.
-* **Stops forcing `ShaderPackCompat.active()` false by default** when Iris/external shaders are on. No-shader play keeps the mod visuals, but external shaders no longer get our custom storm pipelines forced into their override lists.
-* **Adds `pack.mcmeta` to the bundled Super Duper shaderpack zips** and includes it in the embedded/release shaderpack packaging, improving Iris pack recognition.
-* **Restores the OGS CEM preset/model pack as a default-enabled built-in pack** and refreshes the default OGS body/tentacle/tractor textures from `Loganwall111/ogs-stuff/witherstormmod`.
-* **Recenters and fits the left HUD sidebar** so it sits in the vertical center area instead of being too low/cut off.
-* Heavy shaders are still optional rather than forced on, because the latest log shows native virtual-memory/pagefile failure when Super Duper shaders are enabled.
-
-# Devouring Storms 1.9.197 — soft MCSM glare, calm blue night, restored opening structures
-
-This build targets the first successful no-shader gameplay test after 1.9.196: the game runs, but the sky glare/duplicate-head cards, purple night wash, missing opening structures, and weak cyan teeth needed an immediate correction pass.
-
-* **Rebuilt storm glare textures as clean soft radial haze**: no embedded storm-face silhouettes, no hard square/card edges, and no big line-like texture artifacts.
-* **Disabled the duplicate phase-sky glare card path** so only one camera-space storm halo renders around the nearest storm instead of stacked billboards that looked like extra heads.
-* **Removed fake sky teeth/head overlays from the glare pass**; teeth should now come from the real storm model/emissive tint instead of a giant stamped sky texture.
-* **Reduced purple/pink storm sky strength** and made phase 6 more grey-black with only slight purple, so normal night is no longer globally purple. Existing old configs with max night opacity are migrated down.
-* **Restored first-spawn Episode One structure queue** to the treehouse, wilderness, and EnderCon opening cluster while keeping the safe 4096 blocks/tick placement budget.
-* **Boosted phase-dynamic cyan teeth/emissives**: phase 5 reads white-cyan, phase 5.5 glows white-cyan, phase 6 is stronger blue/cyan, and phase 7 is green-blue.
-* **Added only subtle purple underside tinting** to later body/devourer atlases while preserving the dark black/blue-black MCSM body.
-* Shaders are still shipped as release assets and installed as available shaderpacks, but are **not auto-enabled** after the user's NVIDIA/OpenGL `GL_OUT_OF_MEMORY` crash path.
-
-# Devouring Storms 1.9.196 — no-shader stability and readable dark storm body
-
-This build reacts to the no-shader test: the game can play without shaders, but the storm body became too black/silhouette-like and the remaining crash path is native/GL memory rather than Java code.
-
-* **OGS CEM is no longer default-enabled.** It is still extracted and available in Resource Packs, but the stable default keeps only Story Look auto-enabled. This avoids EMF/CEM loading the heaviest storm model pack automatically on Sodium/Iris/Nuit.
-* **Removes already-selected built-in OGS CEM from `options.txt` once**, so old profiles do not keep the heavy model pack selected after updating.
-* **Lifted the phase/body atlas brightness back up** to readable MCSM black/blue-black. It should no longer be a pure black silhouette, while still avoiding the rejected full-purple/full-blue body.
-* Keeps shaders default-off and the config preview default-off from 1.9.195.
-
-# Devouring Storms 1.9.195 — emergency GL/native-memory safe mode
-
-This build targets the new `GL_OUT_OF_MEMORY` / `Native memory allocation ... AllocateHeap` screenshots. The crash is coming from OpenGL/native buffers, so lowering Java heap alone is not enough.
-
-* **Managed Iris/Super Duper shaderpack is no longer auto-enabled by default.** The mod still ships it, but the stable default is now the resource-pack/core look; players can turn the shader back on from Shift+C after confirming the world is stable.
-* **Migrates older Devouring Storms configs to disable `embedded_shader_pack` once**, because old config files kept forcing the heavy shader back on even after installing a safer jar.
-* **If Iris is currently using `DevouringStorms-SuperDuperDefault.zip`, the installer switches Iris back to internal/no shader** when safe mode is active.
-* **The config screen’s live Wither Storm model preview now starts OFF** to avoid a huge dynamic-buffer spike just from opening the settings menu. The `Model` button can still turn it back on manually.
-* Keeps 1.9.194’s first-spawn/structure pacing and debris reductions.
-
-# Devouring Storms 1.9.194 — native-memory crash guard for first-spawn/chunk loading
-
-This build targets the new HotSpot fatal error: `Native memory allocation (malloc) failed ... Chunk::new`. That is not a normal Java exception; it means the JVM/native renderer ran out of native memory while chunks/models were being built.
-
-* **Stops first-spawn from queueing four large Story Mode schematic areas at once.** The first world now starts with the Wilderness Treehouse only; larger towns can still be built/summoned after the world settles.
-* **Spreads schematic placement across ticks** instead of forcing a near-whole structure in one tick, reducing Sodium/Iris chunk-mesh allocation spikes.
-* **Disables the heaviest storm debris/ejecta defaults** while keeping the body, teeth/eye glow, sky, water, HUD, and core Story Mode look active.
-* **Clears old per-pack shader option sidecars when the managed shaderpack updates**, so an older heavy Custom profile does not keep overriding the new safe defaults.
-* Keeps 1.9.193’s darker storm skin and visible phase-5 teeth.
-
-# Devouring Storms 1.9.193 — darker MCSM storm skin and visible phase-5 teeth
-
-This build corrects the screenshot where the phase-5/phase-6 preview still looked like a purple body with no readable teeth.
-
-* **Reworked phase-4/5, phase-5.5, phase-6 and phase-7 body/devourer atlases** so the storm is mostly black/blue-black like Minecraft: Story Mode, with only sparse purple/blue/teal panel scratches instead of a full purple or blue flood.
-* **Made phase-5 teeth visibly white** by keeping the teeth overlay enabled at a very low intensity and increasing the phase-5 white teeth mask opacity. It should read as white teeth without the huge bloom cloud reserved for phase 5.5+.
-* **Rebranded the base config title** from `Dabicco's Wither Storm` to `Devouring Storms` during jar assembly so the fresh build no longer looks like the old base screen.
-* **Preserved phase behavior:** phase 5.5 glows white, phase 6 shifts blue/cyan, and phase 7 shifts green-blue.
-* Keeps the 1.9.192 Fabric API 0.160 built-in resource-pack activation fix.
-
-# Devouring Storms 1.9.192 — Fabric 0.160 resource-pack activation fix
-
-This build follows up on the successful 1.9.191 launch log. The game is now loading the correct jar, but Fabric API 0.160 changed/renamed the built-in resource-pack activation API that the mod was reflecting.
-
-* **Fixed built-in Story Look / OGS CEM auto-registration on Fabric API 0.160+** by reflecting the actual `registerBuiltinResourcePack` activation parameter type instead of hard-coding the removed `ResourcePackActivationPredicate` class name.
-* **Keeps 1.9.191’s phase-6 texture correction and shader crash-safe defaults.**
-* The normal extracted `DevouringStorms-StoryLook.zip` / `DevouringStorms-OGS-CEM.zip` files still work manually, but the built-in default-enabled path should no longer print `ClassNotFoundException: ResourcePackActivationPredicate`.
-
-# Devouring Storms 1.9.191 — corrected phase-6 texture atlases and crash-safe shader defaults
-
-This build fixes the 1.9.190 texture miss: the body atlas was pushed too blue everywhere, and the head glow path was still not guaranteed to see the current phase before choosing the phase-6 atlas.
-
-* **Reverted the over-blue body flood** and replaced it with a more faithful phase-6 style: mostly black/blue-black silhouette with sparse deep sapphire rectangular scratches/panels.
-* **Added phase-specific phase-4/head/body atlases** (`phase_4_assets_p55/p6/p7` and OG variants) so phase 5.5, 6 and 7 can use different body/teeth palettes instead of one shared texture.
-* **Added phase-specific devourer atlases** (`devourer_assets_p55/p6/p7` and OG variants) for the split storm body.
-* **Rebuilt emissive teeth maps from only the bright teeth/mouth pixels**, instead of tinting the whole lower half cyan. This should stop the “whole thing blue” look and make the teeth colour stand out.
-* **Forced storm/head renderers to publish the current phase before texture selection**, so detached heads and body parts choose the correct phase-6/phase-7 texture path.
-* **Crash pressure reduced again**: bundled Super Duper bloom is now off by default, volumetric strength is zero by default, lens flare remains off, underwater caustics remain off, storm shadow heightmap is off, and debris particle/default pressure is capped lower.
-* I also generated a reference texture concept with image generation, but kept the in-game atlas UV-safe instead of directly pasting the generated sheet over the model UVs.
-
-# Devouring Storms 1.9.190 — Story Mode water, phase-dynamic teeth/beams, NPC spawn egg, and storm sway
-
-
-This build starts the next larger pass from your reference frames.
-
-* **Blue-black Wither Storm body skin pass**: normal/OG body atlases and phase/devourer atlases are pushed toward the dark bluish-black Story Mode look, while preserving the charcoal body shape.
-* **Phase-specific teeth behavior**: phase 3 has no teeth glow, phase 4 glows only slightly, phase 5 stays flat white, phase 5.5 glows white, phase 6 glows blue/cyan, and phase 7+ shifts to green-blue glow.
-* **New phase-7 emissive teeth textures** plus a transparent no-glow emissive texture for pre-glow phases.
-* **Tractor beams now recolor with storm phase/day-night atmosphere** instead of staying one solid pink/purple all the time.
-* **Standalone Story Mode Character Spawn Egg** registered as `dabywitherstormmod:story_character_spawn_egg`; it spawns named Story Mode cast NPCs without waiting for town population.
-* **Dark opaque Story Mode water shader defaults**: water is deep blue, mostly opaque, non-reflective, with caustics/rays/reflection shine disabled by default.
-* **Light rays/flaring reduced hard** in the bundled Super Duper shaderpack: lens flare off, volumetric strength near zero, underwater caustics off.
-* **Storm sky/fog fades back out with distance** so going far from the storm returns toward the calm vanilla/Story Mode sky instead of keeping the storm palette forever.
-* **Wither Storm body sway/summon animation pass**: early phases subtly tilt left/right; summon animation starts with a quick look-down/dipped pose then snaps upward.
-* **Ground block-fragment particles** now lift off blocks near the storm, matching the little cubed debris feel from the references.
-* **Death shockwave extended** from a few seconds to about 26 seconds so the purple/supernova pulse remains visible instead of disappearing immediately.
-* Added an **experimental visual infinite back-growth option**, off by default: `/ds storm backgrowth true` and `/ds storm backgrowth_speed <0.01..12>`.
-
-# Devouring Storms 1.9.189 — cyan storm teeth, slimmer HUD rail, and lower-reflection shader defaults
-
-
-This build reacts to the 1.9.188 test: Story Look now loads, the dark storm body looks good, but the phase 5.5/6 teeth need the cyan Story Mode glow and the Intel/Iris/Sodium setup is still running out of native memory.
-
-* **Brightened/cyan-shifted phase 5.5 and phase 6+ Wither Storm emissive teeth textures** for both normal and OG skin paths.
-* **Actually ticks the phase teeth/eye tint driver every rendered frame**, so the configured turquoise teeth glow updates for the current storm phase instead of sitting unused.
-* **Boosted the flat cyan mouth/teeth glow overlays** in the storm-face renderer for phase 5.5 and post-split phase 6+.
-* **Shrank and whitened the left inventory rail** so it fits the left side better and is less black.
-* **Removed heavy reflection defaults from the bundled Super Duper shaderpack**: previous-frame reflections, PBR/specular/environment material reflections, SSR, and rough reflections are disabled by default/profiles; shader bloom is reduced to a subtle value.
-* **Disabled the mod's full-resolution HDR storm bloom by default** to stop the Iris/Sodium native-buffer memory failure seen in the crash log. Teeth/eyes still use emissive cyan render passes.
-
-# Devouring Storms 1.9.188 — Sodium-safe Story Look and first-spawn story area fallback
-
-
-The screenshots confirmed the pack is no longer red/broken in vanilla Minecraft metadata terms, but Sodium still marks Story Look incompatible because it contains vanilla `minecraft:core/*` shader overrides. This build makes the external pack Sodium-safe and moves that look back to the mod/shaderpack path.
-
-* **Removed vanilla core shader overrides from the external Story Look resource pack** so Sodium should stop flagging `DevouringStorms-StoryLook.zip` as incompatible.
-* **Kept Story Look as a normal visual pack** for sky/environment/NPC textures while the jar and Iris shaderpack continue handling the shader look.
-* **Restored legacy schematic fallback assets in the jar** until the clean MC105/MC201 NBT blueprints are supplied, so `/ds towns build`, `/ds towns start`, and first-spawn fallback can actually place Story Mode areas again.
-* **First-spawn now falls back to the Episode One schematic cluster** if converted NBT blueprints are not present, placing/teleporting the player to the Wilderness Treehouse opening area instead of leaving them at an empty vanilla spawn tower.
-* **Lightened the Story Mode HUD rail** so the hotbar is less black and closer to the white/clear UI in the reference image.
-* **Capped full-res storm bloom strength** to reduce Iris/Sodium native-memory pressure while keeping the glow visible.
-
-# Devouring Storms 1.9.187 — 26.2 pack metadata + Story Look shader reload fix
-
-
-The latest log showed the exact problem: Minecraft 26.2 rejects packs above format 64 unless `min_format` and `max_format` are present. It also showed Story Look was overriding `minecraft:core/block` with an older fragment shader that did not match the 26.2 block vertex shader.
-
-* **Fixed generated Story Look and OGS CEM `pack.mcmeta` again**: they now include `pack_format: 88`, `min_format: [88, 0]`, and `max_format: [88, 0]`.
-* **Synced Story Look's block/terrain core shaders with the jar's 26.2 shader pair** so selecting the resource pack should no longer break `minecraft:pipeline/solid_block`, `cutout_block`, or `translucent_block` during reload.
-* Keeps the 1.9.186 HUD/camera/NPC changes.
-
-# Devouring Storms 1.9.186 — Story Mode HUD, camera, and town NPC pass
-
-
-This build starts the in-game interface and NPC cleanup requested from the reference screenshots while keeping the 1.9.185 resource-pack format fix.
-
-* **Changed the gameplay HUD toward the Minecraft: Story Mode layout**: the hotbar is now a large vertical left-side rail with a cream selection outline, selected-item label beside the rail, top-center effect/status callouts, lower-right gold action bars, and a small cyan prompt icon.
-* **Improved third-person framing** by pulling the detached camera farther back so the player has a better full-body/bridge view like the screenshots.
-* **Reduced Story Mode NPC population**: ambient cast now spawns only around actual story towns, with smaller town rosters and automatic cleanup for older overpopulated custom cast members found outside those towns.
-* **Started human-like NPC variants**: named story cast members now use humanized villager bodies/professions where available, with procedurally generated skin/type texture variants bundled directly in the jar and Story Look pack.
-* **Added simple interaction animation hooks**: talking NPCs look at the player, hop slightly, sparkle, and attempt a vanilla hand wave/swing when spoken to.
-
-# Devouring Storms 1.9.185 — Minecraft 26.2 resource-pack format fix
-
-
-## Resource packs
-
-* **Changed Story Look and OGS CEM resource packs to `pack_format: 88`**, the Minecraft 26.2 resource-pack format, so the Resource Packs screen should stop showing the broken/unknown-version confirmation prompt.
-* **Removed the broad `supported_formats` range** from those generated packs. The pack screen now receives one exact 26.2 format number instead of ambiguous compatibility metadata.
-* Because the build version changed, the mod will regenerate fresh `DevouringStorms-StoryLook.zip` and `DevouringStorms-OGS-CEM.zip` copies in your instance `resourcepacks/` folder.
-
----
-
-# Devouring Storms 1.9.184 — resource-pack recovery and visible storm texture fallback
-
-## Fixes
-
-* **Resource-pack recovery:** the jar still installs fixed `DevouringStorms-StoryLook.zip` and `DevouringStorms-OGS-CEM.zip`, but it no longer forces them selected. On launch it removes stale selected entries from `options.txt` so a previously failed reload does not keep breaking the pack screen. Enable the packs manually after launch to test them.
-* **Broader pack compatibility metadata:** Story Look and OGS CEM packs now include `pack_format` plus broad `supported_formats` so Minecraft 26.2 should not classify them as broken just because of pack-format metadata.
-* **Direct Wither Storm texture fallback:** brightened the main phase/devourer atlas textures and mirrored them into OG aliases so the in-world storm is not a completely black silhouette even without the resource pack enabled. This is a temporary direct-main fallback before final model/texture remapping.
-
----
-
-# Devouring Storms 1.9.183 — resource-pack failure fix and cleaner Story Mode UI
-
-## Fixes
-
-* **Fixed the built-in Story Look / OGS CEM resource-pack metadata** by restoring the required `pack_format` field. The previous `min_format`/`max_format`-only metadata could show as failed/incompatible in the Resource Packs screen.
-* **Kept forced extraction/selection of the visual packs** so the next version writes fresh fixed copies of `DevouringStorms-StoryLook.zip` and `DevouringStorms-OGS-CEM.zip` into the instance `resourcepacks/` folder.
-* **Cleaned the old config screen bridge**: removed the fixed overlay button that covered base buttons and replaced the duplicate Devouring Storms rows with one clean “Open Devouring Storms” row.
-* **Cleaned the Devouring Storms control panel layout** with Story Mode side borders, left-aligned/diagonal controls, and no giant duplicate top banner.
-* **Main menu no longer draws a second Devouring Storms logo** over the existing title art; it keeps only the cinematic frame and bottom build strip.
-
-Note: most `overrides/resourcepacks/*.zip` files in this checkout are still Git LFS pointer text, not real zips, so they cannot be converted/merged until hydrated/uploaded as real archives.
-
----
-
-# Devouring Storms 1.9.182 — lower-memory shaders, vanilla water, pack extraction
-
-## Fixes
-
-* **Disabled wavy/water shader features by default** in the managed Super Duper pack: water animation, water normal waves, water noise, foam, stylized absorption, and physics-ocean support are off so water behaves much closer to vanilla.
-* **Lowered shader memory pressure** by default: disabled SSR, volumetric lighting, colored/filtered shadows, and reduced default cloud/AA load. This targets the Sodium native-buffer allocation crash reported with shaders enabled.
-* **Calm night sky is now dark blue instead of pink/purple** in the managed Super Duper overworld settings. Pink/purple is reserved for Wither Storm phase 5.5+ atmosphere, not normal nighttime.
-* **Installs Story Look and OGS CEM as real resource-pack zips** into the instance `resourcepacks/` folder and writes them into `options.txt`, because the screenshots showed they were not selected in the normal Resource Packs screen.
-* **Shift+C now works from menus too**, not only when no screen is open, so testing it from the config screen should open the Devouring Storms panel.
-
----
-
-# Devouring Storms 1.9.181 — built-in OGS pack auto-enabled and audited
-
-## Conflict checks
-
-* **Registers the built-in OGS CEM resource pack as default-enabled** alongside Story Look, instead of merely embedding it in the jar. This is the piece that can make the restored model/resource-pack assets visible when compatible model/resource-pack loaders are present.
-* **Adds hard jar audits for the exact conflict symptoms:** required OGS texture/model paths must exist in the assembled jar, and the stale `MCSM extras 1.9.95` visible label must not survive assembly.
-* Keeps the 1.9.180 live build-number button and the 1.9.179 restored OGS assets.
-
----
-
-# Devouring Storms 1.9.180 — stale config label patched
-
-## UI / install diagnostics
-
-* **Patched the stale base config label** that still printed `MCSM extras 1.9.95` inside the original config screen even when the fresh jar was loaded. The build now rewrites that base class constant to the current Devouring Storms version during assembly.
-* **The fixed bottom-left control-panel button now includes the live build number**, making it obvious which jar is loaded.
-* Keeps the restored OGS Wither Storm assets from 1.9.179.
-
----
-
-# Devouring Storms 1.9.179 — original OGS Wither Storm assets restored
-
-## Models / textures
-
-* **Restored the original OGS Wither Storm asset set** from `Loganwall111/ogs-stuff/witherstormmod`: phase CEM models, segment/torn/dismantled models, head/body textures, pulse/emissive overlays, tentacle texture, tractor-beam particle, and OGS `colors.json`.
-* **Mirrored the assets into both namespaces**: `assets/witherstormmod/...` for the original OGS resource-pack layout and `assets/dabywitherstormmod/...` for this mod jar's runtime texture lookups.
-* **Added root texture aliases used by the current renderer** (`textures/entity/wither_storm.png`, `wither_storm_og.png`, and emissive phase aliases) so the storm does not fall back to a black/missing-texture silhouette when the old root assets are absent.
-* **Updated the built-in OG CEM resource pack** with the complete OGS CEM model list under both `witherstormmod` and `dabywitherstormmod`, while preserving the existing pack metadata.
-
-Note: if the config screen still says `MCSM extras 1.9.95`, Minecraft is loading an older jar/cache. This release identifies as `1.9.179` in the Devouring Storms control panel and in the mod metadata.
-
----
-
-# Devouring Storms 1.9.178 — first-spawn NBT world arrival
-
-## Structures
-
-* **First world arrival now uses the new NBT summon path.** On the first overworld tick with a player present, the mod attempts to summon the converted Story Mode blueprint world exactly where that player spawned/currently stands.
-* **Removed the old first-spawn dependency on broken `.schematic` files.** `McsmEpisodeSpawnMixin` now calls `McsmTemplateSummoner` / `StructureTemplateManager`; it no longer queues the legacy EnderCon schematic.
-* **Players are delivered into the summoned world once per session.** If the converted NBT files are present, first arrival gets the Episode One message and is teleported into the summoned spawn world.
-* **Fails open when uploads are still missing.** If `sky_city.nbt` and `beacontown.nbt` have not been generated yet, normal spawning is left alone and the manual `/ds towns summon` command reports the missing blueprint.
-
----
-
-# Devouring Storms 1.9.177 — broken schematics purged, NBT world summon path
-
-## Structures
-
-* **Old broken `.schematic` assets are purged from the assembled mod jar** during CI packaging. The legacy MCEdit schematic folder from the base jar is removed before release so the mod cannot silently keep using bad structures.
-* **Added `ci/convert_story_worlds.py`**, an NBT automation converter using Python `nbtlib`/nbttag-style parsing. It targets `world_data_temp/MC105/` and `world_data_temp/MC201/`, crops the standalone structural bounds, and writes `sky_city.nbt` plus `beacontown.nbt`.
-* **Writes both requested and runtime locations**: `src/main/resources/assets/dabywitherstormmod/structures/` for the requested asset path and `src/main/resources/data/dabywitherstormmod/structure/` for Minecraft `StructureTemplateManager` runtime loading.
-* **Added Java StructureTemplateManager summoning code**: `McsmTemplateSummoner` places the converted templates, and `/ds towns summon [world|beacontown|sky_city|all]` summons them at the player/spawn location.
-* **Added an item implementation template**: `McsmStructureSummonerItemTemplate` shows the clean custom Item hook for a future registered story-world summoner item.
-
-Note: this workspace did not currently contain `world_data_temp/MC105/` or `world_data_temp/MC201/`, so the converter was executed and reported those folders missing. Add/upload those folders and rerun `python3 ci/convert_story_worlds.py --require` to generate the final `.nbt` blueprints.
-
----
-
-# Devouring Storms 1.9.176 — Super Duper shaderpack embedded as managed default
-
-## Merge
-
-* **Imported the user-provided `here-here` shaderpack source** into `shaderpack-superduper/` and mirrored it into `overrides/shaderpacks/Super_Duper_Devouring_Storms_Default/`.
-* **The mod jar now embeds this pack as the managed Iris/Oculus default**. On launch, the built-in shaderpack installer writes `DevouringStorms-SuperDuperDefault.zip` into the instance `shaderpacks/` folder and selects it when Iris is available and no player-chosen pack is already selected.
-* **The original Devouring Storms shaderpack remains available** as `shaderpack-v5` and as a release asset, but the managed default inside the mod now comes from the Super Duper pack source you linked.
-* **No-Iris fallback still stays merged into the mod** through `mcsm-core-shaders/` plus the built-in Story Look resource pack.
-
----
-
-# Devouring Storms 1.9.175 — million-block stacked cloud strata
-
-## Fixes / Visuals
-
-* **1024 logical stacked cloud layers** now run through the Story Mode sky system from y=192 up to y=1,000,000. They are mathematically sampled instead of brute-forcing one thousand draw calls.
-* **Gigantic void gaps** separate the stack clusters: every 64-layer band only has a short visible deck cluster, followed by a long empty gap, so the high clouds do not become a solid wall.
-* **Ground view is protected**: high-altitude strata are camera-height gated and horizon-hidden, so normal gameplay keeps the usual nearby Story Mode clouds instead of seeing the million-block layers from the surface.
-* **No-Iris and Iris paths both updated**: the built-in/default core shader, Story Look resource pack, and Point of No Return Iris shaderpack all share the high-strata treatment.
-
----
-
-# Devouring Storms 1.9.174 — permanent Story Mode clouds
-
-## Fixes
-
-* **Shader clouds no longer disappear**: the Iris/Oculus `gbuffers_clouds` pass now owns a persistent Story Mode cloud layer with a safe alpha floor, white/lavender colour, storm tint, and procedural softness. Turning shaders on should not wipe the Story Mode cloud read anymore.
-* **Regular non-Iris clouds protected too**: the vanilla/core resource-pack cloud vertex shader now clamps the fade math so real cloud faces cannot fade to full transparent just because of camera height or shader pipeline differences.
-* **Merged default look stays in the mod**: Story Look remains embedded/built into the jar for no-shader play, and the override copies were refreshed from the same sources.
-
----
-
-# Devouring Storms 1.9.173 — version sync + Shift+C quick menu fix
-
-## Fixes
-
-* **Version metadata synced**: source `fabric.mod.json`, `gradle.properties`, runtime `BUILD_VERSION`, and `VERSION` now all identify the build as Devouring Storms instead of the old Dabicco 1.9.60 metadata. The mod id stays `dabywitherstormmod` for save/config compatibility.
-* **Shift+C quick access implemented**: added a client tick mixin that opens the Devouring Storms / MCSM Control Panel in-game with Shift+C. The 1.9.172 notes mentioned this shortcut, but the polling mixin was missing, so players could install a newer jar and still see old behavior.
-* **Winter Storm overrides refreshed**: the merged override copies of Story Look and the Point of No Return Iris shaderpack are refreshed from the latest 1.9.172 assets.
-
----
-
-# Devouring Storms 1.9.172 — The Point of No Return
-
-## Atmospheric VFX, Enhanced AI, Speaking Cast & Shaders Overhaul
-
-### 🌟 Atmosphere & Multi-Color Glare
-* **Multi-Color Radial Glare**: Replaced solid single-hue glare discs with rich multi-color radial gradients:
-  - Phase 4: Electric icy-cyan core with deep indigo falloff
-  - Phase 5: Vibrant blue center blending into cosmic purple with soft magenta highlights
-  - Phase 5.4: Smooth indigo-to-purple transition
-  - Phase 5.5: Dark outer perimeter, rich blue interior, dark purple halo matching ground truth frames
-  - Phase 6: Deep cosmic purple to dark violet cataclysmic aura
-* **Non-Euclidean Storm Glare**: Glare disc can now be world-anchored in the storm's local frame (`glareNonEuclidean`), allowing players to traverse behind the storm with true 3D spatial depth.
-* **Smooth Glare & Body Animations**: Config-driven pulsation, orbital sway, and phase-1 eye/jaw rhythmic throbbing.
-
-### 👥 Story Mode Inhabited Towns & Speaking Cast
-* **Town Populations**: Ground structures and towns now spawn the canonical Story Mode cast (Jesse, Petra, Axel, Olivia, Lukas, Gabriel, Ivor, Soren, Ellegaard, Magnus, Radar, Stella, Harper, etc.).
-* **Dialogue Progression**: Right-clicking NPCs advances story dialogue trees per player with ambient voice tones.
-* **Animations**: Natural walking, wandering, head tracking towards players, and speaking particle bursts.
-
-### 🌌 Sky & Dimension Overhauls
-* **Aurora Borealis Ribbons**: 4-color shimmering curtains (Blue, Pink, Purple, Orange) rippling across night skies.
-* **Snow Biome Celestial Band**: Gigantic icy-blue atmospheric arch encircling the sky dome in cold/snow biomes.
-* **Twinkling Multi-Colored Stars**: Dynamic twinkling star field with varied cosmic hues.
-* **Night Shooting Comets**: Periodic luminous shooting star streaks across the night dome.
-* **End Sky Cosmic Vortex**: Deep void black sky with a gigantic swirling purple vortex and dimensional reality rips along the horizon.
-
-### 🔮 Lighting & Particle VFX
-* **Portal Illumination**: Nether portals emit purple atmospheric glow and swirl motes; End portals emit dark void particles.
-* **Beacon Corona**: Radiant cyan light halo around active beacons.
-* **Nether Atmosphere**: Deep crimson fog and rising sparks/embers over lava lakes.
-* **Underwater Ambience**: Subtle crepuscular god rays and deep blue haze.
-* **Magical Sparkles**: Shimmering white, pink and purple particles around storm bodies and magical anchors.
-
-### ⚡ Enhanced Wither Storm AI
-* **Menacing Threat Tracking**: Prioritizes players holding beacons, formidibombs, or nether stars.
-* **Combat Aggression**: Predictive tentacle slams, roar cues, and aggressive pursuit.
-
-### 🎛 Control Panel & Settings
-* **MCSM Control Panel**: Complete scrollable in-game menu covering all visual, atmospheric, gameplay, and AI parameters.
-* **Quick Access**: Accessible via Wither Storm settings or Shift+C shortcut.
+# Devouring Storms 1.9.306 -- reference-shaped infinite skybox smear
+
+This build is based on the verified 1.9.305 line, not the older 1.9.200
+shader-only jar. It targets the screenshots showing a clean circular colour
+grade instead of the irregular, layered paint mass around the Wither Storm.
+
+- Reworked the core GLSL, FabricSkyBoxes, and active shader-pack blob paths
+  to use the same asymmetric FBM/domain-warped silhouette: unequal side
+  tongues, a low shoulder, an upper notch, torn edges, and internal colour
+  tongues. It is no longer a direct circle or a single radial grade.
+- Pulled the angular footprint closer to the storm bearing (38..60 degrees
+  before the size setting) while retaining the direction-only/infinite
+  behaviour: flying toward the skybox cannot reach a back face.
+- Kept the corrected phase palettes and blended them through the broken
+  contour: phase 5 teal/moss, phase 5.5-5.9 violet/magenta, and phase 6
+  dusty rose/amber vertical split.
+- Bumped the player-facing build to 1.9.306 so the installed jar cannot be
+  confused with the old 1.9.200 or the unmodified 1.9.305 release.
+
+Install the 1.9.306 jar by deleting older `devouringstorms-*.jar` files from
+`mods/` first. The Minecraft mods screen must show
+`1.9.306-26.2-beta-ds`.
+
+# Devouring Storms 1.9.305 (prior) -- the blob becomes a true infinite skybox smear
+
+**Why 1.9.305:** the blob looked like a flat disc floating in the world.
+
+**The problem:** on profiles where iris (or another shader mod) is merely
+INSTALLED with its pack turned off, the mod routed the blob to
+McsmBlobOval's four world-anchored oval quads -- 2D cards pinned at the
+storm's 3D position. That is exactly the "giant purple disc with a dark
+centre floating in mid air, extremely far away" you reported. A shader
+mod being present is not the same as a shader pack being IN USE.
+
+**The fix -- the blob is now a separate infinite skybox layer:**
+* the pack gate now asks IrisApi whether a pack is actually rendering the
+  sky, so vanilla pipelines (including iris with shaders disabled and
+  FabricSkyBoxes) always get the true sky layer;
+* the world-anchored quads are GONE on every path. The blob is painted as
+  an organic, noise-warped smear (an oval with two warped side lobes,
+  feathered edges, uniform body alpha, internal streak shading) on a
+  camera-centred sky sphere -- the sunrise-band / aurora construction you
+  described: infinite, tethered to the storm's bearing, gliding with it,
+  never approaching, with the vanilla sky visible above and around it;
+* the corrected 2026-09-11 hex decks (dark core, phase-5 greenish rim,
+  phase-5.5 royal magenta, phase-6 sunset split) are baked into the smear
+  on a noise-jittered radius, so the bands read as smeared paint, not
+  clean rings;
+* with a real shader pack active, the same smear draws at the storm's
+  distance (skybox depth), so every configuration now shows one identical
+  sky-blob.
+
+**After updating:** load any world during phases 5.0-6.95 and look at the
+storm. The blob is a huge messy purple smear across the sky behind the
+storm -- walk sideways and it stays glued to the storm; fly at it and it
+never gets closer (that is the infinite-skybox tell). Beyond ~1600 blocks
+from the storm it fades out and the regular sky returns.
+
+## 1. Everything from the other line (1.9.201-1.9.220) is IN
+- **Story Mode NPCs (McsmNpcs)**: the canonical cast spawns at towns and
+  sites, with dialogue, talk/laugh acting and phase-crossing voice lines.
+- **StoryCharacter humanoid entity** with 22 cast skins and its renderer.
+- **Real Telltale models**: Stage A / Stage B / Stage C Small/Big/Massive /
+  Stage D massive, the severed storm, the head, voxelised from the real
+  meshes (bbmodel -> jem), plus the per-phase growth slider.
+- **REAL Telltale Vortex model ported** (McsmVortexMesh) over the
+  procedural swirls, debris vortex, glacier tornado flakes, cube rings.
+- **OG look skins + charcoal-indigo atlas pass** on all 18 skin atlases.
+- **Teeth/eye glow root fix**: bloomStrength hard-floor 2.5, glowStrength
+  1.0, forced turquoiseTeeth/headEyeGlow, mini-storm teeth stay lit.
+- **Built-in shader pack auto-select + install fix**: the new pack replaces
+  the old one on update -- this is what previously left the OLD
+  orange/yellow sky on screen even after a new jar was installed.
+- shader default+auto-select, structured glare revamp (sphere deleted),
+  story water, per-phase model growth, tentacle girth, debris maxing.
+
+## 2. This line's sky work is IN (and stays the sky you approved)
+- **Infinite Skybox Blob** with the CORRECTED hexes: phase 5
+  `#161A1D/#2D423F/#6A9A78` (green), phase 5.5-5.9
+  `#0B0410/#2D1442/#581C6E/#87529C` (purple & pink void), phase 6
+  `#1A1226/#462A52/#966173/#D89874` (four-colour sunset split).
+- **Opaque, alpha-blended**: the dark core is near-opaque and truly darkens
+  the sky; the smudge rings bleed outward with smoothstep. NO vanilla
+  distance fog on the storm sky, ever (opaque cinematic layer).
+- Blob on EVERY path: core GLSL sky pass (vanilla), McsmStormSkyLayer
+  (FabricSkyBoxes on), McsmBlobOval (Iris shader-pack path -- the built-in
+  pack). Fully procedural, GL_LINEAR-equivalent, zero pixels.
+- **Day sky**: lavender-blue per the reference. **Night sky**: deep NAVY,
+  never purple. 700-1600 block distance fade back to vanilla sky.
+- **Teeth/eyes**: phase 5 = pure white with white aura, 5.5-5.9 cyan-white,
+  6 = greenish-blue (more blue), 7+ = green-white. Eye glow no longer dims
+  to black.
+
+## 3. Version
+Mods screen shows **1.9.305-26.2-beta-ds**; title screen, config screens
+and `/ds` show build **1.9.305**. Verified by CI annotation on the build.
+
+## Assets
+- `devouringstorms-1.9.305-26.2-beta-ds.jar` — the mod
+- `devouringstorms-shaderpack-v5-1.9.305.zip` — Iris shader pack
+- `devouringstorms-storylook-1.9.305.zip` — Story Look resource pack
+- `devouringstorms-superduper-default-1.9.305.zip` — Super Duper pack
+- `.sha256` checksums for verification
+
+## Installing (so the old jar/pack can never win again)
+1. Delete EVERY `devouringstorms-*.jar` from your `mods/` folder.
+2. Download `devouringstorms-1.9.305-26.2-beta-ds.jar` from this release
+   and put it in `mods/` alone.
+3. Delete the old pack folders from `shaderpacks/` (any folder starting
+   with `devouringstorms`), then toggle "Built-in Shader Pack" OFF and ON
+   once in the MCSM Control Panel -- the new pack reinstalls.
+4. In game: the mods screen must show `1.9.305-26.2-beta-ds`. If it shows
+   ANY other number, that jar is not this build.

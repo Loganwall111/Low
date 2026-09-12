@@ -129,8 +129,20 @@ fetch "https://libraries.minecraft.net/com/mojang/brigadier/1.3.10/brigadier-1.3
 # MCSM 1.9.133 -- the extras storm-blob resubmit references the Fabric
 # rendering context type, so the rendering-v1 module (+api-base) joins the
 # extras compile classpath, fetched exactly like build-source does it.
-FAPI_VER="$(curl -fsSL https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml \
-  | grep -oE '<version>[^<]*\+26\.2[^<]*</version>' | sed 's/<[^>]*>//g' | tail -1 || true)"
+FAPI_VER=""
+for attempt in 1 2 3; do
+  FAPI_META="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+      https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml 2>/dev/null || true)"
+  [ -z "$FAPI_META" ] && sleep 5 && continue
+  FAPI_VER="$(printf '%s' "$FAPI_META" \
+    | grep -oE '<version>[^<]*\+26\.2[^<]*</version>' | sed 's/<[^>]*>//g' | tail -1 || true)"
+  [ -n "$FAPI_VER" ] && break
+  # 1.9.209: if the exact +26.2 build tag vanished from metadata, fall back to
+  # any 26.x build so the rendering modules still land on the classpath.
+  FAPI_VER="$(printf '%s' "$FAPI_META" \
+    | grep -oE '<version>[^<]*\+26[^<]*</version>' | sed 's/<[^>]*>//g' | tail -1 || true)"
+  [ -n "$FAPI_VER" ] && break
+done
 mkdir -p "$DL/fapi2"
 : > "$DL/fapi2-list.txt"
 if [ -n "$FAPI_VER" ]; then
@@ -142,7 +154,7 @@ try:
 except OSError:
     open(sys.argv[2], "w").write("")
     sys.exit(0)
-want = {"fabric-rendering-v1", "fabric-api-base"}
+want = {"fabric-rendering-v1", "fabric-api-base", "fabric-object-builder-api-v1", "fabric-lifecycle-events-v1"}
 out = []
 for m in re.finditer(r'<dependency>\s*<groupId>([^<]+)</groupId>\s*<artifactId>([^<]+)</artifactId>\s*<version>([^<]+)</version>', pom):
     g, a, v = m.groups()
@@ -158,6 +170,12 @@ PYMOD
   done < "$DL/fapi2-list.txt"
 fi
 FAPI2_CP="$(find "$DL/fapi2" -name '*.jar' 2>/dev/null | tr '\n' ':')"
+FAPI2_COUNT="$(find "$DL/fapi2" -name '*.jar' 2>/dev/null | wc -l)"
+echo "[deps] fabric rendering modules on classpath: $FAPI2_COUNT"
+if [ "$FAPI2_COUNT" -lt 4 ]; then
+  echo "::error::fabric-api rendering modules missing from the compile classpath ($FAPI2_COUNT/4) -- the maven metadata fetch flaked; re-run the build"
+  exit 1
+fi
 
 
 # MCSM 1.9.100 -- close the loop: teach the sandbox the real API.
@@ -207,6 +225,25 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.minecraft.server.level.ServerPlayer net.minecraft.core.particles.ParticleType \
     net.minecraft.core.particles.DustParticleOptions net.minecraft.network.chat.Component"
   javap -public -classpath "$CP2" $LEVEL_CLASSES > ci/api/level.txt 2>&1 || true
+  # 1.9.204 -- entity/renderer API for the Story Mode character entity round.
+  ENTITY_CLASSES="net.minecraft.world.entity.EntityType net.minecraft.world.entity.EntityType\$Builder \
+    net.minecraft.world.entity.PathfinderMob net.minecraft.world.entity.Mob net.minecraft.world.entity.LivingEntity \
+    net.minecraft.world.entity.ai.attributes.AttributeSupplier net.minecraft.world.entity.ai.attributes.Attributes \
+    net.minecraft.world.entity.ai.goal.GoalSelector net.minecraft.world.entity.MobCategory \
+    net.minecraft.client.renderer.entity.HumanoidMobRenderer net.minecraft.client.renderer.entity.LivingEntityRenderer \
+    net.minecraft.client.renderer.entity.MobRenderer net.minecraft.client.renderer.entity.EntityRendererProvider\$Context \
+    net.minecraft.client.renderer.entity.EntityRenderers net.minecraft.client.renderer.entity.state.HumanoidRenderState \
+    net.minecraft.client.renderer.entity.state.LivingEntityRenderState net.minecraft.client.model.HumanoidModel \
+    net.minecraft.client.model.player.PlayerModel net.minecraft.client.model.geom.ModelLayers \
+    net.minecraft.client.model.geom.ModelLayerLocation net.minecraft.client.model.geom.builders.LayerDefinition \
+    net.minecraft.client.renderer.entity.ZombieRenderer net.minecraft.client.renderer.entity.AbstractZombieRenderer \
+    net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry \
+    net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry \
+    net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry \
+    net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder \
+    net.minecraft.core.registries.BuiltInRegistries net.minecraft.core.Registry net.minecraft.core.registries.Registries \
+    net.minecraft.resources.ResourceKey net.minecraft.resources.Identifier"
+  javap -public -classpath "$CP2:$FAPI2_CP" $ENTITY_CLASSES > ci/api/entity.txt 2>&1 || true
   unzip -Z1 "$DL/client.jar" 2>/dev/null | grep -E '^net/minecraft/(world/level|server/level|core/particles|client/particles|network/chat)/' \
     | sort > ci/api/api-classes-index.txt || true
   unzip -Z1 "$DL/client.jar" 2>/dev/null | grep -iE 'message' > ci/api/message-locations.txt || true
@@ -214,7 +251,7 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
   unzip -Z1 "$DL/client.jar" 2>/dev/null | grep -E '^net/minecraft/client/.*\.class$' | sort \
     > ci/api/client-index.txt || true
   wc -l ci/api/*.txt || true
-  if [ -s ci/api/client.txt ]; then
+  if [ -s ci/api/client.txt ] || [ -s ci/api/entity.txt ]; then
     git add -f ci/api || true
     if ! git diff --cached --quiet -- ci/api; then
       git -c user.email="ci@mcsm.local" -c user.name="MCSM build" \
@@ -231,6 +268,7 @@ chmod +x glslcheck/bin/glslang || true
 GLSL_LOG=/tmp/mcsm-glsl.log
 if python3 glslcheck/shimcheck.py mcsm-core-shaders \
      jar-overrides/assets/dabywitherstormmod/shaders/core/storm_glow.fsh \
+     jar-overrides/assets/dabywitherstormmod/shaders/core/mcsm_blob_oval.fsh \
      jar-overrides/assets/dabywitherstormmod/shaders/post/storm_sun_glow.fsh \
      > "$GLSL_LOG" 2>&1; then
   tail -2 "$GLSL_LOG"
@@ -341,6 +379,23 @@ if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f
 if [ -f "$CS/sky.fsh" ]; then cp -f "$CS/sky.fsh" "$CS/position.fsh"; cp -f "$CS/sky.vsh" "$CS/position.vsh"; fi
 echo "[build] 26.2 shader aliases: block<-terrain position<-sky"
 cp -r jar-overrides/* "$FX/cls/"
+# 1.9.206: src/main/resources was never overlaid -- the merged Story Look
+# textures (sun/moon, villager cast skins) and the story_character skins
+# silently missed every jar. Overlay it after jar-overrides.
+# Only assets/ (never its fabric.mod.json / mixins.json), and only files the
+# jar does not already have, so the tuned jar-overrides atlases stay in charge.
+if [ -d src/main/resources/assets ]; then
+  N_SRC=0
+  while IFS= read -r -d '' f; do
+    rel="${f#src/main/resources/}"
+    if [ ! -e "$FX/cls/$rel" ]; then
+      mkdir -p "$FX/cls/$(dirname "$rel")"
+      cp "$f" "$FX/cls/$rel"
+      N_SRC=$((N_SRC + 1))
+    fi
+  done < <(find src/main/resources/assets -type f -print0)
+  echo "[build] overlaid $N_SRC new files from src/main/resources/assets"
+fi
 # nullglob guard: on a failed javac the class dir is empty and a bare
 # `cp -r /tmp/mcsm-build/*` would die under set -e (that bug ate the jar).
 shopt -s nullglob
@@ -350,6 +405,25 @@ if [ "${#FRESH_CLASSES[@]}" -gt 0 ]; then
   cp -r "${FRESH_CLASSES[@]}" "$FX/cls/"
 fi
 sed -i "s/\"version\": \"[0-9.]*-26.2-beta[a-z-]*\"/\"version\": \"${JAR_ID}\"/" "$FX/cls/fabric.mod.json"
+# MCSM 1.9.215 R2 -- the sed above only rewrites versions shaped exactly like
+# "<digits>-26.2-beta<letters>"; if the base jar's fabric.mod.json carries any
+# other format the rewrite silently does nothing and the mods screen keeps
+# showing the BASE jar's old number -- which reads as "the game loaded the
+# build from before this release". A JSON rewrite always stamps the current
+# version no matter what the old value looked like, and the notice below
+# makes the stamped value visible as a check-run annotation.
+python3 - "$FX/cls/fabric.mod.json" "$JAR_ID" <<'PYVER'
+import json, sys
+p, ver = sys.argv[1], sys.argv[2]
+d = json.load(open(p, encoding="utf-8"))
+old = d.get("version")
+d["version"] = ver
+with open(p, "w", encoding="utf-8") as f:
+    json.dump(d, f, indent=2)
+    f.write("\n")
+print(f"[build] fabric.mod.json version: {old} -> {ver}")
+PYVER
+echo "::notice title=jar version::fabric.mod.json version = ${JAR_ID} (mods screen shows this)"
 # Devouring Storms rebrand -- the DISPLAY name changes; the mod id
 # (dabywitherstormmod) and every registry namespace stay, because those are
 # compiled into the base jar and changing them without the source would break
@@ -771,6 +845,7 @@ sha256sum "$OUT" | tee "$OUT.sha256"
 
 {
   echo "Devouring Storms build ${JAR_ID}"
+  echo "mod version: ${JAR_ID} (fabric.mod.json)"
   echo "date:        $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "run:         ${GITHUB_RUN_ID:-local} (#${GITHUB_RUN_NUMBER:-local})"
   echo "base jar:    ${BASE} ($(stat -c%s "$BASE") B)"

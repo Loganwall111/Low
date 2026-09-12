@@ -19,6 +19,11 @@
 //  Transitions are hard-ish (0.08-0.14 phase windows), matching how the
 //  Story Mode cutscene snaps colours between beats.
 //
+//  1.9.215.1 (port): day/night vaults retuned to the 2026-09-11 references
+//  (vivid mid-blue day with lilac horizon; PURPLE night, not blue). The
+//  storm glare is now the INFINITE SKYBOX BLOB (see mcsm_visuals.glsl)
+//  running through 5.00-6.95, and phase 6 uses the four-color sunset split.
+//
 //  Bodies (sun/moon) fade OUT as the storm matures - "the sun shining
 //  through the storm dome" was the wrong look; Story Mode kills it at 5.
 // ============================================================================
@@ -35,13 +40,16 @@ in vec3 mcsmCamRay;
 out vec4 fragColor;
 
 // ---- story gradients: index 0 = zenith, 5 = horizon (sampled) -------------
+// 1.9.215 R2 -- sampled from the reference PNGs (skyday + sky 2 midnight):
+// day = clear lavender-blue vault -> pale lilac horizon; night = DEEP NAVY
+// BLUE (the user flagged the night sky as wrongly purple -- it now matches
+// the midnight reference, never purple).
 const vec3 SKY_DAY[6] = vec3[](
-    // soft MCSM blue day (NOT blown white, NOT purple calm)
-    vec3(0.28, 0.38, 0.66), vec3(0.34, 0.44, 0.72), vec3(0.42, 0.50, 0.76),
-    vec3(0.50, 0.56, 0.78), vec3(0.58, 0.60, 0.80), vec3(0.66, 0.66, 0.78));
+    vec3(0.478, 0.455, 0.878), vec3(0.494, 0.490, 0.898), vec3(0.525, 0.555, 0.935),
+    vec3(0.584, 0.575, 0.937), vec3(0.664, 0.618, 0.941), vec3(0.753, 0.667, 0.949));
 const vec3 SKY_NIGHT[6] = vec3[](
-    vec3(0.02, 0.04, 0.14), vec3(0.03, 0.06, 0.22), vec3(0.05, 0.09, 0.32),
-    vec3(0.08, 0.14, 0.45), vec3(0.12, 0.20, 0.58), vec3(0.18, 0.28, 0.68));
+    vec3(0.031, 0.039, 0.204), vec3(0.055, 0.067, 0.306), vec3(0.106, 0.125, 0.471),
+    vec3(0.153, 0.192, 0.627), vec3(0.200, 0.263, 0.800), vec3(0.267, 0.361, 0.961));
 const vec3 SKY_DUSK[6] = vec3[](
     vec3(0.388, 0.122, 0.196), vec3(0.520, 0.150, 0.220), vec3(0.660, 0.200, 0.250),
     vec3(0.820, 0.290, 0.220), vec3(0.933, 0.400, 0.180), vec3(0.980, 0.560, 0.280));
@@ -71,37 +79,30 @@ vec3 mcsm_storm_dome(float up, float p) {
     // MCSM 1.9.71: every stop rescaled x0.46. Measured against the Story Mode
     // reference frames: build read ~(0.60,0.51,0.79) at zenith where the refs
     // read ~(0.15,0.10,0.18). Hue was already right; brightness was ~2.2x high.
-    vec3 d = mcsm_col(up, vec3(0.023, 0.138, 0.184), vec3(0.074, 0.267, 0.285), vec3(0.138, 0.396, 0.391)); // 5.0 turquoise
+    // 1.9.215 R2 -- 5.0 re-keyed to the CORRECTED green deck
+    // (#161A1D core / #2D423F mid / #6A9A78 edge), the same stops the
+    // phase-5 infinite blob smudge is painted from.
+    vec3 d = mcsm_col(up, vec3(0.086, 0.102, 0.114), vec3(0.176, 0.259, 0.247), vec3(0.416, 0.604, 0.471)); // 5.0 green
     d = mix(d, mcsm_col(up, vec3(0.138, 0.037, 0.193), vec3(0.239, 0.083, 0.239), vec3(0.331, 0.138, 0.285)),
             mcsm_ramp(p, 5.04, 5.12));                                                                // 5.1 pink-purple
     d = mix(d, mcsm_col(up, vec3(0.184, 0.046, 0.202), vec3(0.304, 0.110, 0.276), vec3(0.423, 0.193, 0.359)),
             mcsm_ramp(p, 5.15, 5.23));                                                                // 5.2 pinker
     d = mix(d, mcsm_col(up, vec3(0.028, 0.005, 0.064), vec3(0.074, 0.018, 0.110), vec3(0.138, 0.037, 0.175)),
             mcsm_ramp(p, 5.26, 5.34));                                                                // 5.3 dark purple
-    // MCSM 1.9.99 -- 5.5 stop RETUNED BY FIT against the reference frame
-    // (uploads/Screenshot 2026-09-04 182220). Measured per-cell on an 8x6 grid
-    // of the upper sky, our dome read too bright AND too red vs the reference:
-    // mean |dLum| 0.032, mean |dHue| 0.45. Grid search on (brightness, blue)
-    // put the optimum at 0.80x mid brightness / 1.50-1.80x blue -> dHue 0.34.
-    //   was: zenith (0.150,0.055,0.175) mid (0.330,0.118,0.282)
-    //        horizon (0.505,0.235,0.392)   -- lum 0.084 / 0.174 / 0.303
-    //   now: zenith (0.067,0.022,0.134) mid (0.099,0.032,0.150)
-    //        horizon (0.505,0.205,0.580)   -- lum 0.040 / 0.054 / 0.298
-    // The MID stop is the one that mattered: it alone drives elevations
-    // 10-45 deg, and it was 3.2x brighter than the reference there. The
-    // horizon stop keeps its brightness (its blue/red only goes 0.78 -> 1.15,
-    // so the low band stays pink-dominant) and the zenith is pushed darker
-    // still so looking straight up reads black. Fit score over 32 sky cells:
-    // mean |dLum| 0.0324 -> 0.0279, mean |dHue| 0.4529 -> 0.396.
-    // REVERT by restoring the "was" line if the pinker 1.9.96 sky is preferred.
-    d = mix(d, mcsm_col(up, vec3(0.055, 0.015, 0.120), vec3(0.180, 0.045, 0.220), vec3(0.720, 0.280, 0.480)),
-            mcsm_ramp(p, 5.42, 5.52)); // 1.9.168: pink horizon band like ACTIVE still                                                                // 5.5 violet-pink, near-black overhead (1.9.99 fit to reference)
-    // 5.7-5.9 keeps the user's "dark pink end" but takes a milder 1.3x blue so
-    // the sky does not snap back to pink the moment phase crosses 5.7.
-    d = mix(d, mcsm_col(up, vec3(0.080, 0.020, 0.140), vec3(0.280, 0.070, 0.300), vec3(0.650, 0.220, 0.420)),
-            mcsm_ramp(p, 5.70, 5.90)); // 1.9.168 pink end                                                                // 1.9.99 5.7-5.9: dark violet-pink end
-    d = mix(d, mcsm_col(up, vec3(0.099, 0.067, 0.108), vec3(0.162, 0.108, 0.159), vec3(0.265, 0.170, 0.207)),
-            mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 grey + bit of purple
+    // 1.9.215 R2 -- 5.5-5.9 re-keyed to the CORRECTED purple & pink deck
+    // (#0B0410 core / #2D1442 mid / #87529C horizon), replacing the 1.9.99
+    // fitted stops (the user's corrected palette supersedes the old fit).
+    d = mix(d, mcsm_col(up, vec3(0.043, 0.016, 0.063), vec3(0.176, 0.078, 0.259), vec3(0.529, 0.322, 0.612)),
+            mcsm_ramp(p, 5.42, 5.52));                                                                // 5.5 purple & pink void
+    // 1.9.215 R2 -- 5.7-5.9 holds the SAME corrected deck (one palette across
+    // the whole 5.5-5.9 window, matching the reference strips).
+    d = mix(d, mcsm_col(up, vec3(0.043, 0.016, 0.063), vec3(0.176, 0.078, 0.259), vec3(0.529, 0.322, 0.612)),
+            mcsm_ramp(p, 5.70, 5.90));                                                                // 5.7-5.9 same deck
+    // 1.9.215 R2 -- phase 6 = the CORRECTED four-color sunset split
+    // (#1A1226 zenith / #462A52 upper-mid / #966173 lower-mid / #D89874
+    // bottom), not the old grey wash. The phase-6 blob paints the same split.
+    d = mix(d, mcsm_col(up, vec3(0.102, 0.071, 0.149), vec3(0.431, 0.272, 0.386), vec3(0.847, 0.596, 0.455)),
+            mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 four-color sunset split
     // MCSM 1.9.81: retargeted from a REAL rendered frame (Screenshot
     // 2026-09-03 131242) measured against reference 144855. The 1.9.71 values
     // were right in average brightness but wrong in two ways:
@@ -132,7 +133,6 @@ vec3 mcsm_biome_tint(vec3 c) {
     push = mix(push, vec3(0.94, 0.99, 1.06), clamp((f.b - max(f.r, f.g)) * 2.0, 0.0, 1.0));
     return c * mix(vec3(1.0), push, w);
 }
-
 
 // Devouring Storms 1.9.175 -- high-atmosphere Story Mode cloud strata.
 // This is the no-Iris/default-mod twin of the shaderpack stack: 1024 logical
@@ -277,8 +277,6 @@ void main() {
                           (FogColor.b - FogColor.r) + 0.5 * (FogColor.g - FogColor.r));
         sky += mcsm_aurora(worldDir, clock, nightW, coolFog);
 
-        sky = mcsm_sky_high_strata(worldDir, sky, clock, mcsmP);
-
         // MCSM v8: sun halo in ordinary play. Blooms wider and hotter through
         // the late phases; mcsmP is 0 with no storm so this is the calm
         // baseline glow until things start going wrong.
@@ -331,11 +329,25 @@ void main() {
               * vec3(0.82, 0.66, 1.0) * 0.46;
     }
 
-    // 1.9.168 GLARE WIPE: mcsm_blob (dotted/oval halo on sky dome) DISABLED.
-    // User rejected floating circle + dots + line mesh. Phase sky colour still
-    // comes from mcsm_storm_dome below; thick 3D glare rebuilds later from stills.
-    // (aim carrier still written by Java for beams/fog — unused here.)
+    // 1.9.215.1 (port) -- THE INFINITE SKYBOX BLOB. The glare is a separate
+    // skybox layer tethered to the storm (u_StormPos), not a 3D volume: the
+    // dark-matter core masks the vanilla sky, the smudge bleeds over it, and
+    // rays outside the oval fall back to the plain dome ("looking the
+    // opposite direction fades back to normal"). Runs 5.00-6.95 (5 / 5.5-5.9
+    // / 6, the user's phase windows). The Java driver (McsmInfiniteSkyboxBlob)
+    // fades the aim carrier out with distance, so far-away skies return to
+    // vanilla on their own.
+    vec3 camWorld = vec3(CameraBlockPos) + CameraOffset;
+    vec4 aim = mcsm_boss_dir(camWorld);
+    if (aim.w > 0.5 && mcsmP >= 5.00 && mcsmP <= 6.95) {
+        vec4 blob = mcsm_blob(worldDir, aim.xyz, mcsmP, clock, dome);
+        // blob.w is the full occlusion factor (the dark core replaces the
+        // sky); blob.rgb is the premultiplied smudge emission layered over.
+        dome = dome * (1.0 - blob.w) + blob.rgb;
+    }
 
+    // 1.9.175 (position twin): the high-atmosphere Story Mode cloud
+    // strata stack, altitude gated from ground play.
     dome = mcsm_sky_high_strata(worldDir, dome, clock, mcsmP);
 
     // Bodies: tinted briefly at the start, then fade to nothing - no sun or

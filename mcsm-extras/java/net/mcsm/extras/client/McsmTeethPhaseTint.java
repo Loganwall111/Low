@@ -39,15 +39,22 @@ public final class McsmTeethPhaseTint {
             float r, g, b, inten;
             boolean glow;
             if (phase >= 7.0F) {
-                r = 0.44F; g = 1.00F; b = 0.92F; inten = 2.35F; glow = true;   // bright green-blue late storm
+                // phase 7+: GREEN-WHITE glow (user 2026-09-11)
+                r = 0.78F; g = 1.00F; b = 0.85F; inten = 4.20F; glow = true;
             } else if (phase >= 6.0F) {
-                r = 0.18F; g = 0.92F; b = 1.00F; inten = 2.45F; glow = true;   // stronger blue/cyan split teeth
+                // phase 6: greenish-blue, MORE blue (user 2026-09-11)
+                r = 0.50F; g = 0.85F; b = 1.00F; inten = 4.20F; glow = true;
             } else if (phase >= 5.5F) {
-                r = 0.82F; g = 1.00F; b = 1.00F; inten = 2.05F; glow = true;   // white-cyan teeth, glowing
+                r = 0.82F; g = 1.00F; b = 0.96F; inten = 4.00F; glow = true;   // phase 5.5: cyan-white
             } else if (phase >= 5.0F) {
-                r = 0.92F; g = 1.00F; b = 0.96F; inten = 0.70F; glow = true;   // phase 5: readable flat white with cyan edge, low bloom
+                // 1.9.202 regression fix: glow=false hid the teeth overlay
+                // entirely ("no glowing teeth"). Phase 5 must still RENDER —
+                // completely white, with the aura around the glow (user
+                // 2026-09-11: "During 5 they're meant to glow just white with
+                // an aura around the glow").
+                r = 1.00F; g = 1.00F; b = 1.00F; inten = 4.40F; glow = true;   // phase 5: the ONLY pure-white phase
             } else if (phase >= 4.0F) {
-                r = 0.72F; g = 0.98F; b = 1.00F; inten = 1.25F; glow = true;   // slight phase-4 cyan-white glow
+                r = 0.82F; g = 1.00F; b = 0.96F; inten = 3.60F; glow = true;   // phase 4: cyan-white
             } else {
                 r = 0.98F; g = 0.98F; b = 0.86F; inten = 0.0F; glow = false;  // phase 3: no glowing teeth
             }
@@ -57,15 +64,15 @@ public final class McsmTeethPhaseTint {
             DabyWSClientConfig.turquoiseTeethIntensity = inten;
             DabyWSClientConfig.turquoiseTeeth = glow;
 
-            // Tractor beams should follow the same sky/storm family instead of
-            // staying solid pink-purple all day. Keep them soft but phase-aware.
-            float day = 0.55F + 0.45F * (float)Math.sin((mc.level.getGameTime() % 24000L) / 24000.0D * Math.PI * 2.0D);
-            float br = phase >= 7.0F ? 0.42F : (phase >= 6.0F ? 0.30F : (phase >= 5.5F ? 0.78F : 0.62F));
-            float bg = phase >= 7.0F ? 0.96F : (phase >= 6.0F ? 0.64F : (phase >= 5.5F ? 0.52F : 0.30F));
-            float bb = phase >= 7.0F ? 0.86F : (phase >= 6.0F ? 1.00F : (phase >= 5.5F ? 1.00F : 0.95F));
-            DabyWSClientConfig.beamColorR = br * (0.82F + 0.18F * day);
-            DabyWSClientConfig.beamColorG = bg * (0.82F + 0.18F * day);
-            DabyWSClientConfig.beamColorB = bb;
+            // 1.9.217 -- beamColor tints the EYEBALL itself (WitherStormHeadRenderer.eyeTint).
+            // The eyes must read neon PURPLE, the beam colour constraint, not the
+            // teeth colours; day/night only nudges the brightness, never the hue.
+            float day = 0.30F + 0.70F * (0.5F + 0.5F * (float)Math.sin(
+                    (mc.level.getGameTime() % 24000L) / 24000.0D * Math.PI * 2.0D - Math.PI / 2.0D));
+            float eyef = phase >= 7.0F ? 0.55F : (phase >= 6.0F ? 0.78F : (phase >= 5.5F ? 0.92F : 0.66F));
+            DabyWSClientConfig.beamColorR = 0.62F * (0.55F + 0.45F * day) * eyef;
+            DabyWSClientConfig.beamColorG = 0.26F * (0.55F + 0.45F * day) * eyef;
+            DabyWSClientConfig.beamColorB = 1.00F * (0.62F + 0.38F * day);
         } catch (Throwable ignored) {
         }
     }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.dabicco.witherstormmod.entity.WitherStormEntity;
 import net.dabicco.witherstormmod.structures.McsmWorldgen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -51,6 +52,26 @@ public final class McsmNpcs {
     private static final Map<String, Integer> PROGRESS = new HashMap<>();
     private static final Set<String> ROSTER = new HashSet<>();
     private static final Set<String> STORY_TOWNS = new HashSet<>();
+    /** 1.9.210: highest storm phase this level has announced; drives the
+     *  cast's phase-crossing voice lines. */
+    private static int lastAnnouncedPhase = 0;
+    private static final String[][] PHASE_LINES = {
+            { "Look up! It's pulling itself into one piece!",
+              "Phase four... the point of no return. Everyone, the beacon!",
+              "It's whole again! And it's coming this way!" },
+            { "Phase five! The light is getting longer — stay OUT of it!",
+              "Five! The beams reach the ground now. Move!",
+              "It just got angrier. I can feel it through the stone." },
+            { "It split its heads! THREE of them, all looking at us!",
+              "Phase six... I've never seen anything like that smile.",
+              "The heads broke apart! What do we do with three storms?!" },
+            { "The rings... they're closing in around it!",
+              "Phase seven. The cubes are circling it like a cage.",
+              "It's building something up there. I don't want to see what." },
+            { "The sky is BURNING. This is the end of it!",
+              "Phase eight... run. Just run.",
+              "Everything is orange. Like the world caught fire." },
+    };
     private static final String[] SPAWN_EGG_CAST = {
             "Jesse", "Petra", "Axel", "Olivia", "Lukas", "Radar", "Ivor", "Gabriel",
             "Ellegaard", "Magnus", "Soren", "Harper", "Stella", "Nurm", "Jack", "Binta",
@@ -77,52 +98,79 @@ public final class McsmNpcs {
                 "That thing in the sky... it keeps getting bigger. Tell me you see it too.",
                 "The Order of the Stone would know what to do. They have to.",
                 "Reuben, stay close. I mean it.",
-                "We built this place. I'm not letting it get eaten." });
+                "We built this place. I'm not letting it get eaten.",
+        "It ate the whole horizon. It can eat the rest if we do nothing.",
+        "When it talks, it sounds like a whole world breaking."
+});
         LINES.put("Petra", new String[] {
                 "You're staring at it. Everyone stares at it.",
                 "I've fought a lot of things. Nothing that size.",
                 "If you're going out there, take a sword. Take two.",
-                "Don't get command-blocked into standing still. Move." });
+                "Don't get command-blocked into standing still. Move.",
+        "First light's the only time it looks almost calm."
+});
         LINES.put("Axel", new String[] {
                 "Griefing a storm. Now THAT'S a plan.",
                 "I've got TNT. I always have TNT.",
-                "You look about as calm as I feel. Which is not calm." });
+                "You look about as calm as I feel. Which is not calm.",
+        "It has a TRACTOR BEAM. Who puts a tractor beam on a storm?!"
+});
         LINES.put("Olivia", new String[] {
                 "Redstone won't fix this one. I already tried the math.",
                 "It's pulling blocks off the ground. Whole chunks of it.",
-                "Someone built that thing. On purpose. Think about that." });
+                "Someone built that thing. On purpose. Think about that.",
+        "The command block is the brain. Take the brain, take the storm."
+});
         LINES.put("Lukas", new String[] {
                 "The Ocelots are gone. Everyone's gone.",
                 "I keep writing it all down. Someone should remember this.",
-                "Stay near the beacon. The light helps." });
+                "Stay near the beacon. The light helps.",
+        "I saw it smile. Storms do not smile."
+});
         LINES.put("Radar", new String[] {
                 "Sir! Ma'am! Whichever! I have a clipboard and I'm ready!",
                 "I have scheduled the evacuation. Twice. Nobody signed it.",
-                "Beacon Town needs you. I need you. Mostly Beacon Town." });
+                "Beacon Town needs you. I need you. Mostly Beacon Town.",
+        "Statistically speaking, sir, we should be running."
+});
         LINES.put("Ivor", new String[] {
                 "It was a command block. It was ALWAYS a command block.",
                 "You want to know how to stop it? So does everyone.",
-                "Do not approach the tractor beam. I will not repeat that." });
+                "Do not approach the tractor beam. I will not repeat that.",
+        "The Formidi-Bomb was never the answer. It was the fuse."
+});
         LINES.put("Gabriel", new String[] {
                 "The Order stands. Whatever comes.",
                 "I have faced the Ender Dragon. This... this is different.",
-                "Keep your people together. That is the whole of it." });
+                "Keep your people together. That is the whole of it.",
+        "Stand your ground. The Order has never run."
+});
         LINES.put("Ellegaard", new String[] {
                 "Redstone engineering, not luck. That's what saves a town.",
-                "Bring me components and I'll bring you a chance." });
+                "Bring me components and I'll bring you a chance.",
+        "If it consumes a beacon, I want to know exactly how bright."
+});
         LINES.put("Magnus", new String[] {
                 "Blow it up! What? It's a strategy!",
-                "Boom Town would have loved this. Boom Town is gone." });
+                "Boom Town would have loved this. Boom Town is gone.",
+        "Boom Town was loud. This thing is louder."
+});
         LINES.put("Soren", new String[] {
                 "I built a machine to send us somewhere it isn't. It didn't work.",
                 "The formidi-bomb. It is the only answer I have left.",
-                "Do not tell the others I ran. Please." });
+                "Do not tell the others I ran. Please.",
+        "I did not mean for ANY of this. You must believe that."
+});
         LINES.put("Harper", new String[] {
                 "PAMA learned. That was the mistake. Everything after was consequence.",
-                "The terminal still answers. I wish it wouldn't." });
+                "The terminal still answers. I wish it wouldn't.",
+        "PAMA counted every block it took. One hundred and four thousand and two."
+});
         LINES.put("Stella", new String[] {
                 "Champion City would have handled this better. Obviously.",
-                "Do not touch my llama." });
+                "Do not touch my llama.",
+        "Champion City does not panic. We pose dramatically."
+});
         LINES.put("Nurm", new String[] { "Hrrm.", "Hrmmm!", "Hrm. Hrm hrm." });
         LINES.put("PAMA Terminal", new String[] {
                 "YOU WILL BE USEFUL.", "COMPLIANCE IS EFFICIENT.", "THE STORM IS NOT IN MY PARAMETERS." });
@@ -181,6 +229,7 @@ public final class McsmNpcs {
                 lastLevel = level;
                 POPULATED.clear();
                 PROGRESS.clear();
+                lastAnnouncedPhase = 0;
             }
             if (level.dimension() != Level.OVERWORLD || level.getGameTime() % 40L != 0L) {
                 return;
@@ -189,6 +238,7 @@ public final class McsmNpcs {
                 return;
             }
             pruneLegacyOverpopulation(level);
+            announcePhaseLines(level);
             for (McsmWorldgen.Site s : McsmWorldgen.layout()) {
                 if (s.floating() || POPULATED.contains(s.label()) || !STORY_TOWNS.contains(s.label())) {
                     continue;
@@ -216,6 +266,68 @@ public final class McsmNpcs {
         }
     }
 
+    /** 1.9.210 -- the cast has phase-crossing VOICE LINES: when the storm
+     *  crosses 4 / 5 / 6 / 7 / 8, nearby characters shout in-character and
+     *  the line lands in chat attributed to them. */
+    private static void announcePhaseLines(ServerLevel level) {
+        try {
+            if (level.players().isEmpty()) {
+                return;
+            }
+            int bestPhase = 0;
+            double sx = 0.0D, sy = 0.0D, sz = 0.0D;
+            for (Player p : level.players()) {
+                AABB scan = p.getBoundingBox().inflate(3200.0D, 512.0D, 3200.0D);
+                for (WitherStormEntity storm : level.getEntitiesOfClass(WitherStormEntity.class, scan)) {
+                    int pi = (int) Math.floor(storm.getPhase());
+                    if (pi > bestPhase) {
+                        bestPhase = pi;
+                        sx = storm.getX(); sy = storm.getY(); sz = storm.getZ();
+                    }
+                }
+            }
+            if (bestPhase < 4 || bestPhase <= lastAnnouncedPhase) {
+                return;
+            }
+            for (int t = 4; t <= 8 && t <= bestPhase; t++) {
+                if (lastAnnouncedPhase >= t) {
+                    continue;
+                }
+                String[] lines = PHASE_LINES[Math.min(t - 4, PHASE_LINES.length - 1)];
+                String line = lines[(int) (Math.random() * lines.length)];
+                for (Player p : level.players()) {
+                    if (p.distanceToSqr(sx, sy, sz) > 240.0D * 240.0D) {
+                        continue;
+                    }
+                    Mob speaker = null;
+                    AABB near = p.getBoundingBox().inflate(72.0D, 32.0D, 72.0D);
+                    for (Mob mob : level.getEntitiesOfClass(Mob.class, near)) {
+                        if (isManagedCast(mob)) {
+                            speaker = mob;
+                            break;
+                        }
+                    }
+                    if (speaker == null) {
+                        continue;
+                    }
+                    String name = speaker.getCustomName() == null ? "Villager" : speaker.getCustomName().getString();
+                    if (speaker instanceof net.mcsm.extras.entity.StoryCharacterEntity sc) {
+                        sc.talk(60 + line.length());
+                    } else {
+                        Vec3 v = speaker.getDeltaMovement();
+                        speaker.setDeltaMovement(v.x, Math.max(v.y, 0.25D), v.z);
+                    }
+                    p.sendSystemMessage(Component.literal("\u00a7d\u00a7l" + name + "\u00a7r\u00a77: \u00a7e" + line));
+                    p.level().playSound(null, speaker.getX(), speaker.getY(), speaker.getZ(),
+                            SoundEvents.VILLAGER_AMBIENT, SoundSource.NEUTRAL, 0.9F, 1.05F);
+                }
+            }
+            lastAnnouncedPhase = bestPhase;
+        } catch (Throwable ignored) {
+            // a missed shout is survivable; a crashed tick is not
+        }
+    }
+
     public static String[] storyCharacterNames() {
         return SPAWN_EGG_CAST.clone();
     }
@@ -233,8 +345,17 @@ public final class McsmNpcs {
                 ns = eid.substring(0, colon);
                 path = eid.substring(colon + 1);
             }
-            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE
-                    .getValue(Identifier.fromNamespaceAndPath(ns, path));
+            EntityType<?> type = null;
+            boolean story = false;
+            if ("minecraft".equals(ns) && "villager".equals(path)
+                    && net.mcsm.extras.entity.McsmEntities.STORY_CHARACTER != null) {
+                // 1.9.205: human cast are real player-shaped StoryCharacter entities
+                type = net.mcsm.extras.entity.McsmEntities.STORY_CHARACTER;
+                story = true;
+            }
+            if (type == null) {
+                type = BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.fromNamespaceAndPath(ns, path));
+            }
             if (type == null) {
                 type = BuiltInRegistries.ENTITY_TYPE
                         .getValue(Identifier.fromNamespaceAndPath("minecraft", "villager"));
@@ -248,7 +369,11 @@ public final class McsmNpcs {
             }
             mob.finalizeSpawn(level, level.getCurrentDifficultyAt(at),
                     manual ? EntitySpawnReason.COMMAND : EntitySpawnReason.STRUCTURE, (SpawnGroupData) null);
-            applyHumanVariant(mob, who, Math.floorMod(who.hashCode(), 16));
+            if (story && mob instanceof net.mcsm.extras.entity.StoryCharacterEntity sc) {
+                sc.setCharacter(who);
+            } else {
+                applyHumanVariant(mob, who, Math.floorMod(who.hashCode(), 16));
+            }
             mob.setCustomName(Component.literal(who));
             mob.setCustomNameVisible(true);
             mob.setPersistenceRequired();
@@ -388,21 +513,10 @@ public final class McsmNpcs {
             Object data = villager.getMethod("getVillagerData").invoke(mob);
             Class<?> vtype = Class.forName("net.minecraft.world.entity.npc.VillagerType");
             Class<?> prof = Class.forName("net.minecraft.world.entity.npc.VillagerProfession");
-            Object type = namedRegistryValue(vtype, switch (Math.floorMod(who.hashCode() + index, 6)) {
-                case 0 -> "plains";
-                case 1 -> "savanna";
-                case 2 -> "taiga";
-                case 3 -> "snow";
-                case 4 -> "desert";
-                default -> "jungle";
-            });
-            Object profession = namedRegistryValue(prof, switch (Math.floorMod(who.hashCode(), 5)) {
-                case 0 -> "cartographer";
-                case 1 -> "toolsmith";
-                case 2 -> "cleric";
-                case 3 -> "mason";
-                default -> "none";
-            });
+            // 1.9.201: deterministic outfit per character (the type textures are
+            // the Story Look skins), not a hash roulette.
+            Object type = namedRegistryValue(vtype, typeFor(who));
+            Object profession = namedRegistryValue(prof, profFor(who));
             if (type != null) {
                 data = data.getClass().getMethod("setType", vtype).invoke(data, type);
             }
@@ -412,6 +526,38 @@ public final class McsmNpcs {
             villager.getMethod("setVillagerData", data.getClass()).invoke(mob, data);
         } catch (Throwable ignored) {
         }
+    }
+
+    /** Story Look villager-type skin each named character always wears. */
+    private static String typeFor(String who) {
+        return switch (who) {
+            case "Jesse", "Stampy", "Jack", "Aiden" -> "plains";
+            case "Petra", "Stella", "Radar" -> "savanna";
+            case "Axel", "Magnus", "Ellegaard" -> "desert";
+            case "Olivia", "Harper", "Maya" -> "jungle";
+            case "Lukas", "Nurm" -> "taiga";
+            case "Ivor", "Soren", "Gabriel", "Binta", "Wink" -> "snow";
+            case "Otto", "Hadrian", "Dan" -> "swamp";
+            default -> switch (Math.floorMod(who.hashCode(), 6)) {
+                case 0 -> "plains";
+                case 1 -> "savanna";
+                case 2 -> "taiga";
+                case 3 -> "snow";
+                case 4 -> "desert";
+                default -> "jungle";
+            };
+        };
+    }
+
+    /** Matching profession so hats/robes do not fight the outfit. */
+    private static String profFor(String who) {
+        return switch (who) {
+            case "Ivor", "Soren" -> "cleric";
+            case "Olivia", "Harper" -> "toolsmith";
+            case "Ellegaard", "Magnus" -> "mason";
+            case "Radar", "Jack" -> "cartographer";
+            default -> "none";
+        };
     }
 
     private static Object namedRegistryValue(Class<?> holder, String name) {
@@ -508,8 +654,17 @@ public final class McsmNpcs {
                     mob.getClass().getMethod("swing", hand).invoke(mob, main);
                 } catch (Throwable ignoredSwing) {
                 }
-                Vec3 v = mob.getDeltaMovement();
-                mob.setDeltaMovement(v.x, Math.max(v.y, 0.28), v.z);
+                if (mob instanceof net.mcsm.extras.entity.StoryCharacterEntity sc) {
+                    String line = tree[i % tree.length].toLowerCase();
+                    if (line.contains("ha!") || line.contains("haha") || line.contains("hah")) {
+                        sc.laugh(40);
+                    } else {
+                        sc.talk(50 + Math.min(80, tree[i % tree.length].length()));
+                    }
+                } else {
+                    Vec3 v = mob.getDeltaMovement();
+                    mob.setDeltaMovement(v.x, Math.max(v.y, 0.28), v.z);
+                }
             }
         } catch (Throwable ignored) {
         }

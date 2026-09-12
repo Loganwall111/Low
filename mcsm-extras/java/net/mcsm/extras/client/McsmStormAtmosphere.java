@@ -92,26 +92,34 @@ public final class McsmStormAtmosphere {
         float wPurp = ramp(p, 5.20F, 5.42F) * (1.0F - ramp(p, 5.48F, 5.60F));
         float wPink = ramp(p, 5.48F, 5.65F) * (1.0F - ramp(p, 5.78F, 5.94F));
         float wLate = ramp(p, 5.78F, 5.92F) * (1.0F - ramp(p, 5.96F, 6.10F));
-        float wSix  = ramp(p, 5.95F, 6.20F);
-        float tot = wTeal + wPurp + wPink + wLate + wSix;
+        float wSix  = ramp(p, 5.95F, 6.20F) * (1.0F - ramp(p, 7.90F, 8.10F));
+        // 1.9.208: phase 8-9 -- the whole sky goes dark-orange/ember.
+        float w89   = ramp(p, 7.95F, 8.20F);
+        float tot = wTeal + wPurp + wPink + wLate + wSix + w89;
         if (tot < 0.02F) {
             return 0.0F;
         }
-        float[] teal = {0.02F, 0.28F, 0.25F};
-        float[] purp = {0.26F, 0.10F, 0.36F};
-        float[] pink = {0.48F, 0.16F, 0.40F};
-        float[] late = {0.34F, 0.12F, 0.48F};
-        float[] six  = {0.32F, 0.16F, 0.26F};
-        out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + late[0] * wLate + six[0] * wSix) / tot;
-        out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + late[1] * wLate + six[1] * wSix) / tot;
-        out[2] = (teal[2] * wTeal + purp[2] * wPurp + pink[2] * wPink + late[2] * wLate + six[2] * wSix) / tot;
+        // 1.9.215 R2 -- CORRECTED 2026-09-11 hex decks:
+        //   5   #161A1D / #2D423F / #6A9A78 (green skybox blob)
+        //   5.5 #0B0410 / #2D1442 / #87529C (purple & pink void)
+        //   6   #1A1226 / #966173 / #D89874 (four-color sunset split)
+        float[] teal = {0.176F, 0.259F, 0.247F};
+        float[] purp = {0.176F, 0.078F, 0.259F};
+        float[] pink = {0.529F, 0.322F, 0.612F};
+        float[] late = {0.435F, 0.243F, 0.477F};
+        float[] six  = {0.588F, 0.380F, 0.451F};
+        float[] e89  = {0.62F, 0.30F, 0.13F};
+        out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + late[0] * wLate + six[0] * wSix + e89[0] * w89) / tot;
+        out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + late[1] * wLate + six[1] * wSix + e89[1] * w89) / tot;
+        out[2] = (teal[2] * wTeal + purp[2] * wPurp + pink[2] * wPink + late[2] * wLate + six[2] * wSix + e89[2] * w89) / tot;
         // presence scales with phase weight; 5.5 is strongest purple-pink, and
         // fades back to calm/vanilla Story Mode sky when the player gets far
         // away from the storm.
         float blend = Mth.clamp(tot, 0.0F, 1.0F) * distanceInfluence();
         // Keep purple/pink as storm atmosphere only; do not repaint the entire
-        // normal night sky purple when the player is merely nearby.
-        return blend * 0.46F;
+        // normal night sky purple when the player is merely nearby. Phase 8-9
+        // commits harder -- the ember sky owns the horizon.
+        return blend * (0.46F + 0.34F * w89 / Math.max(0.001F, tot));
     }
 
     public static void tick() {

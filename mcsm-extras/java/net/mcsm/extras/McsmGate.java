@@ -3,11 +3,17 @@ package net.mcsm.extras;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.dabicco.witherstormmod.config.WitherStormConfigs;
 import net.dabicco.witherstormmod.config.WitherStormWorldConfig;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * MCSM 1.9.100 -- the "it's already written, it's just switched off" gate.
@@ -62,6 +68,55 @@ public final class McsmGate {
         LAST_SET.clear();
     }
 
+    // ---------------------------------------------------------------------
+    // 1.9.209 -- "some settings are not activating when I click on them".
+    //
+    // The base mod persists its screen into config/dabywitherstormmod-client.json
+    // and every gate run was stomping those choices back at session start, so a
+    // clicked setting looked dead. Now the gate reads that file once and NEVER
+    // forces any key the player has explicitly persisted to a different value.
+    // Fresh installs (no file yet) still get the full MCSM default.
+    // ---------------------------------------------------------------------
+    private static Map<String, Double> persisted = null;
+
+    private static Map<String, Double> persistedOverrides() {
+        if (persisted != null) {
+            return persisted;
+        }
+        persisted = new HashMap<>();
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.gameDirectory == null) {
+                return persisted;
+            }
+            Path p = mc.gameDirectory.toPath().resolve("config").resolve("dabywitherstormmod-client.json");
+            if (!Files.exists(p)) {
+                return persisted;
+            }
+            String text = Files.readString(p);
+            String[] keys = { "tentaclePhysics", "glareEjecta", "devourerDebrisGlow",
+                    "stormShadowHeightmap", "bloomStrength", "sunGlowStrength",
+                    "blackGlareStrength", "debrisAmount", "debrisDustParticles",
+                    "stormShadow", "sunGlow", "blackGlare", "headEyeGlow" };
+            for (String k : keys) {
+                Matcher m = Pattern.compile("\"" + k + "\"\\s*:\\s*(true|false|-?[0-9.]+)").matcher(text);
+                if (m.find()) {
+                    String v = m.group(1);
+                    persisted.put(k, "true".equals(v) ? 1.0 : "false".equals(v) ? 0.0 : Double.parseDouble(v));
+                }
+            }
+        } catch (Throwable ignored) {
+            // a moved config dir must cost the respect pass, never the gate
+        }
+        return persisted;
+    }
+
+    /** True when the player has persisted their own value for this key. */
+    private static boolean playerOwns(String name, double ourValue) {
+        Double v = persistedOverrides().get(name);
+        return v != null && Math.abs(v - ourValue) > 1e-9;
+    }
+
     private static String memKey(Class<?> owner, Object instance, String name) {
         return owner.getName() + ":" + name
                 + (instance == null ? ":static" : "@" + System.identityHashCode(instance));
@@ -94,10 +149,11 @@ public final class McsmGate {
         }
         McsmExtrasConfig.load();
         clientDone = true;
-        if (!McsmExtrasConfig.forceMcsmLook) {
-            McsmDiag.say("MCSM client gate disabled by mcsm_storm_extras.properties");
-            return;
-        }
+        // 1.9.208: the vanilla look is permanently disabled -- there is no
+        // "regular" presentation to fall back to any more. The MCSM gate
+        // always opens.
+        McsmExtrasConfig.forceMcsmLook = true;
+        McsmExtrasConfig.shaderPackGate = true;
         int changed = 0;
         try {
             Class<?> c = DabyWSClientConfig.class;
@@ -111,7 +167,11 @@ public final class McsmGate {
             changed += setBool(c, "phaseAnim", true);
             changed += setBool(c, "filledSubphases", true);
             changed += setBool(c, "scaledSubphaseGrowth", true);
-            changed += setBool(c, "tentaclePhysics", true);
+            // simulated tentacles look wrong per user feedback; off by default
+            changed += setBool(c, "tentaclePhysics", false);
+            // 1.9.208: the shader is the default. Everything the mod draws
+            // (sun glow, shadow map, teeth/eye glow) ports over the Iris
+            // program list via the ShaderPackCompat gate above.
             changed += setBool(c, "optimizeDistantAnimations", true);
             changed += setBool(c, "flatbackFlipFix", true);
             // Obsidian Gloss is the mod's built-in OG/MCSM texture set. The
@@ -119,12 +179,25 @@ public final class McsmGate {
             // textures stop falling back to the Classic orange/plain skin.
             changed += floorField(c, null, "stormSkin", 1.0);
 
+            // ---- 1.9.204: Story Mode neon-purple tractor beams ---------------
+            // Solid violet (0.55, 0.15, 1.0), near-opaque, so the eyes read as a
+            // powerful radiating light instead of a faint blue haze.
+            changed += floorField(c, null, "beamColorR", 0.55);
+            changed += ceilingField(c, null, "beamColorG", 0.15);
+            changed += floorField(c, null, "beamColorB", 1.0);
+            changed += floorField(c, null, "beamOpacity", 1.35);
+
             // ---- the halo / glare the user has been chasing ----------------
-            changed += setBool(c, "sunGlow", true);
+            // 1.9.212: the fake sun-glow card is off (the shader draws its
+            // own sun); the ORIGINAL oval Catalyst Halo is back on.
+            changed += setBool(c, "sunGlow", false);
             changed += setBool(c, "blackGlare", true);
-            changed += setBool(c, "glareEjecta", false);
+            changed += setBool(c, "glareEjecta", true);
+            changed += setBool(c, "cataclysmHalos", true);
+            changed += setBool(c, "atmospherePulse", true);
             changed += setBool(c, "headEyeGlow", true);
-            changed += setBool(c, "devourerDebrisGlow", false);
+            changed += setBool(c, "turquoiseTeeth", true);
+            changed += setBool(c, "devourerDebrisGlow", true);
 
             // ---- ground shadows for trees and mobs (user request) ---------
             changed += setBool(c, "trailerShadows", true);
@@ -156,16 +229,22 @@ public final class McsmGate {
             changed += ceilingField(c, null, "debrisDustParticles", 0.0);
             changed += ceilingField(c, null, "debrisAmount", 0.0);
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
-            changed += floorField(c, null, "stormGlowStrength", 1.0);
-            changed += ceilingField(c, null, "sunGlowStrength", 0.45);
-            changed += ceilingField(c, null, "blackGlareStrength", 0.65);
+            changed += hardFloorNum(c, null, "stormGlowStrength", 1.0);
+            changed += ceilingField(c, null, "sunGlowStrength", 0.0);
+            // 1.9.213: less black cover so the purple middle of the oval reads
+            changed += ceilingField(c, null, "blackGlareStrength", 0.45);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
-            changed += floorField(c, null, "glowStrength", 1.0);
-            // Full-res HDR storm bloom is the native-memory pressure point in
-            // the user's Iris/Sodium logs. Teeth/eyes stay emissive cyan through
-            // their render pass, but the expensive full-screen bloom buffer is
-            // off by default for stability.
-            changed += ceilingField(c, null, "bloomStrength", 0.0);
+            // 1.9.217: the teeth/eye emitter overlays MUST stay on -- a stale
+            // persisted 0 is what killed the emissiveness
+            changed += hardFloorNum(c, null, "glowStrength", 1.0);
+            // 1.9.213: the teeth read flat because the mod's bloom pass was
+            // zeroed -- the glow needs it. A moderate floor (raise-only, the
+            // player can push it higher) gives the teeth the emissive halo
+            // from the reference frames without the old full-res memory blowout.
+            // 1.9.217: with the shader active this integer rounds into
+            // shaderGlowGain (0->0.75x .. 3->2.1x). Floor at 2.5 so the
+            // teeth get the full 2.1x gain and the aura comes back.
+            changed += hardFloorNum(c, null, "bloomStrength", 2.5);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
@@ -231,6 +310,35 @@ public final class McsmGate {
         }
     }
 
+    /** 1.9.217: hard variant for LOOK-CRITICAL keys (teeth/eye glow).  The
+     *  player's choice wins only when it is already at or above our floor --
+     *  stale low values from old sessions get raised so the glow can never
+     *  silently die again. */
+    private static int hardFloorNum(Class<?> owner, Object instance, String name, double min) {
+        try {
+            Field f = owner.getField(name);
+            String key = memKey(owner, instance, name);
+            double cur = readNum(f, instance);
+            Object prev = LAST_SET.get(key);
+            if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
+                return 0;
+            }
+            if (persistedAtLeast(name, min)) {
+                return 0;   // player already has it this high or higher: theirs
+            }
+            double nv = writeNum(f, instance, Math.max(cur, min));
+            LAST_SET.put(key, nv);
+            return 1;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static boolean persistedAtLeast(String name, double min) {
+        Double v = persistedOverrides().get(name);
+        return v != null && v >= min - 1e-9;
+    }
+
     private static int setBool(Class<?> owner, String name, boolean value) {
         try {
             Field f = owner.getField(name);
@@ -239,6 +347,9 @@ public final class McsmGate {
             Object prev = LAST_SET.get(key);
             if (prev instanceof Boolean b && cur != b) {
                 return 0;   // changed after us (preset/player): leave it alone
+            }
+            if (playerOwns(name, value ? 1.0 : 0.0)) {
+                return 0;   // 1.9.209: persisted player choice wins
             }
             f.setBoolean(null, value);
             LAST_SET.put(key, value);
@@ -258,6 +369,9 @@ public final class McsmGate {
             if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
                 return 0;   // changed after us (preset/player): respect it
             }
+            if (playerOwns(name, Math.max(cur, min))) {
+                return 0;   // 1.9.209: persisted player choice wins
+            }
             double nv = writeNum(f, instance, Math.max(cur, min));
             LAST_SET.put(key, nv);
             return 1;
@@ -275,6 +389,9 @@ public final class McsmGate {
             Object prev = LAST_SET.get(key);
             if (prev instanceof Double d && Math.abs(cur - d) > 1e-9) {
                 return 0;
+            }
+            if (playerOwns(name, Math.min(cur, max))) {
+                return 0;   // 1.9.209: persisted player choice wins
             }
             double nv = writeNum(f, instance, Math.min(cur, max));
             LAST_SET.put(key, nv);

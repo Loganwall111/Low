@@ -3,7 +3,7 @@
 #moj_import <minecraft:dynamictransforms.glsl>
 
 // -----------------------------------------------------------------------------------
-// STORM GLOW -- the light around the Wither Storm's teeth.
+// STORM GLOW -- the light around the Wither Storm's teeth and eyes.
 //
 // Each glow is ONE camera-facing quad; this shader turns it into a round pool of light
 // whose brightness falls off smoothly from the centre. Doing the falloff per PIXEL is
@@ -21,6 +21,15 @@
 // of being washed out by it (same call as the storm's night glow). Fog can't simply be
 // mixed in here anyway -- the blend is ADDITIVE (ONE, ONE), so mixing toward the fog
 // colour would add a bright square across the whole quad.
+//
+// 1.9.215 R2 -- phase palette, not forced blue. The mod pushes the phase colour
+// through the VERTEX colour every tick (McsmTeethPhaseTint -> DabyWSClientConfig
+// .eyeColorR/G/B): pure white in phase 5 (the aura phase), cyan-white elsewhere,
+// greenish-blue in phase 6, green-white in phase 7. The old shader threw that away
+// with a hard re-hue to blue AND scaled the pool by the bound texture's luminance --
+// the eye glow binds a dark atlas tile, so the eyes dimmed to near-black. Now the
+// texture only SHAPES the light (alpha + a floor-capped luminance gate), and the
+// pool colour is the phase palette at full strength.
 // -----------------------------------------------------------------------------------
 
 uniform sampler2D Sampler0;
@@ -48,25 +57,29 @@ void main() {
     float halo = exp(-d2 * 2.0) * edge;
     float core = edge * edge;
 
-    float intensity = clamp(halo * 0.90 + core * 0.35, 0.0, 1.0) * vertexColor.a;
+    // The phase palette lives in the vertex colour; the texture only shapes the
+    // light. A dark atlas tile must never dim the pool to near-black again.
+    vec4 tex = texture(Sampler0, texCoord0);
+    float texLum = dot(tex.rgb, vec3(0.2126, 0.7152, 0.0722));
+    float texShape = clamp(0.30 + 0.70 * max(tex.a, texLum), 0.0, 1.0);
+
+    vec3 tint = vertexColor.rgb;
+    // Never let a dim tint pull the pool down; brighten low-luma colours up to
+    // 1.7x, leave bright ones alone. (Phase 5's pure white is untouched.)
+    float lum = max(dot(tint, vec3(0.2126, 0.7152, 0.0722)), 0.12);
+    vec3 rgb = tint * clamp(1.0 / max(lum, 0.55), 1.0, 1.7);
+
+    // The brightest part washes toward white so the centre reads as over-exposed
+    // light: phase 5 = pure white teeth with a white aura, other phases keep
+    // their colour everywhere except the hot heart.
+    rgb = mix(rgb, vec3(1.0), core * 0.25);
+
+    // Slight floor so even a dim Java-side alpha still reads as a glow, never black.
+    float a = clamp(vertexColor.a * 1.15 + 0.07, 0.0, 1.0);
+    float intensity = clamp((halo * 0.90 + core * 0.35) * 1.15, 0.0, 1.0) * a * texShape;
     if (intensity <= 0.003) {
         discard;
     }
-
-    // MCSM 1.9.96 -- SILHOUETTE GOES BLUE (user: "I would like that silhouette glow
-    // to be blue"). The Java side feeds warm/purple vertex colours; the palette now
-    // lives HERE so every caller goes blue at once. Luminance-preserving re-hue:
-    // the pool keeps exactly the brightness it had, only the chroma moves.
-    vec3 tint = vertexColor.rgb * texture(Sampler0, texCoord0).rgb;
-    float mcsmLum = max(dot(tint, vec3(0.2126, 0.7152, 0.0722)), 0.0005);
-    const vec3 MCSM_BLUE = vec3(0.20, 0.45, 0.95);
-    tint = MCSM_BLUE * (mcsmLum / dot(MCSM_BLUE, vec3(0.2126, 0.7152, 0.0722)));
-    // The brightest part still washes toward white but ONLY barely (0.22 -> 0.08):
-    // the old 0.22 white core is what covered the turquoise teeth marks with a white
-    // glow -- the user asked to "take off the white glowing teeth, leave the teeth
-    // white, and put a turquoise glow on top". The turquoise mark textures draw
-    // through the nearly-unwashed centre now; this pool supplies the blue halo.
-    vec3 rgb = mix(tint, vec3(1.0), core * 0.08);
 
     // ADDITIVE blending is (ONE, ONE) -- the alpha channel is ignored by the blender,
     // so the falloff has to be premultiplied into the colour itself.

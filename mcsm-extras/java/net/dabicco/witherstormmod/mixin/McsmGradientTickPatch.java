@@ -2,14 +2,17 @@ package net.dabicco.witherstormmod.mixin;
 
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+import net.dabicco.witherstormmod.client.ClientDistantStormManager;
 import net.dabicco.witherstormmod.client.StormSkins;
 import net.dabicco.witherstormmod.client.StormSkyGradient;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.mcsm.extras.McsmDiag;
 import net.mcsm.extras.McsmGate;
 import net.mcsm.extras.client.McsmClientBlasts;
+import net.mcsm.extras.client.McsmStormDebris;
 import net.mcsm.extras.client.McsmClientChat;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import org.joml.Matrix4fc;
@@ -112,8 +115,35 @@ public abstract class McsmGradientTickPatch {
             // has been removed, and this hook runs for as long as the world is
             // being rendered. It steps at most once per game tick internally.
             McsmClientBlasts.tick();
+            // 1.9.204 -- Story Mode debris/dust vortex around every storm.
+            McsmStormDebris.tick();
+            // 1.9.208 -- volumetric beam strength rides the time of day:
+            // near-noon the tractor beams flare hardest; deep night they
+            // dim to a faint purple shaft. Written live every frame so the
+            // base renderer picks the value up as it draws.
+            mcsm$beamDayNight(cameraState);
+            // 1.9.218 -- push the storm into the shader's infinite sky blob
+            // (uStormPos / uStormPhase / uGlareSize) -- see McsmSkyBlob.
+            net.mcsm.extras.client.McsmSkyBlob.push();
         } catch (Throwable ignored) {
             // Never let a visual helper break the frame.
+        }
+    }
+
+    /** Day/night beam modulation; a bad field name must cost nothing. */
+    private static void mcsm$beamDayNight(Object cameraState) {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.level == null) {
+                return;
+            }
+            float t = (float) (mc.level.getGameTime() % 24000L);
+            float day = 0.5F + 0.5F * (float) Math.cos(((t - 6000.0F) / 24000.0F) * Math.PI * 2.0D);
+            DabyWSClientConfig.beamOpacity = 0.85F + 0.75F * day;
+            DabyWSClientConfig.beamColorR  = 0.48F + 0.18F * day;
+            DabyWSClientConfig.beamColorG  = 0.10F + 0.12F * day;
+            DabyWSClientConfig.beamColorB  = 1.00F;
+        } catch (Throwable ignored) {
         }
     }
 }
