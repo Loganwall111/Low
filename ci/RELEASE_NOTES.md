@@ -1,4 +1,11 @@
-# 1.9.200 — Sky City haze included in verified build
+# 1.9.200 — Infinite Skybox Angular Smudge, uploaded skybox set
+
+- Added the Infinite Skybox Angular Smudge (`mcsm_infinite_smudge.glsl`, wired into `core/sky.fsh`): a direction-only field at infinity — not a 3D shape, not a screen overlay — so the cloud wall can never be physically approached. Centred on the dot product of the player's view vector and the storm direction, crushed 2.5x along the horizontal look axis, with a 5-octave 2D fbm loop (+ domain warp) tearing the edge gradients into organic ink-smear.
+- Hard-coded the exact extracted phase colour profiles into the smudge path: `u_StormPhase` 5 (green/teal energy, #161A1D/#2D423F/#6A9A78), 55 (deep purple void 5.5-5.9, #0B0410/#2D1442/#581C6E/#87529C) and 6 (endgame sunset split, #1A1226/#462A52/#966173/#D89874).
+- `u_StormProximity` (0..1) now travels Java->shader on the FogRenderDistanceStart carrier band 9100..9299 (written by `McsmBlobCarrierPatch`, fog-safe via the existing `mcsm_rd_start()` guard; `witherstorm_Proximity` uniform works on bound custom pipelines). The smudge lerps from a horizon ink-smear to a total 360-degree eclipse of the vanilla sky once fully inside the core.
+- Replaced the shipped main-world + phase skybox/sky gradients with the user's uploaded references: day ("skyday day"), midnight ("sky 2 midnight"), sunset ("storymode_sky_sunset"), phase 5 turquoise, phase 5.5-5.9 purple void, and the phase 6 sunset split — in both `textures/sky` and `textures/mcsm_atmosphere/sky`, in `src` and `jar-overrides`.
+
+# 1.9.200 (prior) — Sky City haze included in verified build
 
 - Includes the high-altitude Sky City blue haze blend in the published jar, ramping in above tall build heights without changing normal ground-level play.
 - Carries forward 1.9.199's thick storm-top oval halo/backdrop, command-block controls, OGS texture fallback, shader reflection/god-ray trim, and skybox audit.

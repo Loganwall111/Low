@@ -27,6 +27,7 @@
 #moj_import <minecraft:dynamictransforms.glsl>
 #moj_import <minecraft:globals.glsl>
 #moj_import <minecraft:mcsm_visuals.glsl>
+#moj_import <minecraft:mcsm_infinite_smudge.glsl>
 
 in float sphericalVertexDistance;
 in float cylindricalVertexDistance;
@@ -271,6 +272,21 @@ void main() {
         // own strength curve), so it multiplies the dome directly. The extra
         // 0.85 that used to be applied here is folded into mcsm_blob().
         dome = dome * (1.0 - blob.w) + blob.rgb;
+    }
+
+    // MCSM 1.9.200 -- INFINITE SKYBOX ANGULAR SMUDGE (user spec 2026-09-11).
+    // The final storm atmosphere layer: a direction-only (infinitely far)
+    // ink-smear field centred on dot(viewDir, stormDir), crushed 2.5x along
+    // the horizontal look axis, warped by a 2D fbm loop into torn organic
+    // edges, and driven by u_StormProximity (FogRenderDistanceStart carrier
+    // band 9100..9299, written by McsmBlobCarrierPatch) so the field lerps
+    // from a horizon smear to a total 360-degree eclipse of the vanilla sky.
+    // Hard-coded phase profiles: 5 = green/teal energy, 55 = deep purple
+    // void (5.5-5.9), 6 = endgame sunset split. See
+    // mcsm_infinite_smudge.glsl -- not a 3D shape, not a screen overlay.
+    if (aim.w > 0.5) {
+        vec4 smd = mcsm_infinite_smudge(worldDir, aim.xyz, mcsmP, clock);
+        if (smd.a > 0.0005) dome = mix(dome, smd.rgb, smd.a);
     }
 
     // Bodies: tinted briefly at the start, then fade to nothing - no sun or

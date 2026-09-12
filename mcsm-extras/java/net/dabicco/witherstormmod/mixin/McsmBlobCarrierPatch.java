@@ -1,5 +1,6 @@
 package net.dabicco.witherstormmod.mixin;
 
+import net.dabicco.witherstormmod.client.ClientDistantStormManager;
 import net.dabicco.witherstormmod.client.StormSkyGradient;
 import net.dabicco.witherstormmod.entity.WitherStormEntity;
 import net.mcsm.extras.McsmDiag;
@@ -103,6 +104,17 @@ public abstract class McsmBlobCarrierPatch {
     private static Field  mcsm$skyEndField   = null;
     private static boolean mcsm$skyEndFailed = false;
 
+    // MCSM 1.9.200 -- u_StormProximity carrier for the infinite skybox
+    // angular smudge (mcsm_infinite_smudge.glsl). Rides the FogRenderDistanceStart
+    // slot on the retired glare-size band 9100..9299: mcsm_rd_start() in the
+    // shader already maps that whole 9001..9299 window back to a sane fog
+    // distance, so the fog math never sees a carrier value, and vanilla
+    // near-fog (~1..20) can never collide with the band.
+    private static Field  mcsm$rdStartField  = null;
+    private static boolean mcsm$rdStartFailed = false;
+    /** Smoothed displayed proximity so the void closes in gradually, not in a pop. */
+    private static float  mcsm$proxShown     = 0.0F;
+
     // FogRenderer.updateBuffer is OVERLOADED -- there is also a private
     // updateBuffer(ByteBuffer,int,Vector4f,F,F,F,F,F,F). A bare "updateBuffer"
     // is ambiguous, so the full descriptor is mandatory here. The mod's own
@@ -149,7 +161,123 @@ public abstract class McsmBlobCarrierPatch {
             McsmDiag.carrier(data.cloudEnd, Math.round(yaw) + 180, Math.round(pitch) + 90);
         }
 
+        // MCSM 1.9.200: proximity of the nearest storm, 0..1, for the
+        // infinite smudge shader (u_StormProximity / band 9100..9299).
+        mcsm$stampProximity(data, p);
+
         mcsm$driveDeathCinematic(data, gradient, sizeIdx);
+    }
+
+    /**
+     * Stamp u_StormProximity (0..1) into FogRenderDistanceStart on the
+     * 9100..9299 carrier band. The shader's mcsm_storm_proximity() decodes
+     * it; the smudge field lerps from a horizon ink-smear (0.0) to a total
+     * 360-degree eclipse of the vanilla sky (1.0).
+     *
+     * The range mirrors McsmStormAtmosphere.distanceInfluence(): full
+     * proximity at 900 blocks or less, fading to zero by 1700 blocks. A
+     * per-frame exponential smoothing (same 0.05 as StormSkyDome) keeps the
+     * takeover gradual even if the player crosses the boundary at speed.
+     */
+    private void mcsm$stampProximity(FogData data, float p) {
+        try {
+            float target = 0.0F;
+            if (p >= 4.9F && p <= 8.06F) {
+                target = mcsm$proximity();
+            }
+            mcsm$proxShown += (target - mcsm$proxShown) * 0.05F;
+            if (mcsm$proxShown < 0.002F) {
+                mcsm$proxShown = 0.0F;
+            }
+            if (mcsm$proxShown <= 0.0F) {
+                return; // no storm in range: leave the fog slot vanilla
+            }
+            float v = 9100.0F + mcsm$proxShown * 199.0F;
+            Field f = mcsm$rdStartField;
+            if (f == null) {
+                if (mcsm$rdStartFailed) {
+                    return;
+                }
+                f = mcsm$resolveRdStart(data);
+                if (f == null) {
+                    mcsm$rdStartFailed = true;
+                    McsmDiag.death("no render-distance-start field on FogData -- "
+                                   + "infinite smudge stays at local range");
+                    return;
+                }
+                try {
+                    f.setAccessible(true);
+                } catch (Throwable ignored) {
+                    mcsm$rdStartFailed = true;
+                    return;
+                }
+                mcsm$rdStartField = f;
+                McsmDiag.death("FogData." + f.getName() + " carries u_StormProximity (band 9100..9299)");
+            }
+            f.setFloat(data, v);
+        } catch (Throwable ignored) {
+            // a vanished level or missing field must never break a frame
+        }
+    }
+
+    /** Nearest tracked storm, 900 blocks or less -> 1.0, 1700 blocks or more -> 0.0. */
+    private static float mcsm$proximity() {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer pl = mc.player;
+        if (pl == null || mc.level == null) {
+            return 0.0F;
+        }
+        double bestD = Double.MAX_VALUE;
+        for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
+            if (d.phase < 4.0F) {
+                continue;
+            }
+            double dx = d.dispX - pl.getX();
+            double dy = d.dispY - pl.getY();
+            double dz = d.dispZ - pl.getZ();
+            bestD = Math.min(bestD, dx * dx + dy * dy + dz * dz);
+        }
+        if (bestD == Double.MAX_VALUE) {
+            return 0.0F;
+        }
+        double dist = Math.sqrt(bestD);
+        float t = (float) ((dist - 900.0D) / 800.0D);
+        if (t < 0.0F) {
+            t = 0.0F;
+        }
+        if (t > 1.0F) {
+            t = 1.0F;
+        }
+        return 1.0F - t;
+    }
+
+    /**
+     * Resolve the FogData field that carries FogRenderDistanceStart. Same
+     * defensive style as mcsm$resolveSkyEnd: exact names first, then a
+     * descriptive-name heuristic, then give up (the smudge degrades to its
+     * local range instead of crashing the frame).
+     */
+    private static Field mcsm$resolveRdStart(FogData data) {
+        try {
+            return FogData.class.getDeclaredField("start");
+        } catch (Throwable ignored) {
+            // fall through to the alternatives
+        }
+        try {
+            return FogData.class.getDeclaredField("renderDistanceStart");
+        } catch (Throwable ignored) {
+            // fall through to the heuristic
+        }
+        for (Field f : FogData.class.getDeclaredFields()) {
+            if (f.getType() != float.class) {
+                continue;
+            }
+            String n = f.getName().toLowerCase();
+            if (n.contains("distance") && n.contains("start")) {
+                return f;
+            }
+        }
+        return null;
     }
 
     /** Latch, advance and stamp the dying sequence. Never throws. */
