@@ -83,7 +83,7 @@ cd C:\path\to\Lowuuuuuu
 powershell -ExecutionPolicy Bypass -File ci\build.ps1
 ```
 
-Output: `out\dabywitherstormmod-<version>-26.2-beta-mcsm.jar` (+ `.sha256`).
+Output: `out\dabywitherstormmod-<identity>.jar` (+ `.sha256`), where `<identity>` is the exact value from `VERSION`.
 Only that jar goes into `mods\` — delete older ones first.
 
 (Linux/macOS equivalent: `bash ci/build.sh`.)

@@ -31,7 +31,9 @@ set -x
 trap 'rc=$?; mkdir -p out 2>/dev/null; { echo "MCSM build FAILURE (run ${GITHUB_RUN_NUMBER:-local})"; echo "exit: $rc"; echo "line: $LINENO"; echo "cmd:  $BASH_COMMAND"; } > out/FAILURE.txt 2>/dev/null; cat out/FAILURE.txt 2>/dev/null; echo "::error title=MCSM build failed (exit $rc) line $LINENO::$BASH_COMMAND"' ERR
 
 VER="${1:-$(cat VERSION | tr -d '[:space:]')}"
-JAR_ID="${VER}-26.2-beta-ds"
+# Keep the artifact and fabric.mod.json identity byte-for-byte equal to VERSION.
+# The custom identity intentionally avoids the repository's old numeric tag list.
+JAR_ID="${VER}"
 echo "[build] Devouring Storms ${JAR_ID}"
 
 EVIDENCE_REPO="https://github.com/Loganwall111/Lowuuuuuu.git"

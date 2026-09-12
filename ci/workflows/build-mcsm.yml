@@ -37,6 +37,11 @@ jobs:
           distribution: temurin
           java-version: "25"
 
+      - name: Read build identity
+        id: build_identity
+        shell: bash
+        run: echo "value=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+
       - name: Build the jar
         run: bash ci/build.sh
 
@@ -44,7 +49,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: mcsm-jar-${{ github.run_number }}
+          name: mcsm-jar-${{ steps.build_identity.outputs.value }}
           path: |
             out/*.jar
             out/*.sha256

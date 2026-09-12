@@ -11,8 +11,10 @@
    3. powershell -ExecutionPolicy Bypass -File ci\build.ps1
         (optionally:  -Version 1.9.98  to pin a version)
 
- Output lands in  .\out\dabywitherstormmod-<version>-26.2-beta-mcsm.jar
- Put that ONE jar in your mods folder, replacing older builds.
+ Output lands in  .\out\dabywitherstormmod-<identity>.jar
+ Put that ONE jar in your mods folder, replacing older builds. The identity is
+ read from VERSION and is intentionally not decorated with a recycled numeric
+ Minecraft/build suffix.
 
  This is the same recipe as ci/build.sh (the one GitHub Actions runs once the
  workflow file is installed — see ci\README.md).
@@ -23,7 +25,8 @@ param([string]$Version = "")
 $ErrorActionPreference = "Stop"
 $root = (Get-Location).Path
 if ($Version -eq "") { $Version = (Get-Content "$root\VERSION").Trim() }
-$jarId = "$Version-26.2-beta-mcsm"
+# Keep the local artifact identity exactly equal to VERSION as well.
+$jarId = $Version
 Write-Host "[build] MCSM $jarId"
 
 # --- newest delivery jar as the base -------------------------------------
@@ -116,7 +119,9 @@ Get-ChildItem "$fx\net\mcsm\extras\client" -Filter "McsmBlobOval`$*.class" -Erro
 Get-ChildItem "$fx\net\mcsm\extras\client" -Filter "McsmBlobShape`$*.class" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
 $fmj = "$fx\fabric.mod.json"
-(Get-Content $fmj -Raw) -replace '"version": "[0-9.]+-26\.2-beta-mcsm"', """version"": ""$jarId""" | Set-Content $fmj -Encoding ASCII
+$metadata = Get-Content $fmj -Raw | ConvertFrom-Json
+$metadata.version = $jarId
+$metadata | ConvertTo-Json -Depth 100 | Set-Content $fmj -Encoding UTF8
 
 $outDir = "$root\out"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
