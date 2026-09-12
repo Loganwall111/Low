@@ -77,71 +77,9 @@ public final class McsmStormBlob {
         }
     }
 
+    /** Compatibility entry point for the StormBackdrop hook. */
     public static void submit(LevelRenderContext ctx) {
-        try {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc == null || mc.level == null || ctx == null) {
-                return;
-            }
-            Vec3 cam = ctx.levelState().cameraRenderState.pos;
-            ClientDistantStormManager.StormData best = null;
-            double bestDistance = Double.MAX_VALUE;
-            for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
-                if (d.phase < 4.90F) {
-                    continue;
-                }
-                double dx = d.dispX - cam.x;
-                double dy = d.dispY - cam.y;
-                double dz = d.dispZ - cam.z;
-                double distance = dx * dx + dy * dy + dz * dz;
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    best = d;
-                }
-            }
-            if (best == null || bestDistance > 2800.0D * 2800.0D) {
-                return;
-            }
-
-            double distance = Math.sqrt(bestDistance);
-            Vec3 storm = new Vec3(best.dispX, best.dispY, best.dispZ);
-            Vec3 view = storm.subtract(cam).normalize();
-            if (view.lengthSqr() < 1.0E-5D) {
-                return;
-            }
-            McsmExtrasConfig.load();
-            // Keep the restored blob a contained storm attachment.  The old
-            // 0.85 ceiling let a nearby phase-5 storm expand into a screen-
-            // filling faceted wall, which looked like invisible blocks and
-            // also multiplied overdraw while the player was close to it.
-            double angular = Mth.clamp(bodyRadius(best.phase) / Math.max(distance, 1.0D), 0.012D, 0.28D);
-            double radius = 220.0D * angular * 1.45D
-                    * Mth.clamp(McsmExtrasConfig.glareSize, 0.35D, 3.05D);
-            float fade = 1.0F - Mth.clamp((float) ((distance - 700.0D) / 2100.0D), 0.0F, 1.0F);
-            if (radius < 2.0D || fade <= 0.004F) {
-                return;
-            }
-
-            // Native, render-only Atmospheric W's Cloud: this is an angular
-            // storm-tethered layer, not a persistent world object or an
-            // external skybox texture. It follows the storm direction while
-            // the camera moves, so the blob remains attached to the storm.
-            Vec3 at = cam.add(view.scale(225.0D));
-            SubmitNodeCollector collector = ctx.submitNodeCollector();
-            PoseStack poseStack = ctx.poseStack();
-            RenderType translucent = GlowRenderTypes.translucent(WHITE);
-            int outerR = best.phase >= 6.0F ? 150 : 104;
-            int outerG = best.phase >= 6.0F ? 66 : 44;
-            int outerB = best.phase >= 6.0F ? 184 : 132;
-            radialBlob(poseStack, collector, translucent, at, view, radius * 1.55D,
-                    outerR, outerG, outerB, (int) (fade * 92.0F));
-            // The black core is deliberately confined to the blob itself. It
-            // never covers the whole sky, eliminating the old black upper band.
-            radialBlob(poseStack, collector, translucent, at, view, radius * 0.52D,
-                    5, 3, 12, (int) (fade * 115.0F));
-        } catch (Throwable ignored) {
-            // an unexpected base-jar surface degrades to no blob, never a crash
-        }
+        McsmHaloSkyRenderer.submit(ctx);
     }
 
     /**
