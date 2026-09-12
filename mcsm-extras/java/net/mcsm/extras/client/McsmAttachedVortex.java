@@ -13,6 +13,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.mcsm.extras.McsmExtrasConfig;
 
+import java.util.Locale;
+
 /**
  * The attached late-stage Vortex pass.
  *
@@ -54,8 +56,9 @@ public final class McsmAttachedVortex {
     private static void drawVortexMeshes(PoseStack poseStack, SubmitNodeCollector collector,
             Vec3 centre, double bodyRadius, float spin, float strength) {
         for (McsmVortexMesh.Group group : McsmVortexMesh.GROUPS) {
-            boolean cubes = group.texture.contains("color_000");
-            boolean backdrop = group.texture.contains("Backdrop") && !group.texture.contains("alp");
+            String textureName = group.texture.toLowerCase(Locale.ROOT);
+            boolean cubes = textureName.contains("color_000");
+            boolean backdrop = textureName.contains("backdrop") && !textureName.contains("alp");
             double scale = bodyRadius * (backdrop ? 3.60D : 3.30D);
             if (!cubes) {
                 scale *= 0.55D + 0.45D * strength;
@@ -68,8 +71,11 @@ public final class McsmAttachedVortex {
                 continue;
             }
 
-            Identifier texture = Identifier.fromNamespaceAndPath(
-                    VORTEX_ROOT.getNamespace(), VORTEX_ROOT.getPath() + "/" + group.texture);
+            Identifier texture = safeTextureIdentifier(textureName);
+            if (texture == null) {
+                // Do not let a stale/generated material name take down phase 7.
+                continue;
+            }
             final McsmVortexMesh.Group mesh = group;
             final Identifier finalTexture = texture;
             final float finalScale = scaleF;
@@ -79,6 +85,27 @@ public final class McsmAttachedVortex {
                     (pose, consumer) -> emit(mesh, centre, pose, consumer,
                             finalScale, finalSpin, finalAlpha));
         }
+    }
+
+    /**
+     * Identifier paths are stricter than ordinary filenames. Keep this guard
+     * beside the real mesh submission so stale/generated uppercase material
+     * labels fail soft instead of crashing the phase-7 render thread.
+     */
+    private static Identifier safeTextureIdentifier(String textureName) {
+        if (textureName == null || textureName.isEmpty()) {
+            return null;
+        }
+        String path = VORTEX_ROOT.getPath() + "/" + textureName;
+        for (int i = 0; i < path.length(); i++) {
+            char c = path.charAt(i);
+            if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+                    || c == '/' || c == '.' || c == '_' || c == '-')) {
+                System.out.println("[dabywitherstormmod] skipped invalid Vortex texture path: " + path);
+                return null;
+            }
+        }
+        return Identifier.fromNamespaceAndPath(VORTEX_ROOT.getNamespace(), path);
     }
 
     private static void emit(McsmVortexMesh.Group mesh, Vec3 centre,

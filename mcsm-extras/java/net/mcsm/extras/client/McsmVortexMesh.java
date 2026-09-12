@@ -97,7 +97,7 @@ public final class McsmVortexMesh {
 
     private static Group g1() {
 
-        return new Group("vortex_tile_witherstormVortexA_alp.png", pos1(), uv1(), idx1());
+        return new Group("vortex_tile_witherstormvortexa_alp.png", pos1(), uv1(), idx1());
 
     }
 
@@ -122,7 +122,7 @@ public final class McsmVortexMesh {
 
     private static Group g2() {
 
-        return new Group("vortex_tile_witherstormVortexABackdrop.png", pos2(), uv2(), idx2());
+        return new Group("vortex_tile_witherstormvortexabackdrop.png", pos2(), uv2(), idx2());
 
     }
 

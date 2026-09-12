@@ -434,6 +434,8 @@ rm -f "$FX/cls/net/mcsm/extras/client/McsmBlobOval.class" \
       "$FX/cls/net/mcsm/extras/client/McsmHaloSkyRenderer.class" \
       "$FX/cls/net/mcsm/extras/client/McsmStormBlob.class" \
       "$FX/cls/net/mcsm/extras/client/McsmStormRings.class" \
+      "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/vortex_tile_witherstormVortexA_alp.png" \
+      "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/vortex_tile_witherstormVortexABackdrop.png" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStormBlobMixin.class" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStormSkyColorPatch.class" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/SkyRendererMixin.class" \
@@ -856,6 +858,31 @@ if [ ! -s "$FX/cls/assets/dabywitherstormmod/shaders/post/mcsm_core.fsh" ]; then
 else
   echo "[audit] MCSM core ambient shader present"
 fi
+# Minecraft resource identifiers are strict lowercase paths. Audit both the
+# generated mesh labels and the assembled texture directory so phase 7 cannot
+# reintroduce the runtime IdentifierException through a stale asset.
+if grep -R -n -E 'vortex_tile_[^"[:space:]]*[A-Z]' \
+     mcsm-extras/java/net/mcsm/extras/client/McsmVortexMesh.java \
+     mcsm-extras/java/net/mcsm/extras/client/McsmAttachedVortex.java; then
+  echo "::error title=jar audit::uppercase character in Vortex resource path"
+  AUDIT_FAIL=1
+fi
+VORTEX_ASSET_DIR="$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere"
+if find "$VORTEX_ASSET_DIR" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null \
+     | grep -E '[A-Z]' >/dev/null; then
+  echo "::error title=jar audit::uppercase Vortex texture filename survived assembly"
+  AUDIT_FAIL=1
+else
+  echo "[audit] Vortex resource paths are lowercase"
+fi
+for vortex_need in \
+  textures/mcsm_atmosphere/vortex_tile_witherstormvortexa_alp.png \
+  textures/mcsm_atmosphere/vortex_tile_witherstormvortexabackdrop.png; do
+  if [ ! -s "$FX/cls/assets/dabywitherstormmod/$vortex_need" ]; then
+    echo "::error title=jar audit::lowercase Vortex texture missing: $vortex_need"
+    AUDIT_FAIL=1
+  fi
+done
 if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/textures/environment/sun.png" ]; then
   echo "::error title=jar audit::built-in Sodium-safe Story Look pack missing from the jar"
   AUDIT_FAIL=1
