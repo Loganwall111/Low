@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import net.mcsm.extras.McsmExtrasConfig;
 
 /**
- * MCSM 1.9.311 -- the Atmospheric W's Cloud for the SHADER-PACK path.
+ * MCSM 1.9.312 -- the Atmospheric W's Cloud for the SHADER-PACK path.
  *
  * 1.9.221-1.9.304 drew the blob here as a stack of four camera-facing oval
  * quads pinned at the storm's 3D position. That made the blob a flat 2D
@@ -22,8 +22,8 @@ import net.mcsm.extras.McsmExtrasConfig;
  * object: it is a separate infinite skybox layer attached to the vanilla
  * sky. So this class now draws the SAME organic smear McsmStormSkyLayer
  * paints in vanilla/FBS mode (McsmBlobShape): a dense angular patch on a
- * sky sphere centred on the camera whose radius equals the storm's
- * distance -- every vertex sits at true skybox depth, the silhouette is
+ * fixed far sky sphere centred on the camera -- every vertex sits at true
+ * skybox depth, the silhouette is
  * the noise-warped messy smear with feathered alpha edges and a stronger
  * interior, and the palette is the exact corrected 2026-09-11 hex decks.
  * The patch touches the storm exactly at the bearing centre, so it is
@@ -51,7 +51,10 @@ public final class McsmBlobOval {
             "dabywitherstormmod", "textures/misc/storm_white.png");
 
     private static final double FULL_RANGE = 700.0;
-    private static final double MAX_RANGE = 1600.0;
+    private static final double MAX_RANGE = 100000.0;
+    // Never place the cloud at the storm's world distance. It is a directional
+    // sky projection, so flying toward it must not reveal a 3D object.
+    private static final double SKY_RADIUS = 2048.0;
 
     private McsmBlobOval() {
     }
@@ -128,10 +131,9 @@ public final class McsmBlobOval {
                 return;
             }
             double dist = Math.sqrt(bestD);
-            float presence = 1.0F - ss((float) FULL_RANGE, (float) MAX_RANGE, (float) dist);
-            if (presence <= 0.005F) {
-                return;
-            }
+            // Infinite projection: do not fade the cloud because the player
+            // flies away from the storm. Only its angular bearing is used.
+            float presence = 1.0F;
             float phase = best.phase;
 
             // phase windows (same as the GLSL blob): 5 / 5.5-5.9 / 6
@@ -155,7 +157,7 @@ public final class McsmBlobOval {
 
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.311: make the alpha patch large enough to sit behind the
+            // 1.9.312: make the alpha patch large enough to sit behind the
             // whole storm silhouette while remaining an irregular field.
             double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
                     * (0.78 + (gs - 0.25) * 0.139);
@@ -166,14 +168,14 @@ public final class McsmBlobOval {
             }
             final Vec3 bearing = rawView.normalize();
 
-            // 1.9.311: the smear patch, drawn on a camera-centred sky
-            // sphere whose radius is the storm's distance -- every vertex
-            // at true skybox depth, so this never reads as a flat card.
+            // 1.9.312: the smear patch is drawn on a fixed camera-centred
+            // far sky sphere, never at the storm's world distance. Its bearing
+            // follows the storm, but its depth cannot be approached in-world.
             final McsmBlobShape.Patch patch = McsmBlobShape.patchFor(bearing, phase,
                     outer, presence, core, mid, edge, P55_HIGH, w55 / tot, w6 / tot);
             // Keep the shell just behind the storm, rather than at a fixed
             // card distance or exactly coplanar with the body.
-            final double radius = Math.max(dist - 8.0, 2.0);
+            final double radius = SKY_RADIUS;
             final Vec3 camPos = cam;
 
             SubmitNodeCollector collector = ctx.submitNodeCollector();

@@ -56,7 +56,8 @@ public final class McsmStormSkyLayer {
 
     /** full presence inside this range; the layer is gone at MAX_RANGE */
     private static final double FULL_RANGE = 700.0;
-    private static final double MAX_RANGE = 1600.0;
+    private static final double MAX_RANGE = 100000.0;
+    private static final double SKY_RADIUS = 2048.0;
 
     // corrected 2026-09-11 hex decks (0..1)
     private static final float[] D5_Z = hex(0x16, 0x1A, 0x1D);
@@ -149,7 +150,7 @@ public final class McsmStormSkyLayer {
             // shader uniforms (FogSkyEnd etc.) that only shader packs bind,
             // so in vanilla the sky pass always saw "no storm". This layer
             // therefore runs whenever no shader pack owns the sky -- plain
-            // vanilla AND FabricSkyBoxes mode. 1.9.311: "no pack owns the
+            // vanilla AND FabricSkyBoxes mode. 1.9.312: "no pack owns the
             // sky" now means the pack is INACTIVE (IrisApi), not that iris
             // is merely installed; a shader mod with its pack turned off
             // renders the vanilla pipeline and this layer draws for it too.
@@ -170,10 +171,9 @@ public final class McsmStormSkyLayer {
             double dy = storm.dispY - cam.y;
             double dz = storm.dispZ - cam.z;
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            float presence = 1.0F - ss((float) FULL_RANGE, (float) MAX_RANGE, (float) dist);
-            if (presence <= 0.005F) {
-                return;
-            }
+            // The cloud is infinite: proximity controls the shader carrier,
+            // not whether this direction-only sky layer exists.
+            float presence = 1.0F;
             float phase = storm.phase;
             // Same lifetime as the core-shader blob: 5.00 - 6.95.
             float w5 = ramp(phase, 5.00F, 5.10F) * (1.0F - ramp(phase, 5.42F, 5.52F));
@@ -186,7 +186,7 @@ public final class McsmStormSkyLayer {
             final Vec3 bearing = new Vec3(dx, dy, dz).normalize();
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.311: the alpha patch itself is large enough to sit behind
+            // 1.9.312: the alpha patch itself is large enough to sit behind
             // the whole storm silhouette. This is a broken angular field,
             // not the old opaque full-sky dome.
             final double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
@@ -196,21 +196,20 @@ public final class McsmStormSkyLayer {
 
             SubmitNodeCollector collector = ctx.submitNodeCollector();
             // Do not paint an opaque camera-centred dome here. That was the
-            // giant green/purple sphere in the 1.9.311 screenshots and it also
+            // giant green/purple sphere in the 1.9.312 screenshots and it also
             // hid the active Fabric sky. The storm sky is the alpha-feathered
             // organic patch below; the untouched sky remains visible through
             // its broken edge, exactly like the reference glare frames.
-            // 1.9.311 -- the organic smear: a SEPARATE infinite skybox layer
-            // tethered to the storm bearing. Put the camera-centred angular
-            // patch just behind the storm instead of at a fixed 399 blocks;
-            // this keeps the paint visually close to the monster while it
-            // remains direction-only and impossible to physically reach.
+            // 1.9.312 -- the organic smear: a SEPARATE infinite skybox layer
+            // tethered only to the storm bearing. It lives on a fixed far
+            // camera shell, so it cannot become a physical circle beside the
+            // storm when the player flies toward it.
             final float[] core = blend(D5_Z, D55_Z, D6_Z, 1.0F - w55 - w6, w55, w6, 1.0F);
             final float[] midc = blend(D5_M, D55_M, D6_UM, 1.0F - w55 - w6, w55, w6, 1.0F);
             final float[] edge = blend(D5_H, D55_H, D6_LM, 1.0F - w55 - w6, w55, w6, 1.0F);
             final McsmBlobShape.Patch patch = McsmBlobShape.patchFor(bearing, phase,
                     outer, presence, core, midc, edge, D55_HIGH, w55f, w6f);
-            final double blobRadius = Math.max(2.0, dist - 8.0);
+            final double blobRadius = SKY_RADIUS;
             collector.submitCustomGeometry(ctx.poseStack(), GlowRenderTypes.translucent(WHITE),
                     (pose, consumer) -> McsmBlobShape.stream(pose, consumer, patch, cam, blobRadius));
 

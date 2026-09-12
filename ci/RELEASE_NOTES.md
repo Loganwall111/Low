@@ -1,3 +1,26 @@
+# Devouring Storms 1.9.312 -- remove the 3D circle and unify active sky
+
+The 1.9.311 in-game report identified two separate problems: the remaining
+world-space glare/ring geometry still looked like a giant circle that could be
+approached, and the normal sky colour remained peach/black when the custom sky
+route was enabled.
+
+- Removed the remaining structured glare, ground pool, vortex meshes, and
+  orbiting ring submissions. Atmospheric W's Cloud is now the only replacement
+  atmosphere geometry.
+- Moved the Java cloud projection to a fixed camera-relative far shell instead
+  of the storm's physical distance, so it cannot become a 3D object beside the
+  storm.
+- Corrected the angular mapping that was using tan(58..88 degrees), which
+  spread the patch around the sphere as a giant circular shape.
+- Applied the active phase 5/5.5/6/8 sky deck to the vanilla SkyRenderState and
+  suppress the regular dynamic skybox during the active storm; regular summon
+  skyboxes return outside the storm.
+- Removed the expensive ring/vortex geometry that contributed to the Intel UHD
+  native-memory crash.
+
+This remains CI-only until the active sky is visually checked in Minecraft.
+
 # Devouring Storms 1.9.311 -- remove legacy circular backdrop
 
 The 1.9.310 screenshot exposed one remaining old render path: the purple

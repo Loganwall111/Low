@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.311 -- ATMOSPHERIC W'S CLOUD, the one true shape of the infinite
+ * 1.9.312 -- ATMOSPHERIC W'S CLOUD, the one true shape of the infinite
  * skybox blob, shared by every Java render path.
  *
  * The blob is NOT a world object and NOT a flat disc: it is a separate,
@@ -113,7 +113,12 @@ public final class McsmBlobShape {
         double st = Math.sin(TILT);
         Vec3 exT = ex.scale(ct).add(ey.scale(st));
         Vec3 eyT = ey.scale(ct).subtract(ex.scale(st));
-        double t = Math.tan(Math.toRadians(outer));
+        // `outer` is the phase/config size in degrees, not a literal tangent
+        // half-angle. The old tan(58..88 degrees) mapping exploded the box
+        // frame over the sphere and read as a giant circular 3D object. Keep
+        // the requested 4.0 horizontal stretch and 0.5 vertical compression,
+        // but map it to a broad finite angular smear.
+        double t = Mth.clamp(outer * 0.00235, 0.10, 0.22);
         int n = (NX + 1) * (NY + 1);
         Patch p = new Patch(n);
         int idx = 0;
