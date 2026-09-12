@@ -589,7 +589,7 @@ for key in ("mixins", "client"):
 if removed:
     with open(p, "w") as f:
         json.dump(d, f, indent=2)
-        f.write("\\n")
+        f.write("\n")
     print("[merge] removed retired sky mixins: " + ", ".join(removed))
 added = []
 for src in sorted(glob.glob("mcsm-extras/java/net/dabicco/witherstormmod/mixin/*.java")):
