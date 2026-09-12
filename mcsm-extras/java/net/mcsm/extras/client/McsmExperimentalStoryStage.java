@@ -200,7 +200,10 @@ public final class McsmExperimentalStoryStage {
 
     private static void submitDome(PoseStack poseStack, SubmitNodeCollector collector,
             RenderType type, Vec3 center, float phase, boolean outside) {
-        final float alpha = outside ? 242.0F : 196.0F;
+        // Keep the stage atmosphere at the same 0.80 ceiling as the native
+        // storm path; the black exterior supplies contrast, not an opaque
+        // overlay.
+        final float alpha = outside ? 204.0F : 196.0F;
         collector.submitCustomGeometry(poseStack, type, (pose, consumer) -> {
             for (int iy = 0; iy < DOME_RINGS; iy++) {
                 double v0 = (double) iy / DOME_RINGS;
