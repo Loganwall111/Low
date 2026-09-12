@@ -17,10 +17,11 @@ import java.util.Properties;
 public final class McsmExtrasConfig {
     public static final String BUILD_VERSION = "1.9.317";
     public static boolean enableTentacleGrab = true;
-    // 1.9.302: build the Episode-1 Story Mode towns automatically on world
-    // load (no /ds towns start needed); the NPC cast populates once a town
-    // is built and a player is near it.
-    public static boolean autoStartTowns = true;
+    // Automatic schematic/town placement is deliberately OFF.  It can queue
+    // three large structures and thousands of chunk rebuilds on first join,
+    // which stalls an integrated server and can exhaust low-end clients.  Use
+    // the explicit /ds towns command when a player actually wants towns.
+    public static boolean autoStartTowns = false;
     public static double  grabIntervalSeconds = 11.0;
     public static boolean enableBeaconStorm = true;
     public static double  beaconCooldownSeconds = 30.0;
@@ -270,7 +271,10 @@ public final class McsmExtrasConfig {
                 return;
             }
             enableTentacleGrab = bool(p, "enable_tentacle_grab", enableTentacleGrab);
-            autoStartTowns     = bool(p, "auto_start_towns", autoStartTowns);
+            // Do not resurrect the legacy auto-start value from an existing
+            // config: this is a safety gate, not a player-facing worldgen
+            // preference. Manual /ds towns commands remain available.
+            autoStartTowns     = false;
             grabIntervalSeconds = dbl(p, "grab_interval_seconds", grabIntervalSeconds);
             enableBeaconStorm  = bool(p, "enable_beacon_storm", enableBeaconStorm);
             beaconCooldownSeconds = dbl(p, "beacon_cooldown_seconds", beaconCooldownSeconds);

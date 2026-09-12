@@ -248,10 +248,11 @@ public final class McsmGate {
             // zeroed -- the glow needs it. A moderate floor (raise-only, the
             // player can push it higher) gives the teeth the emissive halo
             // from the reference frames without the old full-res memory blowout.
-            // 1.9.217: with the shader active this integer rounds into
-            // shaderGlowGain (0->0.75x .. 3->2.1x). Floor at 2.5 so the
-            // teeth get the full 2.1x gain and the aura comes back.
-            changed += hardFloorNum(c, null, "bloomStrength", 2.5);
+            // Never force the full-resolution HDR bloom on the client.  The
+            // Intel UHD path reported repeated UBO growth and long render
+            // stalls even before a storm was visible.  The native storm and
+            // emitter materials remain; players can explicitly raise bloom
+            // in the base config if their GPU can afford it.
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
