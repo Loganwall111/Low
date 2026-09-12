@@ -97,7 +97,7 @@ public final class McsmStormBlob {
             // covers the shader sky, so the storm dome + infinite blob are
             // drawn as a far camera-centred layer on top of it.
             McsmStormSkyLayer.submit(ctx);
-            // 1.9.313: do not submit the legacy world-space glare, ground
+            // 1.9.314: do not submit the legacy world-space glare, ground
             // pool, vortex, or ring geometry. Those are the distant 3D circle
             // and the expensive geometry that users were still seeing. The
             // storm's atmospheric visual is only the directional sky cloud.
@@ -186,7 +186,7 @@ public final class McsmStormBlob {
 
         // The old VORTEX_BACKDROP quad is deliberately gone. It was a
         // world-anchored circular/card-shaped "halo" at the storm side, which
-        // is exactly the purple sphere visible in the 1.9.313 screenshot.
+        // is exactly the purple sphere visible in the 1.9.314 screenshot.
         // Atmospheric W's Cloud is painted by the infinite directional sky
         // paths instead; only the subtle ground pool remains here.
 

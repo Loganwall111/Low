@@ -1,4 +1,4 @@
-# Devouring Storms 1.9.313 -- stability follow-up for the confirmed cloud
+# Devouring Storms 1.9.314 -- stability follow-up for the confirmed cloud
 
 The 1.9.311 log confirms the new purple/pink atmospheric layer is visually
 close to the reference, but the run still dies in the optional shadow path:
@@ -12,7 +12,7 @@ space.
   native-memory failure on this graphics path.
 - The phase sky, storm model, beams, eyes, and atmospheric cloud remain active.
 
-The previous 1.9.312 artifact remains superseded by this CI-only stability
+The previous 1.9.313 artifact remains superseded by this CI-only stability
 build until the game survives a ground-level phase 5.9 test.
 
 # Devouring Storms 1.9.312 -- remove the 3D circle and unify active sky

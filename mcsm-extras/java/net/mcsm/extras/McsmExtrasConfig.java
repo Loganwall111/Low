@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.313";
+    public static final String BUILD_VERSION = "1.9.314";
     public static boolean enableTentacleGrab = true;
     // 1.9.302: build the Episode-1 Story Mode towns automatically on world
     // load (no /ds towns start needed); the NPC cast populates once a town
