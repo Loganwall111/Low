@@ -33,6 +33,8 @@ uniform vec3 uStormPos;
 uniform float uStormPhase;
 #endif
 uniform float uGlareSize;
+// Java writes this carrier every frame; it is intentionally normalized 0..1.
+uniform float u_StormProximity;
 
 
 vec3 mcsmHex(float r, float g, float b){ return vec3(r, g, b) / 255.0; }
@@ -165,7 +167,8 @@ void mcsmBlobProfile(float phase, out vec3 coreC, out vec3 midC, out vec3 outerC
    (fully masks the game sky), falling smoothly to 0 at the flare edge. */
 vec4 mcsmSkyBlob(vec2 texCoord){
     float phase = uStormPhase;
-    float actv = smoothstep(3.8, 4.3, phase);
+    float actv = smoothstep(3.8, 4.3, phase)
+               * clamp(u_StormProximity, 0.0, 1.0);
     if (actv <= 0.002) return vec4(0.0);
 
     // world ray of this pixel (angular space -- the blob never "ends")
@@ -190,8 +193,11 @@ vec4 mcsmSkyBlob(vec2 texCoord){
     // 1.9.306: compact, asymmetric angular paint mass. The old 0.62/0.42
     // ellipse made a direct circle and its single radial grade erased the
     // colour tongues visible in the reference frames.
-    float rx = 0.46 / max(uGlareSize, 0.35);
-    float ry = 0.31 / max(uGlareSize, 0.35);
+    // 1.9.307: the alpha paint must sit behind the whole storm silhouette,
+    // not appear as a distant small circle.
+    const float HORIZONTAL_MULTIPLIER = 2.5;
+    float ry = 0.30 / max(uGlareSize, 0.35);
+    float rx = ry * HORIZONTAL_MULTIPLIER;
     vec2 q = vec2(angX / rx, angY / ry);
     float raw = length(q);
     float theta = atan(q.y, q.x);

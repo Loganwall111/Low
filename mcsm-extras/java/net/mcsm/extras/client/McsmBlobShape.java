@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.306 -- THE ORGANIC STORM SMEAR, the one true shape of the infinite
+ * 1.9.307 -- THE ORGANIC STORM SMEAR, the one true shape of the infinite
  * skybox blob, shared by every Java render path.
  *
  * The blob is NOT a world object and NOT a flat disc: it is a separate,
@@ -27,7 +27,8 @@ import net.minecraft.world.phys.Vec3;
  *   * the silhouette: a noise-warped oval with two warped side lobes --
  *     a messy organic smear, not a clean ellipse. The edge is a feathered
  *     smoothstep of the warped distance field, so it melts into the sky
- *     with no rim; the body alpha is a flat plateau (uniform opacity);
+ *     with no rim; the interior is stronger than the transparent broken
+ *     sides rather than a camera-centred opaque dome;
  *   * the colour: the exact corrected 2026-09-11 hex decks, banded
  *     core/mid/edge on a noise-jittered radius (so the bands smear too),
  *     with the 5.5 royal-magenta overhead, the phase-6 four-colour split
@@ -46,13 +47,14 @@ public final class McsmBlobShape {
     public static final int NX = 84;
     public static final int NY = 60;
 
-    /** patch half-extent in tangent-space units -- covers the old 1.85 bleed */
-    public static final double SX_MAX = 1.55 * 1.85;
-    public static final double SY_MAX = 0.90 * 1.85;
-
-    /** the oval footprint + tilt shared with the GLSL blob */
-    private static final double OVAL_X = 1.55;
+    /** the oval footprint + tilt shared with the GLSL blob. Keep the
+     * reference silhouette's 2.5x horizontal multiplier explicit. */
     private static final double OVAL_Y = 0.90;
+    private static final double OVAL_X = OVAL_Y * 2.5;
+
+    /** patch half-extent in tangent-space units -- covers the 1.85 bleed */
+    public static final double SX_MAX = OVAL_X * 1.85;
+    public static final double SY_MAX = OVAL_Y * 1.85;
     private static final double TILT = 0.18;
 
     // phase-6 four-colour split (canonical corrected hex set B)
@@ -116,7 +118,7 @@ public final class McsmBlobShape {
             for (int j = 0; j <= NX; j++) {
                 double sx = -SX_MAX + (2.0 * SX_MAX * j) / NX;
                 Vec3 d = b.add(exT.scale(sx * t)).add(eyT.scale(sy * t)).normalize();
-                float[] c = smearColor(sx, sy, d.y, core, midc, edge, high, w55, w6);
+                float[] c = smearColor(sx, sy, d.y, phase, core, midc, edge, high, w55, w6);
                 float m = mask(sx, sy);
                 int al = (int) (m * presence * 255.0F);
                 p.dirs[idx] = d;
@@ -196,7 +198,7 @@ public final class McsmBlobShape {
 
     /** full per-vertex colour: deck banding on a noise-jittered radius,
      *  royal-magenta overhead, phase-6 split and warp-streak shading */
-    private static float[] smearColor(double sx, double sy, double ty,
+    private static float[] smearColor(double sx, double sy, double ty, float phase,
             float[] core, float[] midc, float[] edge, float[] high,
             float w55, float w6) {
         double r = Math.sqrt((sx / OVAL_X) * (sx / OVAL_X)
@@ -220,6 +222,16 @@ public final class McsmBlobShape {
                 + smoothstep(0.58, 0.82, tongueNoise) * wEdge * 0.7);
         for (int i = 0; i < 3; i++) {
             c[i] += (edge[i] - midc[i]) * tongue * 0.42F;
+        }
+        // Use the uploaded 16-stop sky ramps as a low-frequency colour wash
+        // over the irregular paint. The dark heart remains visible, while the
+        // feathered outer area carries the teal/purple/amber blend from the
+        // reference images instead of becoming one flat tint.
+        float deckU = Mth.clamp((float) (ty * 0.5 + 0.5), 0.0F, 1.0F);
+        float[] deck = deckColor(phase, deckU);
+        float deckBlend = 0.30F + 0.38F * (1.0F - wCore);
+        for (int i = 0; i < 3; i++) {
+            c[i] += (deck[i] - c[i]) * deckBlend;
         }
         // 5.5-5.9: richer royal magenta overhead
         float upness = Mth.clamp((float) (sy / OVAL_Y) * 0.5F + 0.5F, 0.0F, 1.0F);
@@ -254,6 +266,25 @@ public final class McsmBlobShape {
     }
 
     // ---------------------------------------------------------- utilities
+
+    /** Sample the user-supplied 16-stop zenith-to-horizon ramp. */
+    private static float[] deckColor(float phase, float u) {
+        float[][] deck;
+        if (phase < 5.42F) {
+            deck = McsmGlarePalettes.P5_TEAL;
+        } else if (phase < 5.92F) {
+            deck = McsmGlarePalettes.P55;
+        } else {
+            deck = McsmGlarePalettes.P6;
+        }
+        float f = Mth.clamp(u, 0.0F, 1.0F) * (deck.length - 1);
+        int i = Math.min(deck.length - 2, (int) f);
+        float t = f - i;
+        return new float[]{
+                deck[i][0] + (deck[i + 1][0] - deck[i][0]) * t,
+                deck[i][1] + (deck[i + 1][1] - deck[i][1]) * t,
+                deck[i][2] + (deck[i + 1][2] - deck[i][2]) * t};
+    }
 
     /** is a shader pack ACTUALLY rendering the sky right now? */
     public static boolean packInUse() {

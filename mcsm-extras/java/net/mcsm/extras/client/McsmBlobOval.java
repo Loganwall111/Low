@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import net.mcsm.extras.McsmExtrasConfig;
 
 /**
- * MCSM 1.9.306 -- the infinite skybox smear for the SHADER-PACK path.
+ * MCSM 1.9.307 -- the infinite skybox smear for the SHADER-PACK path.
  *
  * 1.9.221-1.9.304 drew the blob here as a stack of four camera-facing oval
  * quads pinned at the storm's 3D position. That made the blob a flat 2D
@@ -24,8 +24,8 @@ import net.mcsm.extras.McsmExtrasConfig;
  * paints in vanilla/FBS mode (McsmBlobShape): a dense angular patch on a
  * sky sphere centred on the camera whose radius equals the storm's
  * distance -- every vertex sits at true skybox depth, the silhouette is
- * the noise-warped messy smear with feathered edges and uniform body
- * alpha, and the palette is the exact corrected 2026-09-11 hex decks.
+ * the noise-warped messy smear with feathered alpha edges and a stronger
+ * interior, and the palette is the exact corrected 2026-09-11 hex decks.
  * The patch touches the storm exactly at the bearing centre, so it is
  * tethered to the monster and glides with it, and the depth test keeps
  * the storm body and terrain in front.
@@ -155,10 +155,9 @@ public final class McsmBlobOval {
 
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.306: pull the paint closer to the storm bearing. The old
-            // 52..76 degree footprint read as a clean sky-wide circle before
-            // the organic edge could be seen.
-            double outer = (38.0 + 22.0 * ramp(phase, 5.0F, 6.0F))
+            // 1.9.307: make the alpha patch large enough to sit behind the
+            // whole storm silhouette while remaining an irregular field.
+            double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
                     * (0.78 + (gs - 0.25) * 0.139);
 
             Vec3 rawView = new Vec3(best.dispX, best.dispY, best.dispZ).subtract(cam);
@@ -167,7 +166,7 @@ public final class McsmBlobOval {
             }
             final Vec3 bearing = rawView.normalize();
 
-            // 1.9.306: the smear patch, drawn on a camera-centred sky
+            // 1.9.307: the smear patch, drawn on a camera-centred sky
             // sphere whose radius is the storm's distance -- every vertex
             // at true skybox depth, so this never reads as a flat card.
             final McsmBlobShape.Patch patch = McsmBlobShape.patchFor(bearing, phase,

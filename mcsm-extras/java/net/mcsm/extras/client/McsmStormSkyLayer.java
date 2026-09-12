@@ -1,15 +1,11 @@
 package net.mcsm.extras.client;
 
-import com.mojang.blaze3d.vertex.PoseStack.Pose;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-
 import net.dabicco.witherstormmod.client.ClientDistantStormManager;
 import net.dabicco.witherstormmod.client.GlowRenderTypes;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.mcsm.extras.McsmExtrasConfig;
@@ -23,29 +19,23 @@ import net.minecraft.world.phys.Vec3;
  * binds the FogSkyEnd carrier uniforms, so vanilla alone never showed the
  * storm sky -- this layer fixes that.
  *
- * The base mod ships its own FabricSkyBoxes skyboxes (day / night / sunset,
- * customSkyboxes = true by default). When the FabricSkyBoxes mod is loaded
- * it draws those OPAQUE textures over the vanilla sky pass, which hides the
- * core-shader storm dome and the infinite skybox blob entirely -- the user's
- * exact report ("the Wither Storm skies are not rendering with fabric
+ * The base mod ships its own FabricSkyBoxes skyboxes (day / night / sunset),
+ * but McsmSkyBlob suppresses that legacy backdrop before the sky pass while
+ * an in-range phase-5+ storm is active. Otherwise those OPAQUE textures cover
+ * the vanilla sky pass, hiding the directional storm smear entirely -- the
+ * user's exact report ("the Wither Storm skies are not rendering with fabric
  * skyboxes on").
  *
  * This layer draws the SAME sky the shader paints as world geometry, but
  * AFTER the skybox, so it wins:
  *
- *   * a camera-centred shell at 400 blocks (inside the far plane at any
- *     render distance) -- because it re-centres on the camera every frame
- *     you can never fly out of it, which is the infinite-skybox property;
- *   * the full phase dome (three-stop zenith/mid/horizon gradient) using the
- *     CORRECTED 2026-09-11 hex decks, opaque while a storm is near;
- *   * the organic storm SMEAR on the same shell, pinned to the storm
- *     bearing: a separate infinite skybox layer attached to the vanilla
- *     sky (McsmBlobShape) -- a noise-warped oval with side lobes, feathered
- *     edges, uniform body alpha, the corrected deck banding smeared over
- *     a noise-jittered radius -- never a clean disc, never a world object;
- *   * distance fade 700..1600 blocks: the shell alpha falls to zero and the
- *     regular sky (vanilla or FabricSkyBoxes) slowly returns ("go extremely
- *     far away and the sky changes back to vanilla");
+ *   * only the organic storm SMEAR, pinned to the storm bearing: a separate
+ *     infinite skybox layer attached to the vanilla sky (McsmBlobShape) --
+ *     a noise-warped oval with side lobes, transparent feathered edges, and
+ *     the corrected deck banding smeared over a noise-jittered radius;
+ *   * distance fade 700..1600 blocks: the patch alpha falls to zero and the
+ *     regular sky slowly returns ("go extremely far away and the sky changes
+ *     back to vanilla");
  *   * terrain closer than the shell occludes it through the depth test
  *     (translucent pipeline, depth compare >=, no depth write), exactly
  *     like the sky-behind-terrain read of the reference frames.
@@ -63,12 +53,6 @@ public final class McsmStormSkyLayer {
 
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
-
-    /** shell radius in blocks; inside the far plane at any render distance */
-    private static final double SHELL = 400.0;
-
-    private static final int SECTORS = 24;   // azimuth segments (smooth, no facets)
-    private static final int BANDS = 10;     // elevation rings: -12deg .. +88deg
 
     /** full presence inside this range; the layer is gone at MAX_RANGE */
     private static final double FULL_RANGE = 700.0;
@@ -158,11 +142,6 @@ public final class McsmStormSkyLayer {
         }
     }
 
-    private static Vec3 dir(double elevDeg, double azim) {
-        double ce = Math.cos(Math.toRadians(elevDeg));
-        return new Vec3(Math.cos(azim) * ce, Math.sin(Math.toRadians(elevDeg)), Math.sin(azim) * ce);
-    }
-
     public static void submit(LevelRenderContext ctx) {
         try {
             // 1.9.303 -- the blob must exist in PURE VANILLA too. It never
@@ -170,7 +149,7 @@ public final class McsmStormSkyLayer {
             // shader uniforms (FogSkyEnd etc.) that only shader packs bind,
             // so in vanilla the sky pass always saw "no storm". This layer
             // therefore runs whenever no shader pack owns the sky -- plain
-            // vanilla AND FabricSkyBoxes mode. 1.9.306: "no pack owns the
+            // vanilla AND FabricSkyBoxes mode. 1.9.307: "no pack owns the
             // sky" now means the pack is INACTIVE (IrisApi), not that iris
             // is merely installed; a shader mod with its pack turned off
             // renders the vanilla pipeline and this layer draws for it too.
@@ -204,53 +183,28 @@ public final class McsmStormSkyLayer {
             if (tot < 0.02F) {
                 return;
             }
-            // full-sky phase dome, three stops weighted by the phase windows
-            final float[] zen = blend(D5_Z, D55_Z, D6_Z, w5, w55, w6, tot);
-            final float[] mid = blend(D5_M, D55_M, D6_UM, w5, w55, w6, tot);
-            final float[] hor = blend(D5_H, D55_H, D6_H, w5, w55, w6, tot);
-
             final Vec3 bearing = new Vec3(dx, dy, dz).normalize();
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.306: closer, asymmetric angular footprint. The previous
-            // 52..76 degree field overwhelmed the irregular contour and read
-            // as a direct circle around the storm.
-            final double outer = (38.0 + 22.0 * ramp(phase, 5.0F, 6.0F))
+            // 1.9.307: the alpha patch itself is large enough to sit behind
+            // the whole storm silhouette. This is a broken angular field,
+            // not the old opaque full-sky dome.
+            final double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
                     * (0.78 + (gs - 0.25) * 0.139);
-            final int alpha = (int) (presence * 255.0F);
             final float w55f = w55 / tot;
             final float w6f = w6 / tot;
 
             SubmitNodeCollector collector = ctx.submitNodeCollector();
-            // the full phase dome: smooth sky gradient over the whole shell
-            collector.submitCustomGeometry(ctx.poseStack(), GlowRenderTypes.translucent(WHITE),
-                    (pose, consumer) -> {
-                        for (int i = 0; i < BANDS; i++) {
-                            double e0 = -12.0 + i * (100.0 / BANDS);
-                            double e1 = -12.0 + (i + 1) * (100.0 / BANDS);
-                            for (int j = 0; j < SECTORS; j++) {
-                                double a0 = (2.0 * Math.PI * j) / SECTORS;
-                                double a1 = (2.0 * Math.PI * (j + 1)) / SECTORS;
-                                Vec3 p00 = dir(e0, a0).scale(SHELL).add(cam);
-                                Vec3 p01 = dir(e0, a1).scale(SHELL).add(cam);
-                                Vec3 p10 = dir(e1, a0).scale(SHELL).add(cam);
-                                Vec3 p11 = dir(e1, a1).scale(SHELL).add(cam);
-                                float[] c00 = color(dir(e0, a0), zen, mid, hor);
-                                float[] c01 = color(dir(e0, a1), zen, mid, hor);
-                                float[] c10 = color(dir(e1, a0), zen, mid, hor);
-                                float[] c11 = color(dir(e1, a1), zen, mid, hor);
-                                vtx(pose, consumer, p10, c10, alpha);
-                                vtx(pose, consumer, p00, c00, alpha);
-                                vtx(pose, consumer, p01, c01, alpha);
-                                vtx(pose, consumer, p11, c11, alpha);
-                            }
-                        }
-                    });
-            // 1.9.306 -- the organic smear: a SEPARATE infinite skybox layer
-            // tethered to the storm bearing. Put the camera-centred shell just
-            // behind the storm instead of at a fixed 399 blocks; this keeps
-            // the paint visually close to the monster while it remains
-            // direction-only and impossible to physically reach.
+            // Do not paint an opaque camera-centred dome here. That was the
+            // giant green/purple sphere in the 1.9.307 screenshots and it also
+            // hid the active Fabric sky. The storm sky is the alpha-feathered
+            // organic patch below; the untouched sky remains visible through
+            // its broken edge, exactly like the reference glare frames.
+            // 1.9.307 -- the organic smear: a SEPARATE infinite skybox layer
+            // tethered to the storm bearing. Put the camera-centred angular
+            // patch just behind the storm instead of at a fixed 399 blocks;
+            // this keeps the paint visually close to the monster while it
+            // remains direction-only and impossible to physically reach.
             final float[] core = blend(D5_Z, D55_Z, D6_Z, 1.0F - w55 - w6, w55, w6, 1.0F);
             final float[] midc = blend(D5_M, D55_M, D6_UM, 1.0F - w55 - w6, w55, w6, 1.0F);
             final float[] edge = blend(D5_H, D55_H, D6_LM, 1.0F - w55 - w6, w55, w6, 1.0F);
@@ -273,37 +227,5 @@ public final class McsmStormSkyLayer {
                 (a[2] * wa + b[2] * wb + c[2] * wc) / tot};
     }
 
-    /**
-     * Dome gradient for a shell direction: zenith/mid/horizon stops by
-     * elevation, darkening below the horizon. The blob no longer lives in
-     * the shell colour -- it is its own separate skybox layer now
-     * (McsmBlobShape), drawn over the dome by the smear patch.
-     */
-    private static float[] color(Vec3 d, float[] zen, float[] mid, float[] hor) {
-        float ty = (float) Mth.clamp(d.y, -1.0, 1.0);
-        float t = (float) Math.pow(1.0 - Mth.clamp(ty, 0.0F, 1.0F), 1.35);
-        float[] base = mix3(zen, mid, ss(0.04F, 0.45F, t));
-        base = mix3(base, hor, ss(0.45F, 0.95F, t));
-        // below the horizon, keep darkening instead of holding one colour
-        float dark = (float) Mth.clamp(ty * 4.0 + 1.0, 0.0, 1.0);
-        base = scale(base, 0.62F + 0.38F * dark);
-        return base;
-    }
 
-    private static float[] mix3(float[] a, float[] b, float t) {
-        return new float[]{a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
-    }
-
-    private static float[] scale(float[] a, float s) {
-        return new float[]{a[0] * s, a[1] * s, a[2] * s};
-    }
-
-    private static void vtx(Pose pose, VertexConsumer consumer, Vec3 at, float[] rgb, int a) {
-        consumer.addVertex(pose, (float) at.x, (float) at.y, (float) at.z)
-                .setColor((int) (rgb[0] * 255.0F), (int) (rgb[1] * 255.0F), (int) (rgb[2] * 255.0F), a)
-                .setUv(0.5F, 0.5F)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(15728880)
-                .setNormal(pose, 0.0F, 1.0F, 0.0F);
-    }
 }

@@ -1,3 +1,24 @@
+# Devouring Storms 1.9.307 -- alpha storm-sky patch, no legacy Fabric sky
+
+This corrective build addresses the 1.9.306 screenshots. The previous build
+painted a camera-centred full dome, which appeared as a giant green/purple
+sphere and could cover the storm with the legacy FabricSkyBoxes backdrop.
+
+- Removed the opaque full-sky dome from the no-shader/Fabric path. The storm
+  backdrop is now only the large, alpha-feathered organic patch attached just
+  behind the storm, so the reference sky can blend through its edges instead
+  of ending at a hard sphere boundary.
+- Temporarily suppresses the legacy FabricSkyBoxes day/night/sunset override
+  only while an in-range phase-5+ storm is active. The phase storm patch then
+  owns the backdrop; regular summon skyboxes return outside that storm window.
+- Kept the asymmetric FBM silhouette, unequal side feeding, internal colour
+  tongues, and close-to-storm shell placement; expanded the patch rather than
+  expanding an opaque full-screen dome.
+- Bumped the installed build identity to `1.9.307-26.2-beta-ds`.
+
+Delete older Devouring Storms jars and old shader/resource-pack copies before
+launching. Confirm the Mods screen shows `1.9.307-26.2-beta-ds`.
+
 # Devouring Storms 1.9.306 -- reference-shaped infinite skybox smear
 
 This build is based on the verified 1.9.305 line, not the older 1.9.200

@@ -493,8 +493,8 @@ const vec3 P6_BOT   = vec3(216.0, 152.0, 116.0) / 255.0; // #D89874 toxic opaque
 // 1.9.305 ellipse used one analytic radius, which made the sky read as a
 // clean circular colour grade.  These proportions are only the base frame;
 // mcsm_inf_field() domain-warps the silhouette and adds asymmetric lobes.
-const float MCSM_INF_X    = 1.70;
 const float MCSM_INF_Y    = 0.78;
+const float MCSM_INF_X    = MCSM_INF_Y * 2.5; // required horizontal multiplier
 const float MCSM_INF_TILT = 0.18;   // radians
 
 // ---------------------------------------------------------------------------
@@ -606,7 +606,7 @@ vec3 mcsm_inf_p6_split(float height) {
 // occlusion, without the time-varying colour streaks used by mcsm_blob().
 float mcsm_mass_cover(vec3 wd, vec3 bd, float p) {
     float s = mcsm_glare_size();
-    float outer = mix(38.0, 60.0, mcsm_ramp(p, 5.0, 6.0))
+    float outer = mix(58.0, 88.0, mcsm_ramp(p, 5.0, 6.0))
                 * mix(0.78, 1.16, clamp((s - 0.25) / 2.80, 0.0, 1.0));
     float ang = degrees(acos(clamp(dot(normalize(wd), normalize(bd)), -1.0, 1.0)));
     if (ang >= outer * 1.85) return 0.0;
@@ -617,14 +617,14 @@ float mcsm_mass_cover(vec3 wd, vec3 bd, float p) {
     return clamp(0.98 * coreW + 0.62 * midW + 0.20 * edgeW, 0.0, 0.97);
 }
 
-// Opaque core + multi-band, torn colour smear.  sky.fsh composites this as
-// dome * (1 - occ) + emission, so the centre replaces the vanilla sky and the
-// broken edge blends several phase colours back into it.
+// Alpha-feathered core + multi-band, torn colour smear. sky.fsh composites
+// this as dome * (1 - occ) + emission: only the irregular storm field replaces
+// the vanilla sky, while its broken edge lets the ordinary sky show through.
 vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     vec3 wd = normalize(worldDir);
     vec3 bd = normalize(bossDir);
     float s = mcsm_glare_size();
-    float outer = mix(38.0, 60.0, mcsm_ramp(p, 5.0, 6.0))
+    float outer = mix(58.0, 88.0, mcsm_ramp(p, 5.0, 6.0))
                 * mix(0.78, 1.16, clamp((s - 0.25) / 2.80, 0.0, 1.0));
     float ang = degrees(acos(clamp(dot(wd, bd), -1.0, 1.0)));
     if (ang >= outer * 1.85) return vec4(0.0);
@@ -649,6 +649,25 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     float streak = smoothstep(0.52, 0.82,
                       mcsm_inf_fbm(vec2(upness * 2.6 + 4.0, uu * 4.5 - clock * 0.008)));
     c = mix(c, mix(mid, edge, 0.68), streak * edgeW * 0.42);
+
+    // Low-frequency zenith-to-horizon wash from the supplied phase sky
+    // references. It is deliberately mixed into, rather than substituted for,
+    // the torn radial paint so tongues and the dark storm heart survive.
+    vec3 deckTop;
+    vec3 deckBottom;
+    if (p < 5.42) {
+        deckTop = vec3(0.000, 0.180, 0.192);
+        deckBottom = vec3(0.663, 0.847, 0.714);
+    } else if (p < 5.92) {
+        deckTop = vec3(0.216, 0.118, 0.275);
+        deckBottom = vec3(0.804, 0.529, 0.549);
+    } else {
+        deckTop = vec3(0.353, 0.275, 0.373);
+        deckBottom = vec3(0.765, 0.569, 0.627);
+    }
+    vec3 deck = mix(deckBottom, deckTop, clamp(upness, 0.0, 1.0));
+    c = mix(c, deck, 0.30 + 0.38 * (1.0 - coreW));
+
     // 5.5-5.9 gets a richer royal-magenta upper bleed.
     c += mix(mid, high, 0.62) * midW * upness * mcsm_ramp(p, 5.42, 5.52) * 0.62;
 

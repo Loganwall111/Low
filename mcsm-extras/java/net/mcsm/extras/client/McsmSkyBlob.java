@@ -2,8 +2,10 @@ package net.mcsm.extras.client;
 
 import net.dabicco.witherstormmod.client.ClientDistantStormManager;
 import net.mcsm.extras.McsmExtrasConfig;
+import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * 1.9.218 -- the INFINITE SKYBOX BLOB driver.
@@ -36,6 +38,12 @@ public final class McsmSkyBlob {
                     }
                 }
             }
+            float proximity = stormProximity();
+            // The old FabricSkyBoxes backdrop is useful for regular summon
+            // scenes, but must be off before the active storm sky is drawn.
+            // This runs even without Iris, so vanilla/FBS cannot win the
+            // ordering race against McsmStormSkyLayer.
+            DabyWSClientConfig.customSkyboxes = proximity > 0.005F ? false : true;
             if (irisUniforms == null) {
                 return;
             }
@@ -58,8 +66,43 @@ public final class McsmSkyBlob {
             vec3(irisUniforms, "uStormPos", sx, sy, sz);
             float_(irisUniforms, "uStormPhase", phase);
             float_(irisUniforms, "uGlareSize", glare);
+            // Keep both spellings alive: the managed pack uses the compact
+            // name, while custom/reference packs use the documented carrier.
+            float_(irisUniforms, "uStormProximity", proximity);
+            float_(irisUniforms, "u_StormProximity", proximity);
         } catch (Throwable ignored) {
             // the shader keeps its calm default; the blob fades in with phase
+        }
+    }
+
+    /** A normalized 0..1 storm-nearness carrier shared by all render paths. */
+    private static float stormProximity() {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.level == null || mc.player == null) {
+                return 0.0F;
+            }
+            ClientDistantStormManager.StormData best = null;
+            double bestD = Double.MAX_VALUE;
+            for (ClientDistantStormManager.StormData d : ClientDistantStormManager.all()) {
+                if (d.phase < 5.0F) {
+                    continue;
+                }
+                double dx = d.dispX - mc.player.getX();
+                double dy = d.dispY - mc.player.getY();
+                double dz = d.dispZ - mc.player.getZ();
+                double dd = dx * dx + dy * dy + dz * dz;
+                if (dd < bestD) {
+                    bestD = dd;
+                    best = d;
+                }
+            }
+            if (best == null || bestD > 1600.0D * 1600.0D) {
+                return 0.0F;
+            }
+            return 1.0F - Mth.clamp((float) ((Math.sqrt(bestD) - 700.0D) / 900.0D), 0.0F, 1.0F);
+        } catch (Throwable ignored) {
+            return 0.0F;
         }
     }
 
