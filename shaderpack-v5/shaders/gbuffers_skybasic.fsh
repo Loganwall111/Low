@@ -291,28 +291,27 @@ vec3 storyStormSky(vec3 dirS) {
     }
     // 1.9.215 R2 -- corrected 2026-09-11 hex decks:
     // 5.5-5.9 purple & pink void: #0B0410 / #2D1442 / #87529C
-    vec3 z1 = vec3(0.043, 0.016, 0.063);
-    vec3 m1 = vec3(0.176, 0.078, 0.259);
-    vec3 h1 = vec3(0.529, 0.322, 0.612);
+    vec3 z1 = vec3(0.019608, 0.007843, 0.031373);
+    vec3 m1 = vec3(0.164706, 0.070588, 0.239216);
+    vec3 h1 = vec3(0.490196, 0.294118, 0.568627);
     // phase 5 green: #161A1D / #2D423F / #6A9A78
-    vec3 z2 = vec3(0.086, 0.102, 0.114);
-    vec3 m2 = vec3(0.176, 0.259, 0.247);
-    vec3 h2 = vec3(0.416, 0.604, 0.471);
+    vec3 z2 = vec3(0.039216, 0.066667, 0.070588);
+    vec3 m2 = vec3(0.113725, 0.200000, 0.207843);
+    vec3 h2 = vec3(0.333333, 0.439216, 0.380392);
     // sunset-orange (kept)
     vec3 z3 = vec3(0.120, 0.060, 0.080);
     vec3 m3 = vec3(0.350, 0.140, 0.110);
     vec3 h3 = vec3(0.780, 0.280, 0.100);
     // phase 6 four-color split: #1A1226 / #462A52+#966173 / #D89874
-    vec3 z4 = vec3(0.102, 0.071, 0.149);
-    vec3 m4 = vec3(0.431, 0.272, 0.386);
-    vec3 h4 = vec3(0.847, 0.596, 0.455);
+    vec3 z4 = vec3(0.062745, 0.039216, 0.101961);
+    vec3 m4 = vec3(0.200000, 0.109804, 0.239216);
+    vec3 h4 = vec3(0.768627, 0.478431, 0.352941);
     vec3 zen = (z1 * pinkK + z2 * greenK + z3 * orangeK + z4 * magK) / wsum;
     vec3 mid = (m1 * pinkK + m2 * greenK + m3 * orangeK + m4 * magK) / wsum;
     vec3 hor = (h1 * pinkK + h2 * greenK + h3 * orangeK + h4 * magK) / wsum;
 
-    zen = mix(zen, C * 0.35, 0.30);
-    mid = mix(mid, C * 0.80, 0.30);
-    hor = mix(hor, C * 1.35, 0.22);
+    // The phase endpoints above own the active sky; do not reintroduce the
+    // stale vanilla/FabricSkyBoxes colour through fogColor.
 
     float ty = clamp(dirS.y, -1.0, 1.0);
     float t = pow(1.0 - clamp(ty, 0.0, 1.0), 1.35);
@@ -322,11 +321,8 @@ vec3 storyStormSky(vec3 dirS) {
 #if HORIZON_GLOW
     col += hor * 0.22 * exp(-abs(ty) * 6.0);
 #endif
-    float rim = exp(-abs(ty - 0.015) * 42.0);
-    col = mix(col, vec3(0.16, 0.34, 0.95), rim * 0.50);
-    float topLine = exp(-abs(ty - 0.72) * 26.0);
-    col = mix(col, vec3(0.40, 0.15, 0.85), topLine * 0.30);
-    col *= 1.0 - 0.38 * smoothstep(0.50, 1.0, ty);
+    // No artificial top rim or zenith darkening: those old overlays were the
+    // black discontinuity seen at the top of the active sky.
 
     float over = smoothstep(0.30, 0.70, ty);
     float olum = dot(col, vec3(0.299, 0.587, 0.114));

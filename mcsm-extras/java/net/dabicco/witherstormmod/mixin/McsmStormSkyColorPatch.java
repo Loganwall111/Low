@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * 1.9.315 -- one active storm sky colour for every vanilla/FabricSkyBoxes
+ * 1.9.316 -- one active storm sky colour for every vanilla/FabricSkyBoxes
  * route. The old setup let the regular peach/black sky state remain visible
  * while the custom skybox was enabled, so the player saw mismatched sky decks
  * instead of one pink-purple atmosphere.

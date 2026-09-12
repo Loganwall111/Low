@@ -82,7 +82,7 @@ vec3 mcsm_storm_dome(float up, float p) {
     // 1.9.215 R2 -- 5.0 re-keyed to the CORRECTED green deck
     // (#161A1D core / #2D423F mid / #6A9A78 edge), the same stops the
     // phase-5 infinite blob smudge is painted from.
-    vec3 d = mcsm_col(up, vec3(0.086, 0.102, 0.114), vec3(0.176, 0.259, 0.247), vec3(0.416, 0.604, 0.471)); // 5.0 green
+    vec3 d = mcsm_col(up, vec3(0.039216, 0.066667, 0.070588), vec3(0.113725, 0.200000, 0.207843), vec3(0.333333, 0.439216, 0.380392)); // 5.0 green
     d = mix(d, mcsm_col(up, vec3(0.138, 0.037, 0.193), vec3(0.239, 0.083, 0.239), vec3(0.331, 0.138, 0.285)),
             mcsm_ramp(p, 5.04, 5.12));                                                                // 5.1 pink-purple
     d = mix(d, mcsm_col(up, vec3(0.184, 0.046, 0.202), vec3(0.304, 0.110, 0.276), vec3(0.423, 0.193, 0.359)),
@@ -92,16 +92,16 @@ vec3 mcsm_storm_dome(float up, float p) {
     // 1.9.215 R2 -- 5.5-5.9 re-keyed to the CORRECTED purple & pink deck
     // (#0B0410 core / #2D1442 mid / #87529C horizon), replacing the 1.9.99
     // fitted stops (the user's corrected palette supersedes the old fit).
-    d = mix(d, mcsm_col(up, vec3(0.043, 0.016, 0.063), vec3(0.176, 0.078, 0.259), vec3(0.529, 0.322, 0.612)),
+    d = mix(d, mcsm_col(up, vec3(0.019608, 0.007843, 0.031373), vec3(0.164706, 0.070588, 0.239216), vec3(0.490196, 0.294118, 0.568627)),
             mcsm_ramp(p, 5.42, 5.52));                                                                // 5.5 purple & pink void
     // 1.9.215 R2 -- 5.7-5.9 holds the SAME corrected deck (one palette across
     // the whole 5.5-5.9 window, matching the reference strips).
-    d = mix(d, mcsm_col(up, vec3(0.043, 0.016, 0.063), vec3(0.176, 0.078, 0.259), vec3(0.529, 0.322, 0.612)),
+    d = mix(d, mcsm_col(up, vec3(0.019608, 0.007843, 0.031373), vec3(0.164706, 0.070588, 0.239216), vec3(0.490196, 0.294118, 0.568627)),
             mcsm_ramp(p, 5.70, 5.90));                                                                // 5.7-5.9 same deck
     // 1.9.215 R2 -- phase 6 = the CORRECTED four-color sunset split
     // (#1A1226 zenith / #462A52 upper-mid / #966173 lower-mid / #D89874
     // bottom), not the old grey wash. The phase-6 blob paints the same split.
-    d = mix(d, mcsm_col(up, vec3(0.102, 0.071, 0.149), vec3(0.431, 0.272, 0.386), vec3(0.847, 0.596, 0.455)),
+    d = mix(d, mcsm_col(up, vec3(0.062745, 0.039216, 0.101961), vec3(0.200000, 0.109804, 0.239216), vec3(0.768627, 0.478431, 0.352941)),
             mcsm_ramp(p, 5.96, 6.10));                                                                // 6.0 four-color sunset split
     // MCSM 1.9.81: retargeted from a REAL rendered frame (Screenshot
     // 2026-09-03 131242) measured against reference 144855. The 1.9.71 values

@@ -161,7 +161,7 @@ public final class McsmStormSkyLayer {
             // shader uniforms (FogSkyEnd etc.) that only shader packs bind,
             // so in vanilla the sky pass always saw "no storm". This layer
             // therefore runs whenever no shader pack owns the sky -- plain
-            // vanilla AND FabricSkyBoxes mode. 1.9.315: "no pack owns the
+            // vanilla AND FabricSkyBoxes mode. 1.9.316: "no pack owns the
             // sky" now means the pack is INACTIVE (IrisApi), not that iris
             // is merely installed; a shader mod with its pack turned off
             // renders the vanilla pipeline and this layer draws for it too.
@@ -197,7 +197,7 @@ public final class McsmStormSkyLayer {
             final Vec3 bearing = new Vec3(dx, dy, dz).normalize();
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.315: the alpha patch itself is large enough to sit behind
+            // 1.9.316: the alpha patch itself is large enough to sit behind
             // the whole storm silhouette. This is a broken angular field,
             // not the old opaque full-sky dome.
             final double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
@@ -207,11 +207,11 @@ public final class McsmStormSkyLayer {
 
             SubmitNodeCollector collector = ctx.submitNodeCollector();
             // Do not paint an opaque camera-centred dome here. That was the
-            // giant green/purple sphere in the 1.9.315 screenshots and it also
+            // giant green/purple sphere in the 1.9.316 screenshots and it also
             // hid the active Fabric sky. The storm sky is the alpha-feathered
             // organic patch below; the untouched sky remains visible through
             // its broken edge, exactly like the reference glare frames.
-            // 1.9.315 -- the organic smear: a SEPARATE infinite skybox layer
+            // 1.9.316 -- the organic smear: a SEPARATE infinite skybox layer
             // tethered only to the storm bearing. It lives on a fixed far
             // camera shell, so it cannot become a physical circle beside the
             // storm when the player flies toward it.

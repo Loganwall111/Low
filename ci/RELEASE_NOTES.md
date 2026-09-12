@@ -1,3 +1,12 @@
+# Devouring Storms 1.9.316 -- remove the remaining sky-band fallback
+
+This candidate includes the 1.9.315 active-sky ownership and transparent
+cloud changes, plus the same exact phase maps in the built-in core shader and
+the shader-pack-v5 fallback. It also removes the old artificial zenith rim and
+darkening overlay that could appear as a black discontinuity at the top.
+
+This remains a CI artifact until the active scene is confirmed in Minecraft.
+
 # Devouring Storms 1.9.315 -- active sky ownership and transparent exact-map pass
 
 - Suppress the opaque FabricSkyBoxes backdrop before the sky pass only while a
