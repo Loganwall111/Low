@@ -113,6 +113,14 @@ def build_tu(path, defines, include_dir):
                 prelude.append('\n'.join(inc_body))
             elif inc in SHIM:
                 prelude.append(SHIM[inc])
+            elif inc.startswith('mcsm_') and os.path.isfile(os.path.join(include_dir, 'include', inc)):
+                # Custom MCSM libraries ship beside mcsm_visuals.glsl. Inline
+                # them exactly like the shared visuals include so the offline
+                # gate validates new core imports too (Minecraft resolves these
+                # from the assembled shader include directory at runtime).
+                with open(os.path.join(include_dir, 'include', inc)) as g:
+                    inc_body = [l2 for l2 in g.read().splitlines() if not l2.strip().startswith('#version')]
+                prelude.append('\n'.join(inc_body))
             else:
                 raise SystemExit('no shim for include %s in %s' % (inc, path))
             continue
