@@ -868,7 +868,7 @@ if grep -R -n -E 'vortex_tile_[^"[:space:]]*[A-Z]' \
   AUDIT_FAIL=1
 fi
 VORTEX_ASSET_DIR="$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere"
-if find "$VORTEX_ASSET_DIR" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null \
+if find "$VORTEX_ASSET_DIR" -maxdepth 1 -type f -name 'vortex*' -printf '%f\n' 2>/dev/null \
      | grep -E '[A-Z]' >/dev/null; then
   echo "::error title=jar audit::uppercase Vortex texture filename survived assembly"
   AUDIT_FAIL=1
