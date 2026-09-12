@@ -35,7 +35,7 @@ public abstract class McsmStormSkyColorPatch {
         McsmNativeSkyRenderer.apply(level, partialTick, state);
     }
 
-    /** Full storm owns the celestial layer; the native gradient remains. */
+    /** The opt-in SunSun slab owns the storm's celestial layer; the gradient remains. */
     @Inject(
             method = "renderSunMoonAndStars",
             at = @At("HEAD"),
@@ -70,7 +70,7 @@ public abstract class McsmStormSkyColorPatch {
      * stretching it vertically.  Consequently its center remains exactly
      * 500.0F blocks from the camera along the rotated time-of-day vector.
      */
-    private void mcsm$renderStorySun(PoseStack poseStack, float timeOfDay) {
+    private void mcsm$renderStorySun(PoseStack poseStack, float sunAngle) {
         final float FIXED_ORBITAL_DISTANCE = 500.0F;
         final float NATIVE_SUN_CENTER = 100.0F;
         final float SLAB_VERTICAL_SCALE = 3.0F;
@@ -80,7 +80,7 @@ public abstract class McsmStormSkyColorPatch {
         // the native orbital Y axis by it preserves the day/night cycle; the
         // ecliptic tilt makes the result a vertical Story Mode slab rather
         // than a flat, stationary screen overlay.
-        poseStack.mulPose(Axis.YP.rotation(-timeOfDay));
+        poseStack.mulPose(Axis.YP.rotation(-sunAngle));
         poseStack.mulPose(Axis.ZP.rotation((float) Math.toRadians(23.44D)));
         poseStack.translate(0.0F, FIXED_ORBITAL_DISTANCE, 0.0F);
         poseStack.scale(1.0F, SLAB_VERTICAL_SCALE, 1.0F);
