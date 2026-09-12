@@ -538,6 +538,37 @@ public abstract class net.minecraft.client.renderer.entity.EntityRenderer<T exte
   public final S createRenderState(T, float);
   public void extractRenderState(T, S, float);
 }
+Compiled from "CloudRenderer.java"
+public class net.minecraft.client.renderer.CloudRenderer extends net.minecraft.server.packs.resources.SimplePreparableReloadListener<java.util.Optional<net.minecraft.client.renderer.CloudRenderer$TextureData>> implements java.lang.AutoCloseable {
+  public net.minecraft.client.renderer.CloudRenderer();
+  public void render(int, net.minecraft.client.CloudStatus, float, int, net.minecraft.world.phys.Vec3, long, float);
+  public void markForRebuild();
+  public void endFrame();
+  public void close();
+}
+Compiled from "ClientChunkCache.java"
+public class net.minecraft.client.multiplayer.ClientChunkCache extends net.minecraft.world.level.chunk.ChunkSource {
+  public net.minecraft.client.multiplayer.ClientChunkCache(net.minecraft.client.multiplayer.ClientLevel, int);
+  public net.minecraft.world.level.lighting.LevelLightEngine getLightEngine();
+  public void drop(net.minecraft.world.level.ChunkPos);
+  public net.minecraft.world.level.chunk.LevelChunk getChunk(int, int, net.minecraft.world.level.chunk.status.ChunkStatus, boolean);
+  public net.minecraft.world.level.BlockGetter getLevel();
+  public void replaceBiomes(int, int, net.minecraft.network.FriendlyByteBuf);
+  public net.minecraft.world.level.chunk.LevelChunk replaceWithPacketData(int, int, net.minecraft.network.FriendlyByteBuf, java.util.Map<net.minecraft.world.level.levelgen.Heightmap$Types, long[]>, java.util.function.Consumer<net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData$BlockEntityTagOutput>);
+  public void tick(java.util.function.BooleanSupplier, boolean);
+  public void updateViewCenter(int, int);
+  public void updateViewRadius(int);
+  public java.lang.String gatherStats();
+  public int getLoadedChunksCount();
+  public void onLightUpdate(net.minecraft.world.level.LightLayer, net.minecraft.core.SectionPos);
+  public it.unimi.dsi.fastutil.longs.LongOpenHashSet addedEmptySections();
+  public it.unimi.dsi.fastutil.longs.LongOpenHashSet removedEmptySections();
+  public it.unimi.dsi.fastutil.longs.LongOpenHashSet addedLoadedChunks();
+  public it.unimi.dsi.fastutil.longs.LongOpenHashSet removedLoadedChunks();
+  public void flipUpdateTrackingSets();
+  public void onSectionEmptinessChanged(int, int, int, boolean);
+  public net.minecraft.world.level.chunk.ChunkAccess getChunk(int, int, net.minecraft.world.level.chunk.status.ChunkStatus, boolean);
+}
 Compiled from "Camera.java"
 public class net.minecraft.client.Camera implements net.minecraft.world.waypoints.TrackedWaypoint$Camera {
   public static final float PROJECTION_Z_NEAR;
