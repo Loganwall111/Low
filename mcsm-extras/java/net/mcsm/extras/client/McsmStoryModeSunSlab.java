@@ -22,17 +22,23 @@ public final class McsmStoryModeSunSlab {
     public static boolean configured() {
         try {
             McsmExtrasConfig.load();
-            return McsmExtrasConfig.storyModeAccurateSunSun;
+            return McsmExtrasConfig.storyModeAccurateSunSun
+                    || McsmExtrasConfig.ENABLE_EXPERIMENTAL_STORY_MODE_STAGE;
         } catch (Throwable ignored) {
             return false;
         }
     }
 
-    /** Feature is visible only while the native storm-owned celestial pass is active. */
-    public static boolean enabled() {
+    /** True when this feature owns the native celestial pass for the frame. */
+    public static boolean ownsCelestials() {
         return configured()
-                && McsmNativeSkyRenderer.suppressCelestials()
-                && !deleted;
+                && (McsmNativeSkyRenderer.suppressCelestials()
+                    || McsmExtrasConfig.ENABLE_EXPERIMENTAL_STORY_MODE_STAGE);
+    }
+
+    /** Feature is visible while the native storm or stage celestial pass is active. */
+    public static boolean enabled() {
+        return ownsCelestials() && !deleted;
     }
 
     /**

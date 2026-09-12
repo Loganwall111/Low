@@ -32,7 +32,7 @@ public abstract class McsmStormSkyColorPatch {
     )
     private void mcsm$nativeAtmosphereCamera(ClientLevel level, float partialTick,
             Camera camera, SkyRenderState state, CallbackInfo ci) {
-        McsmNativeSkyRenderer.apply(level, partialTick, state);
+        McsmNativeSkyRenderer.apply(level, partialTick, camera, state);
     }
 
     /** The opt-in SunSun slab owns the storm's celestial layer; the gradient remains. */
@@ -45,8 +45,7 @@ public abstract class McsmStormSkyColorPatch {
     private void mcsm$suppressCelestials(PoseStack poseStack, float sunAngle,
             float moonAngle, float sunAlpha, MoonPhase moonPhase,
             float starAngle, float starBrightness, CallbackInfo ci) {
-        if (McsmNativeSkyRenderer.suppressCelestials()
-                && McsmStoryModeSunSlab.configured()) {
+        if (McsmStoryModeSunSlab.ownsCelestials()) {
             if (McsmStoryModeSunSlab.enabled()) {
                 mcsm$renderStorySun(poseStack, sunAngle);
             }
@@ -102,7 +101,7 @@ public abstract class McsmStormSkyColorPatch {
     )
     private void mcsm$suppressSunrise(PoseStack poseStack, float angle, int color,
             CallbackInfo ci) {
-        if (McsmNativeSkyRenderer.suppressCelestials()) {
+        if (McsmStoryModeSunSlab.ownsCelestials()) {
             ci.cancel();
         }
     }

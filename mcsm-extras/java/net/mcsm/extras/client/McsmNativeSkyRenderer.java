@@ -1,6 +1,7 @@
 package net.mcsm.extras.client;
 
 import net.dabicco.witherstormmod.client.ClientDistantStormManager;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.state.level.SkyRenderState;
@@ -26,13 +27,34 @@ public final class McsmNativeSkyRenderer {
     private static volatile float u_StormPhase;
     private static volatile float u_TimeOfDay;
     private static volatile float u_StormOpacity;
+    private static volatile boolean stageOutside;
 
     private McsmNativeSkyRenderer() {
     }
 
     /** Apply a continuously interpolated atmosphere to the native sky state. */
-    public static void apply(ClientLevel level, float partialTick, SkyRenderState state) {
+    public static void apply(ClientLevel level, float partialTick, Camera camera, SkyRenderState state) {
+        stageOutside = false;
         if (level == null || state == null) {
+            return;
+        }
+
+        // The experimental stage owns the background when the camera leaves
+        // the ellipsoid.  Native sky geometry is retained inside the stage,
+        // but outside it becomes a genuinely starless, pitch-black void so
+        // the entire shell can be inspected from above Y=400.
+        stageOutside = McsmExperimentalStoryStage.active()
+                && camera != null
+                && McsmExperimentalStoryStage.cameraOutside(level, camera.position());
+        if (stageOutside) {
+            state.skyColor = 0;
+            state.sunriseAndSunsetColor = 0;
+            state.starBrightness = 0.0F;
+            state.rainBrightness = 0.0F;
+            state.shouldRenderDarkDisc = false;
+            u_StormPhase = Math.max(5.0F, nearestPhase());
+            u_TimeOfDay = (float) Math.floorMod(level.getOverworldClockTime(), 24000L) / 24000.0F;
+            u_StormOpacity = 0.0F;
             return;
         }
 
@@ -96,6 +118,11 @@ public final class McsmNativeSkyRenderer {
         return u_StormOpacity;
     }
 
+    /** Used only by the stage's cloud hook; false in every ordinary frame. */
+    public static boolean stageOutside() {
+        return stageOutside;
+    }
+
     /**
      * Fog colour at the horizon.  FogRenderer calls this after vanilla has
      * computed its native colour, so terrain, foliage, and entities fade into
@@ -104,6 +131,16 @@ public final class McsmNativeSkyRenderer {
     public static float fogColor(ClientLevel level, float[] out) {
         if (out == null || out.length < 3) {
             return 0.0F;
+        }
+        if (stageOutside) {
+            out[0] = 0.0F;
+            out[1] = 0.0F;
+            out[2] = 0.0F;
+            return 1.0F;
+        }
+        if (McsmExperimentalStoryStage.active()) {
+            McsmExperimentalStoryStage.horizonColor(u_StormPhase, out);
+            return 0.80F;
         }
         float time = level == null ? u_TimeOfDay :
                 (float) Math.floorMod(level.getOverworldClockTime(), 24000L) / 24000.0F;

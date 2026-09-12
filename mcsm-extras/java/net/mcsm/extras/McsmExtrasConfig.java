@@ -152,6 +152,12 @@ public final class McsmExtrasConfig {
     // ---- Iris Shader Pack -------------------------------------------------
     /** Story Mode accurate vertical sun slab. Disabled by default. */
     public static boolean storyModeAccurateSunSun = false;
+    /**
+     * Experimental self-contained Story Mode studio-stage simulation.
+     * Deliberately opt-in: it changes only the client presentation and never
+     * mutates the saved world or server-side chunk generator while disabled.
+     */
+    public static boolean ENABLE_EXPERIMENTAL_STORY_MODE_STAGE = false;
 
     /** Ship + auto-install the Devouring Storms Iris shader pack.
      *  Default OFF after native/GL out-of-memory reports; players can turn it
@@ -232,6 +238,7 @@ public final class McsmExtrasConfig {
             p.setProperty("embedded_shader_pack", String.valueOf(embeddedShaderPack));
             p.setProperty("auto_select_shader_pack", String.valueOf(autoSelectShaderPack));
             p.setProperty("story_mode_accurate_sun_sun", String.valueOf(storyModeAccurateSunSun));
+            p.setProperty("ENABLE_EXPERIMENTAL_STORY_MODE_STAGE", String.valueOf(ENABLE_EXPERIMENTAL_STORY_MODE_STAGE));
             p.setProperty("debris_always_max", String.valueOf(debrisAlwaysMax));
             p.setProperty("glacier_flakes", String.valueOf(glacierFlakes));
             p.setProperty("storm_rings", String.valueOf(stormRings));
@@ -337,6 +344,7 @@ public final class McsmExtrasConfig {
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
             autoSelectShaderPack = bool(p, "auto_select_shader_pack", autoSelectShaderPack);
             storyModeAccurateSunSun = bool(p, "story_mode_accurate_sun_sun", storyModeAccurateSunSun);
+            ENABLE_EXPERIMENTAL_STORY_MODE_STAGE = bool(p, "ENABLE_EXPERIMENTAL_STORY_MODE_STAGE", ENABLE_EXPERIMENTAL_STORY_MODE_STAGE);
             debrisAlwaysMax    = bool(p, "debris_always_max", debrisAlwaysMax);
             glacierFlakes      = bool(p, "glacier_flakes", glacierFlakes);
             stormRings         = bool(p, "storm_rings", stormRings);

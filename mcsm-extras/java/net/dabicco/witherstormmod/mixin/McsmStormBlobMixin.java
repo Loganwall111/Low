@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.dabicco.witherstormmod.client.StormBackdrop;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
+import net.mcsm.extras.client.McsmExperimentalStoryStage;
 import net.mcsm.extras.client.McsmStormBlob;
 
 /**
@@ -23,6 +24,10 @@ public abstract class McsmStormBlobMixin {
     @Inject(method = "submit", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private static void dabyws$correctedBlob(LevelRenderContext ctx, CallbackInfo ci) {
         if (Minecraft.getInstance() != null) {
+            // Stage geometry is submitted in the same collect-submits pass as
+            // the storm, so the dome/pad is behind entity geometry and the
+            // existing glare bridge remains untouched.
+            McsmExperimentalStoryStage.submit(ctx);
             McsmStormBlob.submit(ctx);
         }
         ci.cancel();

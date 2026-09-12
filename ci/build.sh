@@ -205,7 +205,8 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.minecraft.client.renderer.SkyRenderer \
     net.minecraft.client.renderer.state.level.SkyRenderState \
     net.minecraft.client.renderer.RenderType net.minecraft.client.renderer.blockentity.BlockEntityRenderer \
-    net.minecraft.client.renderer.entity.EntityRenderer net.minecraft.client.Camera \
+    net.minecraft.client.renderer.entity.EntityRenderer net.minecraft.client.renderer.CloudRenderer \
+    net.minecraft.client.multiplayer.ClientChunkCache net.minecraft.client.Camera \
     net.minecraft.client.player.LocalPlayer net.minecraft.world.entity.player.Player \
     net.minecraft.world.entity.player.Inventory net.minecraft.world.inventory.AbstractContainerMenu \
     net.minecraft.world.level.block.entity.CommandBlockEntity \
@@ -652,6 +653,24 @@ echo "[audit] fresh classes: matched=$JAR_MATCH compiled=$NEW_COUNT"
 if [ "$NEW_COUNT" -eq 0 ] || [ "$JAR_MATCH" -lt "$NEW_COUNT" ]; then
   echo "::error title=jar audit::fresh classes did not make it into the jar (matched=$JAR_MATCH compiled=$NEW_COUNT)"
   AUDIT_FAIL=1
+fi
+# Experimental stage delivery gate: the opt-in renderer, chunk boundary hook,
+# and persisted uppercase key must travel together.  This catches a partial
+# overlay where the menu appears but the stage is inert (or vice versa).
+for stage_class in \
+  net/mcsm/extras/client/McsmExperimentalStoryStage.class \
+  net/dabicco/witherstormmod/mixin/McsmStageChunkBoundaryMixin.class; do
+  if [ ! -f "$FX/cls/$stage_class" ]; then
+    echo "::error title=jar audit::experimental stage class missing: $stage_class"
+    AUDIT_FAIL=1
+  fi
+done
+if ! grep -q 'ENABLE_EXPERIMENTAL_STORY_MODE_STAGE' mcsm-extras/java/net/mcsm/extras/McsmExtrasConfig.java \
+   || ! grep -q 'ENABLE_EXPERIMENTAL_STORY_MODE_STAGE = false' mcsm-extras/java/net/mcsm/extras/McsmExtrasConfig.java; then
+  echo "::error title=jar audit::experimental stage key/default is missing or not false"
+  AUDIT_FAIL=1
+else
+  echo "[audit] experimental Story Mode stage is explicitly opt-in (default false)"
 fi
 
 # 2 + 3. mixin config registration, read from fabric.mod.json itself so a
