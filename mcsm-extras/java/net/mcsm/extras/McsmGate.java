@@ -248,11 +248,12 @@ public final class McsmGate {
             // zeroed -- the glow needs it. A moderate floor (raise-only, the
             // player can push it higher) gives the teeth the emissive halo
             // from the reference frames without the old full-res memory blowout.
-            // Never force the full-resolution HDR bloom on the client.  The
-            // Intel UHD path reported repeated UBO growth and long render
-            // stalls even before a storm was visible.  The native storm and
-            // emitter materials remain; players can explicitly raise bloom
-            // in the base config if their GPU can afford it.
+            // Never leave the full-resolution HDR bloom enabled on the
+            // default client path.  The Intel UHD path reported repeated UBO
+            // growth and long render stalls even before a storm was visible.
+            // The native storm and emitter materials remain; bloom can still
+            // be re-enabled manually after the world is stable.
+            changed += disableNum(c, null, "bloomStrength");
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
@@ -315,6 +316,21 @@ public final class McsmGate {
             McsmDiag.say("MCSM world gate opened: " + changed + " world fields raised/enabled");
         } catch (Throwable t) {
             McsmDiag.say("MCSM world gate failed before field loop: " + t);
+        }
+    }
+
+    /** Disable one optional high-memory numeric effect for this session. */
+    private static int disableNum(Class<?> owner, Object instance, String name) {
+        try {
+            Field f = owner.getField(name);
+            double cur = readNum(f, instance);
+            if (cur <= 0.0D) {
+                return 0;
+            }
+            writeNum(f, instance, 0.0D);
+            return 1;
+        } catch (Throwable ignored) {
+            return 0;
         }
     }
 
