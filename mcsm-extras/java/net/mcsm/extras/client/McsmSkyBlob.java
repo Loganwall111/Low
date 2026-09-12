@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.218 -- the INFINITE SKYBOX BLOB driver.
+ * 1.9.218 -- ATMOSPHERIC W'S CLOUD (infinite skybox) driver.
  *
  * The glare is an angular sky projection inside the MCSM Visual Shader
  * (lib/mcsm/skyBlob.glsl, painted in the lighting composite on sky pixels).

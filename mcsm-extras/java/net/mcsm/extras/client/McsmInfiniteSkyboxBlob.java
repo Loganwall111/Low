@@ -9,7 +9,7 @@ import net.mcsm.extras.McsmDiag;
 import net.mcsm.extras.McsmExtrasConfig;
 
 /**
- * MCSM 1.9.201 -- THE INFINITE SKYBOX BLOB  (Java half of u_StormPos).
+ * MCSM 1.9.201 -- ATMOSPHERIC W'S CLOUD  (Java half of u_StormPos).
  *
  * Telltale's glare in Minecraft: Story Mode is not a 3D volume, not a
  * billboard and not a cloud layer: it is an INFINITE skybox projection

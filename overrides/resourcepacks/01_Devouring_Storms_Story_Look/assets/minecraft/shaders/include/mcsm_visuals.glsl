@@ -18,9 +18,9 @@
 //               rim + void-purple top (img 5-6)
 //    7.00-8.05  dark red sky, orange low band, near-black top (img 7)
 //
-//  1.9.215.1 (port onto the user-designated 1.9.215 base): the glare is
-//  rebuilt as the INFINITE SKYBOX BLOB (user spec 2026-09-11): a separate
-//  infinite skybox layer tethered to the storm, painted with the exact hex
+//  1.9.215.1 (port onto the user-designated 1.9.215 base): Atmospheric W's
+//  Cloud is the INFINITE SKYBOX CLOUD (user spec 2026-09-11): a separate
+//  infinite sky layer tethered to the storm, painted with the exact hex
 //  decks for phase 5 / 5.5-5.9 / 6 below.
 //
 //  CARRIERS (Java writes these as plain fields on FogRenderer's FogData —
@@ -446,7 +446,7 @@ vec3 mcsm_blob_color(float p, float clock) {
 }
 
 // ============================================================================
-//  1.9.215.1 (port of the infinite-skybox work) -- THE INFINITE SKYBOX BLOB
+//  1.9.215.1 (port of the infinite-skybox work) -- ATMOSPHERIC W'S CLOUD
 //  (user spec, 2026-09-11)
 //
 //  Telltale's glare is NOT a 3D volume, NOT a billboard and NOT a cloud
@@ -516,11 +516,13 @@ float mcsm_inf_noise(vec2 p) {
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
+// Three-octave smoke FBM. The fine octave is what shreds the soot edge
+// without making the broad atmospheric cloud look like a geometric oval.
 float mcsm_inf_fbm(vec2 p) {
     float sum = 0.0;
     float amp = 0.5;
     float norm = 0.0;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 3; i++) {
         sum += mcsm_inf_noise(p) * amp;
         norm += amp;
         p = p * 2.03 + vec2(17.13, 9.71);
@@ -529,10 +531,14 @@ float mcsm_inf_fbm(vec2 p) {
     return sum / norm;
 }
 
-// Dome-plane projection plus a warped, asymmetric distance field.  `x` is
-// the normalized paint radius, `y` is elevation inside the smear, and `z`
-// marks a valid forward-facing storm ray.  The angular lobes and the 5-octave
-// FBM are what stop the edge from becoming a perfect circle/oval.
+// Wide Horizon Smog Layer. This is an angular projection relative to the
+// player's view direction and the storm bearing, never a finite box, sphere,
+// billboard, or camera-distance wall. The deliberately non-circular box field
+// is stretched 4x across the horizontal plane and compressed to 0.5 vertically
+// so it reads as atmospheric weather hugging the horizon.
+const float MCSM_SMOG_HORIZONTAL_STRETCH = 4.0;
+const float MCSM_SMOG_VERTICAL_COMPRESSION = 0.5;
+
 vec3 mcsm_inf_field(vec3 wd, vec3 bd, float outerDeg) {
     float cd = dot(wd, bd);
     if (cd <= 0.02) return vec3(2.0, 0.5, 0.0);
@@ -544,39 +550,48 @@ vec3 mcsm_inf_field(vec3 wd, vec3 bd, float outerDeg) {
     vec3 eyT = ey * ct - ex * st;
     vec2 s = vec2(dot(wd, exT), dot(wd, eyT))
            / (cd * tan(radians(outerDeg)));
-    vec2 e = vec2(s.x / MCSM_INF_X, s.y / MCSM_INF_Y);
-    float raw = length(e);
-    float theta = atan(e.y, e.x);
 
-    // Low-frequency torn contour + finer paint breakup.  The explicit lobes
-    // are deliberately unequal so the mass has a heavy side and a ragged
-    // trailing side like the reference frames, not radial symmetry.
-    float n0 = mcsm_inf_fbm(e * 1.35 + vec2(2.7, 8.4));
-    float n1 = mcsm_inf_fbm(e * 3.70 + vec2(-5.1, 3.2));
-    float lobes = 0.070 * sin(theta * 3.0 + 0.7)
-                + 0.045 * sin(theta * 7.0 - 1.4)
-                + 0.028 * sin(theta * 11.0 + n1 * 5.0);
-    float boundary = 1.0 + 0.23 * (n0 - 0.5) * 2.0 + lobes;
-    // Push a low hanging shoulder and a narrower upper-right notch into the
-    // contour.  These are angular features, not geometry in the world.
-    boundary += 0.085 * smoothstep(-0.90, -0.05, e.y) * smoothstep(-1.0, -0.05, -e.x);
-    boundary -= 0.070 * smoothstep(0.10, 0.85, e.y) * smoothstep(-0.20, 0.80, e.x);
-    boundary = max(boundary, 0.58);
+    // Divide by the stretched dimensions: this widens X/Z fourfold while
+    // compressing the visible Y band to half height.
+    vec2 smog = vec2(
+        s.x / (MCSM_INF_X * MCSM_SMOG_HORIZONTAL_STRETCH),
+        s.y / (MCSM_INF_Y * MCSM_SMOG_VERTICAL_COMPRESSION));
+    vec2 a = abs(smog);
+    float boxEdge = max(a.x, a.y); // Manhattan/box-like, explicitly not radial
 
-    float u = raw / boundary;
-    float upness = clamp((s.y / MCSM_INF_Y) * 0.5 + 0.5, 0.0, 1.0);
+    // Three FBM fields make broad ink shoulders, a ragged trailing side, and
+    // fine shredded soot. These are angular coordinates, so they wrap forever.
+    float broad = mcsm_inf_fbm(smog * 1.35 + vec2(2.7, 8.4));
+    float fine = mcsm_inf_fbm(smog * 5.75 + vec2(-5.1, 3.2));
+    float shred = mcsm_inf_fbm(smog * 12.0 + vec2(13.0, -7.0));
+    float lowShoulder = 0.20 * smoothstep(-1.0, 0.15, -smog.x)
+                      * (1.0 - smoothstep(-0.20, 0.80, smog.y));
+    float trailingTongue = 0.16 * smoothstep(-0.15, 0.95, smog.x)
+                         * (1.0 - smoothstep(-0.30, 0.65, smog.y));
+    float upperNotch = 0.13 * smoothstep(0.05, 0.80, smog.y)
+                     * smoothstep(-0.15, 0.85, smog.x);
+    float boundary = 0.86 + lowShoulder + trailingTongue - upperNotch
+                   + (broad - 0.5) * 0.30
+                   + (fine - 0.5) * 0.16
+                   + (shred - 0.5) * 0.10;
+    boundary = max(boundary, 0.48);
+
+    // `u` is a stretched-box edge coordinate, not length(uv) or an oval
+    // radius. The fragment alpha below uses the same torn coordinate.
+    float u = boxEdge / boundary;
+    float upness = clamp(s.y / (MCSM_INF_Y * MCSM_SMOG_VERTICAL_COMPRESSION)
+                       * 0.5 + 0.5, 0.0, 1.0);
     return vec3(u, upness, 1.0);
 }
 
-// Normalized warped field distance: 0 centre .. 1 broken silhouette edge ..
-// 1.85 diffuse bleed.  It is still angular, so the layer is infinite.
-float mcsm_inf_u(vec3 wd, vec3 bd, float outer, float ang) {
+// Normalized stretched-box distance: 0 dense centre .. 1 shredded edge.
+float mcsm_inf_u(vec3 wd, vec3 bd, float outer) {
     vec3 fld = mcsm_inf_field(wd, bd, outer);
     if (fld.z > 0.5) return fld.x;
     return 2.0;
 }
 
-// Per-phase radial palette (core / mid / edge / high).
+// Per-phase Atmospheric W's Cloud palette (core / mid / edge / high).
 void mcsm_inf_palette(float p, out vec3 core, out vec3 mid, out vec3 edge,
                       out vec3 high) {
     core = P5_CORE; mid = P5_MID; edge = P5_EDGE; high = P5_MID;
@@ -602,83 +617,67 @@ vec3 mcsm_inf_p6_split(float height) {
     return c;
 }
 
-// Cloud-pass companion: use the same broken angular contour for cloud
-// occlusion, without the time-varying colour streaks used by mcsm_blob().
+// Cloud-pass companion: the same wide, horizon-hugging atmospheric cloud.
+// This only supplies a soft sky/cloud cover value; it never creates geometry.
 float mcsm_mass_cover(vec3 wd, vec3 bd, float p) {
     float s = mcsm_glare_size();
     float outer = mix(58.0, 88.0, mcsm_ramp(p, 5.0, 6.0))
                 * mix(0.78, 1.16, clamp((s - 0.25) / 2.80, 0.0, 1.0));
-    float ang = degrees(acos(clamp(dot(normalize(wd), normalize(bd)), -1.0, 1.0)));
-    if (ang >= outer * 1.85) return 0.0;
-    float uu = mcsm_inf_u(normalize(wd), normalize(bd), outer, ang);
-    float coreW = 1.0 - smoothstep(0.07, 0.38, uu);
-    float midW  = smoothstep(0.18, 0.48, uu) * (1.0 - smoothstep(0.58, 0.97, uu));
-    float edgeW = smoothstep(0.48, 0.86, uu) * (1.0 - smoothstep(0.92, 1.30, uu));
-    return clamp(0.98 * coreW + 0.62 * midW + 0.16 * edgeW, 0.0, 0.97);
+    vec3 fld = mcsm_inf_field(normalize(wd), normalize(bd), outer);
+    if (fld.z < 0.5) return 0.0;
+    float uu = mcsm_inf_u(normalize(wd), normalize(bd), outer);
+    float edgeNoise = mcsm_inf_fbm(vec2(uu * 5.7 + fld.y * 2.1,
+                                         fld.y * 3.4 - uu * 1.7));
+    float body = 1.0 - smoothstep(0.48, 1.08 + (edgeNoise - 0.5) * 0.22, uu);
+    float smokeNoise = clamp(0.55 + 0.45 * edgeNoise, 0.0, 1.0);
+    float densityAlpha = min(0.80, 0.80 * pow(clamp(body * smokeNoise, 0.0, 1.0), 2.0));
+    return densityAlpha;
 }
 
-// Alpha-feathered core + multi-band, torn colour smear. sky.fsh composites
-// this as dome * (1 - occ) + emission: only the irregular storm field replaces
-// the vanilla sky, while its broken edge lets the ordinary sky show through.
+// Atmospheric W's Cloud: a wide, semi-transparent ink/smog layer painted into
+// the infinite sky. The dark centre is capped at 80% opacity; phase colors
+// remain visible through it instead of becoming a solid black wall.
 vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     vec3 wd = normalize(worldDir);
     vec3 bd = normalize(bossDir);
     float s = mcsm_glare_size();
     float outer = mix(58.0, 88.0, mcsm_ramp(p, 5.0, 6.0))
                 * mix(0.78, 1.16, clamp((s - 0.25) / 2.80, 0.0, 1.0));
-    float ang = degrees(acos(clamp(dot(wd, bd), -1.0, 1.0)));
-    if (ang >= outer * 1.85) return vec4(0.0);
-
     vec3 fld = mcsm_inf_field(wd, bd, outer);
-    float uu = mcsm_inf_u(wd, bd, outer, ang);
+    if (fld.z < 0.5) return vec4(0.0);
+
+    float uu = mcsm_inf_u(wd, bd, outer);
     float upness = fld.y;
+    float boundaryNoise = mcsm_inf_fbm(vec2(uu * 4.2 + upness * 2.7,
+                                             upness * 3.1 - clock * 0.006));
+    float sootNoise = mcsm_inf_fbm(vec2(uu * 9.0 + 3.0,
+                                        upness * 7.0 + clock * 0.004));
+    float shreddedEdge = mcsm_inf_fbm(vec2(uu * 16.0 - 4.0,
+                                           upness * 13.0 + 8.0));
+    float body = 1.0 - smoothstep(0.46,
+            1.08 + (boundaryNoise - 0.5) * 0.28, uu);
+    body *= 1.0 - smoothstep(0.72, 1.14, uu + (shreddedEdge - 0.5) * 0.16);
+    float smokeNoise = clamp(0.50 + 0.50 * sootNoise, 0.0, 1.0);
+
+    // Maximum densityAlpha is exactly 0.80. The squared curve leaves the
+    // sunset/phase color strongly visible through the smoke and dissolves the
+    // outer soot instead of producing a hard geometric boundary.
+    float densityAlpha = min(0.80,
+        0.80 * pow(clamp(body * smokeNoise, 0.0, 1.0), 2.0));
+    if (densityAlpha <= 0.001) return vec4(0.0);
+
+    // The input dome is the current phase-colored atmospheric background.
+    // Multiplicative-looking dark matter blend: bright phase colors pierce the
+    // cloud center while the ink mass remains visibly present.
+    vec3 phaseColor = dome;
+    vec3 cloudColor = mix(phaseColor, vec3(0.02), densityAlpha);
+    // A subtle phase tongue survives inside the cloud without becoming a ring.
     vec3 core, mid, edge, high;
     mcsm_inf_palette(p, core, mid, edge, high);
-
-    // Noise-jitter the colour boundaries independently from the silhouette.
-    // That produces broad painted colour tongues rather than a single grade.
-    float bandNoise = mcsm_inf_fbm(vec2(uu * 3.1 + upness * 1.7,
-                                        upness * 2.4 - uu * 1.1 + clock * 0.004));
-    float rr = uu + (bandNoise - 0.5) * 0.16;
-    float coreW = 1.0 - smoothstep(0.07, 0.38, rr);
-    float midW  = smoothstep(0.18, 0.48, rr) * (1.0 - smoothstep(0.58, 0.97, rr));
-    float edgeW = smoothstep(0.48, 0.86, rr) * (1.0 - smoothstep(0.92, 1.30, rr));
-    float bleedW = smoothstep(0.82, 1.26, rr) * (1.0 - smoothstep(1.24, 1.85, rr));
-
-    vec3 c = core * coreW + mid * midW + edge * (edgeW + bleedW * 0.48);
-    float streak = smoothstep(0.52, 0.82,
-                      mcsm_inf_fbm(vec2(upness * 2.6 + 4.0, uu * 4.5 - clock * 0.008)));
-    c = mix(c, mix(mid, edge, 0.68), streak * edgeW * 0.42);
-
-    // Low-frequency zenith-to-horizon wash from the supplied phase sky
-    // references. It is deliberately mixed into, rather than substituted for,
-    // the torn radial paint so tongues and the dark storm heart survive.
-    vec3 deckTop;
-    vec3 deckBottom;
-    if (p < 5.42) {
-        deckTop = vec3(0.000, 0.180, 0.192);
-        deckBottom = vec3(0.663, 0.847, 0.714);
-    } else if (p < 5.92) {
-        deckTop = vec3(0.216, 0.118, 0.275);
-        deckBottom = vec3(0.804, 0.529, 0.549);
-    } else {
-        deckTop = vec3(0.353, 0.275, 0.373);
-        deckBottom = vec3(0.765, 0.569, 0.627);
-    }
-    vec3 deck = mix(deckBottom, deckTop, clamp(upness, 0.0, 1.0));
-    c = mix(c, deck, 0.30 + 0.38 * (1.0 - coreW));
-
-    // 5.5-5.9 gets a richer royal-magenta upper bleed.
-    c += mix(mid, high, 0.62) * midW * upness * mcsm_ramp(p, 5.42, 5.52) * 0.62;
-
-    float w6 = mcsm_ramp(p, 5.92, 6.08);
-    c = mix(c, mcsm_inf_p6_split(wd.y), w6);
-    c *= mix(1.0, 0.62 + 0.38 * coreW, w6);
-
-    float occ = clamp(0.98 * coreW + 0.62 * midW + 0.16 * edgeW + 0.06 * bleedW,
-                      0.0, 0.97);
-    c *= 0.96 + 0.04 * sin(clock * 1.3 + upness * 2.0);
-    return vec4(c, occ);
+    vec3 tongueColor = mix(mid, edge, clamp(upness * 0.72 + sootNoise * 0.28, 0.0, 1.0));
+    cloudColor = mix(cloudColor, mix(cloudColor, tongueColor, 0.16),
+                     densityAlpha * (1.0 - body) * 0.70);
+    return vec4(cloudColor, densityAlpha);
 }
 
 // ---------------------------------------------------------------- fog / tints

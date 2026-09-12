@@ -21,7 +21,7 @@
 //
 //  1.9.215.1 (port): day/night vaults retuned to the 2026-09-11 references
 //  (vivid mid-blue day with lilac horizon; PURPLE night, not blue). The
-//  storm glare is now the INFINITE SKYBOX BLOB (see mcsm_visuals.glsl)
+//  Atmospheric W's Cloud is now the infinite skybox cloud (see mcsm_visuals.glsl)
 //  running through 5.00-6.95, and phase 6 uses the four-color sunset split.
 //
 //  Bodies (sun/moon) fade OUT as the storm matures - "the sun shining
@@ -257,10 +257,10 @@ void main() {
               * vec3(0.82, 0.66, 1.0) * 0.46;
     }
 
-    // 1.9.215.1 (port) -- THE INFINITE SKYBOX BLOB. The glare is a separate
+    // 1.9.215.1 (port) -- ATMOSPHERIC W'S CLOUD. It is a separate
     // skybox layer tethered to the storm (u_StormPos), not a 3D volume: the
-    // dark-matter core masks the vanilla sky, the smudge bleeds over it, and
-    // rays outside the oval fall back to the plain dome ("looking the
+    // semi-transparent dark smoke mixes over the phase sky, and rays outside
+    // the horizon smog fall back to the plain dome ("looking the
     // opposite direction fades back to normal"). Runs 5.00-6.95 (5 / 5.5-5.9
     // / 6, the user's phase windows). The Java driver (McsmInfiniteSkyboxBlob)
     // fades the aim carrier out with distance, so far-away skies return to
@@ -269,9 +269,9 @@ void main() {
     vec4 aim = mcsm_boss_dir(camWorld);
     if (aim.w > 0.5 && mcsmP >= 5.00 && mcsmP <= 6.95) {
         vec4 blob = mcsm_blob(worldDir, aim.xyz, mcsmP, clock, dome);
-        // blob.w is the full occlusion factor (the dark core replaces the
-        // sky); blob.rgb is the premultiplied smudge emission layered over.
-        dome = dome * (1.0 - blob.w) + blob.rgb;
+        // blob.w is the semi-transparent density of Atmospheric W's Cloud;
+        // blob.rgb is the phase-colored smoke result layered over the sky.
+        dome = mix(dome, blob.rgb, blob.w);
     }
 
     // Bodies: tinted briefly at the start, then fade to nothing - no sun or

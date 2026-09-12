@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 1.9.215 R2 -- FabricSkyBoxes compatibility layer for the storm sky.
- * 1.9.303 -- extended to PURE VANILLA: this is now the storm-sky layer for
+ * 1.9.303 -- extended to PURE VANILLA: this is now the Atmospheric W's Cloud layer for
  * every configuration WITHOUT a shader pack (plain vanilla and
  * FabricSkyBoxes mode). The core-shader blob only works when a shader pack
  * binds the FogSkyEnd carrier uniforms, so vanilla alone never showed the
@@ -29,7 +29,7 @@ import net.minecraft.world.phys.Vec3;
  * This layer draws the SAME sky the shader paints as world geometry, but
  * AFTER the skybox, so it wins:
  *
- *   * only the organic storm SMEAR, pinned to the storm bearing: a separate
+ *   * only the Atmospheric W's Cloud, pinned to the storm bearing: a separate
  *     infinite skybox layer attached to the vanilla sky (McsmBlobShape) --
  *     a noise-warped oval with side lobes, transparent feathered edges, and
  *     the corrected deck banding smeared over a noise-jittered radius;
@@ -149,7 +149,7 @@ public final class McsmStormSkyLayer {
             // shader uniforms (FogSkyEnd etc.) that only shader packs bind,
             // so in vanilla the sky pass always saw "no storm". This layer
             // therefore runs whenever no shader pack owns the sky -- plain
-            // vanilla AND FabricSkyBoxes mode. 1.9.308: "no pack owns the
+            // vanilla AND FabricSkyBoxes mode. 1.9.309: "no pack owns the
             // sky" now means the pack is INACTIVE (IrisApi), not that iris
             // is merely installed; a shader mod with its pack turned off
             // renders the vanilla pipeline and this layer draws for it too.
@@ -186,7 +186,7 @@ public final class McsmStormSkyLayer {
             final Vec3 bearing = new Vec3(dx, dy, dz).normalize();
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.308: the alpha patch itself is large enough to sit behind
+            // 1.9.309: the alpha patch itself is large enough to sit behind
             // the whole storm silhouette. This is a broken angular field,
             // not the old opaque full-sky dome.
             final double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
@@ -196,11 +196,11 @@ public final class McsmStormSkyLayer {
 
             SubmitNodeCollector collector = ctx.submitNodeCollector();
             // Do not paint an opaque camera-centred dome here. That was the
-            // giant green/purple sphere in the 1.9.308 screenshots and it also
+            // giant green/purple sphere in the 1.9.309 screenshots and it also
             // hid the active Fabric sky. The storm sky is the alpha-feathered
             // organic patch below; the untouched sky remains visible through
             // its broken edge, exactly like the reference glare frames.
-            // 1.9.308 -- the organic smear: a SEPARATE infinite skybox layer
+            // 1.9.309 -- the organic smear: a SEPARATE infinite skybox layer
             // tethered to the storm bearing. Put the camera-centred angular
             // patch just behind the storm instead of at a fixed 399 blocks;
             // this keeps the paint visually close to the monster while it

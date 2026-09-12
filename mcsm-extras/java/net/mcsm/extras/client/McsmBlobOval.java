@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import net.mcsm.extras.McsmExtrasConfig;
 
 /**
- * MCSM 1.9.308 -- the infinite skybox smear for the SHADER-PACK path.
+ * MCSM 1.9.309 -- the Atmospheric W's Cloud for the SHADER-PACK path.
  *
  * 1.9.221-1.9.304 drew the blob here as a stack of four camera-facing oval
  * quads pinned at the storm's 3D position. That made the blob a flat 2D
@@ -155,7 +155,7 @@ public final class McsmBlobOval {
 
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.308: make the alpha patch large enough to sit behind the
+            // 1.9.309: make the alpha patch large enough to sit behind the
             // whole storm silhouette while remaining an irregular field.
             double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
                     * (0.78 + (gs - 0.25) * 0.139);
@@ -166,7 +166,7 @@ public final class McsmBlobOval {
             }
             final Vec3 bearing = rawView.normalize();
 
-            // 1.9.308: the smear patch, drawn on a camera-centred sky
+            // 1.9.309: the smear patch, drawn on a camera-centred sky
             // sphere whose radius is the storm's distance -- every vertex
             // at true skybox depth, so this never reads as a flat card.
             final McsmBlobShape.Patch patch = McsmBlobShape.patchFor(bearing, phase,

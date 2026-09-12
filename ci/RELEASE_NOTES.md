@@ -1,3 +1,25 @@
+# Devouring Storms 1.9.309 -- Atmospheric W's Cloud
+
+This pass replaces the old geometric glare/smudge interpretation with the
+actual visual structure from the supplied Wither Storm screenshots: a wide,
+flat, asymmetric atmospheric cloud wrapping across the horizon.
+
+- Renamed the visual concept to `Atmospheric W's Cloud`; it remains an
+  infinite directional skybox effect, not a finite world object.
+- Rewrote the active GLSL cloud field as a 4x horizontal / 0.5x vertical
+  stretched weather layer using a non-circular box field and 3-octave FBM
+  edge shredding. No `length(uv)` radial oval or doughnut bounds remain.
+- Added semi-transparent dark matter density capped at `0.80`, with the
+  required `pow(noise, 2.0)` falloff and `mix(phaseColor, vec3(0.02),
+  densityAlpha)` phase-color bleed-through.
+- Updated both the core sky shader and managed shader-pack path, including
+  correct alpha compositing instead of the previous opaque occlusion formula.
+- Renamed the control-panel labels while retaining old config keys for
+  compatibility.
+
+This build is CI-only until the new atmospheric-cloud result is checked in
+Minecraft.
+
 # Devouring Storms 1.9.308 -- enlarged storm-attached sky smear
 
 This corrective build follows the 1.9.307 in-game check. The storm sky was

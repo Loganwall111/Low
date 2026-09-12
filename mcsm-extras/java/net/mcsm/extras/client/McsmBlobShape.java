@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.308 -- THE ORGANIC STORM SMEAR, the one true shape of the infinite
+ * 1.9.309 -- ATMOSPHERIC W'S CLOUD, the one true shape of the infinite
  * skybox blob, shared by every Java render path.
  *
  * The blob is NOT a world object and NOT a flat disc: it is a separate,
@@ -47,10 +47,13 @@ public final class McsmBlobShape {
     public static final int NX = 84;
     public static final int NY = 60;
 
-    /** the oval footprint + tilt shared with the GLSL blob. Keep the
-     * reference silhouette's 2.5x horizontal multiplier explicit. */
-    private static final double OVAL_Y = 1.45;
-    private static final double OVAL_X = OVAL_Y * 2.5;
+    /** Wide Horizon Smog coordinates shared with the GLSL path: X/Z is
+     * stretched by 4.0 and Y is compressed to 0.5. The 2.5x horizontal
+     * multiplier remains explicit inside that stretched plane. */
+    private static final double SMOG_HORIZONTAL_STRETCH = 4.0;
+    private static final double SMOG_VERTICAL_COMPRESSION = 0.5;
+    private static final double OVAL_Y = 1.45 * SMOG_VERTICAL_COMPRESSION;
+    private static final double OVAL_X = OVAL_Y * 2.5 * SMOG_HORIZONTAL_STRETCH;
 
     /** patch half-extent in tangent-space units -- covers the 1.85 bleed */
     public static final double SX_MAX = OVAL_X * 1.85;
@@ -174,8 +177,8 @@ public final class McsmBlobShape {
 
     /** asymmetric warped distance field: a paint mass, never a direct circle */
     private static double shapeField(double sx, double sy) {
-        double r = Math.sqrt((sx / OVAL_X) * (sx / OVAL_X)
-                + (sy / OVAL_Y) * (sy / OVAL_Y));
+        // Flat box distance, not a circular/elliptical radius.
+        double r = Math.max(Math.abs(sx / OVAL_X), Math.abs(sy / OVAL_Y));
         double theta = Math.atan2(sy, sx);
         double n1 = fbm(sx * 1.9 + 3.7, sy * 1.9 + 9.1, 3);
         double n2 = fbm(sx * 4.1 + 11.3, sy * 4.1 + 2.9, 3);
@@ -187,24 +190,23 @@ public final class McsmBlobShape {
         // thinner right-hand tail. The upper-right notch prevents symmetry.
         double l1x = (sx + 1.75) / 1.34;
         double l1y = (sy + 0.40) / 0.85;
-        double lo1 = Math.sqrt(l1x * l1x + l1y * l1y)
+        double lo1 = Math.max(Math.abs(l1x), Math.abs(l1y))
                 * (1.0 + 0.34 * (fbm(sx * 2.3 + 17.7, sy * 2.3 + 4.4, 3) - 0.5));
         double l2x = (sx - 1.45) / 2.10;
         double l2y = (sy + 0.05) / 1.00;
-        double lo2 = Math.sqrt(l2x * l2x + l2y * l2y)
+        double lo2 = Math.max(Math.abs(l2x), Math.abs(l2y))
                 * (1.0 + 0.34 * (fbm(sx * 2.3 + 31.1, sy * 2.3 + 8.8, 3) - 0.5));
         double notch = 0.16 * Math.exp(-((sx - 0.48) * (sx - 0.48) / 0.20
                 + (sy - 0.34) * (sy - 0.34) / 0.12));
         return Math.min(wr + notch, Math.min(lo1, lo2));
     }
 
-    /** full per-vertex colour: deck banding on a noise-jittered radius,
+    /** full per-vertex colour: deck banding on the flat smog field,
      *  royal-magenta overhead, phase-6 split and warp-streak shading */
     private static float[] smearColor(double sx, double sy, double ty, float phase,
             float[] core, float[] midc, float[] edge, float[] high,
             float w55, float w6) {
-        double r = Math.sqrt((sx / OVAL_X) * (sx / OVAL_X)
-                + (sy / OVAL_Y) * (sy / OVAL_Y));
+        double r = Math.max(Math.abs(sx / OVAL_X), Math.abs(sy / OVAL_Y));
         double rr = r * (1.0 + 0.18 * (fbm(sx * 3.1 + 5.5, sy * 3.1 + 1.1, 2) - 0.5));
         float wCore = (float) (1.0 - smoothstep(0.10, 0.42, rr));
         float wMid = (float) (smoothstep(0.16, 0.46, rr)

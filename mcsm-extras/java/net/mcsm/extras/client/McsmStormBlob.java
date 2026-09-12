@@ -27,7 +27,7 @@ import net.minecraft.world.phys.Vec3;
  *  - the dark storm heart sits dead-centre in every phase from 4 up;
  *  - the centre direction is temporally smoothed (25% per frame) so blob
  *    and storm glide as one sky element;
- *  - the GLARE is the original game's construction, exposed by the reference
+ *  - the ATMOSPHERIC W'S CLOUD is the infinite sky construction, exposed by the reference
  *    frames: one soft gradient billboard hung BEHIND the silhouette (wide
  *    purple aura 5.5+, blue at 4-5), terrain occluding it for free - the old
  *    hard ring glare is deleted;
@@ -50,9 +50,9 @@ public final class McsmStormBlob {
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
     // 1.9.214 -- REAL Telltale assets (repo Loganwall111/gggggrff):
-    // the volumetric halo is a thin ellipsoid SHELL around the storm,
+    // the legacy atmospheric cloud texture belonged to the old shell path,
     // textured with the game's own radial falloff halo texture.
-    private static final Identifier HALO_TEX = Identifier.fromNamespaceAndPath(
+    private static final Identifier ATMOSPHERIC_CLOUD_TEX = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/mcsm_atmosphere/halo.png");
     private static final Identifier VORTEX_BACKDROP = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/mcsm_atmosphere/vortex_backdrop.png");
@@ -173,7 +173,7 @@ public final class McsmStormBlob {
         // volumetric halo shell (two nested ellipsoid layers drawn additively
         // behind the storm) is what read as the weird white circular/square
         // mass in the distance. The glare is NOT a 3D shell, a billboard or
-        // a cloud layer: it is the INFINITE SKYBOX BLOB, painted in the sky
+        // a cloud layer: it is Atmospheric W's Cloud, painted in the sky
         // pass by mcsm_blob() (sky.fsh / mcsm_visuals.glsl) with the exact
         // 2026-09-11 hex decks, driven by McsmInfiniteSkyboxBlob. The shell
         // stays in the source as dormant code (emitHaloShell) but draws

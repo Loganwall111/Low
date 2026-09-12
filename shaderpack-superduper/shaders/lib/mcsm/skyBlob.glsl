@@ -1,5 +1,5 @@
 /*
-================================ MCSM INFINITE SKYBOX BLOB 1.9.218 ================================
+================================ ATMOSPHERIC W'S CLOUD 1.9.218 =================================
 
     The glare as Telltale actually built it: an INFINITE skybox blob.
 
@@ -87,6 +87,21 @@ float msNoise(vec3 v){
     return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
 }
 
+// Three-octave FBM used by Atmospheric W's Cloud. The last octave is
+// deliberately fine enough to shred soot and dust into the sky.
+float msFbm3(vec3 p){
+    float sum = 0.0;
+    float amp = 0.5;
+    float norm = 0.0;
+    for (int i = 0; i < 3; i++) {
+        sum += msNoise(p) * amp;
+        norm += amp;
+        p = p * 2.03 + vec3(17.13, 9.71, 4.37);
+        amp *= 0.5;
+    }
+    return sum / norm;
+}
+
 /* ---- exact phase profiles (core / mid / outer / beam / zenith / bottom) ---- */
 void mcsmBlobProfile(float phase, out vec3 coreC, out vec3 midC, out vec3 outerC,
                      out vec3 beamC, out vec3 zenC, out vec3 botC){
@@ -162,88 +177,86 @@ void mcsmBlobProfile(float phase, out vec3 coreC, out vec3 midC, out vec3 outerC
     botC   = mix(botC, t8,  smoothstep(7.0, 8.0, phase));
 }
 
-/* ---- the infinite sky blob ----
-   returns vec4(rgb, coverage): coverage = 1 inside the dark-matter core
-   (fully masks the game sky), falling smoothly to 0 at the flare edge. */
+/* ---- Atmospheric W's Cloud ----
+   returns vec4(rgb, densityAlpha): the dark smoke is capped at 0.80 and
+   falls smoothly to zero at the shredded horizon edge. */
 vec4 mcsmSkyBlob(vec2 texCoord){
     float phase = uStormPhase;
     float actv = smoothstep(3.8, 4.3, phase)
                * clamp(u_StormProximity, 0.0, 1.0);
     if (actv <= 0.002) return vec4(0.0);
 
-    // world ray of this pixel (angular space -- the blob never "ends")
+    // World ray of this pixel. This is the infinite spatial wrap: the cloud
+    // is evaluated from look direction and storm direction only, never from a
+    // finite world-space box or a sphere that the player could approach.
     vec2 ndc = texCoord * 2.0 - 1.0;
     vec4 farP = gbufferProjectionInverse * vec4(ndc, 1.0, 1.0);
     vec4 nearP = gbufferProjectionInverse * vec4(ndc, -1.0, 1.0);
     farP /= max(abs(farP.w), 1.0E-6);
     nearP /= max(abs(nearP.w), 1.0E-6);
     vec3 rayDir = normalize(mat3(gbufferModelViewInverse) * (farP.xyz - nearP.xyz));
-
     vec3 stormDir = normalize(uStormPos - cameraPosition + vec3(1.0E-5));
 
-    // local basis around the storm direction
+    // Local horizon axes around the storm's view direction.
     vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), stormDir) + vec3(1.0E-5));
-    vec3 up    = cross(stormDir, right);
+    vec3 up = cross(stormDir, right);
     float dotR = dot(rayDir, right);
     float dotU = dot(rayDir, up);
     float dotF = dot(rayDir, stormDir);
     float angX = atan(dotR, dotF);
     float angY = atan(dotU, dotF);
 
-    // 1.9.306: compact, asymmetric angular paint mass. The old 0.62/0.42
-    // ellipse made a direct circle and its single radial grade erased the
-    // colour tongues visible in the reference frames.
-    // 1.9.307: the alpha paint must sit behind the whole storm silhouette,
-    // not appear as a distant small circle.
+    // Wide Horizon Smog: multiply the horizontal plane by 4 and compress Y
+    // to 0.5. max(abs()) is an intentionally flat weather-wall boundary;
+    // there is no length(uv), circular radius, ellipse, or doughnut here.
+    const float HORIZONTAL_STRETCH = 4.0;
+    const float VERTICAL_COMPRESSION = 0.5;
     const float HORIZONTAL_MULTIPLIER = 2.5;
-    float ry = 0.72 / max(uGlareSize, 0.35);
-    float rx = ry * HORIZONTAL_MULTIPLIER;
-    vec2 q = vec2(angX / rx, angY / ry);
-    float raw = length(q);
-    float theta = atan(q.y, q.x);
-    float n0 = msNoise(vec3(q * 1.35 + vec2(2.7, 8.4), phase * 0.11));
-    float n1 = msNoise(vec3(q * 3.70 + vec2(-5.1, 3.2), phase * 0.19));
-    float lobes = 0.075 * sin(theta * 3.0 + 0.7)
-                + 0.048 * sin(theta * 7.0 - 1.4)
-                + 0.028 * sin(theta * 11.0 + n1 * 5.0);
-    float boundary = 1.0 + 0.23 * (n0 - 0.5) * 2.0 + lobes;
-    boundary += 0.085 * smoothstep(-0.90, -0.05, q.y) * smoothstep(-1.0, -0.05, -q.x);
-    boundary -= 0.070 * smoothstep(0.10, 0.85, q.y) * smoothstep(-0.20, 0.80, q.x);
-    boundary = max(boundary, 0.58);
-    float r = raw / boundary;
+    float baseY = 0.72 / max(uGlareSize, 0.35);
+    float baseX = baseY * HORIZONTAL_MULTIPLIER;
+    vec2 smog = vec2(
+        angX / (baseX * HORIZONTAL_STRETCH),
+        angY / (baseY * VERTICAL_COMPRESSION));
+    vec2 absSmog = abs(smog);
+    float boxEdge = max(absSmog.x, absSmog.y);
+
+    // Broad, asymmetric ink shoulders plus a 3-octave fine tear pattern.
+    float broad = msFbm3(vec3(smog * 1.35 + vec2(2.7, 8.4), phase * 0.11));
+    float fine = msFbm3(vec3(smog * 5.75 + vec2(-5.1, 3.2), phase * 0.19));
+    float shred = msFbm3(vec3(smog * 12.0 + vec2(13.0, -7.0), phase * 0.27));
+    float shoulder = 0.20 * smoothstep(-1.0, 0.15, -smog.x)
+                   * (1.0 - smoothstep(-0.20, 0.80, smog.y));
+    float trailing = 0.16 * smoothstep(-0.15, 0.95, smog.x)
+                   * (1.0 - smoothstep(-0.30, 0.65, smog.y));
+    float notch = 0.13 * smoothstep(0.05, 0.80, smog.y)
+                * smoothstep(-0.15, 0.85, smog.x);
+    float boundary = 0.86 + shoulder + trailing - notch
+                   + (broad - 0.5) * 0.30
+                   + (fine - 0.5) * 0.16
+                   + (shred - 0.5) * 0.10;
+    boundary = max(boundary, 0.48);
+    float edgeCoord = boxEdge / boundary;
 
     vec3 coreC, midC, outerC, beamC, zenC, botC;
     mcsmBlobProfile(phase, coreC, midC, outerC, beamC, zenC, botC);
+    float upness = clamp(angY / (baseY * VERTICAL_COMPRESSION) * 0.5 + 0.5, 0.0, 1.0);
 
-    // solid opaque dark-matter core (blocks the normal sky)
-    float coreM = 1.0 - smoothstep(0.30, 0.46, r);
-    // mid smudge bleed
-    float midM  = smoothstep(0.30, 0.60, r) * (1.0 - smoothstep(0.58, 0.80, r));
-    // outer gradient flare
-    float outM  = smoothstep(0.60, 0.88, r) * (1.0 - smoothstep(0.86, 1.12, r));
+    // Semi-transparent smoke density. The centre is capped at 80%, and the
+    // squared noise curve makes the outer soot dissolve into the phase sky.
+    float body = 1.0 - smoothstep(0.46,
+        1.08 + (fine - 0.5) * 0.28, edgeCoord);
+    body *= 1.0 - smoothstep(0.72, 1.14,
+        edgeCoord + (shred - 0.5) * 0.16);
+    float smokeNoise = clamp(0.50 + 0.50 * msFbm3(vec3(
+        smog * 9.0 + vec2(3.0, 1.0), phase * 0.31)), 0.0, 1.0);
+    float densityAlpha = min(0.80,
+        0.80 * pow(clamp(body * smokeNoise, 0.0, 1.0), 2.0)) * actv;
+    if (densityAlpha <= 0.001) return vec4(0.0);
 
-    vec3 col = coreC;
-    col = mix(col, midC, midM);
-    col = mix(col, outerC, outM);
-    // Broken paint tongues keep the phase colours visible as blended bands
-    // instead of flattening the whole sky to one purple grade.
-    float tongue = smoothstep(0.40, 0.72,
-        msNoise(vec3(angX * 3.2 + 4.0, angY * 5.0 - 2.0, phase * 0.17)));
-    col = mix(col, mix(midC, outerC, 0.68), tongue * (midM + outM) * 0.34);
-
-    // phase-6 four-colour sunset split: outer band becomes a vertical
-    // zenith -> burning-horizon ramp inside the blob
-    float six = smoothstep(5.6, 6.0, phase) * (1.0 - smoothstep(6.0, 6.6, phase));
-    if (six > 0.01){
-        float vgrad = smoothstep(-0.85, 0.85, angY / ry);
-        col = mix(col, mix(zenC, botC, vgrad), six * smoothstep(0.45, 0.9, r));
-    }
-
-    // energy beam accent pinned at the exact centre
-    col += beamC * exp(-r * r * 52.0) * 0.85 * smoothstep(4.9, 5.0, phase);
-
-    // coverage: fully opaque core, heavy mid, vanishing flare edge so the
-    // vanilla sky shines through the outer borders
-    float cov = clamp(coreM + midM * 0.88 + outM * 0.50, 0.0, 1.0) * actv;
-    return vec4(col, cov);
+    // Preserve the sunset/phase colors through the dark cloud center.
+    vec3 phaseColor = mix(botC, zenC, upness);
+    vec3 smokeColor = mix(phaseColor, vec3(0.02), densityAlpha);
+    smokeColor = mix(smokeColor, mix(midC, outerC, clamp(upness * 0.72 + broad * 0.28, 0.0, 1.0)),
+                     densityAlpha * (1.0 - body) * 0.12);
+    return vec4(smokeColor, densityAlpha);
 }

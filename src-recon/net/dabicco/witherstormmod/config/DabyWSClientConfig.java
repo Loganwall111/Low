@@ -749,7 +749,7 @@ public class DabyWSClientConfig {
       key("pulseSize", "How far the glow reaches past the body.", 0.5, 2.0, false, () -> pulseSize, v -> pulseSize = v);
       key(
          "stormBackdrop",
-         "The gradient sky that hangs behind the Wither Storm and follows it. Not a halo - it recolours the patch of sky the storm stands in front of.",
+         "Atmospheric W's Cloud: the infinite, wide smog layer that hangs behind the Wither Storm and follows its sky direction.",
          0.0,
          1.0,
          true,
