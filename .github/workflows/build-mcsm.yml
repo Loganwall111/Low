@@ -69,7 +69,11 @@ jobs:
           VER="$(cat VERSION | tr -d '[:space:]')"
           TAG="ds-${VER}"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "release $TAG already exists — leaving it alone"
+            # A VERSION tag can already exist when a later arena branch adds
+            # fixes without bumping the player-facing version. Replace the
+            # binary assets so the stable download link always matches this
+            # successful build, rather than silently serving an older jar.
+            gh release upload "$TAG" out/*.jar out/*.sha256 --clobber
           else
             gh release create "$TAG" \
               --repo Loganwall111/Lowuuuuuu \
