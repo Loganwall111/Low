@@ -1,4 +1,4 @@
-# Devouring Storms 1.9.316 -- remove the remaining sky-band fallback
+# Devouring Storms 1.9.317 -- opt-in Story Mode studio stage simulation
 
 This candidate includes the 1.9.315 active-sky ownership and transparent
 cloud changes, plus the same exact phase maps in the built-in core shader and
