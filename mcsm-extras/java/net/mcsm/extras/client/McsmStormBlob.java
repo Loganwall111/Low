@@ -54,8 +54,6 @@ public final class McsmStormBlob {
     // textured with the game's own radial falloff halo texture.
     private static final Identifier ATMOSPHERIC_CLOUD_TEX = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/mcsm_atmosphere/halo.png");
-    private static final Identifier VORTEX_BACKDROP = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/vortex_backdrop.png");
 
     /** The three beam mouths, in billboard units of baseR (x right, y up). */
     private static final float[] MOUTH_X = { -0.30F, 0.00F, 0.30F };
@@ -185,14 +183,11 @@ public final class McsmStormBlob {
         final Vec3 bearing = b;
         final float fade = aa;
 
-        // the vortex backdrop: the game's own black swirl strip behind the
-        // lower body, darkening the sky like the original silhouette band
-        collector.submitCustomGeometry(poseStack, GlowRenderTypes.translucent(VORTEX_BACKDROP),
-                (pose, consumer) -> {
-                    quadVertsTex(pose, consumer, centre.add(0.0D, -bodyR * 0.75D, 0.0D), bearing,
-                            bodyR * 2.6D, bodyR * 1.1D,
-                            26, 16, 44, (int)(fade * 120.0F));
-                });
+        // The old VORTEX_BACKDROP quad is deliberately gone. It was a
+        // world-anchored circular/card-shaped "halo" at the storm side, which
+        // is exactly the purple sphere visible in the 1.9.311 screenshot.
+        // Atmospheric W's Cloud is painted by the infinite directional sky
+        // paths instead; only the subtle ground pool remains here.
 
         // faint purple fog pool cast onto the ground under the beams
         double groundY = best.dispY - bodyR * 1.15D;

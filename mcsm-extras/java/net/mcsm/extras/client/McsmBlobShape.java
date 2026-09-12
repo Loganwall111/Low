@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.310 -- ATMOSPHERIC W'S CLOUD, the one true shape of the infinite
+ * 1.9.311 -- ATMOSPHERIC W'S CLOUD, the one true shape of the infinite
  * skybox blob, shared by every Java render path.
  *
  * The blob is NOT a world object and NOT a flat disc: it is a separate,

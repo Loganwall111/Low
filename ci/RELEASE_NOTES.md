@@ -1,3 +1,18 @@
+# Devouring Storms 1.9.311 -- remove legacy circular backdrop
+
+The 1.9.310 screenshot exposed one remaining old render path: the purple
+round world-anchored Vortex Backdrop card was still being submitted beside
+the storm. It was not Atmospheric W's Cloud and made the result look like a
+distant circle.
+
+- Removed the legacy VORTEX_BACKDROP quad from the structured glare pass.
+- Atmospheric W's Cloud remains only in the infinite directional sky paths.
+- The phase-colored cloud and its semi-transparent horizon smog are no longer
+  competing with that old circular card.
+
+This build is CI-only until the circle is gone and the pink/purple cloud is
+visibly wrapped behind the storm in Minecraft.
+
 # Devouring Storms 1.9.310 -- crown placement for Atmospheric W's Cloud
 
 This placement correction follows the visual clarification that the cloud is
