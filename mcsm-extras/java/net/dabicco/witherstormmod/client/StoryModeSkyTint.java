@@ -82,6 +82,13 @@ public final class StoryModeSkyTint {
       }
    }
 
+   /** Native SkyRenderer bridge: calm Story Mode stops without storm blending. */
+   public static void nativeCalmGradient(long clockTime, float[] top, float[] mid, float[] horizon) {
+      byTime(clockTime, SKY_DAY, SKY_DUSK, SKY_NIGHT, SKY_DAWN, top);
+      byTime(clockTime, HORIZON_DAY, HORIZON_DUSK, HORIZON_NIGHT, HORIZON_DAWN, horizon);
+      mix(mid, top, horizon, 0.50F);
+   }
+
    public static void skyColor(long clockTime, float[] out) {
       byTime(clockTime, SKY_DAY, SKY_DUSK, SKY_NIGHT, SKY_DAWN, out);
       // storm atmosphere owns purple/pink/teal — calm never does

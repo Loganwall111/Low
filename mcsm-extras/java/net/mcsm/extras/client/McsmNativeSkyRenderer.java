@@ -1,6 +1,8 @@
 package net.mcsm.extras.client;
 
 import net.dabicco.witherstormmod.client.ClientDistantStormManager;
+import net.dabicco.witherstormmod.client.StoryModeSkyTint;
+import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -71,16 +73,22 @@ public final class McsmNativeSkyRenderer {
         u_TimeOfDay = time;
         u_StormOpacity = storm;
 
-        // Keep vanilla completely untouched outside the active storm.  This is
-        // important for dimensions and for the pre-phase-5 story atmosphere.
-        if (storm <= 0.0001F) {
-            return;
-        }
-
         float[] top = new float[3];
         float[] mid = new float[3];
         float[] horizon = new float[3];
-        calmGradient(time, top, mid, horizon);
+        calmGradient(clock, top, mid, horizon);
+
+        // Story Mode's calm day, sunset, and midnight ramps are native state
+        // colors, not an external skybox.  When the option is not active, the
+        // ordinary vanilla state remains untouched.
+        if (storm <= 0.0001F) {
+            if (DabyWSClientConfig.storyModeSky) {
+                state.skyColor = rgb(top, state.skyColor);
+                state.sunriseAndSunsetColor = rgb(horizon, state.sunriseAndSunsetColor);
+                state.shouldRenderDarkDisc = false;
+            }
+            return;
+        }
 
         float[] stormTop = new float[3];
         float[] stormMid = new float[3];
@@ -142,8 +150,7 @@ public final class McsmNativeSkyRenderer {
             McsmExperimentalStoryStage.horizonColor(u_StormPhase, out);
             return 0.80F;
         }
-        float time = level == null ? u_TimeOfDay :
-                (float) Math.floorMod(level.getOverworldClockTime(), 24000L) / 24000.0F;
+        long clock = level == null ? (long) (u_TimeOfDay * 24000.0F) : level.getOverworldClockTime();
         float phase = nearestPhase();
         float opacity = stormOpacity(phase, McsmStormAtmosphere.distanceInfluence());
         if (opacity <= 0.0001F) {
@@ -153,7 +160,7 @@ public final class McsmNativeSkyRenderer {
         float[] calmTop = new float[3];
         float[] calmMid = new float[3];
         float[] calmHorizon = new float[3];
-        calmGradient(time, calmTop, calmMid, calmHorizon);
+        calmGradient(clock, calmTop, calmMid, calmHorizon);
         float[] stormTop = new float[3];
         float[] stormMid = new float[3];
         float[] stormHorizon = new float[3];
@@ -183,7 +190,7 @@ public final class McsmNativeSkyRenderer {
         float[] top = new float[3];
         float[] mid = new float[3];
         float[] horizon = new float[3];
-        calmGradient(time, top, mid, horizon);
+        calmGradient((long) (time * 24000.0F), top, mid, horizon);
         float[] st = new float[3];
         float[] sm = new float[3];
         float[] sl = new float[3];
@@ -245,7 +252,12 @@ public final class McsmNativeSkyRenderer {
         return Mth.clamp(opacity / MAX_STORM_OPACITY, 0.0F, 1.0F);
     }
 
-    private static void calmGradient(float time, float[] top, float[] mid, float[] horizon) {
+    private static void calmGradient(long clock, float[] top, float[] mid, float[] horizon) {
+        if (DabyWSClientConfig.storyModeSky) {
+            StoryModeSkyTint.nativeCalmGradient(clock, top, mid, horizon);
+            return;
+        }
+        float time = (float) Math.floorMod(clock, 24000L) / 24000.0F;
         float[] dayTop = rgb(0x10, 0x21, 0x4C);
         float[] dayMid = rgb(0x1E, 0x46, 0xA8);
         float[] dayHorizon = rgb(0x2A, 0x5D, 0xEF);
@@ -266,7 +278,9 @@ public final class McsmNativeSkyRenderer {
         float[] p5Top = rgb(0x14, 0x22, 0x26);
         float[] p5Mid = rgb(0x20, 0x3A, 0x3C);
         float[] p5Horizon = rgb(0x62, 0x82, 0x6F);
-        float[] p55Top = rgb(0x10, 0x06, 0x19);
+        // The ordinary storm path keeps a purple upper atmosphere; the
+        // near-black stage-only zenith is intentionally not used here.
+        float[] p55Top = rgb(0x23, 0x11, 0x41);
         float[] p55Mid = rgb(0x33, 0x1A, 0x47);
         float[] p55Horizon = rgb(0x5D, 0x2A, 0x72);
         float[] p6Top = rgb(0x1A, 0x12, 0x26);

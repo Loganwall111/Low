@@ -87,7 +87,10 @@ public final class McsmStormAtmosphere {
             return 0.0F;
         }
         float[] p5 = {0x14 / 255.0F, 0x22 / 255.0F, 0x26 / 255.0F};
-        float[] p55 = {0x10 / 255.0F, 0x06 / 255.0F, 0x19 / 255.0F};
+        // Ordinary phase 5.5 retains a purple upper atmosphere; the
+        // near-black zenith belongs only to the opt-in stage, never the
+        // normal storm presentation.
+        float[] p55 = {0x23 / 255.0F, 0x11 / 255.0F, 0x41 / 255.0F};
         float[] p6 = {0x1A / 255.0F, 0x12 / 255.0F, 0x26 / 255.0F};
         float t55 = ramp(phase, 5.00F, 5.50F);
         float t6 = ramp(phase, 5.90F, 6.00F);
