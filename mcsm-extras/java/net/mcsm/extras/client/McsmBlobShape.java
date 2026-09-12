@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.307 -- THE ORGANIC STORM SMEAR, the one true shape of the infinite
+ * 1.9.308 -- THE ORGANIC STORM SMEAR, the one true shape of the infinite
  * skybox blob, shared by every Java render path.
  *
  * The blob is NOT a world object and NOT a flat disc: it is a separate,
@@ -49,7 +49,7 @@ public final class McsmBlobShape {
 
     /** the oval footprint + tilt shared with the GLSL blob. Keep the
      * reference silhouette's 2.5x horizontal multiplier explicit. */
-    private static final double OVAL_Y = 0.90;
+    private static final double OVAL_Y = 1.45;
     private static final double OVAL_X = OVAL_Y * 2.5;
 
     /** patch half-extent in tangent-space units -- covers the 1.85 bleed */
@@ -167,7 +167,9 @@ public final class McsmBlobShape {
 
     /** feathered organic silhouette: 1 inside the smear, 0 outside, no rim */
     private static float mask(double sx, double sy) {
-        return (float) smoothstep(1.52, 1.02, shapeField(sx, sy));
+        // The broad transition is intentional: the outer side feeding is
+        // visible, but it never ends in an opaque rim.
+        return (float) Math.pow(smoothstep(1.82, 0.68, shapeField(sx, sy)), 1.35);
     }
 
     /** asymmetric warped distance field: a paint mass, never a direct circle */
@@ -183,12 +185,12 @@ public final class McsmBlobShape {
         double wr = r * (1.0 + 0.42 * (n1 - 0.5)) + 0.16 * (n2 - 0.5) + lobed;
         // Unequal side tongues: a heavy low-left shoulder and a longer,
         // thinner right-hand tail. The upper-right notch prevents symmetry.
-        double l1x = (sx + 1.12) / 0.86;
-        double l1y = (sy + 0.25) / 0.58;
+        double l1x = (sx + 1.75) / 1.34;
+        double l1y = (sy + 0.40) / 0.85;
         double lo1 = Math.sqrt(l1x * l1x + l1y * l1y)
                 * (1.0 + 0.34 * (fbm(sx * 2.3 + 17.7, sy * 2.3 + 4.4, 3) - 0.5));
-        double l2x = (sx - 0.92) / 1.34;
-        double l2y = (sy + 0.03) / 0.68;
+        double l2x = (sx - 1.45) / 2.10;
+        double l2y = (sy + 0.05) / 1.00;
         double lo2 = Math.sqrt(l2x * l2x + l2y * l2y)
                 * (1.0 + 0.34 * (fbm(sx * 2.3 + 31.1, sy * 2.3 + 8.8, 3) - 0.5));
         double notch = 0.16 * Math.exp(-((sx - 0.48) * (sx - 0.48) / 0.20

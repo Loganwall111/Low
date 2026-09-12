@@ -1,3 +1,23 @@
+# Devouring Storms 1.9.308 -- enlarged storm-attached sky smear
+
+This corrective build follows the 1.9.307 in-game check. The storm sky was
+visible and correctly shaped, but its angular footprint still read as a small
+dot floating behind the Wither Storm.
+
+- Enlarged the directional smear substantially in every render path so its
+  color mass sits directly behind and around the complete storm silhouette.
+- Kept the 2.5x horizontal multiplier, phase 5/5.5/6 ramps, asymmetrical
+  feeding tongues, and 2D FBM/torn contour.
+- Broadened the alpha transition and reduced the side/outer coverage so the
+  enlarged field still dissolves into the regular sky instead of becoming a
+  solid dome.
+- Retained the normalized `u_StormProximity` carrier and separate regular
+  summon skybox textures.
+- Bumped the installed build identity to `1.9.308-26.2-beta-ds`.
+
+This build is intentionally CI-only until the enlarged result is checked in
+Minecraft.
+
 # Devouring Storms 1.9.307 -- alpha storm-sky patch, no legacy Fabric sky
 
 This corrective build addresses the 1.9.306 screenshots. The previous build

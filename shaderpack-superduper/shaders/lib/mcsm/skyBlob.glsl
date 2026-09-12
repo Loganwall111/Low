@@ -196,7 +196,7 @@ vec4 mcsmSkyBlob(vec2 texCoord){
     // 1.9.307: the alpha paint must sit behind the whole storm silhouette,
     // not appear as a distant small circle.
     const float HORIZONTAL_MULTIPLIER = 2.5;
-    float ry = 0.30 / max(uGlareSize, 0.35);
+    float ry = 0.72 / max(uGlareSize, 0.35);
     float rx = ry * HORIZONTAL_MULTIPLIER;
     vec2 q = vec2(angX / rx, angY / ry);
     float raw = length(q);
@@ -244,6 +244,6 @@ vec4 mcsmSkyBlob(vec2 texCoord){
 
     // coverage: fully opaque core, heavy mid, vanishing flare edge so the
     // vanilla sky shines through the outer borders
-    float cov = clamp(coreM + midM * 0.94 + outM * 0.62, 0.0, 1.0) * actv;
+    float cov = clamp(coreM + midM * 0.88 + outM * 0.50, 0.0, 1.0) * actv;
     return vec4(col, cov);
 }

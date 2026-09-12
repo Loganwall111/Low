@@ -493,7 +493,7 @@ const vec3 P6_BOT   = vec3(216.0, 152.0, 116.0) / 255.0; // #D89874 toxic opaque
 // 1.9.305 ellipse used one analytic radius, which made the sky read as a
 // clean circular colour grade.  These proportions are only the base frame;
 // mcsm_inf_field() domain-warps the silhouette and adds asymmetric lobes.
-const float MCSM_INF_Y    = 0.78;
+const float MCSM_INF_Y    = 1.35;
 const float MCSM_INF_X    = MCSM_INF_Y * 2.5; // required horizontal multiplier
 const float MCSM_INF_TILT = 0.18;   // radians
 
@@ -614,7 +614,7 @@ float mcsm_mass_cover(vec3 wd, vec3 bd, float p) {
     float coreW = 1.0 - smoothstep(0.07, 0.38, uu);
     float midW  = smoothstep(0.18, 0.48, uu) * (1.0 - smoothstep(0.58, 0.97, uu));
     float edgeW = smoothstep(0.48, 0.86, uu) * (1.0 - smoothstep(0.92, 1.30, uu));
-    return clamp(0.98 * coreW + 0.62 * midW + 0.20 * edgeW, 0.0, 0.97);
+    return clamp(0.98 * coreW + 0.62 * midW + 0.16 * edgeW, 0.0, 0.97);
 }
 
 // Alpha-feathered core + multi-band, torn colour smear. sky.fsh composites
@@ -675,7 +675,7 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     c = mix(c, mcsm_inf_p6_split(wd.y), w6);
     c *= mix(1.0, 0.62 + 0.38 * coreW, w6);
 
-    float occ = clamp(0.98 * coreW + 0.62 * midW + 0.20 * edgeW + 0.10 * bleedW,
+    float occ = clamp(0.98 * coreW + 0.62 * midW + 0.16 * edgeW + 0.06 * bleedW,
                       0.0, 0.97);
     c *= 0.96 + 0.04 * sin(clock * 1.3 + upness * 2.0);
     return vec4(c, occ);
