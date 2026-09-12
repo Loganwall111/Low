@@ -538,6 +538,7 @@ float mcsm_inf_fbm(vec2 p) {
 // so it reads as atmospheric weather hugging the horizon.
 const float MCSM_SMOG_HORIZONTAL_STRETCH = 4.0;
 const float MCSM_SMOG_VERTICAL_COMPRESSION = 0.5;
+const float MCSM_SMOG_TOP_LIFT = 0.22; // place the cloud crown over the storm
 
 vec3 mcsm_inf_field(vec3 wd, vec3 bd, float outerDeg) {
     float cd = dot(wd, bd);
@@ -555,7 +556,8 @@ vec3 mcsm_inf_field(vec3 wd, vec3 bd, float outerDeg) {
     // compressing the visible Y band to half height.
     vec2 smog = vec2(
         s.x / (MCSM_INF_X * MCSM_SMOG_HORIZONTAL_STRETCH),
-        s.y / (MCSM_INF_Y * MCSM_SMOG_VERTICAL_COMPRESSION));
+        s.y / (MCSM_INF_Y * MCSM_SMOG_VERTICAL_COMPRESSION)
+            - MCSM_SMOG_TOP_LIFT);
     vec2 a = abs(smog);
     float boxEdge = max(a.x, a.y); // Manhattan/box-like, explicitly not radial
 
@@ -579,8 +581,7 @@ vec3 mcsm_inf_field(vec3 wd, vec3 bd, float outerDeg) {
     // `u` is a stretched-box edge coordinate, not length(uv) or an oval
     // radius. The fragment alpha below uses the same torn coordinate.
     float u = boxEdge / boundary;
-    float upness = clamp(s.y / (MCSM_INF_Y * MCSM_SMOG_VERTICAL_COMPRESSION)
-                       * 0.5 + 0.5, 0.0, 1.0);
+    float upness = clamp(smog.y * 0.5 + 0.5, 0.0, 1.0);
     return vec3(u, upness, 1.0);
 }
 

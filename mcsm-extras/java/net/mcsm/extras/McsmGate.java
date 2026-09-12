@@ -161,7 +161,7 @@ public final class McsmGate {
             // ---- storm body + sky -----------------------------------------
             changed += setBool(c, "distantStorms", true);
             changed += setBool(c, "distantFog", true);
-            // 1.9.309: keep the regular summon skyboxes available when no
+            // 1.9.310: keep the regular summon skyboxes available when no
             // phase-5+ storm is present. McsmSkyBlob temporarily suppresses
             // this backdrop during the active storm, before the sky pass, so
             // it cannot cover the directional alpha patch.

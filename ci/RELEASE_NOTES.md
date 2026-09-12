@@ -1,3 +1,21 @@
+# Devouring Storms 1.9.310 -- crown placement for Atmospheric W's Cloud
+
+This placement correction follows the visual clarification that the cloud is
+not merely centered on the storm's midpoint. The dense cloud crown now sits
+above the Wither Storm while its broad, flat lower shoulder wraps across the
+horizon behind the storm.
+
+- Added a shared `0.22` top lift to the core GLSL, managed shader-pack, and
+  Java fallback paths.
+- Kept the 4x horizontal spread and 0.5x vertical compression, so the cloud
+  remains massive around the centered horizon rather than becoming a small
+  spot or a detached upper blob.
+- Preserved infinite directional projection, semi-transparent 0.80 density
+  cap, phase-color bleed-through, and shredded 3-octave FBM edges.
+
+This build is CI-only until the crown/back/horizon placement is checked in
+Minecraft.
+
 # Devouring Storms 1.9.309 -- Atmospheric W's Cloud
 
 This pass replaces the old geometric glare/smudge interpretation with the

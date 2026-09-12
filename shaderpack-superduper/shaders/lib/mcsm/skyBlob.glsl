@@ -211,12 +211,13 @@ vec4 mcsmSkyBlob(vec2 texCoord){
     // there is no length(uv), circular radius, ellipse, or doughnut here.
     const float HORIZONTAL_STRETCH = 4.0;
     const float VERTICAL_COMPRESSION = 0.5;
+    const float TOP_LIFT = 0.22; // cloud crown sits above the storm bearing
     const float HORIZONTAL_MULTIPLIER = 2.5;
     float baseY = 0.72 / max(uGlareSize, 0.35);
     float baseX = baseY * HORIZONTAL_MULTIPLIER;
     vec2 smog = vec2(
         angX / (baseX * HORIZONTAL_STRETCH),
-        angY / (baseY * VERTICAL_COMPRESSION));
+        angY / (baseY * VERTICAL_COMPRESSION) - TOP_LIFT);
     vec2 absSmog = abs(smog);
     float boxEdge = max(absSmog.x, absSmog.y);
 
@@ -239,7 +240,7 @@ vec4 mcsmSkyBlob(vec2 texCoord){
 
     vec3 coreC, midC, outerC, beamC, zenC, botC;
     mcsmBlobProfile(phase, coreC, midC, outerC, beamC, zenC, botC);
-    float upness = clamp(angY / (baseY * VERTICAL_COMPRESSION) * 0.5 + 0.5, 0.0, 1.0);
+    float upness = clamp(smog.y * 0.5 + 0.5, 0.0, 1.0);
 
     // Semi-transparent smoke density. The centre is capped at 80%, and the
     // squared noise curve makes the outer soot dissolve into the phase sky.
