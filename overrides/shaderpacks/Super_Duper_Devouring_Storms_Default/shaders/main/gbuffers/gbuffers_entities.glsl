@@ -223,8 +223,14 @@
         // only the storm body material here; eyes, teeth, beams, and their
         // separate emissive passes retain their phase colours.
         if (entityId == 10144) {
-            float stormGray = dot(material.albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
-            material.albedo.rgb = mix(material.albedo.rgb, vec3(stormGray), 0.82);
+            float stormMax = max(material.albedo.r, max(material.albedo.g, material.albedo.b));
+            // Emissive CEM teeth/eyes are intentionally bright and saturated;
+            // leave that separate pass alone while neutralizing only the dark
+            // body texels that the world light can push toward green.
+            if (stormMax < 0.72) {
+                float stormGray = dot(material.albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+                material.albedo.rgb = mix(material.albedo.rgb, vec3(stormGray), 0.82);
+            }
         }
 
         // Convert to linear space

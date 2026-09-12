@@ -71,8 +71,7 @@ public final class McsmExtrasConfig {
     /** Phase 4+: icy-white glacier flakes torn off the body blocks, spiralling
      *  upward like a tornado. */
     public static boolean glacierFlakes = true;
-    /** Phase 6+: real cubed rings orbiting the storm (clockwise + diagonal +
-     *  vertical), growing into the gigantic layered vortex at phase 8-9. */
+    /** Phase 7+: supplied Telltale Vortex.bbmodel debris mesh. */
     public static boolean stormRings = true;
 
     // ---- MCSM 1.9.100 batch: the gates ------------------------------------

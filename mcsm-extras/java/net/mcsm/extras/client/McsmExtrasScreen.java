@@ -169,7 +169,7 @@ public final class McsmExtrasScreen extends Screen {
         addFixed(1, r2++, fColW, gap, left, top, rowH, "MCSM Shader: DEFAULT (auto-selected)");
         addToggle(1, r2++, fColW, gap, left, top, rowH, "Glacier Flakes (p4+)",
                 () -> McsmExtrasConfig.glacierFlakes, v -> McsmExtrasConfig.glacierFlakes = v);
-        addToggle(1, r2++, fColW, gap, left, top, rowH, "Storm Cube Rings (p6+)",
+        addToggle(1, r2++, fColW, gap, left, top, rowH, "Telltale Vortex (p7+)",
                 () -> McsmExtrasConfig.stormRings, v -> McsmExtrasConfig.stormRings = v);
         addToggle(1, r2++, fColW, gap, left, top, rowH, "Debris Max Density",
                 () -> McsmExtrasConfig.debrisAlwaysMax, v -> McsmExtrasConfig.debrisAlwaysMax = v);

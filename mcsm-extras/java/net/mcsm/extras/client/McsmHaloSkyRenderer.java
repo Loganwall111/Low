@@ -85,20 +85,22 @@ public final class McsmHaloSkyRenderer {
                 return;
             }
 
-            // Scale the world-attached oval from the storm distance rather than
-            // clamping a camera billboard.  Close approaches therefore cannot
-            // turn it into a screen-filling wall or a paper fan.
+            // The Halo is a world-tethered atmosphere around the storm, not a
+            // distant camera plate.  Size it from the live body first so the
+            // inner bands engulf the model even on a close approach; retain a
+            // smaller perspective term so it remains legible at range.
             float size = Mth.clamp((float) McsmExtrasConfig.glareSize, 0.35F, 3.05F);
             double outerAngle = Math.toRadians(storm.phase >= 6.0F ? 31.0D : 27.0D);
-            double horizontal = Math.max(bodyRadius * 2.2D,
-                    distance * Math.tan(outerAngle)) * (0.72D + 0.14D * size);
-            double vertical = horizontal * 0.54D;
-            double depth = horizontal * 0.16D;
+            double horizontal = Math.max(bodyRadius * 4.8D,
+                    distance * Math.tan(outerAngle) * 0.58D) * (0.92D + 0.10D * size);
+            double vertical = horizontal * 0.72D;
+            double depth = horizontal * 0.20D;
             // Keep the geometry bounded even if a config slider is set to its
-            // maximum on a close camera; all colour still fades at the rim.
-            horizontal = Math.min(horizontal, 720.0D);
-            vertical = Math.min(vertical, 390.0D);
-            depth = Math.min(depth, 116.0D);
+            // maximum on a close camera. The outer ring still fades to zero
+            // alpha, so enlarging the tethered Halo does not make a hard card.
+            horizontal = Math.min(horizontal, 1100.0D);
+            vertical = Math.min(vertical, 790.0D);
+            depth = Math.min(depth, 220.0D);
 
             Vec3 centre = stormPos; // exact u_StormPos tether; no camera offset
             RenderType material = GlowRenderTypes.translucent(WHITE);
