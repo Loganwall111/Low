@@ -486,6 +486,18 @@ public class net.minecraft.client.renderer.LevelRenderer implements java.lang.Au
   public void addMainThreadGizmos(java.util.List<net.minecraft.gizmos.SimpleGizmoCollector$GizmoInstance>);
 }
 Error: class not found: net.minecraft.client.renderer.MultiBufferSource
+Compiled from "SkyRenderer.java"
+public class net.minecraft.client.renderer.SkyRenderer implements java.lang.AutoCloseable {
+  public net.minecraft.client.renderer.SkyRenderer(net.minecraft.client.renderer.texture.TextureManager, net.minecraft.client.resources.model.sprite.AtlasManager, com.mojang.blaze3d.pipeline.RenderTarget);
+  public void renderSkyDisc(int);
+  public void extractRenderState(net.minecraft.client.multiplayer.ClientLevel, float, net.minecraft.client.Camera, net.minecraft.client.renderer.state.level.SkyRenderState);
+  public void renderDarkDisc();
+  public void renderSunMoonAndStars(com.mojang.blaze3d.vertex.PoseStack, float, float, float, net.minecraft.world.level.MoonPhase, float, float);
+  public void renderSunriseAndSunset(com.mojang.blaze3d.vertex.PoseStack, float, int);
+  public void renderEndSky();
+  public void renderEndFlash(com.mojang.blaze3d.vertex.PoseStack, float, float, float);
+  public void close();
+}
 Compiled from "SkyRenderState.java"
 public class net.minecraft.client.renderer.state.level.SkyRenderState {
   public net.minecraft.world.level.dimension.DimensionType$Skybox skybox;
