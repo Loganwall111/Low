@@ -150,6 +150,9 @@ public final class McsmExtrasConfig {
     public static double infiniteBackGrowthSpeed = 0.10;
 
     // ---- Iris Shader Pack -------------------------------------------------
+    /** Story Mode accurate vertical sun slab. Disabled by default. */
+    public static boolean storyModeAccurateSunSun = false;
+
     /** Ship + auto-install the Devouring Storms Iris shader pack.
      *  Default OFF after native/GL out-of-memory reports; players can turn it
      *  back on from Shift+C once the world is stable. */
@@ -228,6 +231,7 @@ public final class McsmExtrasConfig {
             p.setProperty("infinite_back_growth_speed", String.valueOf(infiniteBackGrowthSpeed));
             p.setProperty("embedded_shader_pack", String.valueOf(embeddedShaderPack));
             p.setProperty("auto_select_shader_pack", String.valueOf(autoSelectShaderPack));
+            p.setProperty("story_mode_accurate_sun_sun", String.valueOf(storyModeAccurateSunSun));
             p.setProperty("debris_always_max", String.valueOf(debrisAlwaysMax));
             p.setProperty("glacier_flakes", String.valueOf(glacierFlakes));
             p.setProperty("storm_rings", String.valueOf(stormRings));
@@ -332,6 +336,7 @@ public final class McsmExtrasConfig {
             infiniteBackGrowthSpeed = dbl(p, "infinite_back_growth_speed", infiniteBackGrowthSpeed);
             embeddedShaderPack = bool(p, "embedded_shader_pack", embeddedShaderPack);
             autoSelectShaderPack = bool(p, "auto_select_shader_pack", autoSelectShaderPack);
+            storyModeAccurateSunSun = bool(p, "story_mode_accurate_sun_sun", storyModeAccurateSunSun);
             debrisAlwaysMax    = bool(p, "debris_always_max", debrisAlwaysMax);
             glacierFlakes      = bool(p, "glacier_flakes", glacierFlakes);
             stormRings         = bool(p, "storm_rings", stormRings);

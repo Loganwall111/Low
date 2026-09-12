@@ -65,6 +65,11 @@ public final class McsmExtrasScreen extends Screen {
 
         // ---- Column 1: Visuals, Atmosphere & Shaders ------------------------
         int r1 = 1;
+        addFixed(0, r1++, fColW, gap, left, top, rowH,
+                "Please note this feature is turned off by default because other YouTubers might make fun of it and it's just weird in general, but I thought it was cool to add. It's optional; you can turn it on if you want to.");
+        addToggle(0, r1++, fColW, gap, left, top, rowH, "Story Mode Accurate SunSun",
+                () -> McsmExtrasConfig.storyModeAccurateSunSun,
+                v -> McsmExtrasConfig.storyModeAccurateSunSun = v);
         addSlider(0, r1++, fColW, gap, left, top, rowH, "Atmospheric W's Cloud Scale", "%.2fx",
                 0.25, 3.05, () -> McsmExtrasConfig.glareSize, v -> McsmExtrasConfig.glareSize = v);
         addSlider(0, r1++, fColW, gap, left, top, rowH, "Storm Model Scale", "%.2fx",
