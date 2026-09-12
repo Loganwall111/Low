@@ -486,36 +486,6 @@ public class net.minecraft.client.renderer.LevelRenderer implements java.lang.Au
   public void addMainThreadGizmos(java.util.List<net.minecraft.gizmos.SimpleGizmoCollector$GizmoInstance>);
 }
 Error: class not found: net.minecraft.client.renderer.MultiBufferSource
-Compiled from "SkyRenderer.java"
-public class net.minecraft.client.renderer.SkyRenderer implements java.lang.AutoCloseable {
-  public net.minecraft.client.renderer.SkyRenderer(net.minecraft.client.renderer.texture.TextureManager, net.minecraft.client.resources.model.sprite.AtlasManager, com.mojang.blaze3d.pipeline.RenderTarget);
-  public void renderSkyDisc(int);
-  public void extractRenderState(net.minecraft.client.multiplayer.ClientLevel, float, net.minecraft.client.Camera, net.minecraft.client.renderer.state.level.SkyRenderState);
-  public void renderDarkDisc();
-  public void renderSunMoonAndStars(com.mojang.blaze3d.vertex.PoseStack, float, float, float, net.minecraft.world.level.MoonPhase, float, float);
-  public void renderSunriseAndSunset(com.mojang.blaze3d.vertex.PoseStack, float, int);
-  public void renderEndSky();
-  public void renderEndFlash(com.mojang.blaze3d.vertex.PoseStack, float, float, float);
-  public void close();
-}
-Compiled from "SkyRenderState.java"
-public class net.minecraft.client.renderer.state.level.SkyRenderState {
-  public net.minecraft.world.level.dimension.DimensionType$Skybox skybox;
-  public boolean shouldRenderDarkDisc;
-  public float sunAngle;
-  public float moonAngle;
-  public float starAngle;
-  public float rainBrightness;
-  public float starBrightness;
-  public int sunriseAndSunsetColor;
-  public net.minecraft.world.level.MoonPhase moonPhase;
-  public int skyColor;
-  public float endFlashIntensity;
-  public float endFlashXAngle;
-  public float endFlashYAngle;
-  public net.minecraft.client.renderer.state.level.SkyRenderState();
-  public void reset();
-}
 Error: class not found: net.minecraft.client.renderer.RenderType
 Compiled from "BlockEntityRenderer.java"
 public interface net.minecraft.client.renderer.blockentity.BlockEntityRenderer<T extends net.minecraft.world.level.block.entity.BlockEntity, S extends net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState> {
@@ -1074,72 +1044,4 @@ public final class net.minecraft.ChatFormatting extends java.lang.Enum<net.minec
   public java.lang.String toString();
   public static java.lang.String stripFormatting(java.lang.String);
   public static net.minecraft.ChatFormatting getByCode(char);
-}
-Compiled from "SkyRenderer.java"
-public class net.minecraft.client.renderer.SkyRenderer implements java.lang.AutoCloseable {
-  private static final net.minecraft.resources.Identifier SUN_SPRITE;
-  private static final net.minecraft.resources.Identifier END_FLASH_SPRITE;
-  private static final net.minecraft.resources.Identifier END_SKY_LOCATION;
-  private static final float SKY_DISC_RADIUS;
-  private static final int SKY_VERTICES;
-  private static final int STAR_COUNT;
-  private static final float SUN_SIZE;
-  private static final float SUN_HEIGHT;
-  private static final float MOON_SIZE;
-  private static final float MOON_HEIGHT;
-  private static final int SUNRISE_STEPS;
-  private static final int END_SKY_QUAD_COUNT;
-  private static final float END_FLASH_HEIGHT;
-  private static final float END_FLASH_SCALE;
-  private final net.minecraft.client.renderer.texture.TextureAtlas celestialsAtlas;
-  private final com.mojang.blaze3d.pipeline.RenderTarget renderTarget;
-  private final com.mojang.blaze3d.buffers.GpuBuffer starBuffer;
-  private final com.mojang.blaze3d.buffers.GpuBuffer topSkyBuffer;
-  private final com.mojang.blaze3d.buffers.GpuBuffer bottomSkyBuffer;
-  private final com.mojang.blaze3d.buffers.GpuBuffer endSkyBuffer;
-  private final com.mojang.blaze3d.buffers.GpuBuffer sunBuffer;
-  private final com.mojang.blaze3d.buffers.GpuBuffer moonBuffer;
-  private final com.mojang.blaze3d.buffers.GpuBuffer sunriseBuffer;
-  private final com.mojang.blaze3d.buffers.GpuBuffer endFlashBuffer;
-  private final com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer quadIndices;
-  private final net.minecraft.client.renderer.texture.AbstractTexture endSkyTexture;
-  private int starIndexCount;
-  public net.minecraft.client.renderer.SkyRenderer(net.minecraft.client.renderer.texture.TextureManager, net.minecraft.client.resources.model.sprite.AtlasManager, com.mojang.blaze3d.pipeline.RenderTarget);
-  private net.minecraft.client.renderer.texture.AbstractTexture getTexture(net.minecraft.client.renderer.texture.TextureManager, net.minecraft.resources.Identifier);
-  private com.mojang.blaze3d.buffers.GpuBuffer buildSunriseFan();
-  private static com.mojang.blaze3d.buffers.GpuBuffer buildSunQuad(net.minecraft.client.renderer.texture.TextureAtlas);
-  private static com.mojang.blaze3d.buffers.GpuBuffer buildEndFlashQuad(net.minecraft.client.renderer.texture.TextureAtlas);
-  private static com.mojang.blaze3d.buffers.GpuBuffer buildCelestialQuad(java.lang.String, net.minecraft.client.renderer.texture.TextureAtlasSprite);
-  private static com.mojang.blaze3d.buffers.GpuBuffer buildMoonPhases(net.minecraft.client.renderer.texture.TextureAtlas);
-  private com.mojang.blaze3d.buffers.GpuBuffer buildStars();
-  private void buildSkyDisc(com.mojang.blaze3d.vertex.VertexConsumer, float);
-  private static com.mojang.blaze3d.buffers.GpuBuffer buildEndSky();
-  public void renderSkyDisc(int);
-  public void extractRenderState(net.minecraft.client.multiplayer.ClientLevel, float, net.minecraft.client.Camera, net.minecraft.client.renderer.state.level.SkyRenderState);
-  private boolean shouldRenderDarkDisc(float, net.minecraft.client.multiplayer.ClientLevel);
-  public void renderDarkDisc();
-  public void renderSunMoonAndStars(com.mojang.blaze3d.vertex.PoseStack, float, float, float, net.minecraft.world.level.MoonPhase, float, float);
-  private void renderSun(float, com.mojang.blaze3d.vertex.PoseStack);
-  private void renderMoon(net.minecraft.world.level.MoonPhase, float, com.mojang.blaze3d.vertex.PoseStack);
-  private void renderStars(float, com.mojang.blaze3d.vertex.PoseStack);
-  public void renderSunriseAndSunset(com.mojang.blaze3d.vertex.PoseStack, float, int);
-  public void renderEndSky();
-  public void renderEndFlash(com.mojang.blaze3d.vertex.PoseStack, float, float, float);
-  public void close();
-  private static java.lang.String lambda$renderEndFlash$0();
-  private static java.lang.String lambda$renderEndSky$0();
-  private static java.lang.String lambda$renderSunriseAndSunset$0();
-  private static java.lang.String lambda$renderStars$0();
-  private static java.lang.String lambda$renderMoon$0();
-  private static java.lang.String lambda$renderSun$0();
-  private static java.lang.String lambda$renderDarkDisc$0();
-  private static java.lang.String lambda$renderSkyDisc$0();
-  private static java.lang.String lambda$buildEndSky$0();
-  private static java.lang.String lambda$buildStars$0();
-  private static java.lang.String lambda$buildMoonPhases$0();
-  private static java.lang.String lambda$buildCelestialQuad$0(java.lang.String);
-  private static java.lang.String lambda$buildSunriseFan$0();
-  private static java.lang.String lambda$new$1();
-  private static java.lang.String lambda$new$0();
-  static {};
 }
