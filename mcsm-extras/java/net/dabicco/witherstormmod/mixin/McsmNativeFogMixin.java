@@ -8,7 +8,7 @@ import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Applies the native sky endpoint to Minecraft's existing fog calculation.
@@ -19,9 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class McsmNativeFogMixin {
     @Inject(method = "computeFogColor", at = @At("TAIL"), require = 1)
     private void mcsm$blendNativeSky(Camera camera, float partialTick, ClientLevel level,
-            int renderDistance, float darkenAmount, boolean thick,
-            CallbackInfoReturnable<Vector4f> cir) {
-        Vector4f color = cir.getReturnValue();
+            int renderDistance, float darkenAmount, Vector4f color, CallbackInfo ci) {
         if (color == null) {
             return;
         }
