@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
  * the dispatcher pose is already anchored at the entity's interpolated
  * u_StormPos. Nothing here queries the camera, a level-wide storm registry, a
  * sky renderer, or an external model file. The only parent transform added by
- * this component is the storm's body rotation and the exact 45-block offset
+ * this component is the storm's body rotation and the exact 120-block offset
  * behind its primary body.
  *
  * The mesh is an ellipsoid/saucer generated directly into the native vertex
@@ -32,10 +32,10 @@ public final class McsmAtmosphericMeshComponent {
     private static final Identifier NEUTRAL_VERTEX_CARRIER = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
 
-    private static final float RADIUS_X = 250.0F;
-    private static final float RADIUS_Z = 250.0F;
-    private static final float RADIUS_Y = 80.0F;
-    private static final float BEHIND_OFFSET = 45.0F;
+    private static final float RADIUS_X = 1000.0F;
+    private static final float RADIUS_Z = 1000.0F;
+    private static final float RADIUS_Y = 320.0F;
+    private static final float BEHIND_OFFSET = 120.0F;
     private static final float MAX_ALPHA = 0.80F;
 
     // Deliberately low-poly while retaining a clean silhouette: every cell is
