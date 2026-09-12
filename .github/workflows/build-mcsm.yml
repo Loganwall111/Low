@@ -61,7 +61,8 @@ jobs:
         # run page, with a run-numbered name that says nothing about the version.
         # That is part of the "which build did I actually install?" confusion this
         # release exists to end, so the gate is now the tag check alone.
-        if: success() && startsWith(github.ref, 'refs/heads/arena/')
+        # Releases are intentionally disabled for Arena development builds.
+        if: false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -84,7 +85,8 @@ jobs:
           fi
 
       - name: Attach Story Look resource pack to the release
-        if: success() && startsWith(github.ref, 'refs/heads/arena/')
+        # Releases are intentionally disabled for Arena development builds.
+        if: false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -99,7 +101,8 @@ jobs:
           fi
 
       - name: Attach the Devouring Storms shader pack to the release
-        if: success() && startsWith(github.ref, 'refs/heads/arena/')
+        # Releases are intentionally disabled for Arena development builds.
+        if: false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

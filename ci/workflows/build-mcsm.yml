@@ -51,7 +51,8 @@ jobs:
             out/*.txt
 
       - name: Publish release when VERSION is new
-        if: success() && (github.ref == 'refs/heads/arena/01a071bb-lowuuuuuu' || github.ref == 'refs/heads/arena/01a06df7-lowuuuuuu')
+        # Releases are intentionally disabled for Arena development builds.
+        if: false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -70,7 +71,8 @@ jobs:
           fi
 
       - name: Attach the Devouring Storms shader pack to the release
-        if: success() && startsWith(github.ref, 'refs/heads/arena/')
+        # Releases are intentionally disabled for Arena development builds.
+        if: false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
