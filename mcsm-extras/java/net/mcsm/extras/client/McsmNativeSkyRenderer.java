@@ -37,10 +37,10 @@ public final class McsmNativeSkyRenderer {
         }
 
         long clock = level.getOverworldClockTime();
-        float time = state.time;
-        if (!(time >= 0.0F && time <= 1.0F)) {
-            time = (float) Math.floorMod(clock, 24000L) / 24000.0F;
-        }
+        // 26.2's SkyRenderState retains the native sun angle but no longer
+        // carries a separate time-of-day field.  The level clock is the same
+        // standard day/night source used to extract that state.
+        float time = (float) Math.floorMod(clock, 24000L) / 24000.0F;
         float phase = nearestPhase();
         float distance = McsmStormAtmosphere.distanceInfluence();
         float storm = stormOpacity(phase, distance);
@@ -77,7 +77,6 @@ public final class McsmNativeSkyRenderer {
         state.starBrightness *= 1.0F - celestialSuppression(storm);
         state.rainBrightness = Mth.lerp(storm * 0.35F, state.rainBrightness, 0.0F);
         state.shouldRenderDarkDisc = false;
-        state.isSunTransition = false;
     }
 
     /** True when the storm is strong enough to own all celestial rendering. */
