@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.mcsm.extras.client.McsmAtmosphericMeshComponent;
 import net.mcsm.extras.client.McsmAttachedVortex;
+import net.mcsm.extras.client.McsmCoreEngineController;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,6 +26,7 @@ public abstract class McsmAtmosphericMeshMixin {
     @Inject(method = "submit", at = @At("HEAD"), remap = false, require = 1)
     private void mcsm$submitAtmosphere(WitherStormRenderState state, PoseStack poseStack,
             SubmitNodeCollector collector, CameraRenderState camera, CallbackInfo ci) {
+        McsmCoreEngineController.update(state);
         McsmAtmosphericMeshComponent.submit(state, poseStack, collector);
     }
 

@@ -279,6 +279,14 @@ else
   echo "[glsl] shader gate FAILED — not building a broken shaderpack"
   exit 1
 fi
+if ! glslcheck/bin/glslang -S frag src/main/resources/assets/dabywitherstormmod/shaders/post/mcsm_core.fsh \
+     >> "$GLSL_LOG" 2>&1; then
+  cat "$GLSL_LOG"
+  echo "[glsl] mcsm_core.fsh FAILED validation — not building a broken core pass"
+  exit 1
+fi
+
+echo "[glsl] mcsm_core.fsh validates"
 
 # Story Look resource-pack shaders must validate as well.
 for SL in storylook/assets/minecraft/shaders/core/*; do
@@ -841,6 +849,12 @@ python3 ci/make_stormface.py "$FX/cls/assets/dabywitherstormmod/textures/misc/st
 if [ ! -f "$FX/cls/assets/minecraft/shaders/core/position.fsh" ] || [ ! -f "$FX/cls/assets/minecraft/shaders/core/block.fsh" ]; then
   echo "::error title=jar audit::26.2 shader aliases missing (position/block) — vivid light would never load"
   AUDIT_FAIL=1
+fi
+if [ ! -s "$FX/cls/assets/dabywitherstormmod/shaders/post/mcsm_core.fsh" ]; then
+  echo "::error title=jar audit::MCSM core ambient shader missing from assembled jar"
+  AUDIT_FAIL=1
+else
+  echo "[audit] MCSM core ambient shader present"
 fi
 if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/textures/environment/sun.png" ]; then
   echo "::error title=jar audit::built-in Sodium-safe Story Look pack missing from the jar"

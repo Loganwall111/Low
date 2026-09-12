@@ -4,6 +4,8 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.dabicco.witherstormmod.config.WitherStormConfigs;
 import net.dabicco.witherstormmod.config.WitherStormWorldConfig;
 import net.minecraft.client.Minecraft;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.mcsm.extras.client.McsmCoreEngineController;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Field;
@@ -45,6 +47,24 @@ public final class McsmGate {
 
     private static boolean clientDone = false;
     private static boolean worldDone = false;
+    private static boolean coreSunSlabRegistered = false;
+
+    /**
+     * The sun slab is the only level-wide component in the new architecture.
+     * The atmospheric overcast itself remains attached to WitherStormRenderer;
+     * this callback only places the camera-relative 500-block celestial prop.
+     */
+    private static synchronized void registerCoreSunSlabPass() {
+        if (coreSunSlabRegistered) {
+            return;
+        }
+        try {
+            LevelRenderEvents.COLLECT_SUBMITS.register(McsmCoreEngineController::submitSunSlab);
+            coreSunSlabRegistered = true;
+        } catch (Throwable ignored) {
+            // A Fabric event signature change must not break ordinary rendering.
+        }
+    }
 
     /**
      * MCSM 1.9.112 -- memory of every value this gate writes, keyed by field.
@@ -147,6 +167,7 @@ public final class McsmGate {
         if (clientDone) {
             return;
         }
+        registerCoreSunSlabPass();
         McsmExtrasConfig.load();
         clientDone = true;
         // 1.9.208: the vanilla look is permanently disabled -- there is no

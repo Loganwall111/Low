@@ -11,6 +11,7 @@ import net.mcsm.extras.McsmGate;
 import net.mcsm.extras.client.McsmClientBlasts;
 import net.mcsm.extras.client.McsmStormDebris;
 import net.mcsm.extras.client.McsmClientChat;
+import net.mcsm.extras.client.McsmCoreEngineController;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -83,6 +84,7 @@ public abstract class McsmGradientTickPatch {
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
             StormSkyGradient.update(cameraState.pos);
+            McsmCoreEngineController.beginFrame(cameraState.pos);
             // The Wither Storm renderer owns the atmosphere; no external
             // skybox or camera-relative backdrop is toggled from the frame driver.
             net.mcsm.extras.client.McsmTeethPhaseTint.tick();
