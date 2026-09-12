@@ -6,7 +6,6 @@ import net.mcsm.extras.McsmDiag;
 import net.mcsm.extras.McsmExtrasConfig;
 import net.mcsm.extras.McsmFxDriver;
 import net.mcsm.extras.client.McsmClientChat;
-import net.mcsm.extras.client.McsmInfiniteSkyboxBlob;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.fog.FogData;
@@ -119,47 +118,23 @@ public abstract class McsmBlobCarrierPatch {
         McsmExtrasConfig.load();
 
         boolean gradient = StormSkyGradient.fogStampActive();
-        float p = gradient ? StormSkyGradient.phase() : 0.0F;
 
-        // glare-size nibble, shared by both paths below
+        // glare-size nibble, retained for the optional death cinematic carrier
         int sizeIdx = mcsm$sizeIdx(McsmExtrasConfig.glareSize);
         mcsm$lastSizeIdx = sizeIdx;
 
-        if (gradient && p >= 4.42F && p <= 8.06F) {
-            float yaw = StormSkyGradient.yaw();
-            float pitch = StormSkyGradient.pitch();
-
-            // normalise yaw into [-180,180] before indexing
-            yaw = yaw % 360.0F;
-            if (yaw > 180.0F) {
-                yaw -= 360.0F;
-            }
-            if (yaw < -180.0F) {
-                yaw += 360.0F;
-            }
-            if (pitch > 90.0F) {
-                pitch = 90.0F;
-            }
-            if (pitch < -90.0F) {
-                pitch = -90.0F;
-            }
-            mcsm$lastYaw = yaw;
-            mcsm$lastPitch = pitch;
-
-            data.cloudEnd = mcsm$pack(yaw, pitch, sizeIdx);
-            McsmDiag.carrier(data.cloudEnd, Math.round(yaw) + 180, Math.round(pitch) + 90);
-        }
+        // The normal phase-5+ blob is now owned by McsmStormBlob's native
+        // render-only radial material.  Do not write the old FogData carrier:
+        // the built-in shader's procedural sky blob is a second, expensive
+        // full-screen projection and was responsible for the giant faceted
+        // black/blue wall seen when the player approached the storm.  The
+        // carrier remains reserved for the death cinematic below.
 
         mcsm$driveDeathCinematic(data, gradient, sizeIdx);
 
-        // 1.9.215.1 (port) -- the infinite skybox blob carrier gets the LAST
-        // word: it folds the distance fade (700..1600 blocks) into the aim
-        // band so the tethered sky layer recedes with range, exactly like
-        // Telltale's. Skipped while the death cinematic runs -- that owns
-        // the band for its duration.
-        if (mcsm$deathStartNs == 0L) {
-            McsmInfiniteSkyboxBlob.stamp(data);
-        }
+        // Normal storm blob rendering stays native and render-only.  No
+        // shader carrier is stamped here, so this pass cannot add a second
+        // full-screen sky layer or its per-fragment noise cost.
     }
 
     /** Latch, advance and stamp the dying sequence. Never throws. */

@@ -110,7 +110,11 @@ public final class McsmStormBlob {
                 return;
             }
             McsmExtrasConfig.load();
-            double angular = Mth.clamp(bodyRadius(best.phase) / Math.max(distance, 1.0D), 0.012D, 0.85D);
+            // Keep the restored blob a contained storm attachment.  The old
+            // 0.85 ceiling let a nearby phase-5 storm expand into a screen-
+            // filling faceted wall, which looked like invisible blocks and
+            // also multiplied overdraw while the player was close to it.
+            double angular = Mth.clamp(bodyRadius(best.phase) / Math.max(distance, 1.0D), 0.012D, 0.28D);
             double radius = 220.0D * angular * 1.45D
                     * Mth.clamp(McsmExtrasConfig.glareSize, 0.35D, 3.05D);
             float fade = 1.0F - Mth.clamp((float) ((distance - 700.0D) / 2100.0D), 0.0F, 1.0F);
