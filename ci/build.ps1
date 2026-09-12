@@ -107,6 +107,13 @@ Copy-Item -Recurse -Force "$root\jar-overrides\*" "$fx\"
 if ($nClasses -gt 0) {
   Copy-Item -Recurse -Force "$buildDir\*" "$fx\"
 }
+# Native SkyRenderer is authoritative; remove legacy texture-pack sky paths
+# even when the pinned base jar still carries them.
+Remove-Item -Recurse -Force "$fx\assets\fabricskyboxes", "$fx\assets\dabywitherstormmod\textures\sky", "$fx\assets\dabywitherstormmod\textures\mcsm_atmosphere\sky" -ErrorAction SilentlyContinue
+Get-ChildItem "$fx\assets\dabywitherstormmod\textures\environment" -Filter "storymode_sky_*.png" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+Remove-Item -Force "$fx\net\mcsm\extras\client\McsmBlobOval.class", "$fx\net\mcsm\extras\client\McsmBlobShape.class", "$fx\net\mcsm\extras\client\McsmSkyDome.class", "$fx\net\mcsm\extras\client\McsmStormSkyLayer.class", "$fx\net\dabicco\witherstormmod\mixin\StormSkyGradientMixin.class", "$fx\net\dabicco\witherstormmod\mixin\StoryModeSkyDomeMixin.class" -ErrorAction SilentlyContinue
+Get-ChildItem "$fx\net\mcsm\extras\client" -Filter "McsmBlobOval`$*.class" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+Get-ChildItem "$fx\net\mcsm\extras\client" -Filter "McsmBlobShape`$*.class" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
 $fmj = "$fx\fabric.mod.json"
 (Get-Content $fmj -Raw) -replace '"version": "[0-9.]+-26\.2-beta-mcsm"', """version"": ""$jarId""" | Set-Content $fmj -Encoding ASCII

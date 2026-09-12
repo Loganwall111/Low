@@ -1,16 +1,12 @@
-# Skybox audit for 1.9.199
+# Native sky renderer audit
 
-Audit command run in the workspace:
+The legacy texture-backed sky route is no longer part of the source or
+assembly inputs. The active implementation is the Java `SkyRenderer` state
+hook in `McsmStormSkyColorPatch` plus `McsmNativeSkyRenderer`; it supplies
+interpolated RGB endpoints and matching fog state to Minecraft's native
+spherical sky pass.
 
-```bash
-find . -type d \( -name '*skybox*' -o -name '*fabricskyboxes*' -o -name 'sky' \) | sort
-```
-
-Result: no FabricSkyBoxes/OptiFine skybox override folders are present in the shipped packs. The only sky-related folders are the intended Devouring Storms atmosphere texture sources:
-
-- `src/main/resources/assets/dabywitherstormmod/textures/mcsm_atmosphere/sky`
-- `src/main/resources/assets/dabywitherstormmod/textures/sky`
-- `jar-overrides/assets/dabywitherstormmod/textures/mcsm_atmosphere/sky`
-- `jar-overrides/assets/dabywitherstormmod/textures/sky`
-
-So the thin purple phase look is not coming from a hidden Fabric skybox folder in this checkout. 1.9.199 refreshes these intended folders with the phase/day/night/sunset gradient assets and keeps purple/pink limited to storm phases/distance influence in code.
+The build scripts also remove legacy sky directories from the pinned base jar
+before assembly and fail the jar audit if any of those paths survive. The
+retained `mcsm_atmosphere/glare` textures are unrelated to sky colour and are
+kept for the existing glare system.

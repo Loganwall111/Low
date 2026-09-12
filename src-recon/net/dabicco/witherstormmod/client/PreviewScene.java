@@ -23,12 +23,9 @@ public final class PreviewScene {
    public boolean castShadow = true;
    public int beams;
    public int backdropIndex = 0;
-   public static final Identifier SKY_DAY = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/sky/day.png");
-   public static final Identifier SKY_SUNSET = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/sky/sunset.png");
-   public static final Identifier SKY_NIGHT = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/sky/night.png");
-   public static final Identifier SKY_COSMIC = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/sky/mcsm_cosmic_sky.png");
-   public static final Identifier SKY_TWILIGHT = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/sky/sky_only_no_clouds.png");
-   public static final String[] BACKDROP_LABELS = new String[]{"Default Sky", "MCSM Day", "MCSM Sunset", "MCSM Night", "Cosmic Void", "Storm Twilight"};
+   // Sky previews are native state previews now; no texture-pack backdrop is
+   // loaded by the preview scene.
+   public static final String[] BACKDROP_LABELS = new String[]{"Default Sky"};
    private static final Identifier GRASS_TOP = Identifier.withDefaultNamespace("textures/block/grass_block_top.png");
    private static final int[] GRASS_TINT = new int[]{124, 178, 94};
    private static final int CELLS_MAX = 30;
@@ -41,26 +38,9 @@ public final class PreviewScene {
    public static final int SHADOW_TINT = 940578856;
    private static final Identifier SHADOW_SHEET = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/tractor_beam.png");
 
+   /** The preview uses the same native SkyRenderer state as the world. */
    public void submitSky(PoseStack poseStack, SubmitNodeCollector collector) {
-      if (this.backdropIndex > 0) {
-         Identifier tex = switch (this.backdropIndex) {
-            case 1 -> SKY_DAY;
-            case 2 -> SKY_SUNSET;
-            case 3 -> SKY_NIGHT;
-            case 4 -> SKY_COSMIC;
-            case 5 -> SKY_TWILIGHT;
-            default -> null;
-         };
-         if (tex != null) {
-            float d = Math.max(120.0F, this.field * 2.2F);
-            collector.submitCustomGeometry(poseStack, RenderTypes.eyes(tex), (pose, consumer) -> {
-               vertex(pose, consumer, -d, -d * 0.4F, -d * 0.9F, 0.0F, 1.0F, 255, 255, 255, 255, 0.0F, 1.0F, 0.0F);
-               vertex(pose, consumer, -d, d * 1.6F, -d * 0.9F, 0.0F, 0.0F, 255, 255, 255, 255, 0.0F, 1.0F, 0.0F);
-               vertex(pose, consumer, d, d * 1.6F, -d * 0.9F, 1.0F, 0.0F, 255, 255, 255, 255, 0.0F, 1.0F, 0.0F);
-               vertex(pose, consumer, d, -d * 0.4F, -d * 0.9F, 1.0F, 1.0F, 255, 255, 255, 255, 0.0F, 1.0F, 0.0F);
-            });
-         }
-      }
+      // Intentionally empty: never create a reachable sky billboard.
    }
 
    public void submitGround(PoseStack poseStack, SubmitNodeCollector collector) {

@@ -39,11 +39,9 @@ public final class McsmSkyBlob {
                 }
             }
             float proximity = stormProximity();
-            // The old FabricSkyBoxes backdrop is useful for regular summon
-            // scenes, but must be off before the active storm sky is drawn.
-            // This runs even without Iris, so vanilla/FBS cannot win the
-            // ordering race against McsmStormSkyLayer.
-            McsmStormSkyLayer.suppressLegacySkybox();
+            // Glare uniforms remain independent of the native sky pass.  No
+            // skybox or texture-pack switch is needed when the native renderer
+            // is active.
             if (irisUniforms == null) {
                 return;
             }

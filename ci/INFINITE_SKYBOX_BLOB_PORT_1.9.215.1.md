@@ -67,7 +67,7 @@ blob between 700 and 1600 blocks ("go extremely far away and the sky
 slowly changes back to regular vanilla").
 
 ### 5. Skybox PNGs
-`ci/regenerate_skybox_pngs.py` rebuilt `mcsm_atmosphere/sky/*` and
+`ci/regenerate_glare_pngs.py` rebuilds only the retained glare textures;
 `glare/*` (both `src/main/resources` and `jar-overrides`) from the new
 decks — day, purple night, phase-5 turquoise, 5.4, 5.5, phase-6 split and
 matching radial smudges. The glare PNGs are not referenced by any current
@@ -80,7 +80,7 @@ verbatim.
   via bbmodel→jem voxeliser), `ci/bbmodel_convert.py`.
 - The 1.9.215 volumetric GLSL storm deck (`stormVolume.glsl`) and the
   Iris uniform push (`McsmSkyBlob`).
-- `McsmSkyDome` (already a no-op), `McsmStormRings`, CEM models, teeth /
+- native `SkyRenderer` state, `McsmStormRings`, CEM models, teeth /
   emissive work, phase textures.
 - 1.9.208 dusk/dawn and phase 8-9 ember decks (kept in the Java retunes).
 

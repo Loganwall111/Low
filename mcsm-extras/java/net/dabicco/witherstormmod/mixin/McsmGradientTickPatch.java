@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * and active. A whole-jar bytecode scan for callers of that method returns
  * NOTHING -- it is dead code. Three classes read the results:
  *
- *     StormSkyGradientMixin   -> yaw(), color(), fogStampActive()
+ *     native SkyRenderer state -> phase/time sky carriers
  *     McsmFogCarrierMixin     -> yaw(), pitch(), phase(), fogStampActive()
  *     McsmBlobCarrierPatch    -> yaw(), pitch(), phase(), fogStampActive()
  *
@@ -83,9 +83,8 @@ public abstract class McsmGradientTickPatch {
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
             StormSkyGradient.update(cameraState.pos);
-            // FabricSkyBoxes is retained for calm/summon scenes, but cannot
-            // paint over the active infinite storm sky.
-            net.mcsm.extras.client.McsmStormSkyLayer.suppressLegacySkybox();
+            // The native SkyRenderer owns the atmosphere; no external
+            // skybox is toggled from the frame driver.
             net.mcsm.extras.client.McsmTeethPhaseTint.tick();
             // Report what update() produced. This is the value the glare blob
             // depends on -- if it never reports ACTIVE, the blob cannot draw

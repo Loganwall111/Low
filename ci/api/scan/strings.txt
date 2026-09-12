@@ -50,7 +50,6 @@
     setDevourerTint
 
 ### net/dabicco/witherstormmod/client/PreviewScene.class
-     textures/sky/mcsm_cosmic_sky.png
     MCSM Day
     MCSM Sunset
     MCSM Night

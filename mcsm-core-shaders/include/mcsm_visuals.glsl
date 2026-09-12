@@ -452,7 +452,7 @@ vec3 mcsm_blob_color(float p, float clock) {
 //  Telltale's glare is NOT a 3D volume, NOT a billboard and NOT a cloud
 //  layer. It is a separate INFINITE skybox projection tethered to the Wither
 //  Storm -- the same trick as the infinite-hallway portals: a flat, smeared
-//  oval gradient mass painted into the sky pass (gbuffers_sky / sky.fsh),
+//  oval gradient mass retained only for the optional glare composite,
 //  centred behind u_StormPos (witherstorm_BossPos / the aim carrier).
 //
 //    * looking at the storm: the gradient never ends. Every ray inside the

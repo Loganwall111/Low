@@ -268,7 +268,6 @@ chmod +x glslcheck/bin/glslang || true
 GLSL_LOG=/tmp/mcsm-glsl.log
 if python3 glslcheck/shimcheck.py mcsm-core-shaders \
      jar-overrides/assets/dabywitherstormmod/shaders/core/storm_glow.fsh \
-     jar-overrides/assets/dabywitherstormmod/shaders/core/mcsm_blob_oval.fsh \
      jar-overrides/assets/dabywitherstormmod/shaders/post/storm_sun_glow.fsh \
      > "$GLSL_LOG" 2>&1; then
   tail -2 "$GLSL_LOG"
@@ -373,11 +372,11 @@ rm -rf "$FX" && mkdir -p "$FX/cls"
 # supplied/generated.  /ds towns build/start and the first-spawn fallback rely on
 # these resources so the player can actually arrive in Story Mode locations now.
 cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
-# 1.9.167: 26.2 loads position/block, not sky/terrain. Alias so vivid grade+shadows actually bind.
+# 1.9.167: 26.2 loads block rather than terrain for the native block pass.
+# Native SkyRenderer owns sky colour; no custom sky/position alias is shipped.
 CS="$FX/cls/assets/minecraft/shaders/core"
 if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f "$CS/terrain.vsh" "$CS/block.vsh"; fi
-if [ -f "$CS/sky.fsh" ]; then cp -f "$CS/sky.fsh" "$CS/position.fsh"; cp -f "$CS/sky.vsh" "$CS/position.vsh"; fi
-echo "[build] 26.2 shader aliases: block<-terrain position<-sky"
+echo "[build] 26.2 shader aliases: block<-terrain; native SkyRenderer owns sky"
 cp -r jar-overrides/* "$FX/cls/"
 # 1.9.206: src/main/resources was never overlaid -- the merged Story Look
 # textures (sun/moon, villager cast skins) and the story_character skins
@@ -404,6 +403,25 @@ shopt -u nullglob
 if [ "${#FRESH_CLASSES[@]}" -gt 0 ]; then
   cp -r "${FRESH_CLASSES[@]}" "$FX/cls/"
 fi
+# Native SkyRenderer is authoritative. Purge legacy texture-pack sky paths from
+# the base jar as well as from the overlay so they cannot be discovered by a
+# loader or win an ordering race at runtime.
+rm -rf "$FX/cls/assets/fabricskyboxes" \
+       "$FX/cls/assets/dabywitherstormmod/textures/sky" \
+       "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/sky"
+find "$FX/cls/assets/dabywitherstormmod/textures/environment" -maxdepth 1 \
+     -type f -name 'storymode_sky_*.png' -delete 2>/dev/null || true
+# Remove stale overlay bytecode from a previously published base jar. These
+# classes are intentionally absent from the fresh source set and must not be
+# left reachable through an old class file.
+rm -f "$FX/cls/net/mcsm/extras/client/McsmBlobOval.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmBlobShape.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmSkyDome.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmStormSkyLayer.class" \
+      "$FX/cls/net/dabicco/witherstormmod/mixin/StormSkyGradientMixin.class" \
+      "$FX/cls/net/dabicco/witherstormmod/mixin/StoryModeSkyDomeMixin.class"
+find "$FX/cls/net/mcsm/extras/client" -type f \
+     \( -name 'McsmBlobOval$*.class' -o -name 'McsmBlobShape$*.class' \) -delete 2>/dev/null || true
 sed -i "s/\"version\": \"[0-9.]*-26.2-beta[a-z-]*\"/\"version\": \"${JAR_ID}\"/" "$FX/cls/fabric.mod.json"
 # MCSM 1.9.215 R2 -- the sed above only rewrites versions shaped exactly like
 # "<digits>-26.2-beta<letters>"; if the base jar's fabric.mod.json carries any
@@ -776,6 +794,15 @@ if [ -d "$FX/cls/resourcepacks/storylook/assets/minecraft/shaders" ]; then
   echo "::error title=jar audit::external Story Look pack still overrides vanilla core shaders; Sodium will reject it"
   AUDIT_FAIL=1
 fi
+if [ -e "$FX/cls/assets/fabricskyboxes" ] \
+   || [ -d "$FX/cls/assets/dabywitherstormmod/textures/sky" ] \
+   || [ -d "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/sky" ] \
+   || find "$FX/cls/assets/dabywitherstormmod/textures/environment" -maxdepth 1 -name 'storymode_sky_*.png' -print -quit 2>/dev/null | grep -q .; then
+  echo "::error title=jar audit::legacy texture-pack sky assets survived assembly"
+  AUDIT_FAIL=1
+else
+  echo "[audit] legacy texture-pack sky assets removed"
+fi
 
 if [ ! -f "$FX/cls/resourcepacks/ogs-cem/pack.mcmeta" ] \
    || [ ! -f "$FX/cls/resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm.jem" ]; then
@@ -808,18 +835,18 @@ SCHEMATIC_COUNT="$(find "$FX/cls/assets/dabywitherstormmod" -path '*/schematics/
 echo "[audit] legacy schematic fallback assets available: ${SCHEMATIC_COUNT}"
 
 # mega-phase 5b: the embedded Iris pack must actually be in the jar, and its
-# zip must contain the v5 sky pass - an installer with nothing to install is
-# the same silent no-op the audit exists to catch.
+# zip must contain the retained glare composite - an installer with nothing to install
+# is the same silent no-op the audit exists to catch.
 EMBED_PACK="$FX/cls/assets/dabywitherstormmod/shaderpacks/devouringstorms.zip"
-if [ ! -s "$EMBED_PACK" ] || ! unzip -Z1 "$EMBED_PACK" 2>/dev/null | grep -Eq "shaders/(gbuffers_skybasic|world0/gbuffers_skybasic)\.fsh"; then
+if [ ! -s "$EMBED_PACK" ] || ! unzip -Z1 "$EMBED_PACK" 2>/dev/null | grep -Eq "shaders/(main/)?composite6?\.glsl"; then
   echo "::error title=jar audit::embedded managed Iris shader pack missing or incomplete"
   AUDIT_FAIL=1
 else
   echo "[audit] embedded shader pack: $(unzip -Z1 "$EMBED_PACK" | wc -l) entries"
 fi
 
-# shader spot-check: the jar must carry THIS source, not the base's
-for f in core/sky.fsh include/mcsm_visuals.glsl; do
+# shader spot-check: the jar must carry the shared visual include, not a stale base copy.
+for f in include/mcsm_visuals.glsl; do
   if [ -f "$FX/cls/assets/minecraft/shaders/$f" ] && \
      cmp -s "mcsm-core-shaders/$f" "$FX/cls/assets/minecraft/shaders/$f"; then
     echo "[audit] shader up to date: $f"

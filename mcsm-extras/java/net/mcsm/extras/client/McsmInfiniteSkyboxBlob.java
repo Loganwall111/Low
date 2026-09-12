@@ -12,11 +12,9 @@ import net.mcsm.extras.McsmExtrasConfig;
  * MCSM 1.9.201 -- ATMOSPHERIC W'S CLOUD  (Java half of u_StormPos).
  *
  * Telltale's glare in Minecraft: Story Mode is not a 3D volume, not a
- * billboard and not a cloud layer: it is an INFINITE skybox projection
- * tethered to the Wither Storm (the same trick as the infinite-hallway
- * portals). The GLSL half lives in mcsm_infinite_blob()/mcsm_blob() inside
- * the sky pass (gbuffers_sky / sky.fsh); this class is the Java driver that
- * feeds it once per frame:
+ * billboard and not a cloud layer. The optional shader half is a retained
+ * screen-space glare composite; this class is the Java carrier driver that
+ * feeds it once per frame without owning the native sky pass:
  *
  *   * tracks the nearest storm and hands the shader its world position --
  *     that vector IS the shader's u_StormPos (witherstorm_BossPos), shipped

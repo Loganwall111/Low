@@ -39,8 +39,6 @@ public class DabyWSClientConfig {
    public static double chromaticGlitchStrength = 1.0;
    public static boolean storyModeBossbar = true;
    public static boolean storyModeTitleScreen = true;
-   /** Legacy skyboxes remain available outside an active phase-5+ storm. */
-   public static boolean customSkyboxes = true;
    public static boolean cloudDeckLayer = true;
    public static boolean regionalBiomeFog = true;
    public static boolean purpleLightningSparks = true;
@@ -1569,15 +1567,6 @@ public class DabyWSClientConfig {
          true,
          () -> storyModeTitleScreen ? 1.0 : 0.0,
          v -> storyModeTitleScreen = v >= 0.5
-      );
-      key(
-         "customSkyboxes",
-         "Dynamic Story Mode FabricSkyBoxes with day, night, and cataclysm skies.",
-         0.0,
-         1.0,
-         true,
-         () -> customSkyboxes ? 1.0 : 0.0,
-         v -> customSkyboxes = v >= 0.5
       );
       key(
          "cloudDeckLayer",

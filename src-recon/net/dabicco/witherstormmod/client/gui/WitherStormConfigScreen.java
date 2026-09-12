@@ -1120,7 +1120,6 @@ public class WitherStormConfigScreen extends Screen {
       this.clientRow("groundShakingTremors", "Earthquake Camera Tremors", (BooleanSupplier)null);
       this.clientRow("screenTremorIntensity", "Camera Shake Intensity", () -> !DabyWSClientConfig.groundShakingTremors);
       this.clientRow("dynamicScreenShake", "Storm Footstep Ground Vibrations", (BooleanSupplier)null);
-      this.clientRow("customSkyboxes", "Dynamic FabricSkyBoxes", (BooleanSupplier)null);
       this.clientRow("cloudDeckLayer", "Story Mode Volumetric Cloud Deck", (BooleanSupplier)null);
       this.clientRow("regionalBiomeFog", "Regional Biome Atmospheric Fog", (BooleanSupplier)null);
       this.clientRow("purpleLightningSparks", "Ambient Purple Lightning Spikes", (BooleanSupplier)null);

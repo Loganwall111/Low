@@ -1,7 +1,6 @@
 package net.mcsm.extras.client;
 
 import net.dabicco.witherstormmod.client.ClientDistantStormManager;
-import net.dabicco.witherstormmod.client.StoryModeSkyTint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 
@@ -81,45 +80,24 @@ public final class McsmStormAtmosphere {
      * Write storm sky RGB into out[3] when storm owns the sky.
      * Returns blend 0..1 (0 = pure calm StoryModeSkyTint).
      */
+    /** Compatibility colour for older fog callers; native SkyRenderer is authoritative. */
     public static float skyBlend(float[] out) {
-        float p = nearestPhase();
-        if (p < 4.9F) {
+        float phase = nearestPhase();
+        if (phase < 4.90F || out == null || out.length < 3) {
             return 0.0F;
         }
-        // phase colour decks — sampled from the user's uploaded gradient set:
-        // 5 turquoise, 5.5 pink/purple/orange, 5.9 purple-blue-pink, 6 brown-pink/black.
-        float wTeal = ramp(p, 4.90F, 5.10F) * (1.0F - ramp(p, 5.25F, 5.40F));
-        float wPurp = ramp(p, 5.20F, 5.42F) * (1.0F - ramp(p, 5.48F, 5.60F));
-        float wPink = ramp(p, 5.48F, 5.65F) * (1.0F - ramp(p, 5.78F, 5.94F));
-        float wLate = ramp(p, 5.78F, 5.92F) * (1.0F - ramp(p, 5.96F, 6.10F));
-        float wSix  = ramp(p, 5.95F, 6.20F) * (1.0F - ramp(p, 7.90F, 8.10F));
-        // 1.9.208: phase 8-9 -- the whole sky goes dark-orange/ember.
-        float w89   = ramp(p, 7.95F, 8.20F);
-        float tot = wTeal + wPurp + wPink + wLate + wSix + w89;
-        if (tot < 0.02F) {
-            return 0.0F;
-        }
-        // 1.9.215 R2 -- CORRECTED 2026-09-11 hex decks:
-        //   5   #0A1112 / #1D3335 / #557061 (green skybox blob)
-        //   5.5 #050208 / #2A123D / #4B1E5E / #7D4B91 (purple & pink void)
-        //   6   #100A1A / #8A5361 / #C47A5A (four-color sunset split)
-        float[] teal = {0.333333F, 0.439216F, 0.380392F}; // #557061
-        float[] purp = {0.164706F, 0.070588F, 0.239216F};  // #2A123D
-        float[] pink = {0.490196F, 0.294118F, 0.568627F};  // #7D4B91
-        float[] late = {0.294118F, 0.117647F, 0.368627F};  // #4B1E5E
-        float[] six  = {0.541176F, 0.325490F, 0.380392F};   // #8A5361
-        float[] e89  = {0.62F, 0.30F, 0.13F};
-        out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + late[0] * wLate + six[0] * wSix + e89[0] * w89) / tot;
-        out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + late[1] * wLate + six[1] * wSix + e89[1] * w89) / tot;
-        out[2] = (teal[2] * wTeal + purp[2] * wPurp + pink[2] * wPink + late[2] * wLate + six[2] * wSix + e89[2] * w89) / tot;
-        // presence scales with phase weight; 5.5 is strongest purple-pink, and
-        // fades back to calm/vanilla Story Mode sky when the player gets far
-        // away from the storm.
-        float blend = Mth.clamp(tot, 0.0F, 1.0F) * distanceInfluence();
-        // Keep purple/pink as storm atmosphere only; do not repaint the entire
-        // normal night sky purple when the player is merely nearby. Phase 8-9
-        // commits harder -- the ember sky owns the horizon.
-        return blend * (0.46F + 0.34F * w89 / Math.max(0.001F, tot));
+        float[] p5 = {0x14 / 255.0F, 0x22 / 255.0F, 0x26 / 255.0F};
+        float[] p55 = {0x10 / 255.0F, 0x06 / 255.0F, 0x19 / 255.0F};
+        float[] p6 = {0x1A / 255.0F, 0x12 / 255.0F, 0x26 / 255.0F};
+        float t55 = ramp(phase, 5.00F, 5.50F);
+        float t6 = ramp(phase, 5.90F, 6.00F);
+        out[0] = p5[0] + (p55[0] - p5[0]) * t55;
+        out[1] = p5[1] + (p55[1] - p5[1]) * t55;
+        out[2] = p5[2] + (p55[2] - p5[2]) * t55;
+        out[0] += (p6[0] - out[0]) * t6;
+        out[1] += (p6[1] - out[1]) * t6;
+        out[2] += (p6[2] - out[2]) * t6;
+        return Mth.clamp(0.80F * distanceInfluence(), 0.0F, 0.80F);
     }
 
     public static void tick() {

@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  *
  * and DabyWSClientConfig exposes 335 public static non-final fields holding the
  * look: trailerShadows (ground shadows for terrain and mobs),
- * stormProximityVignette (the smoke screen), cloudDeckLayer, customSkyboxes,
+ * stormProximityVignette (the smoke screen), cloudDeckLayer,
  * purpleLightningSparks, sunGlow, blackGlare, stormShadowTerrain and so on.
  *
  * So the work is not to reimplement them -- it is to open the gates. This runs
@@ -161,11 +161,8 @@ public final class McsmGate {
             // ---- storm body + sky -----------------------------------------
             changed += setBool(c, "distantStorms", true);
             changed += setBool(c, "distantFog", true);
-            // 1.9.314: keep the regular summon skyboxes available when no
-            // phase-5+ storm is present. McsmSkyBlob temporarily suppresses
-            // this backdrop during the active storm, before the sky pass, so
-            // it cannot cover the directional alpha patch.
-            changed += setBool(c, "customSkyboxes", true);
+            // The native SkyRenderer owns the full atmosphere for every
+            // phase; there is no alternate skybox feature to gate.
             changed += setBool(c, "cloudDeckLayer", true);
             changed += setBool(c, "regionalBiomeFog", true);
             changed += setBool(c, "phaseAnim", true);

@@ -5,8 +5,6 @@ import net.dabicco.witherstormmod.client.FarLandsHaze;
 import net.dabicco.witherstormmod.client.SpawnTowerGloom;
 import net.dabicco.witherstormmod.client.StormFog;
 import net.dabicco.witherstormmod.client.StormSkyDarken;
-import net.dabicco.witherstormmod.client.StormSkyDome;
-import net.dabicco.witherstormmod.client.StoryModeSkyTint;
 import net.dabicco.witherstormmod.client.BiomeStormFog.RegionAtmosphere;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -28,27 +26,9 @@ public class FogRendererMixin {
       at = {@At("TAIL")}
    )
    private void dabyws$darkenSky(Camera camera, float partialTick, ClientLevel level, int renderDistance, float darkenAmount, Vector4f color, CallbackInfo ci) {
-      float origR = color.x;
-      float origG = color.y;
-      float origB = color.z;
-      float stormSky = StormSkyDome.strength();
-      if (stormSky > 0.0F) {
-         float[] ssc = new float[3];
-         StormSkyDome.skyColor(ssc);
-         float fogAmt = stormSky * 0.75F;
-         color.x = color.x * (1.0F - fogAmt) + ssc[0] * fogAmt;
-         color.y = color.y * (1.0F - fogAmt) + ssc[1] * fogAmt;
-         color.z = color.z * (1.0F - fogAmt) + ssc[2] * fogAmt;
-      }
-
-      float smStrength = StoryModeSkyTint.fogStrength();
-      if (smStrength > 0.0F && level != null) {
-         float[] sm = new float[3];
-         StoryModeSkyTint.skyColor(level.getOverworldClockTime(), sm);
-         color.x = color.x * (1.0F - smStrength) + sm[0] * smStrength;
-         color.y = color.y * (1.0F - smStrength) + sm[1] * smStrength;
-         color.z = color.z * (1.0F - smStrength) + sm[2] * smStrength;
-      }
+      // McsmNativeFogMixin applies the native SkyRenderer endpoint here. Keep
+      // this base mixin focused on the existing darken/biome fog modifiers so
+      // source and shipping builds do not blend the atmosphere twice.
 
       StormSkyDarken.update(camera.position(), partialTick);
       float darken = StormSkyDarken.factor();

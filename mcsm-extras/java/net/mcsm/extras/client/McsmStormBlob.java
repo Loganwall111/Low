@@ -49,12 +49,6 @@ public final class McsmStormBlob {
     // glare is gone.
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
-    // 1.9.214 -- REAL Telltale assets (repo Loganwall111/gggggrff):
-    // the legacy atmospheric cloud texture belonged to the old shell path,
-    // textured with the game's own radial falloff halo texture.
-    private static final Identifier ATMOSPHERIC_CLOUD_TEX = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/halo.png");
-
     /** The three beam mouths, in billboard units of baseR (x right, y up). */
     private static final float[] MOUTH_X = { -0.30F, 0.00F, 0.30F };
     private static final float[] MOUTH_Y = { -0.04F, -0.14F, -0.02F };
@@ -85,22 +79,10 @@ public final class McsmStormBlob {
 
     public static void submit(LevelRenderContext ctx) {
         try {
-            // 1.9.221: the infinite skybox blob also exists as a Java layer
-            // for the Iris shader-pack path (the built-in pack), where the
-            // core GLSL sky pass never runs -- alpha-blended oval stack
-            // pinned behind the storm, same corrected hexes.
-            McsmBlobOval.submit(ctx);
-            // 1.9.201: the extracted OG sky gradients render every frame
-            // (calm decks + storm decks) before the storm glare volume.
-            McsmSkyDome.submit(ctx);
-            // 1.9.215 R2: with FabricSkyBoxes active the mod's own skybox
-            // covers the shader sky, so the storm dome + infinite blob are
-            // drawn as a far camera-centred layer on top of it.
-            McsmStormSkyLayer.submit(ctx);
-            // 1.9.314: do not submit the legacy world-space glare, ground
-            // pool, vortex, or ring geometry. Those are the distant 3D circle
-            // and the expensive geometry that users were still seeing. The
-            // storm's atmospheric visual is only the directional sky cloud.
+            // Sky atmosphere is now owned by the native SkyRenderer mixin.
+            // Deliberately do not submit the former oval, dome, shell, or
+            // camera-facing sky geometry here.  McsmSkyBlob.push() keeps the
+            // existing optional glare carriers alive for shader packs.
         } catch (Throwable ignored) {
             // an unexpected base-jar surface degrades to no blob, never a crash
         }

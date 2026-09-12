@@ -65,6 +65,8 @@
     "SelectItemModelPropertiesAccessor",
     "SelectWorldScreenMixin",
     "SkyRendererMixin",
+    "McsmStormSkyColorPatch",
+    "McsmNativeFogMixin",
     "SoundBufferAccessor",
     "SoundBufferLibraryMixin",
     "SoundEngineMixin",

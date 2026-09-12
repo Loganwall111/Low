@@ -1,127 +1,37 @@
 package net.dabicco.witherstormmod.client;
 
-import net.dabicco.witherstormmod.config.DabyWSClientConfig;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * MCSM: fog tint that drives the shader storm gate — ONLY while a real
- * phase-5+ storm is nearby. Calm night stays deep blue; purple/pink/teal fog
- * is phase-locked to the user strips.
+ * Compatibility shell for older base callers. The former world-space dome
+ * implementation is intentionally inert; McsmNativeSkyRenderer owns both sky
+ * colour and fog state now.
  */
 public final class StormSkyDome {
-   // 1.9.215 R2 -- CORRECTED 2026-09-11 hex decks:
-   //   phase 5   #161A1D / #2D423F / #6A9A78 (green)
-   //   phase 5.5 #0B0410 / #2D1442 / #87529C (purple & pink void)
-   //   phase 6   #1A1226 / #966173 / #D89874 (four-color sunset split)
-   private static final float[] TEAL = new float[]{0.176F, 0.259F, 0.247F};
-   // phase 5.4 purple
-   private static final float[] PURP = new float[]{0.176F, 0.078F, 0.259F};
-   // phase 5.5 pink-magenta, restrained so normal night does not become purple
-   private static final float[] PINK = new float[]{0.529F, 0.322F, 0.612F};
-   // phase 6+ four-color sunset split (dusty rose base, amber horizon glow)
-   private static final float[] SIX = new float[]{0.588F, 0.380F, 0.451F};
-   private static final double RANGE = 900.0;
-   private static float displayed;
-   private static float displayedCore;
-   private static float phaseSeen;
+    private StormSkyDome() {
+    }
 
-   private StormSkyDome() {
-   }
+    public static void update(Vec3 cameraPosition) {
+        // Native SkyRenderer state extraction is the sole atmosphere update.
+    }
 
-   public static void update(Vec3 var0) {
-      float var1 = 0.0F;
-      float var2 = 0.0F;
-      float var3 = 0.0F;
+    public static float strength() {
+        return 0.0F;
+    }
 
-      for (ClientDistantStormManager.StormData var5 : ClientDistantStormManager.all()) {
-         // only phase 5+ owns the fog/sky tint
-         if (!(var5.phase < 4.95F)) {
-            double var6 = var5.dispX - var0.x;
-            double var8 = var5.dispY - var0.y;
-            double var10 = var5.dispZ - var0.z;
-            double var12 = Math.sqrt(var6 * var6 + var8 * var8 + var10 * var10);
-            if (!(var12 > RANGE)) {
-               double var14 = var12 / RANGE;
-               float var16 = var14 <= 0.55 ? 1.0F : smooth((float)(1.0 - (var14 - 0.55) / 0.45));
-               float var17 = ramp(var5.phase, 4.95F, 5.15F);
-               float var18 = var16 * var17;
-               if (var18 > var1) {
-                  var1 = var18;
-                  var3 = var5.phase;
-               }
+    public static float coreStrength() {
+        return 0.0F;
+    }
 
-               var2 = Math.max(var2, var16 * ramp(var5.phase, 4.95F, 5.35F));
-            }
-         }
-      }
+    public static float phase() {
+        return 0.0F;
+    }
 
-      displayed = displayed + (var1 - displayed) * 0.05F;
-      displayedCore = displayedCore + (var2 - displayedCore) * 0.05F;
-      if (displayed < 0.002F) {
-         displayed = 0.0F;
-      }
-
-      if (displayedCore < 0.002F) {
-         displayedCore = 0.0F;
-      }
-
-      if (var3 > 0.0F) {
-         phaseSeen = var3;
-      } else if (displayed < 0.01F) {
-         phaseSeen = 0.0F;
-      }
-   }
-
-   public static float strength() {
-      // MCSM: fog tint only while a real phase-5+ storm is nearby AND displayed.
-      // Cap low so residual fog cannot purple-wash the calm night vault.
-      if (!DabyWSClientConfig.stormBackdrop) {
-         return 0.0F;
-      }
-      if (phaseSeen < 4.95F) {
-         return 0.0F;
-      }
-      return Mth.clamp(displayed * (float)DabyWSClientConfig.stormBackdropStrength * 0.32F, 0.0F, 0.32F);
-   }
-
-   public static float coreStrength() {
-      return Mth.clamp(displayedCore, 0.0F, 1.0F);
-   }
-
-   public static float phase() {
-      return phaseSeen;
-   }
-
-   public static void skyColor(float[] var0) {
-      float p = phaseSeen;
-      float wTeal = ramp(p, 4.95F, 5.10F) * (1.0F - ramp(p, 5.30F, 5.42F));
-      float wPurp = ramp(p, 5.30F, 5.42F) * (1.0F - ramp(p, 5.52F, 5.65F));
-      float wPink = ramp(p, 5.52F, 5.65F) * (1.0F - ramp(p, 5.92F, 6.10F));
-      float wSix  = ramp(p, 5.92F, 6.15F);
-      float tot = wTeal + wPurp + wPink + wSix;
-      if (tot <= 1.0E-4F || p < 4.9F) {
-         // no phase tint — leave fog alone (calm blue night)
-         var0[0] = 0.012F;
-         var0[1] = 0.035F;
-         var0[2] = 0.360F;
-      } else {
-         var0[0] = (TEAL[0] * wTeal + PURP[0] * wPurp + PINK[0] * wPink + SIX[0] * wSix) / tot;
-         var0[1] = (TEAL[1] * wTeal + PURP[1] * wPurp + PINK[1] * wPink + SIX[1] * wSix) / tot;
-         var0[2] = (TEAL[2] * wTeal + PURP[2] * wPurp + PINK[2] * wPink + SIX[2] * wSix) / tot;
-      }
-   }
-
-   private static float ramp(float var0, float var1, float var2) {
-      if (var2 <= var1) {
-         return var0 >= var2 ? 1.0F : 0.0F;
-      } else {
-         return smooth(Mth.clamp((var0 - var1) / (var2 - var1), 0.0F, 1.0F));
-      }
-   }
-
-   private static float smooth(float var0) {
-      var0 = Mth.clamp(var0, 0.0F, 1.0F);
-      return var0 * var0 * (3.0F - 2.0F * var0);
-   }
+    public static void skyColor(float[] out) {
+        if (out != null && out.length >= 3) {
+            out[0] = 0.0F;
+            out[1] = 0.0F;
+            out[2] = 0.0F;
+        }
+    }
 }
