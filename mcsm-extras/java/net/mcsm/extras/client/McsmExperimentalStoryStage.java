@@ -58,12 +58,9 @@ public final class McsmExperimentalStoryStage {
     }
 
     public static boolean active() {
-        try {
-            McsmExtrasConfig.load();
-            return McsmExtrasConfig.ENABLE_EXPERIMENTAL_STORY_MODE_STAGE;
-        } catch (Throwable ignored) {
-            return false;
-        }
+        // The client tick owns config loading. This predicate is called from
+        // the render graph, so it must remain a pure in-memory gate.
+        return McsmExtrasConfig.ENABLE_EXPERIMENTAL_STORY_MODE_STAGE;
     }
 
     /** The camera is in the black exterior once it crosses the ellipsoid. */

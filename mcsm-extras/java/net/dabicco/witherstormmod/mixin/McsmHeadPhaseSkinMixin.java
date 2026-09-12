@@ -18,7 +18,16 @@ public abstract class McsmHeadPhaseSkinMixin {
                                        float partialTick, CallbackInfo ci) {
         try {
             if (entity.level().getEntity(entity.getStormId()) instanceof WitherStormEntity storm) {
-                StormSkins.setPhaseHint(storm.getPhase());
+                double phase = storm.getPhase();
+                StormSkins.setPhaseHint(phase);
+                if (phase >= 5.0F) {
+                    // The eye and tooth layers are submitted with full-bright
+                    // emitterMark/bloom render types by the native head
+                    // renderer. Its lit gate otherwise suppresses both eye
+                    // lenses in a dark world, so keep the phase-5+ emissive
+                    // layers visible without changing the body palette.
+                    state.lit = 1.0F;
+                }
             }
         } catch (Throwable ignored) {
         }

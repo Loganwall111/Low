@@ -1,5 +1,6 @@
 {
 	"credit": "Telltale 1:1 meshes (extracted by wheatlycrab5892, voxelised by Devouring Storms)",
+	"texture": "textures/entity/cem/wither_storm_stage_d_massive.png",
 	"textureSize": [160, 160],
 	"models": [
 		{"part": "mass","id": "part","invertAxis": "xy","translate": [4.229,-70.875,-1.054],"boxes": [

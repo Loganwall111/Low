@@ -74,7 +74,8 @@ public final class McsmHaloSkyRenderer {
                 return;
             }
 
-            McsmExtrasConfig.load();
+            // Config is loaded by the client tick before render submission;
+            // never perform config/file work in this geometry path.
             double bodyRadius = bodyRadius(storm.phase);
             float phaseFade = Mth.clamp((storm.phase - 4.90F) / 0.18F, 0.0F, 1.0F);
             float distanceFade = 1.0F - Mth.clamp(

@@ -1,0 +1,486 @@
+{
+  "animations": "not imported; existing in-game animation code remains authoritative",
+  "models": {
+    "stage_a": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_a.png",
+        "source_material": "skM0_witherstormStageDbloodA.png",
+        "source_material_index": 9,
+        "source_size": [
+          64,
+          64
+        ]
+      },
+      "materials": [
+        {
+          "index": 8,
+          "name": "obj_blockCommandA.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_a/08_obj_blockCommandA.png"
+        },
+        {
+          "index": 9,
+          "name": "skM0_witherstormStageDbloodA.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_a/09_skM0_witherstormStageDbloodA.png"
+        }
+      ],
+      "model": "Stage_A/witherstormStageA.bbmodel"
+    },
+    "stage_a_debris": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_a_debris.png",
+        "source_material": "skM0_witherstormStageDbloodA.png",
+        "source_material_index": 9,
+        "source_size": [
+          64,
+          64
+        ]
+      },
+      "materials": [
+        {
+          "index": 0,
+          "name": "skM0_witherstormStageB.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_a_debris/00_skM0_witherstormStageB.png"
+        },
+        {
+          "index": 8,
+          "name": "obj_blockCommandA.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_a_debris/08_obj_blockCommandA.png"
+        },
+        {
+          "index": 9,
+          "name": "skM0_witherstormStageDbloodA.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_a_debris/09_skM0_witherstormStageDbloodA.png"
+        }
+      ],
+      "model": "Stage_A/witherstormStageA_with_debris.bbmodel"
+    },
+    "stage_b": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_b.png",
+        "source_material": "1_1_flesh.png",
+        "source_material_index": 15,
+        "source_size": [
+          2092,
+          1120
+        ]
+      },
+      "materials": [
+        {
+          "index": 6,
+          "name": "color_6632B9.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_b/06_color_6632B9.png"
+        },
+        {
+          "index": 7,
+          "name": "color_000.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_b/07_color_000.png"
+        },
+        {
+          "index": 13,
+          "name": "not_white.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_b/13_not_white.png"
+        },
+        {
+          "index": 15,
+          "name": "1_1_flesh.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_b/15_1_1_flesh.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageB (with traced shading textures).bbmodel"
+    },
+    "stage_c_big": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_c_big.png",
+        "source_material": "it_all_comes_tumbling_down.png",
+        "source_material_index": 11,
+        "source_size": [
+          2092,
+          1120
+        ]
+      },
+      "materials": [
+        {
+          "index": 0,
+          "name": "skM0_witherstormStageB.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_big/00_skM0_witherstormStageB.png"
+        },
+        {
+          "index": 6,
+          "name": "color_6632B9.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_big/06_color_6632B9.png"
+        },
+        {
+          "index": 7,
+          "name": "color_000.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_big/07_color_000.png"
+        },
+        {
+          "index": 11,
+          "name": "it_all_comes_tumbling_down.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_big/11_it_all_comes_tumbling_down.png"
+        },
+        {
+          "index": 12,
+          "name": "white_e.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_big/12_white_e.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageC_Big (with traced shading textures).bbmodel"
+    },
+    "stage_c_debris": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_c_debris.png",
+        "source_material": "skM0_witherstormStageB.png",
+        "source_material_index": 0,
+        "source_size": [
+          16,
+          16
+        ]
+      },
+      "materials": [
+        {
+          "index": 0,
+          "name": "skM0_witherstormStageB.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_debris/00_skM0_witherstormStageB.png"
+        },
+        {
+          "index": 4,
+          "name": "skM0_witherstormStageB.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_debris/04_skM0_witherstormStageB.png"
+        },
+        {
+          "index": 5,
+          "name": "color_786B44.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_debris/05_color_786B44.png"
+        },
+        {
+          "index": 6,
+          "name": "color_6632B9.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_debris/06_color_6632B9.png"
+        },
+        {
+          "index": 7,
+          "name": "color_000.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_debris/07_color_000.png"
+        }
+      ],
+      "model": "Stage_C/witherstormStageC_Massive_With_Debris_INACC.bbmodel"
+    },
+    "stage_c_massive": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_c_massive.png",
+        "source_material": "nice_try_wither_weirdo.png",
+        "source_material_index": 15,
+        "source_size": [
+          2092,
+          1120
+        ]
+      },
+      "materials": [
+        {
+          "index": 12,
+          "name": "oh_look_theres_another_placeholder_here_too.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_massive/12_oh_look_theres_another_placeholder_here_too.png"
+        },
+        {
+          "index": 13,
+          "name": "color_FF19FF.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_massive/13_color_FF19FF.png"
+        },
+        {
+          "index": 15,
+          "name": "nice_try_wither_weirdo.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_massive/15_nice_try_wither_weirdo.png"
+        },
+        {
+          "index": 16,
+          "name": "not_white.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_massive/16_not_white.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageC_Massive (with traced shading textures).bbmodel"
+    },
+    "stage_c_small": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_c_small.png",
+        "source_material": "this_is_1_1_too.png",
+        "source_material_index": 13,
+        "source_size": [
+          2092,
+          1120
+        ]
+      },
+      "materials": [
+        {
+          "index": 0,
+          "name": "skM0_witherstormStageB.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_small/00_skM0_witherstormStageB.png"
+        },
+        {
+          "index": 6,
+          "name": "color_6632B9.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_small/06_color_6632B9.png"
+        },
+        {
+          "index": 7,
+          "name": "color_000.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_small/07_color_000.png"
+        },
+        {
+          "index": 11,
+          "name": "white.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_small/11_white.png"
+        },
+        {
+          "index": 13,
+          "name": "this_is_1_1_too.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_c_small/13_this_is_1_1_too.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageC_Small (with traced shading textures).bbmodel"
+    },
+    "stage_d_big_mass": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_d_big_mass.png",
+        "source_material": "this_one_is_accurate.png",
+        "source_material_index": 17,
+        "source_size": [
+          781,
+          381
+        ]
+      },
+      "materials": [
+        {
+          "index": 7,
+          "name": "color_000.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/07_color_000.png"
+        },
+        {
+          "index": 10,
+          "name": "color_FF19FF.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/10_color_FF19FF.png"
+        },
+        {
+          "index": 13,
+          "name": "RECREATIONA-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/13_RECREATIONA-modified.png"
+        },
+        {
+          "index": 15,
+          "name": "RECREATIONC-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/15_RECREATIONC-modified.png"
+        },
+        {
+          "index": 16,
+          "name": "hold_the_elevator_.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/16_hold_the_elevator_.png"
+        },
+        {
+          "index": 17,
+          "name": "this_one_is_accurate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/17_this_one_is_accurate.png"
+        },
+        {
+          "index": 18,
+          "name": "this_one_is_also_accurate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/18_this_one_is_also_accurate.png"
+        },
+        {
+          "index": 19,
+          "name": "this_one_is_accurate_too.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/19_this_one_is_accurate_too.png"
+        },
+        {
+          "index": 20,
+          "name": "theyre_all_accurate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/20_theyre_all_accurate.png"
+        },
+        {
+          "index": 21,
+          "name": "not_white.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/21_not_white.png"
+        },
+        {
+          "index": 22,
+          "name": "heead.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_big_mass/22_heead.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageD_Center_big mass motherfucker (with in game accurate textures).bbmodel"
+    },
+    "stage_d_massive": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_d_massive.png",
+        "source_material": "this_one_is_accurate.png",
+        "source_material_index": 17,
+        "source_size": [
+          781,
+          381
+        ]
+      },
+      "materials": [
+        {
+          "index": 7,
+          "name": "color_000.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/07_color_000.png"
+        },
+        {
+          "index": 10,
+          "name": "color_FF19FF.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/10_color_FF19FF.png"
+        },
+        {
+          "index": 13,
+          "name": "RECREATIONA-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/13_RECREATIONA-modified.png"
+        },
+        {
+          "index": 15,
+          "name": "RECREATIONC-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/15_RECREATIONC-modified.png"
+        },
+        {
+          "index": 16,
+          "name": "hold_the_elevator_.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/16_hold_the_elevator_.png"
+        },
+        {
+          "index": 17,
+          "name": "this_one_is_accurate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/17_this_one_is_accurate.png"
+        },
+        {
+          "index": 18,
+          "name": "this_one_is_also_accurate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/18_this_one_is_also_accurate.png"
+        },
+        {
+          "index": 19,
+          "name": "this_one_is_accurate_too.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/19_this_one_is_accurate_too.png"
+        },
+        {
+          "index": 20,
+          "name": "theyre_all_accurate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/20_theyre_all_accurate.png"
+        },
+        {
+          "index": 21,
+          "name": "not_white.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/21_not_white.png"
+        },
+        {
+          "index": 22,
+          "name": "heead.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_massive/22_heead.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageD_Center_Massive.bbmodel"
+    },
+    "stage_d_small": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_d_small.png",
+        "source_material": "m.png",
+        "source_material_index": 18,
+        "source_size": [
+          781,
+          381
+        ]
+      },
+      "materials": [
+        {
+          "index": 7,
+          "name": "color_000.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/07_color_000.png"
+        },
+        {
+          "index": 10,
+          "name": "color_FF19FF.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/10_color_FF19FF.png"
+        },
+        {
+          "index": 12,
+          "name": "it_was_at_that_moment_superman_realized_his_fate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/12_it_was_at_that_moment_superman_realized_his_fate.png"
+        },
+        {
+          "index": 13,
+          "name": "RECREATIONB-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/13_RECREATIONB-modified.png"
+        },
+        {
+          "index": 14,
+          "name": "not_white.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/14_not_white.png"
+        },
+        {
+          "index": 18,
+          "name": "m.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/18_m.png"
+        },
+        {
+          "index": 19,
+          "name": "RECREATIONA-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/19_RECREATIONA-modified.png"
+        },
+        {
+          "index": 20,
+          "name": "RECREATIONC-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_small/20_RECREATIONC-modified.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageD_Center_Small (with traced shading textures).bbmodel"
+    },
+    "stage_d_split": {
+      "atlas": {
+        "atlas": "ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_d_split.png",
+        "source_material": "m.png",
+        "source_material_index": 18,
+        "source_size": [
+          781,
+          381
+        ]
+      },
+      "materials": [
+        {
+          "index": 10,
+          "name": "color_FF19FF.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_split/10_color_FF19FF.png"
+        },
+        {
+          "index": 12,
+          "name": "it_was_at_that_moment_superman_realized_his_fate.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_split/12_it_was_at_that_moment_superman_realized_his_fate.png"
+        },
+        {
+          "index": 13,
+          "name": "RECREATIONB-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_split/13_RECREATIONB-modified.png"
+        },
+        {
+          "index": 14,
+          "name": "not_white.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_split/14_not_white.png"
+        },
+        {
+          "index": 18,
+          "name": "m.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_split/18_m.png"
+        },
+        {
+          "index": 19,
+          "name": "RECREATIONA-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_split/19_RECREATIONA-modified.png"
+        },
+        {
+          "index": 20,
+          "name": "RECREATIONC-modified.png",
+          "path": "ogs-cem/assets/dabywitherstormmod/textures/entity/cem/traced/stage_d_split/20_RECREATIONC-modified.png"
+        }
+      ],
+      "model": "Traced_shading_Textures/witherstormStageD_Center_No_mass (with traced shading textures).bbmodel"
+    }
+  },
+  "pack": "Traced_shading_Textures plus Stage_A/Stage_C debris material sources",
+  "source": "Loganwall111/gggggrff"
+}

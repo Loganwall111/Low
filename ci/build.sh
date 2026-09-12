@@ -855,6 +855,25 @@ if [ ! -f "$FX/cls/resourcepacks/ogs-cem/pack.mcmeta" ] \
   AUDIT_FAIL=1
 fi
 
+# 1.9.318: prove the offline extracted traced materials and per-stage CEM
+# atlases survived assembly. The source .bbmodel files are never shipped or
+# parsed by the client.
+for traced_need in \
+  resourcepacks/ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_a.png \
+  resourcepacks/ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_b.png \
+  resourcepacks/ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_c_massive.png \
+  resourcepacks/ogs-cem/assets/minecraft/textures/entity/cem/wither_storm_stage_d_massive.png \
+  resourcepacks/ogs-cem/assets/traced_asset_manifest.json; do
+  if [ ! -s "$FX/cls/$traced_need" ]; then
+    echo "::error title=jar audit::offline traced model material missing: $traced_need"
+    AUDIT_FAIL=1
+  fi
+done
+if [ -e "shaderpack-superduper/shaders/lib/mcsm/skyBlob.glsl" ]; then
+  echo "::error title=jar audit::retired shader sky-box attachment survived source assembly"
+  AUDIT_FAIL=1
+fi
+
 # 1.9.181: prove the restored OGS assets and live labels survived assembly.
 for need in \
   assets/dabywitherstormmod/textures/entity/wither_storm.png \

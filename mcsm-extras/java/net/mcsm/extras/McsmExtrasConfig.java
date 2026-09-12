@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.317";
+    public static final String BUILD_VERSION = "1.9.318";
     public static boolean enableTentacleGrab = true;
     // Automatic schematic/town placement is deliberately OFF.  It can queue
     // three large structures and thousands of chunk rebuilds on first join,
@@ -170,6 +170,10 @@ public final class McsmExtrasConfig {
 
     private static boolean loaded = false;
     private static long stamp = -1L;
+    // External config edits are useful, but probing the filesystem from every
+    // render hook is not. One probe per second is enough; in-game changes call
+    // save() and update the live fields immediately.
+    private static long nextProbeNanos = 0L;
 
     private static File file() {
         return new File(new File(System.getProperty("user.dir", "."), "config"), "mcsm_storm_extras.properties");
@@ -252,22 +256,33 @@ public final class McsmExtrasConfig {
         }
     }
 
-    /** Cheap stat per call; reloads whenever the file is edited in game. */
+    /** Cheap throttled stat; reloads within one second of an external edit. */
     public static synchronized void load() {
         File f = file();
+        long now = System.nanoTime();
         if (loaded) {
+            if (now < nextProbeNanos) {
+                return;
+            }
+            nextProbeNanos = now + 1_000_000_000L;
             long m = f.lastModified();
             if (m == stamp) return;
             stamp = m;
         } else {
-            loaded = true; stamp = f.lastModified();
+            loaded = true;
+            stamp = f.lastModified();
+            nextProbeNanos = now + 1_000_000_000L;
         }
         try {
             Properties p = new Properties();
             if (f.isFile()) {
                 try (InputStream in = new FileInputStream(f)) { p.load(in); }
             } else {
-                save();
+                // Do not perform synchronous disk I/O from the first render
+                // or server tick just to materialize defaults. The old save()
+                // here was the main avoidable first-world frame spike. Defaults
+                // remain in memory and are persisted only when the player
+                // changes the Extras screen or explicitly calls save().
                 return;
             }
             enableTentacleGrab = bool(p, "enable_tentacle_grab", enableTentacleGrab);

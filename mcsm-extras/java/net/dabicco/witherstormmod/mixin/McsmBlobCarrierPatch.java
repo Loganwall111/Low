@@ -115,8 +115,8 @@ public abstract class McsmBlobCarrierPatch {
         require = 1
     )
     private void mcsm$stampBlobCarrier(FogData data, CallbackInfo ci) {
-        McsmExtrasConfig.load();
-
+        // McsmGradientTickPatch loads the small config state before this fog
+        // hook runs. Avoid a render-thread filesystem probe here.
         boolean gradient = StormSkyGradient.fogStampActive();
 
         // glare-size nibble, retained for the optional death cinematic carrier

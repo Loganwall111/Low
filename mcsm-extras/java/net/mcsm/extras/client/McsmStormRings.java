@@ -41,15 +41,12 @@ public final class McsmStormRings {
 
     private static final Map<Integer, Vec3> SMOOTH = new HashMap<>();
 
-    // 1.9.214 -- REAL Telltale block textures (repo gggggrff) for the cubes
-    private static final Identifier BLOCK_PURPLE = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_purple.png");
-    private static final Identifier BLOCK_DARK = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_darkpurple.png");
-    private static final Identifier BLOCK_BLACK = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/mcsm_atmosphere/ring_block_black.png");
-    private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
-            "dabywitherstormmod", "textures/misc/storm_white.png");
+    // Embedded materials used by the supplied Stage C debris and Stage D
+    // split models, not hand-painted ring replacements.
+    private static final Identifier STAGE_C_DEBRIS = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/stage_c_debris.png");
+    private static final Identifier STAGE_D_SPLIT = Identifier.fromNamespaceAndPath(
+            "dabywitherstormmod", "textures/mcsm_atmosphere/stage_d_split.png");
 
     private static float ramp(float v, float lo, float hi) {
         if (hi <= lo) {
@@ -68,7 +65,8 @@ public final class McsmStormRings {
 
     public static void submit(LevelRenderContext ctx) {
         try {
-            McsmExtrasConfig.load();
+            // Config is loaded by the client tick; keep this render-only
+            // pass free of filesystem work and model parsing.
             if (!McsmExtrasConfig.stormRings) {
                 return;
             }
@@ -110,28 +108,39 @@ public final class McsmStormRings {
                 final float fade = on;
                 final float tSec = nowSec;
                 final Vec3 c = centre;
-                final boolean vortex = phase >= 7.95F;
+                // The supplied Vortex model belongs to the split/late ladder:
+                // it must not appear during phase 6 or the pre-split Stage C
+                // entries.  Phase 7 is the first frame where it is allowed.
+                final boolean vortex = phase >= 7.0F;
                 final boolean phase7 = phase >= 7.0F;
                 // p6-7: dark indigo blocks w/ purple edge; p8-9: ember
                 final float cr = vortex ? 62 : 34;
                 final float cg = vortex ? 26 : 27;
                 final float cb = vortex ? 18 : 52;
 
-                Identifier blockTex = vortex ? BLOCK_BLACK : (phase7 ? BLOCK_PURPLE : BLOCK_DARK);
+                Identifier blockTex = vortex ? STAGE_D_SPLIT
+                        : (phase7 ? STAGE_D_SPLIT : STAGE_C_DEBRIS);
                 final RenderType ringType = GlowRenderTypes.translucent(blockTex);
                 collector.submitCustomGeometry(poseStack, ringType,
                         (pose, consumer) -> {
+                            // Stage C/D debris rings remain the base layer;
+                            // the Vortex is an additional top-of-storm object,
+                            // never a replacement for the existing animation.
+                            drawPhase67(pose, consumer, c, cam, bR, tSec, fade, phase7, cr, cg, cb);
                             if (vortex) {
                                 drawVortex(pose, consumer, c, cam, bR, tSec, fade, cr, cg, cb);
-                            } else {
-                                drawPhase67(pose, consumer, c, cam, bR, tSec, fade, phase7, cr, cg, cb);
                             }
                         });
                 // 1.9.220 -- the REAL Telltale vortex model (ported from
                 // Vortex.bbmodel): the funnel backdrop strip, the alpha
                 // swirl and the black cube ring, lathed around the storm.
-                drawVortexMeshes(poseStack, collector, c, bR, tSec, fade,
-                        cr, cg, cb, vortex ? 1.0F : 0.34F);
+                // It is explicitly phase-7+, with a short fade-in so loading
+                // the first world never has to parse a Blockbench file.
+                if (vortex) {
+                    float vortexStrength = ramp(phase, 7.0F, 7.35F);
+                    drawVortexMeshes(poseStack, collector, c, bR, tSec, fade,
+                            cr, cg, cb, vortexStrength);
+                }
             }
         } catch (Throwable ignored) {
             // a visual must never break a frame

@@ -124,9 +124,9 @@ public abstract class McsmGradientTickPatch {
             // dim to a faint purple shaft. Written live every frame so the
             // base renderer picks the value up as it draws.
             mcsm$beamDayNight(cameraState);
-            // 1.9.218 -- push the storm into the shader's infinite sky blob
-            // (uStormPos / uStormPhase / uGlareSize) -- see McsmSkyBlob.
-            net.mcsm.extras.client.McsmSkyBlob.push();
+            // The residual shader sky-blob carrier was removed in 1.9.318.
+            // Halo ownership stays in the tethered native render pass; do not
+            // upload a second camera/sky attachment here.
         } catch (Throwable ignored) {
             // Never let a visual helper break the frame.
         }

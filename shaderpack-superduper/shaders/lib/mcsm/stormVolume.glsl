@@ -12,9 +12,9 @@
         exponentially as the ray approaches the storm;
       * phase-driven dynamic colour lerp with the exact hex profiles below.
 
-    IMPORTANT: this is now an OPTIONAL layer. The default glare is the
-    INFINITE SKYBOX BLOB (lib/mcsm/skyBlob.glsl, 1.9.218), which matches the
-    Telltale technique. Enable this deck by defining
+    IMPORTANT: this is an OPTIONAL layer and is disabled by default. The
+    live Halo is owned by the tethered native renderer; this file must never
+    create a second sky attachment. Enable this deck only by defining
     MCSM_STORM_VOLUME_EXTRA in main/composite6.glsl.
 =============================================================================================
 */

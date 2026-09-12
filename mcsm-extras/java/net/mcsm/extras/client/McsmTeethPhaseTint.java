@@ -63,6 +63,15 @@ public final class McsmTeethPhaseTint {
             DabyWSClientConfig.eyeColorB = b;
             DabyWSClientConfig.turquoiseTeethIntensity = inten;
             DabyWSClientConfig.turquoiseTeeth = glow;
+            if (phase >= 5.0F) {
+                // The native head renderer owns both eye lenses and the teeth
+                // overlay. Keep both emissive submissions alive for the
+                // phase-5 model even when a migrated config carried an old
+                // zero glow setting; the render type is full-bright and bloom
+                // remains fail-soft in the base renderer.
+                DabyWSClientConfig.headEyeGlow = true;
+                DabyWSClientConfig.glowStrength = Math.max(DabyWSClientConfig.glowStrength, 1.0);
+            }
 
             // 1.9.217 -- beamColor tints the EYEBALL itself (WitherStormHeadRenderer.eyeTint).
             // The eyes must read neon PURPLE, the beam colour constraint, not the

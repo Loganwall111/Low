@@ -1,4 +1,4 @@
-# Devouring Storms 1.9.317 -- opt-in Story Mode studio stage simulation
+# Devouring Storms 1.9.318 -- traced Wither Storm models, native Halo cleanup, and phase-7 Vortex
 
 This candidate includes the 1.9.315 active-sky ownership and transparent
 cloud changes, plus the same exact phase maps in the built-in core shader and

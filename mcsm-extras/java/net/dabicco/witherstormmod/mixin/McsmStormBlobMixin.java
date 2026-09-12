@@ -29,6 +29,11 @@ public abstract class McsmStormBlobMixin {
             // existing glare bridge remains untouched.
             McsmExperimentalStoryStage.submit(ctx);
             McsmStormBlob.submit(ctx);
+            // Keep the Stage C/D debris-ring pass in the same render graph
+            // submission as the storm. It is client-side and uses only the
+            // already-generated static mesh; no model/animation parsing occurs
+            // during world initialization.
+            net.mcsm.extras.client.McsmStormRings.submit(ctx);
         }
         ci.cancel();
     }

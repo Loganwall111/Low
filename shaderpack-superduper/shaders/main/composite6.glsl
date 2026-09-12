@@ -128,11 +128,9 @@
 
     #include "/lib/post/tonemap.glsl"
 
-    #include "/lib/mcsm/skyBlob.glsl"
-
     // MCSM 1.9.219 -- optional volumetric cloud deck (the original raymarch
-    // formula). OFF by default: the infinite sky blob is the Telltale look.
-    // Uncomment the line below to layer the swirling volume on top.
+    // formula). OFF by default: the tethered native Halo is the live look.
+    // Uncomment the line below only to opt into the extra volume.
     // #define MCSM_STORM_VOLUME_EXTRA
     #include "/lib/mcsm/stormVolume.glsl"
 
@@ -173,20 +171,10 @@
             #endif
         #endif
 
-        // MCSM 1.9.218 -- the INFINITE SKYBOX BLOB (Telltale's real glare):
-        // a flat angular projection pinned behind the storm. The core is an
-        // opaque dark-matter mask that replaces the game sky; the border is
-        // a wide smooth gradient flare that lets the vanilla sky bleed
-        // through the outer edges. Sky pixels only.
-        #ifdef MCSM_STORM_VOLUME
-        {
-            float sceneDepth = textureLod(depthtex0, texCoord, 0).x;
-            if (sceneDepth >= 0.99998) {
-                vec4 blob = mcsmSkyBlob(texCoord);
-                postColOut = mix(postColOut, blob.rgb, blob.a);
-            }
-        }
-        #endif
+        // 1.9.318 -- no shader sky-box attachment.  The live Halo is the
+        // tethered native mesh submitted with the storm.  Keeping this
+        // composite free of the old angular sky projection prevents a second
+        // black object from following the Halo.
 
         // MCSM 1.9.219 -- OPTIONAL volumetric cloud deck (off by default):
         // ray-box isolated raymarch around the camera-centered cloud box,

@@ -150,10 +150,11 @@ public final class McsmStormBlob {
         // mass in the distance. The glare is NOT a 3D shell, a billboard or
         // a cloud layer: it is Atmospheric W's Cloud, painted in the sky
         // pass by mcsm_blob() (sky.fsh / mcsm_visuals.glsl) with the exact
-        // 2026-09-11 hex decks, driven by McsmInfiniteSkyboxBlob. The shell
+        // 2026-09-11 hex decks, driven by the tethered native Halo renderer. The shell
         // stays in the source as dormant code (emitHaloShell) but draws
         // nothing.
-        McsmExtrasConfig.load();
+        // Config is loaded before the render graph; keep this dormant
+        // compatibility path free of synchronous file access.
         PoseStack poseStack = ctx.poseStack();
         SubmitNodeCollector collector = ctx.submitNodeCollector();
         final Vec3 centre = c;
@@ -434,7 +435,6 @@ public final class McsmStormBlob {
             // This is a light visual-only first pass so it cannot engulf saves
             // or destroy worlds until the player explicitly enables it.
             if (key == mainKey && phase >= 4.0F) {
-                McsmExtrasConfig.load();
                 if (McsmExtrasConfig.infiniteBackGrowth) {
                     float speed = (float)Mth.clamp(McsmExtrasConfig.infiniteBackGrowthSpeed, 0.01, 12.0);
                     float grow = Mth.clamp((nowSec * speed) / 900.0F, 0.0F, 1.0F);
