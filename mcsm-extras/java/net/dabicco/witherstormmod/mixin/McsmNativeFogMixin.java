@@ -2,13 +2,13 @@ package net.dabicco.witherstormmod.mixin;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.client.renderer.fog.FogRenderer;
 import net.mcsm.extras.client.McsmNativeSkyRenderer;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Applies the native sky endpoint to Minecraft's existing fog calculation.
@@ -19,7 +19,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class McsmNativeFogMixin {
     @Inject(method = "computeFogColor", at = @At("TAIL"), require = 1)
     private void mcsm$blendNativeSky(Camera camera, float partialTick, ClientLevel level,
-            int renderDistance, float darkenAmount, Vector4f color, CallbackInfo ci) {
+            int renderDistance, float darkenAmount, boolean thick,
+            CallbackInfoReturnable<Vector4f> cir) {
+        Vector4f color = cir.getReturnValue();
+        if (color == null) {
+            return;
+        }
         float[] sky = new float[3];
         float opacity = McsmNativeSkyRenderer.fogColor(level, sky);
         if (opacity <= 0.0F) {
