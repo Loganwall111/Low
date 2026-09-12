@@ -24,19 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(value = SkyRenderer.class, priority = 1200)
 public abstract class McsmStormSkyColorPatch {
-    @Inject(
-            method = "extractRenderState",
-            at = @At("TAIL"),
-            require = 0
-    )
-    private void mcsm$nativeAtmosphere(ClientLevel level, float partialTick,
-            net.minecraft.world.phys.Vec3 cameraPosition, SkyRenderState state,
-            CallbackInfo ci) {
-        McsmNativeSkyRenderer.apply(level, partialTick, state);
-    }
-
-    // The camera-position parameter changed across the client transition. Keep
-    // the fallback non-required so one descriptor can never crash startup.
+    // Minecraft 26.2 passes the live camera to the native state extractor.
     @Inject(
             method = "extractRenderState",
             at = @At("TAIL"),

@@ -381,7 +381,11 @@ cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
 # Native SkyRenderer owns sky colour; no custom sky/position alias is shipped.
 CS="$FX/cls/assets/minecraft/shaders/core"
 if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f "$CS/terrain.vsh" "$CS/block.vsh"; fi
-echo "[build] 26.2 shader aliases: block<-terrain; native SkyRenderer owns sky"
+# The 26.2 fixed-function block path also asks for position; reuse the same
+# vivid-light-safe block program rather than reviving any sky shader alias.
+if [ ! -f "$CS/position.fsh" ] && [ -f "$CS/block.fsh" ]; then cp -f "$CS/block.fsh" "$CS/position.fsh"; fi
+if [ ! -f "$CS/position.vsh" ] && [ -f "$CS/block.vsh" ]; then cp -f "$CS/block.vsh" "$CS/position.vsh"; fi
+echo "[build] 26.2 shader aliases: block<-terrain (when present), position<-block; native SkyRenderer owns sky"
 cp -r jar-overrides/* "$FX/cls/"
 # 1.9.206: src/main/resources was never overlaid -- the merged Story Look
 # textures (sun/moon, villager cast skins) and the story_character skins
@@ -570,6 +574,23 @@ for cfg in cfgs:
 if target is None:
     print("::error title=jar audit::no mixin config with package %s found" % PKG)
     raise SystemExit(1)
+# These two entries belong to the retired texture/dome sky path.  Their class
+# files are purged below; remove the base-jar registrations as well or Mixin
+# will fail launch before the native SkyRenderer hook can run.
+p = os.path.join(cls_dir, target)
+d = json.load(open(p))
+retired_sky_mixins = {"StormSkyGradientMixin", "StoryModeSkyDomeMixin"}
+removed = []
+for key in ("mixins", "client"):
+    old = d.get(key) or []
+    new = [e for e in old if e not in retired_sky_mixins]
+    removed.extend(e for e in old if e not in new)
+    d[key] = new
+if removed:
+    with open(p, "w") as f:
+        json.dump(d, f, indent=2)
+        f.write("\\n")
+    print("[merge] removed retired sky mixins: " + ", ".join(removed))
 added = []
 for src in sorted(glob.glob("mcsm-extras/java/net/dabicco/witherstormmod/mixin/*.java")):
     cls = os.path.basename(src)[:-5]
