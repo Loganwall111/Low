@@ -218,6 +218,15 @@
         // Apply entity color tint
         material.albedo.rgb = mix(material.albedo.rgb, entityColor.rgb, entityColor.a);
 
+        // The traced Wither Storm atlases are blue-black, but the Story Mode
+        // world light can push them into a false green/teal body. Neutralize
+        // only the storm body material here; eyes, teeth, beams, and their
+        // separate emissive passes retain their phase colours.
+        if (entityId == 10144) {
+            float stormGray = dot(material.albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+            material.albedo.rgb = mix(material.albedo.rgb, vec3(stormGray), 0.82);
+        }
+
         // Convert to linear space
         material.albedo.rgb = toLinear(material.albedo.rgb);
 
