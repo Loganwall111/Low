@@ -161,7 +161,7 @@ public final class McsmGate {
             // ---- storm body + sky -----------------------------------------
             changed += setBool(c, "distantStorms", true);
             changed += setBool(c, "distantFog", true);
-            // 1.9.312: keep the regular summon skyboxes available when no
+            // 1.9.313: keep the regular summon skyboxes available when no
             // phase-5+ storm is present. McsmSkyBlob temporarily suppresses
             // this backdrop during the active storm, before the sky pass, so
             // it cannot cover the directional alpha patch.
@@ -203,11 +203,16 @@ public final class McsmGate {
             changed += setBool(c, "turquoiseTeeth", true);
             changed += setBool(c, "devourerDebrisGlow", true);
 
-            // ---- ground shadows for trees and mobs (user request) ---------
-            changed += setBool(c, "trailerShadows", true);
-            changed += setBool(c, "stormShadow", true);
-            changed += setBool(c, "stormShadowTerrain", true);
-            changed += setBool(c, "stormShadowSoftEdge", true);
+            // ---- stability on the Intel UHD path --------------------------
+            // The active shadow renderer was allocating roughly 2 GB of G1
+            // virtual space in the user's 1.9.311 run (145k storm vertices
+            // plus 80k ground vertices per shadow submission). The atmosphere
+            // and storm remain fully visible; disable only the optional
+            // high-memory shadow passes so the game can survive phase 5.9.
+            changed += setBool(c, "trailerShadows", false);
+            changed += setBool(c, "stormShadow", false);
+            changed += setBool(c, "stormShadowTerrain", false);
+            changed += setBool(c, "stormShadowSoftEdge", false);
             changed += setBool(c, "stormShadowHeightmap", false);
 
             // ---- screen: smoke screen, tremor, sickness, glitch -----------

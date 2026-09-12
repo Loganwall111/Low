@@ -1,3 +1,20 @@
+# Devouring Storms 1.9.313 -- stability follow-up for the confirmed cloud
+
+The 1.9.311 log confirms the new purple/pink atmospheric layer is visually
+close to the reference, but the run still dies in the optional shadow path:
+Intel UHD reaches 145,000 storm vertices plus more than 80,000 ground vertices
+per shadow submission before the JVM fails to reserve 2.16 GB of G1 virtual
+space.
+
+- Keep the confirmed Atmospheric W's Cloud and its fixed far directional
+  projection unchanged.
+- Disable only the optional trailer/storm/terrain shadow passes that cause the
+  native-memory failure on this graphics path.
+- The phase sky, storm model, beams, eyes, and atmospheric cloud remain active.
+
+The previous 1.9.312 artifact remains superseded by this CI-only stability
+build until the game survives a ground-level phase 5.9 test.
+
 # Devouring Storms 1.9.312 -- remove the 3D circle and unify active sky
 
 The 1.9.311 in-game report identified two separate problems: the remaining
