@@ -6,6 +6,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.client.renderer.state.level.SkyRenderState;
+import net.minecraft.world.level.MoonPhase;
 import net.mcsm.extras.client.McsmNativeSkyRenderer;
 import net.mcsm.extras.client.McsmStoryModeSunSlab;
 import org.spongepowered.asm.mixin.Mixin;
@@ -53,11 +54,12 @@ public abstract class McsmStormSkyColorPatch {
             cancellable = true,
             require = 1
     )
-    private void mcsm$suppressCelestials(PoseStack poseStack, float timeOfDay,
-            int moonPhase, float sunAlpha, float starBrightness, CallbackInfo ci) {
+    private void mcsm$suppressCelestials(PoseStack poseStack, float sunAngle,
+            float moonAngle, float sunAlpha, MoonPhase moonPhase,
+            float starAngle, float starBrightness, CallbackInfo ci) {
         if (McsmNativeSkyRenderer.suppressCelestials()) {
             if (McsmStoryModeSunSlab.enabled()) {
-                mcsm$renderStorySun(poseStack, timeOfDay);
+                mcsm$renderStorySun(poseStack, sunAngle);
             }
             // The ordinary sun, moon, and stars are all in this method.  Do
             // this after the native gradient has been extracted: the slab is

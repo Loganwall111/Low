@@ -217,6 +217,9 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.dabicco.witherstormmod.entity.WitherStormEntity \
     net.dabicco.witherstormmod.command.DabyWSCommand"
   javap -public -classpath "$CP2" $CLIENT_CLASSES > ci/api/client.txt 2>&1 || true
+  # SkyRenderer's celestial helper is private in 26.2; include it so native
+  # mixin invokers can be checked against the actual client signature.
+  javap -private -classpath "$CP2" net.minecraft.client.renderer.SkyRenderer >> ci/api/client.txt 2>&1 || true
   javap -public -classpath "$CP2" $MOD_CLASSES   > ci/api/mod.txt    2>&1 || true
   # MCSM 1.9.101 -- the 1.9.101 javac errors (sendParticles overload,
   # "cannot access Message") live in the particle/level/chat API, which the
