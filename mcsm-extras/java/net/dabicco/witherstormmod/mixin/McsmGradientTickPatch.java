@@ -29,9 +29,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * and active. A whole-jar bytecode scan for callers of that method returns
  * NOTHING -- it is dead code. Three classes read the results:
  *
- *     native SkyRenderer state -> phase/time sky carriers
- *     McsmFogCarrierMixin     -> yaw(), pitch(), phase(), fogStampActive()
- *     McsmBlobCarrierPatch    -> yaw(), pitch(), phase(), fogStampActive()
+ *     entity-attached atmosphere -> phase palette from WitherStormRenderState
+ *     McsmFogCarrierMixin       -> yaw(), pitch(), phase(), fogStampActive()
+ *     McsmBlobCarrierPatch      -> yaw(), pitch(), phase(), fogStampActive()
  *
  * but nobody ever populates them. So "active" stays false for the entire
  * session, fogStampActive() returns false, and BOTH carriers bail at their
@@ -83,8 +83,8 @@ public abstract class McsmGradientTickPatch {
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
             StormSkyGradient.update(cameraState.pos);
-            // The native SkyRenderer owns the atmosphere; no external
-            // skybox is toggled from the frame driver.
+            // The Wither Storm renderer owns the atmosphere; no external
+            // skybox or camera-relative backdrop is toggled from the frame driver.
             net.mcsm.extras.client.McsmTeethPhaseTint.tick();
             // Report what update() produced. This is the value the glare blob
             // depends on -- if it never reports ACTIVE, the blob cannot draw

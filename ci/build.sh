@@ -204,8 +204,6 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.minecraft.client.gui.components.EditBox net.minecraft.client.gui.components.Tooltip \
     net.minecraft.client.gui.layouts.LinearLayout net.minecraft.client.DeltaTracker \
     net.minecraft.client.renderer.LevelRenderer net.minecraft.client.renderer.MultiBufferSource \
-    net.minecraft.client.renderer.SkyRenderer \
-    net.minecraft.client.renderer.state.level.SkyRenderState \
     net.minecraft.client.renderer.RenderType net.minecraft.client.renderer.blockentity.BlockEntityRenderer \
     net.minecraft.client.renderer.entity.EntityRenderer net.minecraft.client.renderer.CloudRenderer \
     net.minecraft.client.multiplayer.ClientChunkCache net.minecraft.client.Camera \
@@ -220,9 +218,6 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.dabicco.witherstormmod.entity.WitherStormEntity \
     net.dabicco.witherstormmod.command.DabyWSCommand"
   javap -public -classpath "$CP2" $CLIENT_CLASSES > ci/api/client.txt 2>&1 || true
-  # SkyRenderer's celestial helper is private in 26.2; include it so native
-  # mixin invokers can be checked against the actual client signature.
-  javap -private -classpath "$CP2" net.minecraft.client.renderer.SkyRenderer >> ci/api/client.txt 2>&1 || true
   javap -public -classpath "$CP2" $MOD_CLASSES   > ci/api/mod.txt    2>&1 || true
   # MCSM 1.9.101 -- the 1.9.101 javac errors (sendParticles overload,
   # "cannot access Message") live in the particle/level/chat API, which the
@@ -381,14 +376,14 @@ rm -rf "$FX" && mkdir -p "$FX/cls"
 # these resources so the player can actually arrive in Story Mode locations now.
 cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
 # 1.9.167: 26.2 loads block rather than terrain for the native block pass.
-# Native SkyRenderer owns sky colour; no custom sky/position alias is shipped.
+# The storm overcast is an entity-attached mesh; no sky shader alias is shipped.
 CS="$FX/cls/assets/minecraft/shaders/core"
 if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f "$CS/terrain.vsh" "$CS/block.vsh"; fi
 # The 26.2 fixed-function block path also asks for position; reuse the same
 # vivid-light-safe block program rather than reviving any sky shader alias.
 if [ ! -f "$CS/position.fsh" ] && [ -f "$CS/block.fsh" ]; then cp -f "$CS/block.fsh" "$CS/position.fsh"; fi
 if [ ! -f "$CS/position.vsh" ] && [ -f "$CS/block.vsh" ]; then cp -f "$CS/block.vsh" "$CS/position.vsh"; fi
-echo "[build] 26.2 shader aliases: block<-terrain (when present), position<-block; native SkyRenderer owns sky"
+echo "[build] 26.2 shader aliases: block<-terrain (when present), position<-block; storm overcast is entity-attached"
 cp -r jar-overrides/* "$FX/cls/"
 # 1.9.206: src/main/resources was never overlaid -- the merged Story Look
 # textures (sun/moon, villager cast skins) and the story_character skins
@@ -415,9 +410,9 @@ shopt -u nullglob
 if [ "${#FRESH_CLASSES[@]}" -gt 0 ]; then
   cp -r "${FRESH_CLASSES[@]}" "$FX/cls/"
 fi
-# Native SkyRenderer is authoritative. Purge legacy texture-pack sky paths from
-# the base jar as well as from the overlay so they cannot be discovered by a
-# loader or win an ordering race at runtime.
+# The Wither Storm renderer is authoritative for the overcast. Purge legacy
+# texture-pack sky paths from the base jar as well as from the overlay so they
+# cannot be discovered by a loader or win an ordering race at runtime.
 rm -rf "$FX/cls/assets/fabricskyboxes" \
        "$FX/cls/assets/dabywitherstormmod/textures/sky" \
        "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/sky"
@@ -428,6 +423,16 @@ find "$FX/cls/assets/dabywitherstormmod/textures/environment" -maxdepth 1 \
 # left reachable through an old class file.
 rm -f "$FX/cls/net/mcsm/extras/client/McsmBlobOval.class" \
       "$FX/cls/net/mcsm/extras/client/McsmBlobShape.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmHaloSkyRenderer.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmStormBlob.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmStormRings.class" \
+      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStormBlobMixin.class" \
+      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStormSkyColorPatch.class" \
+      "$FX/cls/net/dabicco/witherstormmod/mixin/SkyRendererMixin.class" \
+      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmNativeFogMixin.class" \
+      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStageCloudMixin.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmNativeSkyRenderer.class" \
+      "$FX/cls/net/mcsm/extras/client/McsmStoryModeSunSlab.class" \
       "$FX/cls/net/mcsm/extras/client/McsmSkyDome.class" \
       "$FX/cls/net/mcsm/extras/client/McsmStormSkyLayer.class" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/StormSkyGradientMixin.class" \
@@ -577,12 +582,16 @@ for cfg in cfgs:
 if target is None:
     print("::error title=jar audit::no mixin config with package %s found" % PKG)
     raise SystemExit(1)
-# These two entries belong to the retired texture/dome sky path.  Their class
-# files are purged below; remove the base-jar registrations as well or Mixin
-# will fail launch before the native SkyRenderer hook can run.
+# These entries belong to retired texture/dome/sky hooks. Their class files
+# are purged below; remove the base-jar registrations as well or Mixin will
+# fail launch before the entity-attached atmosphere can run.
 p = os.path.join(cls_dir, target)
 d = json.load(open(p))
-retired_sky_mixins = {"StormSkyGradientMixin", "StoryModeSkyDomeMixin"}
+retired_sky_mixins = {
+    "StormSkyGradientMixin", "StoryModeSkyDomeMixin",
+    "SkyRendererMixin", "McsmStormSkyColorPatch", "McsmStormBlobMixin",
+    "McsmNativeFogMixin", "McsmStageCloudMixin"
+}
 removed = []
 for key in ("mixins", "client"):
     old = d.get(key) or []

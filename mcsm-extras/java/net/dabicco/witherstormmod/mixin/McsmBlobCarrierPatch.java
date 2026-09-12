@@ -123,7 +123,7 @@ public abstract class McsmBlobCarrierPatch {
         int sizeIdx = mcsm$sizeIdx(McsmExtrasConfig.glareSize);
         mcsm$lastSizeIdx = sizeIdx;
 
-        // The normal phase-5+ blob is now owned by McsmStormBlob's native
+        // The normal phase-5+ atmosphere is now owned by the entity-attached
         // render-only radial material.  Do not write the old FogData carrier:
         // the built-in shader's procedural sky blob is a second, expensive
         // full-screen projection and was responsible for the giant faceted

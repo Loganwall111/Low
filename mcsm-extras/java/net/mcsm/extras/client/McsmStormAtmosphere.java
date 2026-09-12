@@ -7,7 +7,8 @@ import net.minecraft.util.Mth;
 /**
  * Storm-only sky/fog colour from mcsm_atmosphere palettes.
  * Calm day/night never go purple — only active storm phases do.
- * Wired every client tick; does not touch FabricSkyboxes.
+ * Retained as a phase lookup helper for optional Stage A/C/D assets; it does
+ * not submit a sky pass or touch Fabric Skyboxes.
  */
 public final class McsmStormAtmosphere {
 
@@ -80,7 +81,7 @@ public final class McsmStormAtmosphere {
      * Write storm sky RGB into out[3] when storm owns the sky.
      * Returns blend 0..1 (0 = pure calm StoryModeSkyTint).
      */
-    /** Compatibility colour for older fog callers; native SkyRenderer is authoritative. */
+    /** Compatibility colour for older optional effects; the mesh is authoritative. */
     public static float skyBlend(float[] out) {
         float phase = nearestPhase();
         if (phase < 4.90F || out == null || out.length < 3) {

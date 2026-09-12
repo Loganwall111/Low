@@ -115,7 +115,7 @@ public final class McsmExperimentalStoryStage {
     }
 
     private static float stagePhase() {
-        float phase = McsmNativeSkyRenderer.stormPhase();
+        float phase = McsmStormAtmosphere.nearestPhase();
         if (!(phase >= 5.0F)) {
             return 5.0F;
         }

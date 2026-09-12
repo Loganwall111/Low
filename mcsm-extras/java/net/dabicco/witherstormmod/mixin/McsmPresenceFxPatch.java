@@ -16,8 +16,9 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
  * black-glare symbol, and the floating atmosphere-pulse spheres the user
  * keeps rejecting as "weird halo floating in mid air" / "face on it".
  *
- * All aura / glare / silhouette now lives in McsmStormBlob (body-glued) and
- * McsmPhaseSky (sky-glued to the storm bearing). require=0 so a rename is safe.
+ * The physical atmospheric mesh and the entity renderer now own the storm
+ * backdrop; this mixin only disables the base presence cards. require=0 keeps
+ * a base-mod rename fail-soft.
  */
 @Mixin(StormPresenceFX.class)
 public abstract class McsmPresenceFxPatch {

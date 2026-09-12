@@ -2,87 +2,55 @@ package net.mcsm.extras.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 
-import net.dabicco.witherstormmod.client.ClientDistantStormManager;
 import net.dabicco.witherstormmod.client.GlowRenderTypes;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.minecraft.client.Minecraft;
+import net.dabicco.witherstormmod.entity.state.WitherStormRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.mcsm.extras.McsmExtrasConfig;
 import net.minecraft.world.phys.Vec3;
+import net.mcsm.extras.McsmExtrasConfig;
 
 /**
- * The late-stage Vortex pass.
+ * The attached late-stage Vortex pass.
  *
- * This class intentionally submits only the offline port of the supplied
- * Telltale Vortex.bbmodel (see McsmVortexMesh).  The old procedural dot line,
- * cubed rings, billboard diamonds, and layered funnel have been removed: they
- * were generated geometry, not the debris asset.  Phase 7+ gating is retained
- * so the real debris model does not appear during the earlier phase ladder.
+ * This is called from WitherStormRenderer after the entity's ordinary model
+ * and local debris have been submitted. It contains only the offline port of
+ * the supplied Telltale Vortex.bbmodel. The former level-wide dotted line,
+ * cubed rings, billboard diamonds, and generated funnel are gone.
  */
-public final class McsmStormRings {
-    private static final double MAX_DISTANCE = 2800.0D;
+public final class McsmAttachedVortex {
     private static final Identifier VORTEX_ROOT = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/mcsm_atmosphere");
 
-    private McsmStormRings() {
+    private McsmAttachedVortex() {
     }
 
-    public static void submit(LevelRenderContext ctx) {
-        try {
-            if (!McsmExtrasConfig.stormRings) {
-                return;
-            }
-            Minecraft mc = Minecraft.getInstance();
-            if (mc == null || mc.level == null || mc.player == null || ctx == null) {
-                return;
-            }
-
-            Vec3 camera = ctx.levelState().cameraRenderState.pos;
-            float gameTime = (float) (mc.level.getGameTime() % 240000L)
-                    + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-            float spin = gameTime * 0.05F;
-            PoseStack poseStack = ctx.poseStack();
-            SubmitNodeCollector collector = ctx.submitNodeCollector();
-
-            for (ClientDistantStormManager.StormData storm : ClientDistantStormManager.all()) {
-                if (storm.phase < 7.0F) {
-                    continue;
-                }
-                Vec3 centre = new Vec3(storm.dispX, storm.dispY, storm.dispZ);
-                double distance = centre.distanceTo(camera);
-                if (distance < 1.0D || distance > MAX_DISTANCE) {
-                    continue;
-                }
-
-                float distanceFade = 1.0F - Mth.clamp(
-                        (float) ((distance - 1500.0D) / 1300.0D), 0.0F, 1.0F);
-                float strength = smoothstep(storm.phase, 7.0F, 7.35F) * distanceFade;
-                if (strength <= 0.01F) {
-                    continue;
-                }
-
-                double bodyRadius = bodyRadius(storm.phase);
-                drawVortexMeshes(poseStack, collector, centre, bodyRadius, spin, strength);
-            }
-        } catch (Throwable ignored) {
-            // A visual pass must disappear rather than break the render thread.
+    /** Phase-7+ Vortex, parented to the same entity pose as the storm. */
+    public static void submit(WitherStormRenderState state, PoseStack poseStack,
+            SubmitNodeCollector collector) {
+        if (state == null || poseStack == null || collector == null
+                || !McsmExtrasConfig.stormRings || state.preview != null || state.phase < 7.0D) {
+            return;
         }
+
+        double bodyRadius = Math.min(340.0D, 62.0D + 46.0D * (state.phase - 6.0D));
+        // The base submit has restored its entry pose by TAIL. Reapply the
+        // exact body yaw used by the ordinary renderer so the supplied Vortex
+        // travels and rotates with the same world-space parent.
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.bodyRot));
+        if (state.bodyRoll != 0.0F) {
+            poseStack.mulPose(Axis.ZN.rotationDegrees(state.bodyRoll));
+        }
+        drawVortexMeshes(poseStack, collector, new Vec3(0.0D, 0.0D, 0.0D),
+                bodyRadius, state.idleTimeTicks * 0.05F, 1.0F);
+        poseStack.popPose();
     }
 
-    private static float smoothstep(float value, float low, float high) {
-        float t = Mth.clamp((value - low) / (high - low), 0.0F, 1.0F);
-        return t * t * (3.0F - 2.0F * t);
-    }
-
-    private static double bodyRadius(float phase) {
-        return Math.min(340.0D, 62.0D + 46.0D * (phase - 6.0D));
-    }
-
-    /** Submit the actual BB-model mesh, preserving its textured groups. */
+    /** Submit the real BB-model mesh while preserving its textured groups. */
     private static void drawVortexMeshes(PoseStack poseStack, SubmitNodeCollector collector,
             Vec3 centre, double bodyRadius, float spin, float strength) {
         for (McsmVortexMesh.Group group : McsmVortexMesh.GROUPS) {

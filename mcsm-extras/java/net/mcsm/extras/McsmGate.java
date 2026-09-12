@@ -4,8 +4,6 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.dabicco.witherstormmod.config.WitherStormConfigs;
 import net.dabicco.witherstormmod.config.WitherStormWorldConfig;
 import net.minecraft.client.Minecraft;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.mcsm.extras.client.McsmHaloSkyRenderer;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Field;
@@ -47,25 +45,6 @@ public final class McsmGate {
 
     private static boolean clientDone = false;
     private static boolean worldDone = false;
-    private static boolean nativeHaloRegistered = false;
-
-    /**
-     * Register the Halo on the actual level submit event instead of relying
-     * solely on replacing the base mod's StormBackdrop callback. The base
-     * callback is version-sensitive and can be skipped by a harmless optional
-     * mixin; the Halo itself must remain visible in that case.
-     */
-    private static synchronized void registerNativeHaloPass() {
-        if (nativeHaloRegistered) {
-            return;
-        }
-        try {
-            LevelRenderEvents.COLLECT_SUBMITS.register(McsmHaloSkyRenderer::submit);
-            nativeHaloRegistered = true;
-        } catch (Throwable ignored) {
-            // Rendering must remain fail-soft if Fabric changes the event API.
-        }
-    }
 
     /**
      * MCSM 1.9.112 -- memory of every value this gate writes, keyed by field.
@@ -168,7 +147,6 @@ public final class McsmGate {
         if (clientDone) {
             return;
         }
-        registerNativeHaloPass();
         McsmExtrasConfig.load();
         clientDone = true;
         // 1.9.208: the vanilla look is permanently disabled -- there is no
@@ -183,8 +161,11 @@ public final class McsmGate {
             // ---- storm body + sky -----------------------------------------
             changed += setBool(c, "distantStorms", true);
             changed += setBool(c, "distantFog", true);
-            // The native SkyRenderer owns the full atmosphere for every
-            // phase; there is no alternate skybox feature to gate.
+            // Retire the old level-wide quad path. The only storm overcast is
+            // now submitted from WitherStormRenderer by the physical mesh
+            // component, so a config preset cannot resurrect the old card.
+            changed += retireBool(c, "stormBackdrop", false);
+            changed += retireBool(c, "stormBackdropQuad", false);
             changed += setBool(c, "cloudDeckLayer", true);
             changed += setBool(c, "regionalBiomeFog", true);
             changed += setBool(c, "phaseAnim", true);
@@ -383,6 +364,18 @@ public final class McsmGate {
     private static boolean persistedAtLeast(String name, double min) {
         Double v = persistedOverrides().get(name);
         return v != null && v >= min - 1e-9;
+    }
+
+    /** Retired renderer switches are not player-facing options anymore. */
+    private static int retireBool(Class<?> owner, String name, boolean value) {
+        try {
+            Field f = owner.getField(name);
+            boolean cur = f.getBoolean(null);
+            f.setBoolean(null, value);
+            return cur == value ? 0 : 1;
+        } catch (Throwable ignored) {
+            return 0;
+        }
     }
 
     private static int setBool(Class<?> owner, String name, boolean value) {
