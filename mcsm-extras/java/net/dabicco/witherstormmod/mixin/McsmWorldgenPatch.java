@@ -69,6 +69,17 @@ public abstract class McsmWorldgenPatch {
             if (level.dimension() != Level.OVERWORLD) {
                 return;
             }
+            // The experimental stage is explicitly render-only.  In an
+            // integrated world the client and server share this config file;
+            // cancel the existing automatic town queue so the stage cannot
+            // spend minutes placing physical structures or force thousands of
+            // chunk rebuilds behind the player's back.  Dedicated servers
+            // keep their own config and therefore remain unchanged.
+            McsmExtrasConfig.load();
+            if (McsmExtrasConfig.ENABLE_EXPERIMENTAL_STORY_MODE_STAGE) {
+                McsmWorldgen.clear();
+                return;
+            }
             if (lastOverworld != level) {
                 lastOverworld = level;
                 McsmWorldgen.clear();
