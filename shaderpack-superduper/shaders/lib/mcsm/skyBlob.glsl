@@ -111,27 +111,26 @@ void mcsmBlobProfile(float phase, out vec3 coreC, out vec3 midC, out vec3 outerC
     vec3 o4 = mcsmHex(94.0, 160.0, 166.0);
     vec3 b4 = mcsmHex(200.0, 240.0, 255.0);
     vec3 z4 = c4; vec3 t4 = o4;
-    // PHASE 5 -- #161A1D / #2D423F / #6A9A78 / cool energy accent
-    vec3 c5 = mcsmHex(0x16, 0x1A, 0x1D);
-    vec3 m5 = mcsmHex(0x2D, 0x42, 0x3F);
-    vec3 o5 = mcsmHex(0x6A, 0x9A, 0x78);
-    vec3 b5 = mcsmHex(0x84, 0xD8, 0xFF);
+    // PHASE 5 -- exact requested map
+    vec3 c5 = mcsmHex(0x0A, 0x11, 0x12); // #0A1112 core
+    vec3 m5 = mcsmHex(0x1D, 0x33, 0x35); // #1D3335 mid
+    vec3 o5 = mcsmHex(0x55, 0x70, 0x61); // #557061 outer aura
+    vec3 b5 = mcsmHex(0x84, 0x93, 0xFF); // #8493FF beam peak
     vec3 z5 = c5; vec3 t5 = o5;
-    // PHASE 5.5-5.9 -- #0B0410 / #2D1442 / #581C6E / #87529C
-    vec3 c55 = mcsmHex(0x0B, 0x04, 0x10);
-    vec3 m55 = mcsmHex(0x2D, 0x14, 0x42);
-    vec3 h55 = mcsmHex(0x58, 0x1C, 0x6E);
-    vec3 o55 = mcsmHex(0x87, 0x52, 0x9C);
-    vec3 b55 = mcsmHex(0xB9, 0x76, 0xFF);
-    vec3 z55 = c55; vec3 t55 = o55;
-    // PHASE 6 -- #1A1226 / #462A52 / #966173 / #D89874
-    vec3 c6 = mcsmHex(0x1A, 0x12, 0x26);
-    vec3 m6 = mcsmHex(0x46, 0x2A, 0x52);
-    vec3 l6 = mcsmHex(0x96, 0x61, 0x73);
-    vec3 b6 = mcsmHex(0xD8, 0x98, 0x74);
-    vec3 z6 = mcsmHex(0x1A, 0x12, 0x26);
-    vec3 t6 = mcsmHex(0xD8, 0x98, 0x74);
-    vec3 b6b = mcsmHex(0xF0, 0xB3, 0x8A);
+    // PHASE 5.5-5.9 -- exact requested map
+    vec3 c55 = mcsmHex(0x05, 0x02, 0x08); // #050208 core
+    vec3 m55 = mcsmHex(0x2A, 0x12, 0x3D); // #2A123D mid
+    vec3 h55 = mcsmHex(0x7D, 0x4B, 0x91); // #7D4B91 ambient bleed
+    vec3 o55 = mcsmHex(0x4B, 0x1E, 0x5E); // #4B1E5E outer aura
+    vec3 b55 = h55;
+    vec3 z55 = c55; vec3 t55 = h55;
+    // PHASE 6 -- exact requested split sunset
+    vec3 c6 = mcsmHex(0x10, 0x0A, 0x1A); // #100A1A zenith
+    vec3 m6 = mcsmHex(0x33, 0x1C, 0x3D); // #331C3D upper smudge
+    vec3 l6 = mcsmHex(0x8A, 0x53, 0x61); // #8A5361 lower smudge
+    vec3 b6 = mcsmHex(0xC4, 0x7A, 0x5A); // #C47A5A horizon glow
+    vec3 z6 = c6; vec3 t6 = b6;
+    vec3 b6b = b6;
     // phase 7 (green storm)
     vec3 c7 = mcsmHex(10.0, 26.0, 18.0);
     vec3 m7 = mcsmHex(30.0, 74.0, 46.0);
@@ -250,14 +249,17 @@ vec4 mcsmSkyBlob(vec2 texCoord){
         edgeCoord + (shred - 0.5) * 0.16);
     float smokeNoise = clamp(0.50 + 0.50 * msFbm3(vec3(
         smog * 9.0 + vec2(3.0, 1.0), phase * 0.31)), 0.0, 1.0);
+    // Keep the 0.80 ceiling, but target 0.58 so vanilla sky/cloud motion
+    // remains visible through the dark core.
     float densityAlpha = min(0.80,
-        0.80 * pow(clamp(body * smokeNoise, 0.0, 1.0), 2.0)) * actv;
+        0.58 * pow(clamp(body * smokeNoise, 0.0, 1.0), 2.0)) * actv;
     if (densityAlpha <= 0.001) return vec4(0.0);
 
     // Preserve the sunset/phase colors through the dark cloud center.
     vec3 phaseColor = mix(botC, zenC, upness);
-    vec3 smokeColor = mix(phaseColor, vec3(0.02), densityAlpha);
-    smokeColor = mix(smokeColor, mix(midC, outerC, clamp(upness * 0.72 + broad * 0.28, 0.0, 1.0)),
-                     densityAlpha * (1.0 - body) * 0.12);
+    vec3 bandColor = mix(midC, outerC,
+                         clamp(upness * 0.72 + broad * 0.28, 0.0, 1.0));
+    vec3 smokeColor = mix(bandColor, coreC, clamp(body, 0.0, 1.0));
+    smokeColor = mix(smokeColor, phaseColor, 0.10 * (1.0 - body));
     return vec4(smokeColor, densityAlpha);
 }

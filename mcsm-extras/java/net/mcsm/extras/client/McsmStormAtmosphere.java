@@ -100,14 +100,14 @@ public final class McsmStormAtmosphere {
             return 0.0F;
         }
         // 1.9.215 R2 -- CORRECTED 2026-09-11 hex decks:
-        //   5   #161A1D / #2D423F / #6A9A78 (green skybox blob)
-        //   5.5 #0B0410 / #2D1442 / #87529C (purple & pink void)
-        //   6   #1A1226 / #966173 / #D89874 (four-color sunset split)
-        float[] teal = {0.176F, 0.259F, 0.247F};
-        float[] purp = {0.176F, 0.078F, 0.259F};
-        float[] pink = {0.529F, 0.322F, 0.612F};
-        float[] late = {0.435F, 0.243F, 0.477F};
-        float[] six  = {0.588F, 0.380F, 0.451F};
+        //   5   #0A1112 / #1D3335 / #557061 (green skybox blob)
+        //   5.5 #050208 / #2A123D / #4B1E5E / #7D4B91 (purple & pink void)
+        //   6   #100A1A / #8A5361 / #C47A5A (four-color sunset split)
+        float[] teal = {0.333333F, 0.439216F, 0.380392F}; // #557061
+        float[] purp = {0.164706F, 0.070588F, 0.239216F};  // #2A123D
+        float[] pink = {0.490196F, 0.294118F, 0.568627F};  // #7D4B91
+        float[] late = {0.294118F, 0.117647F, 0.368627F};  // #4B1E5E
+        float[] six  = {0.541176F, 0.325490F, 0.380392F};   // #8A5361
         float[] e89  = {0.62F, 0.30F, 0.13F};
         out[0] = (teal[0] * wTeal + purp[0] * wPurp + pink[0] * wPink + late[0] * wLate + six[0] * wSix + e89[0] * w89) / tot;
         out[1] = (teal[1] * wTeal + purp[1] * wPurp + pink[1] * wPink + late[1] * wLate + six[1] * wSix + e89[1] * w89) / tot;

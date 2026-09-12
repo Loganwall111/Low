@@ -1,3 +1,15 @@
+# Devouring Storms 1.9.315 -- active sky ownership and transparent exact-map pass
+
+- Suppress the opaque FabricSkyBoxes backdrop before the sky pass only while a
+  phase-5+ storm is active; calm and ordinary summon scenes keep their skybox.
+- Reduce the directional cloud alpha target to 0.58 (below the 0.80 cap), so
+  vanilla clouds and background motion remain visible through the core.
+- Apply the requested exact phase maps in Java and shader paths.
+- Write both uStormPos and u_StormPos carrier names.
+- Request blurred/clamped sampling for storm_white.png.
+
+This remains a CI artifact until the active scene is confirmed in Minecraft.
+
 # Devouring Storms 1.9.314 -- stability follow-up for the confirmed cloud
 
 The 1.9.311 log confirms the new purple/pink atmospheric layer is visually

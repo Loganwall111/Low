@@ -60,17 +60,18 @@ public final class McsmStormSkyLayer {
     private static final double SKY_RADIUS = 2048.0;
 
     // corrected 2026-09-11 hex decks (0..1)
-    private static final float[] D5_Z = hex(0x16, 0x1A, 0x1D);
-    private static final float[] D5_M = hex(0x2D, 0x42, 0x3F);
-    private static final float[] D5_H = hex(0x6A, 0x9A, 0x78);
-    private static final float[] D55_Z = hex(0x0B, 0x04, 0x10);
-    private static final float[] D55_M = hex(0x2D, 0x14, 0x42);
-    private static final float[] D55_H = hex(0x87, 0x52, 0x9C);
-    private static final float[] D55_HIGH = hex(0x58, 0x1C, 0x6E);
-    private static final float[] D6_Z = hex(0x1A, 0x12, 0x26);
-    private static final float[] D6_UM = hex(0x46, 0x2A, 0x52);
-    private static final float[] D6_LM = hex(0x96, 0x61, 0x73);
-    private static final float[] D6_H = hex(0xD8, 0x98, 0x74);
+    private static final float[] D5_Z = hex(0x0A, 0x11, 0x12); // #0A1112
+    private static final float[] D5_M = hex(0x1D, 0x33, 0x35); // #1D3335
+    private static final float[] D5_H = hex(0x55, 0x70, 0x61); // #557061
+    private static final float[] D5_HIGH = hex(0x84, 0x93, 0xFF); // #8493FF
+    private static final float[] D55_Z = hex(0x05, 0x02, 0x08); // #050208
+    private static final float[] D55_M = hex(0x2A, 0x12, 0x3D); // #2A123D
+    private static final float[] D55_H = hex(0x4B, 0x1E, 0x5E); // #4B1E5E
+    private static final float[] D55_HIGH = hex(0x7D, 0x4B, 0x91); // #7D4B91
+    private static final float[] D6_Z = hex(0x10, 0x0A, 0x1A); // #100A1A
+    private static final float[] D6_UM = hex(0x33, 0x1C, 0x3D); // #331C3D
+    private static final float[] D6_LM = hex(0x8A, 0x53, 0x61); // #8A5361
+    private static final float[] D6_H = hex(0xC4, 0x7A, 0x5A); // #C47A5A
 
     private McsmStormSkyLayer() {
     }
@@ -112,6 +113,16 @@ public final class McsmStormSkyLayer {
         return McsmBlobShape.packInUse();
     }
 
+    /** True only while a phase-5+ storm is present in the directional range. */
+    public static boolean activeStormOwnsSky() {
+        return nearestStorm(MAX_RANGE) != null;
+    }
+
+    /** Keep calm/summon FabricSkyBoxes, but remove its active-storm ownership. */
+    public static void suppressLegacySkybox() {
+        DabyWSClientConfig.customSkyboxes = !activeStormOwnsSky();
+    }
+
     private static ClientDistantStormManager.StormData nearestStorm(double maxDist) {
         try {
             Minecraft mc = Minecraft.getInstance();
@@ -150,7 +161,7 @@ public final class McsmStormSkyLayer {
             // shader uniforms (FogSkyEnd etc.) that only shader packs bind,
             // so in vanilla the sky pass always saw "no storm". This layer
             // therefore runs whenever no shader pack owns the sky -- plain
-            // vanilla AND FabricSkyBoxes mode. 1.9.314: "no pack owns the
+            // vanilla AND FabricSkyBoxes mode. 1.9.315: "no pack owns the
             // sky" now means the pack is INACTIVE (IrisApi), not that iris
             // is merely installed; a shader mod with its pack turned off
             // renders the vanilla pipeline and this layer draws for it too.
@@ -186,7 +197,7 @@ public final class McsmStormSkyLayer {
             final Vec3 bearing = new Vec3(dx, dy, dz).normalize();
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.314: the alpha patch itself is large enough to sit behind
+            // 1.9.315: the alpha patch itself is large enough to sit behind
             // the whole storm silhouette. This is a broken angular field,
             // not the old opaque full-sky dome.
             final double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
@@ -196,19 +207,20 @@ public final class McsmStormSkyLayer {
 
             SubmitNodeCollector collector = ctx.submitNodeCollector();
             // Do not paint an opaque camera-centred dome here. That was the
-            // giant green/purple sphere in the 1.9.314 screenshots and it also
+            // giant green/purple sphere in the 1.9.315 screenshots and it also
             // hid the active Fabric sky. The storm sky is the alpha-feathered
             // organic patch below; the untouched sky remains visible through
             // its broken edge, exactly like the reference glare frames.
-            // 1.9.314 -- the organic smear: a SEPARATE infinite skybox layer
+            // 1.9.315 -- the organic smear: a SEPARATE infinite skybox layer
             // tethered only to the storm bearing. It lives on a fixed far
             // camera shell, so it cannot become a physical circle beside the
             // storm when the player flies toward it.
             final float[] core = blend(D5_Z, D55_Z, D6_Z, 1.0F - w55 - w6, w55, w6, 1.0F);
             final float[] midc = blend(D5_M, D55_M, D6_UM, 1.0F - w55 - w6, w55, w6, 1.0F);
             final float[] edge = blend(D5_H, D55_H, D6_LM, 1.0F - w55 - w6, w55, w6, 1.0F);
+            final float[] high = blend(D5_HIGH, D55_HIGH, D6_UM, 1.0F - w55 - w6, w55, w6, 1.0F);
             final McsmBlobShape.Patch patch = McsmBlobShape.patchFor(bearing, phase,
-                    outer, presence, core, midc, edge, D55_HIGH, w55f, w6f);
+                    outer, presence, core, midc, edge, high, w55f, w6f);
             final double blobRadius = SKY_RADIUS;
             collector.submitCustomGeometry(ctx.poseStack(), GlowRenderTypes.translucent(WHITE),
                     (pose, consumer) -> McsmBlobShape.stream(pose, consumer, patch, cam, blobRadius));

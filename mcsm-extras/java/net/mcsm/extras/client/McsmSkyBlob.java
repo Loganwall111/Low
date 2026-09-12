@@ -43,7 +43,7 @@ public final class McsmSkyBlob {
             // scenes, but must be off before the active storm sky is drawn.
             // This runs even without Iris, so vanilla/FBS cannot win the
             // ordering race against McsmStormSkyLayer.
-            DabyWSClientConfig.customSkyboxes = proximity > 0.005F ? false : true;
+            McsmStormSkyLayer.suppressLegacySkybox();
             if (irisUniforms == null) {
                 return;
             }
@@ -64,6 +64,7 @@ public final class McsmSkyBlob {
             McsmExtrasConfig.load();
             float glare = (float) Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
             vec3(irisUniforms, "uStormPos", sx, sy, sz);
+            vec3(irisUniforms, "u_StormPos", sx, sy, sz);
             float_(irisUniforms, "uStormPhase", phase);
             float_(irisUniforms, "uGlareSize", glare);
             // Keep both spellings alive: the managed pack uses the compact

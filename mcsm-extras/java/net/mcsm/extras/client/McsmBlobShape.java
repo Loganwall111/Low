@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 1.9.314 -- ATMOSPHERIC W'S CLOUD, the one true shape of the infinite
+ * 1.9.315 -- ATMOSPHERIC W'S CLOUD, the one true shape of the infinite
  * skybox blob, shared by every Java render path.
  *
  * The blob is NOT a world object and NOT a flat disc: it is a separate,
@@ -62,10 +62,10 @@ public final class McsmBlobShape {
     private static final double TILT = 0.18;
 
     // phase-6 four-colour split (canonical corrected hex set B)
-    private static final float[] D6_Z = hex(0x1A, 0x12, 0x26);
-    private static final float[] D6_UM = hex(0x46, 0x2A, 0x52);
-    private static final float[] D6_LM = hex(0x96, 0x61, 0x73);
-    private static final float[] D6_H = hex(0xD8, 0x98, 0x74);
+    private static final float[] D6_Z = hex(0x10, 0x0A, 0x1A); // #100A1A
+    private static final float[] D6_UM = hex(0x33, 0x1C, 0x3D); // #331C3D
+    private static final float[] D6_LM = hex(0x8A, 0x53, 0x61); // #8A5361
+    private static final float[] D6_H = hex(0xC4, 0x7A, 0x5A); // #C47A5A
 
     private McsmBlobShape() {
     }
@@ -129,7 +129,10 @@ public final class McsmBlobShape {
                 Vec3 d = b.add(exT.scale(sx * t)).add(eyT.scale(sy * t)).normalize();
                 float[] c = smearColor(sx, sy, d.y, phase, core, midc, edge, high, w55, w6);
                 float m = mask(sx, sy);
-                int al = (int) (m * presence * 255.0F);
+                // Keep the directional cloud transparent instead of making
+                // the vanilla/Fabric sky a black wall. Effective alpha is
+                // 0.58, below the standing 0.80 maximum cap.
+                int al = (int) (m * presence * 0.58F * 255.0F);
                 p.dirs[idx] = d;
                 p.r[idx] = (int) (c[0] * 255.0F);
                 p.g[idx] = (int) (c[1] * 255.0F);
@@ -243,7 +246,7 @@ public final class McsmBlobShape {
         // reference images instead of becoming one flat tint.
         float deckU = Mth.clamp((float) (ty * 0.5 + 0.5), 0.0F, 1.0F);
         float[] deck = deckColor(phase, deckU);
-        float deckBlend = 0.30F + 0.38F * (1.0F - wCore);
+        float deckBlend = 0.20F * (1.0F - wCore);
         for (int i = 0; i < 3; i++) {
             c[i] += (deck[i] - c[i]) * deckBlend;
         }
@@ -270,7 +273,7 @@ public final class McsmBlobShape {
         return c;
     }
 
-    /** phase 6: #1A1226 / #462A52 / #966173 / #D89874 keyed to elevation */
+    /** phase 6: #100A1A / #331C3D / #8A5361 / #C47A5A keyed to elevation */
     private static float[] p6Split(double ty) {
         float u = Mth.clamp((float) ty * 0.5F + 0.5F, 0.0F, 1.0F);
         float[] c = mix3(D6_H, D6_LM, ss(0.02F, 0.30F, u));

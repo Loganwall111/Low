@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import net.mcsm.extras.McsmExtrasConfig;
 
 /**
- * MCSM 1.9.314 -- the Atmospheric W's Cloud for the SHADER-PACK path.
+ * MCSM 1.9.315 -- the Atmospheric W's Cloud for the SHADER-PACK path.
  *
  * 1.9.221-1.9.304 drew the blob here as a stack of four camera-facing oval
  * quads pinned at the storm's 3D position. That made the blob a flat 2D
@@ -64,17 +64,18 @@ public final class McsmBlobOval {
     }
 
     // corrected 2026-09-11 hex decks
-    private static final float[] P5_CORE = hex(0x16, 0x1A, 0x1D);
-    private static final float[] P5_MID = hex(0x2D, 0x42, 0x3F);
-    private static final float[] P5_EDGE = hex(0x6A, 0x9A, 0x78);
-    private static final float[] P55_CORE = hex(0x0B, 0x04, 0x10);
-    private static final float[] P55_MID = hex(0x2D, 0x14, 0x42);
-    private static final float[] P55_HIGH = hex(0x58, 0x1C, 0x6E);
-    private static final float[] P55_EDGE = hex(0x87, 0x52, 0x9C);
-    private static final float[] P6_TOP = hex(0x1A, 0x12, 0x26);
-    private static final float[] P6_UMID = hex(0x46, 0x2A, 0x52);
-    private static final float[] P6_LMID = hex(0x96, 0x61, 0x73);
-    private static final float[] P6_BOT = hex(0xD8, 0x98, 0x74);
+    private static final float[] P5_CORE = hex(0x0A, 0x11, 0x12); // #0A1112
+    private static final float[] P5_MID = hex(0x1D, 0x33, 0x35);  // #1D3335
+    private static final float[] P5_EDGE = hex(0x55, 0x70, 0x61); // #557061
+    private static final float[] P5_HIGH = hex(0x84, 0x93, 0xFF); // #8493FF
+    private static final float[] P55_CORE = hex(0x05, 0x02, 0x08); // #050208
+    private static final float[] P55_MID = hex(0x2A, 0x12, 0x3D);  // #2A123D
+    private static final float[] P55_HIGH = hex(0x7D, 0x4B, 0x91); // #7D4B91
+    private static final float[] P55_EDGE = hex(0x4B, 0x1E, 0x5E); // #4B1E5E
+    private static final float[] P6_TOP = hex(0x10, 0x0A, 0x1A); // #100A1A
+    private static final float[] P6_UMID = hex(0x33, 0x1C, 0x3D); // #331C3D
+    private static final float[] P6_LMID = hex(0x8A, 0x53, 0x61); // #8A5361
+    private static final float[] P6_BOT = hex(0xC4, 0x7A, 0x5A); // #C47A5A
 
     private static float ramp(float v, float lo, float hi) {
         float t = Mth.clamp((v - lo) / (hi - lo), 0.0F, 1.0F);
@@ -157,7 +158,7 @@ public final class McsmBlobOval {
 
             McsmExtrasConfig.load();
             double gs = Mth.clamp(McsmExtrasConfig.glareSize, 0.25, 3.05);
-            // 1.9.314: make the alpha patch large enough to sit behind the
+            // 1.9.315: make the alpha patch large enough to sit behind the
             // whole storm silhouette while remaining an irregular field.
             double outer = (58.0 + 30.0 * ramp(phase, 5.0F, 6.0F))
                     * (0.78 + (gs - 0.25) * 0.139);
@@ -168,11 +169,12 @@ public final class McsmBlobOval {
             }
             final Vec3 bearing = rawView.normalize();
 
-            // 1.9.314: the smear patch is drawn on a fixed camera-centred
+            // 1.9.315: the smear patch is drawn on a fixed camera-centred
             // far sky sphere, never at the storm's world distance. Its bearing
             // follows the storm, but its depth cannot be approached in-world.
+            final float[] high = blend(P5_HIGH, P55_HIGH, P6_UMID, w5, w55, w6, tot);
             final McsmBlobShape.Patch patch = McsmBlobShape.patchFor(bearing, phase,
-                    outer, presence, core, mid, edge, P55_HIGH, w55 / tot, w6 / tot);
+                    outer, presence, core, mid, edge, high, w55 / tot, w6 / tot);
             // Keep the shell just behind the storm, rather than at a fixed
             // card distance or exactly coplanar with the body.
             final double radius = SKY_RADIUS;

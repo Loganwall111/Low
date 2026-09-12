@@ -433,9 +433,9 @@ vec3 mcsm_sky_color(float height, float p, float clock) {
 // sky blob paints: 5 moss-green, 5.5-5.9 velvet violet, 6 dusty rose/amber,
 // 7/8 ember.
 vec3 mcsm_blob_color(float p, float clock) {
-    vec3 teal = mix(vec3(45.0, 66.0, 63.0),  vec3(106.0, 154.0, 120.0), 0.55) / 255.0; // #2D423F -> #6A9A78
-    vec3 purp = mix(vec3(45.0, 20.0, 66.0),  vec3(135.0, 82.0, 156.0), 0.45) / 255.0; // #2D1442 -> #87529C
-    vec3 six  = mix(vec3(150.0, 97.0, 115.0), vec3(216.0, 152.0, 116.0), 0.35) / 255.0; // #966173 -> #D89874
+    vec3 teal = mix(vec3(29.0, 51.0, 53.0),  vec3(85.0, 112.0, 97.0), 0.55) / 255.0; // #1D3335 -> #557061
+    vec3 purp = mix(vec3(42.0, 18.0, 61.0),  vec3(75.0, 30.0, 94.0), 0.45) / 255.0; // #2A123D -> #4B1E5E
+    vec3 six  = mix(vec3(138.0, 83.0, 97.0), vec3(196.0, 122.0, 90.0), 0.35) / 255.0; // #8A5361 -> #C47A5A
     vec3 ember = vec3(0.720, 0.180, 0.100);
     vec3 c = teal;
     c = mix(c, purp,  mcsm_ramp(p, 5.42, 5.52));
@@ -475,19 +475,20 @@ vec3 mcsm_blob_color(float p, float clock) {
 // CORRECTED artist hexes (user 2026-09-11, re-measured from the reference
 // screenshots). x/255 -> display space.
 // PHASE 5 -- GREEN SKYBOX BLOB
-const vec3 P5_CORE  = vec3(22.0, 26.0, 29.0) / 255.0;    // #161A1D near-black charcoal
-const vec3 P5_MID   = vec3(45.0, 66.0, 63.0) / 255.0;    // #2D423F muted jade-teal green
-const vec3 P5_EDGE  = vec3(106.0, 154.0, 120.0) / 255.0; // #6A9A78 cinematic pastel moss green
+const vec3 P5_CORE  = vec3(10.0, 17.0, 18.0) / 255.0;   // #0A1112
+const vec3 P5_MID   = vec3(29.0, 51.0, 53.0) / 255.0;    // #1D3335
+const vec3 P5_EDGE  = vec3(85.0, 112.0, 97.0) / 255.0;  // #557061
+const vec3 P5_BEAM  = vec3(132.0, 147.0, 255.0) / 255.0; // #8493FF
 // PHASE 5.5-5.9 -- PURPLE & PINK VOID BLOB
-const vec3 P55_CORE = vec3(11.0, 4.0, 16.0) / 255.0;     // #0B0410 deep void black-purple
-const vec3 P55_MID  = vec3(45.0, 20.0, 66.0) / 255.0;    // #2D1442 thick velvet violet
-const vec3 P55_HIGH = vec3(88.0, 28.0, 110.0) / 255.0;   // #581C6E vibrant royal magenta
-const vec3 P55_EDGE = vec3(135.0, 82.0, 156.0) / 255.0;  // #87529C glowing soft pink-lavender
+const vec3 P55_CORE = vec3(5.0, 2.0, 8.0) / 255.0;      // #050208
+const vec3 P55_MID  = vec3(42.0, 18.0, 61.0) / 255.0;    // #2A123D
+const vec3 P55_HIGH = vec3(125.0, 75.0, 145.0) / 255.0;  // #7D4B91 ambient bleed
+const vec3 P55_EDGE = vec3(75.0, 30.0, 94.0) / 255.0;    // #4B1E5E
 // PHASE 6 -- THE FOUR-COLOR SUNSET SPLIT BLOB (vertical)
-const vec3 P6_TOP   = vec3(26.0, 18.0, 38.0) / 255.0;    // #1A1226 midnight void purple (zenith)
-const vec3 P6_UMID  = vec3(70.0, 42.0, 82.0) / 255.0;    // #462A52 muted dark burgundy
-const vec3 P6_LMID  = vec3(150.0, 97.0, 115.0) / 255.0;  // #966173 cinematic dusty rose-pink
-const vec3 P6_BOT   = vec3(216.0, 152.0, 116.0) / 255.0; // #D89874 toxic opaque amber orange-peach
+const vec3 P6_TOP   = vec3(16.0, 10.0, 26.0) / 255.0;   // #100A1A zenith
+const vec3 P6_UMID  = vec3(51.0, 28.0, 61.0) / 255.0;   // #331C3D upper smudge
+const vec3 P6_LMID  = vec3(138.0, 83.0, 97.0) / 255.0;   // #8A5361 lower smudge
+const vec3 P6_BOT   = vec3(196.0, 122.0, 90.0) / 255.0;  // #C47A5A horizon glow
 
 // The blob is intentionally compact around the storm bearing.  The old
 // 1.9.305 ellipse used one analytic radius, which made the sky read as a
@@ -595,7 +596,7 @@ float mcsm_inf_u(vec3 wd, vec3 bd, float outer) {
 // Per-phase Atmospheric W's Cloud palette (core / mid / edge / high).
 void mcsm_inf_palette(float p, out vec3 core, out vec3 mid, out vec3 edge,
                       out vec3 high) {
-    core = P5_CORE; mid = P5_MID; edge = P5_EDGE; high = P5_MID;
+    core = P5_CORE; mid = P5_MID; edge = P5_EDGE; high = P5_BEAM;
     float w55 = mcsm_ramp(p, 5.42, 5.52);
     core = mix(core, P55_CORE, w55);
     mid  = mix(mid,  P55_MID,  w55);
@@ -631,7 +632,7 @@ float mcsm_mass_cover(vec3 wd, vec3 bd, float p) {
                                          fld.y * 3.4 - uu * 1.7));
     float body = 1.0 - smoothstep(0.48, 1.08 + (edgeNoise - 0.5) * 0.22, uu);
     float smokeNoise = clamp(0.55 + 0.45 * edgeNoise, 0.0, 1.0);
-    float densityAlpha = min(0.80, 0.80 * pow(clamp(body * smokeNoise, 0.0, 1.0), 2.0));
+    float densityAlpha = min(0.80, 0.58 * pow(clamp(body * smokeNoise, 0.0, 1.0), 2.0));
     return densityAlpha;
 }
 
@@ -671,13 +672,12 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
     // Multiplicative-looking dark matter blend: bright phase colors pierce the
     // cloud center while the ink mass remains visibly present.
     vec3 phaseColor = dome;
-    vec3 cloudColor = mix(phaseColor, vec3(0.02), densityAlpha);
-    // A subtle phase tongue survives inside the cloud without becoming a ring.
     vec3 core, mid, edge, high;
     mcsm_inf_palette(p, core, mid, edge, high);
-    vec3 tongueColor = mix(mid, edge, clamp(upness * 0.72 + sootNoise * 0.28, 0.0, 1.0));
-    cloudColor = mix(cloudColor, mix(cloudColor, tongueColor, 0.16),
-                     densityAlpha * (1.0 - body) * 0.70);
+    vec3 bandColor = mix(mid, edge,
+                         clamp(upness * 0.72 + sootNoise * 0.28, 0.0, 1.0));
+    vec3 cloudColor = mix(bandColor, core, clamp(body, 0.0, 1.0));
+    cloudColor = mix(cloudColor, phaseColor, 0.10 * (1.0 - body));
     return vec4(cloudColor, densityAlpha);
 }
 

@@ -83,6 +83,9 @@ public abstract class McsmGradientTickPatch {
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
             StormSkyGradient.update(cameraState.pos);
+            // FabricSkyBoxes is retained for calm/summon scenes, but cannot
+            // paint over the active infinite storm sky.
+            net.mcsm.extras.client.McsmStormSkyLayer.suppressLegacySkybox();
             net.mcsm.extras.client.McsmTeethPhaseTint.tick();
             // Report what update() produced. This is the value the glare blob
             // depends on -- if it never reports ACTIVE, the blob cannot draw
