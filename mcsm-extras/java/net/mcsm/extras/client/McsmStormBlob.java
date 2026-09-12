@@ -77,9 +77,16 @@ public final class McsmStormBlob {
         }
     }
 
-    /** Compatibility entry point for the StormBackdrop hook. */
+    /**
+     * Compatibility entry point for the StormBackdrop hook.
+     *
+     * The Halo is registered directly on COLLECT_SUBMITS by McsmGate. Keeping
+     * this callback empty prevents a duplicate Halo when the base mod's
+     * StormBackdrop mixin and the direct native registration are both active.
+     */
     public static void submit(LevelRenderContext ctx) {
-        McsmHaloSkyRenderer.submit(ctx);
+        // Native Halo registration is independent of the replaceable backdrop
+        // callback; see McsmGate.registerNativeHaloPass().
     }
 
     /**

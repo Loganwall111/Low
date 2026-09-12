@@ -4,6 +4,8 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.dabicco.witherstormmod.config.WitherStormConfigs;
 import net.dabicco.witherstormmod.config.WitherStormWorldConfig;
 import net.minecraft.client.Minecraft;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.mcsm.extras.client.McsmHaloSkyRenderer;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Field;
@@ -45,6 +47,25 @@ public final class McsmGate {
 
     private static boolean clientDone = false;
     private static boolean worldDone = false;
+    private static boolean nativeHaloRegistered = false;
+
+    /**
+     * Register the Halo on the actual level submit event instead of relying
+     * solely on replacing the base mod's StormBackdrop callback. The base
+     * callback is version-sensitive and can be skipped by a harmless optional
+     * mixin; the Halo itself must remain visible in that case.
+     */
+    private static synchronized void registerNativeHaloPass() {
+        if (nativeHaloRegistered) {
+            return;
+        }
+        try {
+            LevelRenderEvents.COLLECT_SUBMITS.register(McsmHaloSkyRenderer::submit);
+            nativeHaloRegistered = true;
+        } catch (Throwable ignored) {
+            // Rendering must remain fail-soft if Fabric changes the event API.
+        }
+    }
 
     /**
      * MCSM 1.9.112 -- memory of every value this gate writes, keyed by field.
@@ -147,6 +168,7 @@ public final class McsmGate {
         if (clientDone) {
             return;
         }
+        registerNativeHaloPass();
         McsmExtrasConfig.load();
         clientDone = true;
         // 1.9.208: the vanilla look is permanently disabled -- there is no
