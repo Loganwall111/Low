@@ -890,6 +890,24 @@ for need in \
     AUDIT_FAIL=1
   fi
 done
+# 1.9.320: the numbered daby CEM selector now points at the authoritative
+# ogs-stuff phase models. Audit the active ladder, the shared 160x160 atlas,
+# and its emissive companion so an assembly cannot silently fall back to the
+# old traced placeholder variants.
+for active_need in \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm.properties \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm1.jem \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm5.jem \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm8.jem \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm10.jem \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm11.jem \
+  resourcepacks/ogs-cem/assets/dabywitherstormmod/textures/entity/wither_storm/wither_storm.png \
+  resourcepacks/ogs-cem/assets/dabywitherstormmod/textures/entity/wither_storm/wither_storm_e.png; do
+  if [ ! -s "$FX/cls/$active_need" ]; then
+    echo "::error title=jar audit::authoritative active CEM asset missing from jar: $active_need"
+    AUDIT_FAIL=1
+  fi
+done
 if grep -R -a -q 'MCSM extras 1\.9\.95' "$FX/cls" 2>/dev/null; then
   echo "::error title=jar audit::stale visible config label MCSM extras 1.9.95 survived assembly"
   AUDIT_FAIL=1
