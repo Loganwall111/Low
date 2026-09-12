@@ -45,13 +45,15 @@ public abstract class McsmStormSkyColorPatch {
     private void mcsm$suppressCelestials(PoseStack poseStack, float sunAngle,
             float moonAngle, float sunAlpha, MoonPhase moonPhase,
             float starAngle, float starBrightness, CallbackInfo ci) {
-        if (McsmNativeSkyRenderer.suppressCelestials()) {
+        if (McsmNativeSkyRenderer.suppressCelestials()
+                && McsmStoryModeSunSlab.configured()) {
             if (McsmStoryModeSunSlab.enabled()) {
                 mcsm$renderStorySun(poseStack, sunAngle);
             }
             // The ordinary sun, moon, and stars are all in this method.  Do
-            // this after the native gradient has been extracted: the slab is
-            // therefore the only optional celestial geometry, while the
+            // this only for the opt-in feature: with the toggle off, even an
+            // active storm keeps the vanilla celestial pass.  When on, the
+            // native gradient has already run, the slab is second, and the
             // Wither Storm/entity pass that follows still draws in front.
             ci.cancel();
         }

@@ -18,16 +18,21 @@ public final class McsmStoryModeSunSlab {
     private McsmStoryModeSunSlab() {
     }
 
-    /** Feature gate; vanilla remains untouched when this is false. */
-    public static boolean enabled() {
+    /** Config gate; the vanilla celestial pass is untouched when this is false. */
+    public static boolean configured() {
         try {
             McsmExtrasConfig.load();
-            return McsmExtrasConfig.storyModeAccurateSunSun
-                    && McsmNativeSkyRenderer.suppressCelestials()
-                    && !deleted;
+            return McsmExtrasConfig.storyModeAccurateSunSun;
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    /** Feature is visible only while the native storm-owned celestial pass is active. */
+    public static boolean enabled() {
+        return configured()
+                && McsmNativeSkyRenderer.suppressCelestials()
+                && !deleted;
     }
 
     /**
