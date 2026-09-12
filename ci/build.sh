@@ -202,6 +202,7 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.minecraft.client.gui.components.EditBox net.minecraft.client.gui.components.Tooltip \
     net.minecraft.client.gui.layouts.LinearLayout net.minecraft.client.DeltaTracker \
     net.minecraft.client.renderer.LevelRenderer net.minecraft.client.renderer.MultiBufferSource \
+    net.minecraft.client.renderer.state.level.SkyRenderState \
     net.minecraft.client.renderer.RenderType net.minecraft.client.renderer.blockentity.BlockEntityRenderer \
     net.minecraft.client.renderer.entity.EntityRenderer net.minecraft.client.Camera \
     net.minecraft.client.player.LocalPlayer net.minecraft.world.entity.player.Player \
