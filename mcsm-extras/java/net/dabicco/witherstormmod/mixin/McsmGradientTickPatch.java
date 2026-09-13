@@ -151,8 +151,10 @@ public abstract class McsmGradientTickPatch {
             float t = (float) (mc.level.getGameTime() % 24000L);
             float day = 0.5F + 0.5F * (float) Math.cos(((t - 6000.0F) / 24000.0F) * Math.PI * 2.0D);
             DabyWSClientConfig.beamOpacity = 0.85F + 0.75F * day;
-            DabyWSClientConfig.beamColorR  = 0.48F + 0.18F * day;
-            DabyWSClientConfig.beamColorG  = 0.10F + 0.12F * day;
+            // Keep the eye/beam channel genuinely purple; teeth use their
+            // separate cyan/green phase palette.
+            DabyWSClientConfig.beamColorR  = 0.62F + 0.12F * day;
+            DabyWSClientConfig.beamColorG  = 0.18F + 0.10F * day;
             DabyWSClientConfig.beamColorB  = 1.00F;
         } catch (Throwable ignored) {
         }

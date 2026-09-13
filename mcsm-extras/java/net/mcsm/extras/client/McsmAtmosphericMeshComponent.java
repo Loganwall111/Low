@@ -183,6 +183,11 @@ public final class McsmAtmosphericMeshComponent {
         float corePass = phase >= 5.0F
                 ? 0.22F + 0.78F * smoothstep(radius, 0.0F, 0.42F)
                 : 1.0F;
+        // Finish the lower edge as a dark silhouette instead of a bright
+        // floating slab. This anchors the atmosphere below the storm while
+        // the enlarged rear circle carries the cover up over its crown.
+        float bottomSilhouette = 1.0F - smoothstep(vertical, 0.0F, 0.32F);
+        rgb = mix(rgb, rgb(0x01, 0x03, 0x08), bottomSilhouette * 0.82F);
         float alpha = MAX_ALPHA * phaseFade * outerFade * corePass;
         return (Mth.clamp((int) (alpha * 255.0F), 0, 255) << 24) | (rgb & 0x00FFFFFF);
     }
