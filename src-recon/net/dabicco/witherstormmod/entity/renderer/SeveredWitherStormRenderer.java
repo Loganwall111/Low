@@ -152,7 +152,7 @@ public class SeveredWitherStormRenderer
                state.idleTimeTicks,
                true,
                false,
-               StormSkins.phase6Body()
+               StormSkins.devourer()
             );
       }
    }
@@ -207,6 +207,6 @@ public class SeveredWitherStormRenderer
    }
 
    public Identifier getTextureLocation(SeveredWitherStormRenderState state) {
-      return StormSkins.phase6Body();
+      return StormSkins.devourer();
    }
 }

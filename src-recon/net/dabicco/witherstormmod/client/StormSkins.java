@@ -5,12 +5,16 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Single source of truth for storm body materials. Phase 0 keeps its tiny
- * starter atlas; every Phase 1+ opaque storm piece uses the dark Phase 6 sheet.
+ * starter atlas; every Phase 1+ opaque storm piece uses the matching dark
+ * Phase 6 atlas for its model UV layout.
  */
 public final class StormSkins {
    private static final Identifier LEGACY_CLASSIC = id("textures/entity/wither_storm.png");
    private static final Identifier LEGACY_OG = id("textures/entity/wither_storm_og.png");
-   private static final Identifier PHASE6_BODY = id("textures/entity/wither_storm/wither_storm.png");
+   // Phase 6 main/head/tentacle atlas. Do not use the nested 160x160
+   // vanilla sheet here; these models use the 512x512 phase atlas UVs.
+   private static final Identifier PHASE6_BODY = id("textures/entity/phase_4_assets_p6.png");
+   private static final Identifier PHASE6_DEVOURER = id("textures/entity/devourer_assets_p6.png");
 
    private static volatile double phaseHint;
 
@@ -33,7 +37,7 @@ public final class StormSkins {
       return Math.round(DabyWSClientConfig.stormSkin) >= 1L;
    }
 
-   /** Phase 0 only; Phase 1 and later use phase6Body(). */
+   /** Phase 0 only; Phase 1 and later use the main-model Phase 6 atlas. */
    public static Identifier legacy() {
       return phaseHint >= 1.0D ? PHASE6_BODY : (og() ? LEGACY_OG : LEGACY_CLASSIC);
    }
@@ -44,7 +48,7 @@ public final class StormSkins {
       return phase >= 1.0D ? PHASE6_BODY : (og() ? LEGACY_OG : LEGACY_CLASSIC);
    }
 
-   /** Universal opaque atlas for bodies, heads, jaws, necks, and tentacles. */
+   /** Main-model Phase 6 atlas for bodies, heads, jaws, necks, and tentacles. */
    public static Identifier phase6Body() {
       return PHASE6_BODY;
    }
@@ -54,9 +58,9 @@ public final class StormSkins {
       return PHASE6_BODY;
    }
 
-   /** Detached/devourer pieces share the universal body atlas. */
+   /** Detached/devourer pieces use their matching Phase 6 UV atlas. */
    public static Identifier devourer() {
-      return PHASE6_BODY;
+      return PHASE6_DEVOURER;
    }
 
    public static Identifier teethGlow(double phase) {

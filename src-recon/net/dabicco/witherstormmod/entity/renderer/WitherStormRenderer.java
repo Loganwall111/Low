@@ -881,7 +881,7 @@ public class WitherStormRenderer
             devTentacles,
             state,
             poseStack,
-            this.pieceType(StormSkins.phase6Body()),
+            this.pieceType(StormSkins.devourer()),
             state.lightCoords,
             OverlayTexture.NO_OVERLAY,
             this.pieceTint(),
@@ -1014,8 +1014,10 @@ public class WitherStormRenderer
    }
 
    public Identifier getTextureLocation(WitherStormRenderState state) {
-      // Phase 0 alone keeps the tiny starter atlas. Every later opaque pass,
-      // including the pre-Phase-4 body, uses the same dark Phase 6 sheet.
-      return state.devourer || state.phase >= 1.0D ? StormSkins.phase6Body() : StormSkins.legacy();
+      // Phase 0 alone keeps the tiny starter atlas. Every later opaque pass
+      // uses the correct dark Phase 6 atlas for its model family.
+      return state.devourer
+         ? StormSkins.devourer()
+         : state.phase >= 1.0D ? StormSkins.phase6Body() : StormSkins.legacy();
    }
 }

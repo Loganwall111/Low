@@ -7,14 +7,18 @@ import net.minecraft.resources.Identifier;
  * Texture policy for every native storm model pass.
  *
  * Phase 0 deliberately keeps its tiny starter atlas. Every later storm body,
- * head, jaw, skull, neck, tentacle, detached piece, and distant preview uses
- * the dark Phase 6 body sheet. Emissive layers may still use their dedicated
- * eye/teeth sheets through RenderTypes.eyes(...).
+ * head, jaw, skull, neck, and tentacle uses the matching dark Phase 6 atlas
+ * for its model UV layout; detached pieces use their dedicated Phase 6 sheet.
+ * Emissive layers may still use their dedicated eye/teeth sheets.
  */
 public final class StormSkins {
     private static final Identifier LEGACY_CLASSIC = id("textures/entity/wither_storm.png");
     private static final Identifier LEGACY_OG = id("textures/entity/wither_storm_og.png");
-    private static final Identifier PHASE6_BODY = id("textures/entity/wither_storm/wither_storm.png");
+    // This is the Phase 6 atlas for the main/head/tentacle UV layout. The
+    // nested 160x160 vanilla sheet is a different UV layout and must not be
+    // bound to these 512x512 models.
+    private static final Identifier PHASE6_BODY = id("textures/entity/phase_4_assets_p6.png");
+    private static final Identifier PHASE6_DEVOURER = id("textures/entity/devourer_assets_p6.png");
 
     // Retained as compatibility constants for callers that still ask for the
     // old phase ladder. They are intentionally no longer selected for bodies.
@@ -80,9 +84,9 @@ public final class StormSkins {
         return PHASE6_BODY;
     }
 
-    /** Detached/devourer pieces use the same universal body atlas. */
+    /** Detached/devourer pieces use their matching Phase 6 UV atlas. */
     public static Identifier devourer() {
-        return PHASE6_BODY;
+        return PHASE6_DEVOURER;
     }
 
     /** Actual emissive teeth atlases; never bind the opaque body sheet as glow. */
