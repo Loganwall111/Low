@@ -168,7 +168,11 @@ public final class McsmGate {
         if (clientDone) {
             return;
         }
-        registerNativeHaloPass();
+        // The native Halo was a world-attached oval that could intersect the
+        // terrain and read as a giant black/white object. The original smooth
+        // StormBackdrop is restored by McsmStormBlobMixin; do not register the
+        // retired Halo pass here.
+        nativeHaloRegistered = true;
         McsmExtrasConfig.load();
         clientDone = true;
         // 1.9.208: the vanilla look is permanently disabled -- there is no
@@ -214,7 +218,9 @@ public final class McsmGate {
             // 1.9.212: the fake sun-glow card is off (the shader draws its
             // own sun); the ORIGINAL oval Catalyst Halo is back on.
             changed += setBool(c, "sunGlow", false);
-            changed += setBool(c, "blackGlare", true);
+            // Retire the generated black glare ring; the restored backdrop
+            // already supplies the smooth phase atmosphere.
+            changed += disableBool(c, "blackGlare");
             changed += setBool(c, "glareEjecta", true);
             changed += setBool(c, "cataclysmHalos", true);
             changed += setBool(c, "atmospherePulse", true);
@@ -260,8 +266,7 @@ public final class McsmGate {
             changed += floorField(c, null, "volumetricFogDensity", 0.6);
             changed += hardFloorNum(c, null, "stormGlowStrength", 1.0);
             changed += ceilingField(c, null, "sunGlowStrength", 0.0);
-            // 1.9.213: less black cover so the purple middle of the oval reads
-            changed += ceilingField(c, null, "blackGlareStrength", 0.45);
+            changed += ceilingField(c, null, "blackGlareStrength", 0.0);
             changed += floorField(c, null, "stormShadowStrength", 1.0);
             // 1.9.217: the teeth/eye emitter overlays MUST stay on -- a stale
             // persisted 0 is what killed the emissiveness
@@ -270,12 +275,10 @@ public final class McsmGate {
             // zeroed -- the glow needs it. A moderate floor (raise-only, the
             // player can push it higher) gives the teeth the emissive halo
             // from the reference frames without the old full-res memory blowout.
-            // Never leave the full-resolution HDR bloom enabled on the
-            // default client path.  The Intel UHD path reported repeated UBO
-            // growth and long render stalls even before a storm was visible.
-            // The native storm and emitter materials remain; bloom can still
-            // be re-enabled manually after the world is stable.
-            changed += disableNum(c, null, "bloomStrength");
+            // Restore a moderate HDR bloom floor so the dedicated eyes/teeth
+            // RenderType.eyes passes read as actual emitters. Keep it bounded
+            // so bloom cannot recreate the retired backdrop oval.
+            changed += hardFloorNum(c, null, "bloomStrength", 2.0);
             changed += floorField(c, null, "ambienceVolume", 0.8);
             changed += floorField(c, null, "headSoundsVolume", 0.8);
             changed += floorField(c, null, "beamSoundsVolume", 0.8);
@@ -338,6 +341,21 @@ public final class McsmGate {
             McsmDiag.say("MCSM world gate opened: " + changed + " world fields raised/enabled");
         } catch (Throwable t) {
             McsmDiag.say("MCSM world gate failed before field loop: " + t);
+        }
+    }
+
+    /** Retire a generated black overlay even if an old config persisted it. */
+    private static int disableBool(Class<?> owner, String name) {
+        try {
+            Field f = owner.getField(name);
+            if (f.getBoolean(null)) {
+                f.setBoolean(null, false);
+                LAST_SET.put(memKey(owner, null, name), false);
+                return 1;
+            }
+            return 0;
+        } catch (Throwable ignored) {
+            return 0;
         }
     }
 

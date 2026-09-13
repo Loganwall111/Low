@@ -24,17 +24,14 @@ public abstract class McsmStormBlobMixin {
     @Inject(method = "submit", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private static void dabyws$correctedBlob(LevelRenderContext ctx, CallbackInfo ci) {
         if (Minecraft.getInstance() != null) {
-            // Stage geometry is submitted in the same collect-submits pass as
-            // the storm, so the dome/pad is behind entity geometry and the
-            // existing glare bridge remains untouched.
+            // Keep the optional stage hook and compatibility callback, but do
+            // not cancel the base method. Restoring StormBackdrop.submit brings
+            // back the smooth original phase backdrop instead of the retired
+            // generated black rings/oval cards.
             McsmExperimentalStoryStage.submit(ctx);
             McsmStormBlob.submit(ctx);
-            // Keep the Stage C/D debris-ring pass in the same render graph
-            // submission as the storm. It is client-side and uses only the
-            // already-generated static mesh; no model/animation parsing occurs
-            // during world initialization.
-            net.mcsm.extras.client.McsmStormRings.submit(ctx);
         }
-        ci.cancel();
+        // Intentionally no ci.cancel(): the original smooth backdrop owns this
+        // pass. The custom ring/vortex generators are not submitted here.
     }
 }

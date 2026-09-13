@@ -9,7 +9,6 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.mcsm.extras.McsmDiag;
 import net.mcsm.extras.McsmGate;
 import net.mcsm.extras.client.McsmClientBlasts;
-import net.mcsm.extras.client.McsmStormDebris;
 import net.mcsm.extras.client.McsmClientChat;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -117,8 +116,9 @@ public abstract class McsmGradientTickPatch {
             // has been removed, and this hook runs for as long as the world is
             // being rendered. It steps at most once per game tick internally.
             McsmClientBlasts.tick();
-            // 1.9.204 -- Story Mode debris/dust vortex around every storm.
-            McsmStormDebris.tick();
+            // The generated particle/ring debris vortex is intentionally
+            // retired. Native StormDebris remains the single debris source;
+            // its authored outer entries expand in the phase-9 window.
             // 1.9.208 -- volumetric beam strength rides the time of day:
             // near-noon the tractor beams flare hardest; deep night they
             // dim to a faint purple shaft. Written live every frame so the

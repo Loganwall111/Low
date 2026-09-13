@@ -19,8 +19,8 @@ uniform float viewHeight;
 uniform float frameTimeCounter;
 uniform vec3 fogColor;
 
-#define BLOOM             0     // [0 1]
-#define BLOOM_STRENGTH    0.00  // [0.00 0.20 0.35 0.60 0.90 1.30]
+#define BLOOM             1     // [0 1]
+#define BLOOM_STRENGTH    0.60  // [0.00 0.20 0.35 0.60 0.90 1.30]
 #define SSAO              1     // [0 1]
 #define SSAO_STRENGTH     0.40  // [0.00 0.20 0.40 0.60 0.80 1.00]
 #define TONEMAP           1     // [0 1]

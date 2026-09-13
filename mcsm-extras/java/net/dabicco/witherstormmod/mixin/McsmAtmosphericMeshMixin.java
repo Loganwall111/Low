@@ -27,12 +27,15 @@ public abstract class McsmAtmosphericMeshMixin {
     private void mcsm$submitAtmosphere(WitherStormRenderState state, PoseStack poseStack,
             SubmitNodeCollector collector, CameraRenderState camera, CallbackInfo ci) {
         McsmCoreEngineController.update(state);
-        McsmAtmosphericMeshComponent.submit(state, poseStack, collector);
+        // The attached curved mask was rendering as a bright oval anchored in
+        // the ground. Keep the component source for compatibility, but do not
+        // submit that retired world geometry; StormBackdrop owns the backdrop.
     }
 
     @Inject(method = "submit", at = @At("TAIL"), remap = false, require = 1)
     private void mcsm$submitAttachedVortex(WitherStormRenderState state, PoseStack poseStack,
             SubmitNodeCollector collector, CameraRenderState camera, CallbackInfo ci) {
-        McsmAttachedVortex.submit(state, poseStack, collector);
+        // The generated attached Vortex mesh is retired. Native model debris
+        // remains in WitherStormRenderer and is expanded only for phase 9.
     }
 }

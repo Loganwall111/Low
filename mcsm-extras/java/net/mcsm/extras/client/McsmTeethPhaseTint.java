@@ -1,6 +1,7 @@
 package net.mcsm.extras.client;
 
 import net.dabicco.witherstormmod.client.ClientDistantStormManager;
+import net.dabicco.witherstormmod.client.StormSkins;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.client.Minecraft;
 
@@ -11,8 +12,9 @@ import net.minecraft.client.Minecraft;
  *   phase 4          small cool-white/cyan glow on the three heads
  *   phase 5          flat white teeth, no big glow
  *   phase 5.5        white teeth with glow
- *   phase 4.5-5.4    sea-green emissive channels (#00A877)
- *   phase 5.5+       neon-cyan emissive channels (#00F3FF)
+ *   phase 4.5-5.4    sea-green teeth channels (#00A877)
+ *   phase 5.5+       neon-cyan teeth channels (#00F3FF)
+ *   all late phases  purple eye lens with a full-bright bloom source
  */
 public final class McsmTeethPhaseTint {
 
@@ -21,6 +23,15 @@ public final class McsmTeethPhaseTint {
 
     /** Packed full-bright ARGB used by the exact native teeth hook. */
     public static int teethTintArgb() {
+        // Use the renderer's phase hint as well as the distant-storm tracker;
+        // local storms do not always publish a DistantStormData entry.
+        double phase = Math.max(StormSkins.phaseHint(), McsmStormAtmosphere.nearestPhase());
+        if (phase >= 5.5D) {
+            return rgb(0.0F, 0.953F, 1.0F);   // #00F3FF
+        }
+        if (phase >= 4.5D) {
+            return rgb(0.0F, 0.659F, 0.467F); // #00A877
+        }
         return rgb((float) DabyWSClientConfig.eyeColorR,
                 (float) DabyWSClientConfig.eyeColorG,
                 (float) DabyWSClientConfig.eyeColorB);
@@ -31,9 +42,9 @@ public final class McsmTeethPhaseTint {
         // Dedicated eyes stay on RenderType.eyes; only the phase tint shifts
         // between the requested sea-green and neon-cyan decks.
         double phase = McsmStormAtmosphere.nearestPhase();
-        return phase >= 5.5D
-                ? rgb(0.0F, 0.953F, 1.0F)   // #00F3FF
-                : rgb(0.0F, 0.659F, 0.467F); // #00A877
+        // The eye lens is the small purple focal light; teeth remain on the
+        // separate sea-green/neon-cyan palette below.
+        return rgb(0.694F, 0.302F, 1.0F); // #B14DFF
     }
 
     private static int rgb(float r, float g, float b) {
