@@ -1,14 +1,9 @@
-# Devouring Storms 1.9.104 -- traced Wither Storm models, native Halo cleanup, and phase-7 Vortex
+# Devouring Storms 999.0.0-MCSM-REMAPPED-FINAL -- traced Wither Storm models, native Halo cleanup, and phase-7 Vortex
 
-This candidate makes the native SkyRenderer the only continuous sky colour
-path. It copies the live lower/current sky colour to the complete native sky,
-removes the old top-band routes, and leaves the attached storm oval/body
-renderer intact. The checked-in sun.png and moon_phases.png files are vanilla
-celestial assets used by the built-in look; they are not a second sky layer.
-
-It also keeps the shader-pack-v5 fallback from applying its screen vignette,
-which could darken the extreme top edge. The build remains a remote-CI
-artifact until the active scene is confirmed in Minecraft.
+This candidate includes the 1.9.315 active-sky ownership and transparent
+cloud changes, plus the same exact phase maps in the built-in core shader and
+the shader-pack-v5 fallback. It also removes the old artificial zenith rim and
+darkening overlay that could appear as a black discontinuity at the top.
 
 This remains a CI artifact until the active scene is confirmed in Minecraft.
 

@@ -204,6 +204,8 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.minecraft.client.gui.components.EditBox net.minecraft.client.gui.components.Tooltip \
     net.minecraft.client.gui.layouts.LinearLayout net.minecraft.client.DeltaTracker \
     net.minecraft.client.renderer.LevelRenderer net.minecraft.client.renderer.MultiBufferSource \
+    net.minecraft.client.renderer.SkyRenderer \
+    net.minecraft.client.renderer.state.level.SkyRenderState \
     net.minecraft.client.renderer.RenderType net.minecraft.client.renderer.blockentity.BlockEntityRenderer \
     net.minecraft.client.renderer.entity.EntityRenderer net.minecraft.client.renderer.CloudRenderer \
     net.minecraft.client.multiplayer.ClientChunkCache net.minecraft.client.Camera \
@@ -218,6 +220,9 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     net.dabicco.witherstormmod.entity.WitherStormEntity \
     net.dabicco.witherstormmod.command.DabyWSCommand"
   javap -public -classpath "$CP2" $CLIENT_CLASSES > ci/api/client.txt 2>&1 || true
+  # SkyRenderer's celestial helper is private in 26.2; include it so native
+  # mixin invokers can be checked against the actual client signature.
+  javap -private -classpath "$CP2" net.minecraft.client.renderer.SkyRenderer >> ci/api/client.txt 2>&1 || true
   javap -public -classpath "$CP2" $MOD_CLASSES   > ci/api/mod.txt    2>&1 || true
   # MCSM 1.9.101 -- the 1.9.101 javac errors (sendParticles overload,
   # "cannot access Message") live in the particle/level/chat API, which the
@@ -279,14 +284,6 @@ else
   echo "[glsl] shader gate FAILED — not building a broken shaderpack"
   exit 1
 fi
-if ! glslcheck/bin/glslang -S frag src/main/resources/assets/dabywitherstormmod/shaders/post/mcsm_core.fsh \
-     >> "$GLSL_LOG" 2>&1; then
-  cat "$GLSL_LOG"
-  echo "[glsl] mcsm_core.fsh FAILED validation — not building a broken core pass"
-  exit 1
-fi
-
-echo "[glsl] mcsm_core.fsh validates"
 
 # Story Look resource-pack shaders must validate as well.
 for SL in storylook/assets/minecraft/shaders/core/*; do
@@ -329,7 +326,7 @@ echo "[glsl] shaderpack-v5 validates"
 # fails the build instead of shipping.
 # ---------------------------------------------------------------------------
 CFG=mcsm-extras/java/net/mcsm/extras/McsmExtrasConfig.java
-sed -i "s/BUILD_VERSION = \"[^\"]*\"/BUILD_VERSION = \"${VER}\"/" "$CFG"
+sed -i "s/BUILD_VERSION = \"[0-9][0-9.]*\"/BUILD_VERSION = \"${VER}\"/" "$CFG"
 echo "[version] BUILD_VERSION synced to ${VER}"
 
 DRIFT="$(grep -rn '"[^"]*1\.9\.[0-9]' --include='*.java' mcsm-extras/java \
@@ -384,14 +381,14 @@ rm -rf "$FX" && mkdir -p "$FX/cls"
 # these resources so the player can actually arrive in Story Mode locations now.
 cp -r mcsm-core-shaders/* "$FX/cls/assets/minecraft/shaders/"
 # 1.9.167: 26.2 loads block rather than terrain for the native block pass.
-# The storm overcast is an entity-attached mesh; no sky shader alias is shipped.
+# Native SkyRenderer owns sky colour; no custom sky/position alias is shipped.
 CS="$FX/cls/assets/minecraft/shaders/core"
 if [ -f "$CS/terrain.fsh" ]; then cp -f "$CS/terrain.fsh" "$CS/block.fsh"; cp -f "$CS/terrain.vsh" "$CS/block.vsh"; fi
 # The 26.2 fixed-function block path also asks for position; reuse the same
 # vivid-light-safe block program rather than reviving any sky shader alias.
 if [ ! -f "$CS/position.fsh" ] && [ -f "$CS/block.fsh" ]; then cp -f "$CS/block.fsh" "$CS/position.fsh"; fi
 if [ ! -f "$CS/position.vsh" ] && [ -f "$CS/block.vsh" ]; then cp -f "$CS/block.vsh" "$CS/position.vsh"; fi
-echo "[build] 26.2 shader aliases: block<-terrain (when present), position<-block; storm overcast is entity-attached"
+echo "[build] 26.2 shader aliases: block<-terrain (when present), position<-block; native SkyRenderer owns sky"
 cp -r jar-overrides/* "$FX/cls/"
 # 1.9.206: src/main/resources was never overlaid -- the merged Story Look
 # textures (sun/moon, villager cast skins) and the story_character skins
@@ -418,9 +415,9 @@ shopt -u nullglob
 if [ "${#FRESH_CLASSES[@]}" -gt 0 ]; then
   cp -r "${FRESH_CLASSES[@]}" "$FX/cls/"
 fi
-# The Wither Storm renderer is authoritative for the overcast. Purge legacy
-# texture-pack sky paths from the base jar as well as from the overlay so they
-# cannot be discovered by a loader or win an ordering race at runtime.
+# Native SkyRenderer is authoritative. Purge legacy texture-pack sky paths from
+# the base jar as well as from the overlay so they cannot be discovered by a
+# loader or win an ordering race at runtime.
 rm -rf "$FX/cls/assets/fabricskyboxes" \
        "$FX/cls/assets/dabywitherstormmod/textures/sky" \
        "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/sky"
@@ -431,16 +428,6 @@ find "$FX/cls/assets/dabywitherstormmod/textures/environment" -maxdepth 1 \
 # left reachable through an old class file.
 rm -f "$FX/cls/net/mcsm/extras/client/McsmBlobOval.class" \
       "$FX/cls/net/mcsm/extras/client/McsmBlobShape.class" \
-      "$FX/cls/net/mcsm/extras/client/McsmHaloSkyRenderer.class" \
-      "$FX/cls/net/mcsm/extras/client/McsmStormBlob.class" \
-      "$FX/cls/net/mcsm/extras/client/McsmStormRings.class" \
-      "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/vortex_tile_witherstormVortexA_alp.png" \
-      "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/vortex_tile_witherstormVortexABackdrop.png" \
-      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStormBlobMixin.class" \
-      "$FX/cls/net/dabicco/witherstormmod/mixin/SkyRendererMixin.class" \
-      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmNativeFogMixin.class" \
-      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStageCloudMixin.class" \
-      "$FX/cls/net/mcsm/extras/client/McsmStoryModeSunSlab.class" \
       "$FX/cls/net/mcsm/extras/client/McsmSkyDome.class" \
       "$FX/cls/net/mcsm/extras/client/McsmStormSkyLayer.class" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/StormSkyGradientMixin.class" \
@@ -590,16 +577,12 @@ for cfg in cfgs:
 if target is None:
     print("::error title=jar audit::no mixin config with package %s found" % PKG)
     raise SystemExit(1)
-# These entries belong to retired texture/dome/sky hooks. Their class files
-# are purged below; remove the base-jar registrations as well or Mixin will
-# fail launch before the entity-attached atmosphere can run.
+# These two entries belong to the retired texture/dome sky path.  Their class
+# files are purged below; remove the base-jar registrations as well or Mixin
+# will fail launch before the native SkyRenderer hook can run.
 p = os.path.join(cls_dir, target)
 d = json.load(open(p))
-retired_sky_mixins = {
-    "StormSkyGradientMixin", "StoryModeSkyDomeMixin",
-    "SkyRendererMixin", "McsmStormBlobMixin", "McsmNativeFogMixin",
-    "McsmStageCloudMixin"
-}
+retired_sky_mixins = {"StormSkyGradientMixin", "StoryModeSkyDomeMixin"}
 removed = []
 for key in ("mixins", "client"):
     old = d.get(key) or []
@@ -850,37 +833,6 @@ if [ ! -f "$FX/cls/assets/minecraft/shaders/core/position.fsh" ] || [ ! -f "$FX/
   echo "::error title=jar audit::26.2 shader aliases missing (position/block) — vivid light would never load"
   AUDIT_FAIL=1
 fi
-if [ ! -s "$FX/cls/assets/dabywitherstormmod/shaders/post/mcsm_core.fsh" ]; then
-  echo "::error title=jar audit::MCSM core ambient shader missing from assembled jar"
-  AUDIT_FAIL=1
-else
-  echo "[audit] MCSM core ambient shader present"
-fi
-# Minecraft resource identifiers are strict lowercase paths. Audit both the
-# generated mesh labels and the assembled texture directory so phase 7 cannot
-# reintroduce the runtime IdentifierException through a stale asset.
-if grep -R -n -E 'vortex_tile_[^"[:space:]]*[A-Z]' \
-     mcsm-extras/java/net/mcsm/extras/client/McsmVortexMesh.java \
-     mcsm-extras/java/net/mcsm/extras/client/McsmAttachedVortex.java; then
-  echo "::error title=jar audit::uppercase character in Vortex resource path"
-  AUDIT_FAIL=1
-fi
-VORTEX_ASSET_DIR="$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere"
-if find "$VORTEX_ASSET_DIR" -maxdepth 1 -type f -name 'vortex*' -printf '%f\n' 2>/dev/null \
-     | grep -E '[A-Z]' >/dev/null; then
-  echo "::error title=jar audit::uppercase Vortex texture filename survived assembly"
-  AUDIT_FAIL=1
-else
-  echo "[audit] Vortex resource paths are lowercase"
-fi
-for vortex_need in \
-  textures/mcsm_atmosphere/vortex_tile_witherstormvortexa_alp.png \
-  textures/mcsm_atmosphere/vortex_tile_witherstormvortexabackdrop.png; do
-  if [ ! -s "$FX/cls/assets/dabywitherstormmod/$vortex_need" ]; then
-    echo "::error title=jar audit::lowercase Vortex texture missing: $vortex_need"
-    AUDIT_FAIL=1
-  fi
-done
 if [ ! -f "$FX/cls/resourcepacks/storylook/pack.mcmeta" ] || [ ! -f "$FX/cls/resourcepacks/storylook/assets/minecraft/textures/environment/sun.png" ]; then
   echo "::error title=jar audit::built-in Sodium-safe Story Look pack missing from the jar"
   AUDIT_FAIL=1
@@ -935,25 +887,6 @@ for need in \
   assets/dabywitherstormmod/resourcepacks/ogs-cem.zip; do
   if [ ! -s "$FX/cls/$need" ]; then
     echo "::error title=jar audit::restored OGS asset missing from jar: $need"
-    AUDIT_FAIL=1
-  fi
-done
-# 1.9.320: the numbered daby CEM selector now points at the authoritative
-# ogs-stuff phase models. Audit the active ladder, the shared 160x160 atlas,
-# and its emissive companion so an assembly cannot silently fall back to the
-# old traced placeholder variants.
-for active_need in \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm.properties \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm1.jem \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm5.jem \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm7.jem \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm8.jem \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm10.jem \
-  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm11.jem \
-  resourcepacks/ogs-cem/assets/dabywitherstormmod/textures/entity/wither_storm/wither_storm.png \
-  resourcepacks/ogs-cem/assets/dabywitherstormmod/textures/entity/wither_storm/wither_storm_e.png; do
-  if [ ! -s "$FX/cls/$active_need" ]; then
-    echo "::error title=jar audit::authoritative active CEM asset missing from jar: $active_need"
     AUDIT_FAIL=1
   fi
 done

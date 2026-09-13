@@ -82,7 +82,7 @@ public final class StoryModeSkyTint {
       }
    }
 
-   /** Calm Story Mode palette helper; storm colour is entity-attached. */
+   /** Native SkyRenderer bridge: calm Story Mode stops without storm blending. */
    public static void nativeCalmGradient(long clockTime, float[] top, float[] mid, float[] horizon) {
       byTime(clockTime, SKY_DAY, SKY_DUSK, SKY_NIGHT, SKY_DAWN, top);
       byTime(clockTime, HORIZON_DAY, HORIZON_DUSK, HORIZON_NIGHT, HORIZON_DAWN, horizon);

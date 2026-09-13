@@ -56,7 +56,7 @@ public abstract class McsmWorldgenPatch {
     @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 0)
     private static void dabyws$wholeStructures(ServerLevel level, CallbackInfoReturnable<Integer> cir) {
         try {
-            // 1.9.305 CRASH FIX -- the base registers this tick for EVERY
+            // 1.9.304 CRASH FIX -- the base registers this tick for EVERY
             // loaded ServerLevel (overworld, nether, end AND the mod's
             // bowels dimension). Keying the logic on a bare
             // "lastLevel != level" flipped true on every invocation, so the
@@ -104,7 +104,7 @@ public abstract class McsmWorldgenPatch {
         }
     }
 
-    /** 1.9.305 -- the story starts itself, exactly once per world load, and
+    /** 1.9.304 -- the story starts itself, exactly once per world load, and
      *  never rebuilds a site that is already there (older world, or the
      *  base's own Episode-1 flow got there first). */
     private static void autoStartTowns(ServerLevel level) {

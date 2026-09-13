@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "207";
+    public static final String BUILD_VERSION = "999.0.0-MCSM-REMAPPED-FINAL";
     public static boolean enableTentacleGrab = true;
     // Automatic schematic/town placement is deliberately OFF.  It can queue
     // three large structures and thousands of chunk rebuilds on first join,
@@ -71,7 +71,8 @@ public final class McsmExtrasConfig {
     /** Phase 4+: icy-white glacier flakes torn off the body blocks, spiralling
      *  upward like a tornado. */
     public static boolean glacierFlakes = true;
-    /** Phase 7+: supplied Telltale Vortex.bbmodel debris mesh. */
+    /** Phase 6+: real cubed rings orbiting the storm (clockwise + diagonal +
+     *  vertical), growing into the gigantic layered vortex at phase 8-9. */
     public static boolean stormRings = true;
 
     // ---- MCSM 1.9.100 batch: the gates ------------------------------------

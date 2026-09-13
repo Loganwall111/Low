@@ -4,15 +4,15 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Compatibility shell for older base callers. The former world-space dome
- * implementation is intentionally inert; McsmAtmosphericMeshComponent owns the
- * visible phase backdrop from the Wither Storm renderer now.
+ * implementation is intentionally inert; McsmNativeSkyRenderer owns both sky
+ * colour and fog state now.
  */
 public final class StormSkyDome {
     private StormSkyDome() {
     }
 
     public static void update(Vec3 cameraPosition) {
-        // The entity-attached atmospheric component is the sole backdrop path.
+        // Native SkyRenderer state extraction is the sole atmosphere update.
     }
 
     public static float strength() {

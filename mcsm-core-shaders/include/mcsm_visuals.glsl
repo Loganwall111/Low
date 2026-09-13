@@ -7,8 +7,8 @@
 //    TURQ #182F2E  PURP #382553  MAGE #761A67  PINK #A32E92  RED  #661326
 //
 //  TIMELINE
-//    4.45-4.95  dark navy fog only (sky untouched)
-//    5.00-5.15  dark charcoal/navy atmosphere (no body recolour)
+//    4.45-4.95  green fog only (sky untouched)
+//    5.00-5.15  turquoise sky + green glare blob ("brighter" at 5.1)
 //    5.20       sky goes dark purple (snap; teal hard-deactivated)
 //    5.20-5.40  morphs through purple
 //    5.40-5.55  morphs to pink with dark purple overhead (img 3)
@@ -333,8 +333,8 @@ float mcsm_ramp(float v, float lo, float hi) {
 // key: (bottom, mid, top, lift, sharp). Lift = how far the horizon colour
 // climbs; sharp = ribbon crispness (0 feathered .. 1 hard edge).
 vec3 mcsm_k_bot(int k) {
-    if (k == 0) return vec3(0.035, 0.055, 0.075);   // 5.00 dark navy horizon
-    if (k == 1) return vec3(0.055, 0.080, 0.110);   // 5.10 cool navy lift
+    if (k == 0) return vec3(0.000, 0.880, 0.800);   // 5.00 turquoise horizon
+    if (k == 1) return vec3(0.060, 0.940, 0.850);   // 5.10 brighter green-teal
     if (k == 2) return vec3(0.150, 0.050, 0.250);   // 5.20 dark purple (img 3 base)
     if (k == 3) return vec3(0.240, 0.080, 0.330);   // 5.40 purple morph mid
     if (k == 4) return vec3(0.920, 0.360, 0.680);   // 5.55 light story-pink core
@@ -345,8 +345,8 @@ vec3 mcsm_k_bot(int k) {
     return vec3(0.550, 0.160, 0.030);                // 8.00 deeper ember
 }
 vec3 mcsm_k_mid(int k) {
-    if (k == 0) return vec3(0.070, 0.100, 0.140);
-    if (k == 1) return vec3(0.100, 0.145, 0.190);
+    if (k == 0) return vec3(0.000, 0.340, 0.320);
+    if (k == 1) return vec3(0.040, 0.560, 0.520);
     if (k == 2) return vec3(0.220, 0.145, 0.325);   // PURP #382553
     if (k == 3) return vec3(0.340, 0.120, 0.420);
     if (k == 4) return vec3(0.620, 0.170, 0.510);   // rose-purple body
@@ -388,7 +388,7 @@ void mcsm_keys(float p, out vec3 bot, out vec3 mid, out vec3 top,
     bot = mix(mcsm_k_bot(ka), mcsm_k_bot(kb), u);
     mid = mix(mcsm_k_mid(ka), mcsm_k_mid(kb), u);
     top = mix(mcsm_k_top(ka), mcsm_k_top(kb), u);
-    // horizon colour climbs higher at 5.1 and flattens at 6.1 tapestry
+    // horizon colour climbs higher at 5.1 (denser teal) and flattens at 6.1 tapestry
     lift  = mix(p <= 5.15 ? 0.42 : 0.30, p >= 6.0 ? 0.90 : (p >= 5.55 ? 0.55 : 0.36), u);
     sharp = p < 5.2 ? 0.0 : (p < 5.4 ? 0.9 : (p < 6.0 ? 0.45 : 0.8));
 }
@@ -430,10 +430,10 @@ vec3 mcsm_sky_color(float height, float p, float clock) {
 // ---------------------------------------------------------------- blob (glare)
 // Retuned to the CORRECTED 2026-09-11 decks. This is the ground-rim tint
 // under the storm column (terrain.fsh), so it tracks the same palettes the
-// sky blob paints: 5 charcoal/navy, 5.5-5.9 velvet violet, 6 dusty rose/amber,
+// sky blob paints: 5 moss-green, 5.5-5.9 velvet violet, 6 dusty rose/amber,
 // 7/8 ember.
 vec3 mcsm_blob_color(float p, float clock) {
-    vec3 teal = mix(vec3(29.0, 51.0, 72.0),  vec3(80.0, 105.0, 135.0), 0.55) / 255.0; // #1D3348 -> #506987
+    vec3 teal = mix(vec3(29.0, 51.0, 53.0),  vec3(85.0, 112.0, 97.0), 0.55) / 255.0; // #1D3335 -> #557061
     vec3 purp = mix(vec3(42.0, 18.0, 61.0),  vec3(75.0, 30.0, 94.0), 0.45) / 255.0; // #2A123D -> #4B1E5E
     vec3 six  = mix(vec3(138.0, 83.0, 97.0), vec3(196.0, 122.0, 90.0), 0.35) / 255.0; // #8A5361 -> #C47A5A
     vec3 ember = vec3(0.720, 0.180, 0.100);
@@ -474,10 +474,10 @@ vec3 mcsm_blob_color(float p, float clock) {
 
 // CORRECTED artist hexes (user 2026-09-11, re-measured from the reference
 // screenshots). x/255 -> display space.
-// PHASE 5 -- CHARCOAL/NAVY SKYBOX BLOB
-const vec3 P5_CORE  = vec3(10.0, 17.0, 24.0) / 255.0;   // #0A1118 charcoal navy
-const vec3 P5_MID   = vec3(29.0, 51.0, 72.0) / 255.0;    // #1D3348 dark navy
-const vec3 P5_EDGE  = vec3(80.0, 105.0, 135.0) / 255.0;  // #506987 blue-grey edge
+// PHASE 5 -- GREEN SKYBOX BLOB
+const vec3 P5_CORE  = vec3(10.0, 17.0, 18.0) / 255.0;   // #0A1112
+const vec3 P5_MID   = vec3(29.0, 51.0, 53.0) / 255.0;    // #1D3335
+const vec3 P5_EDGE  = vec3(85.0, 112.0, 97.0) / 255.0;  // #557061
 const vec3 P5_BEAM  = vec3(132.0, 147.0, 255.0) / 255.0; // #8493FF
 // PHASE 5.5-5.9 -- PURPLE & PINK VOID BLOB
 const vec3 P55_CORE = vec3(5.0, 2.0, 8.0) / 255.0;      // #050208
@@ -683,16 +683,14 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
 
 // ---------------------------------------------------------------- fog / tints
 vec3 mcsm_fog_color(float p, vec3 vanilla) {
-    // The former 4.5/5.0 green haze was a hidden global body/world filter.
-    // Start from charcoal navy and let later purple/ember phase decks take
-    // over without ever re-huing the storm body green.
-    vec3 neutral = vec3(0.070, 0.090, 0.130);
+    // 4.5 green haze first, then the sky's own bottom colour drives the fog.
+    vec3 green = vec3(0.100, 0.420, 0.300);
     float seg;
     vec3 bot, mid, top; float lift, sharp;
     mcsm_keys(p, bot, mid, top, lift, sharp);
     vec3 c = bot * 0.75 + mid * 0.25;
     seg = mcsm_ramp(p, 4.42, 4.95);
-    c = mix(neutral, c, seg);
+    c = mix(green, c, seg);
     return mcsm_kill_teal(mix(vanilla, c, 0.55 + 0.30 * seg), p);
 }
 
@@ -704,8 +702,8 @@ float mcsm_fog_density(float p) {
 
 vec3 mcsm_cloud_tint(float p) {
     if (p < 5.05) return vec3(0.98, 1.00, 0.98);
-    if (p < 5.19) return mix(vec3(0.98, 1.00, 0.98), vec3(0.76, 0.84, 0.98), mcsm_ramp(p, 4.95, 5.10));
-    if (p < 5.40) return mix(vec3(0.76, 0.84, 0.98), vec3(0.78, 0.42, 0.92), mcsm_ramp(p, 5.19, 5.30));
+    if (p < 5.19) return mix(vec3(0.98, 1.00, 0.98), vec3(0.58, 1.00, 0.94), mcsm_ramp(p, 4.95, 5.10));
+    if (p < 5.40) return mix(vec3(0.58, 1.00, 0.94), vec3(0.78, 0.42, 0.92), mcsm_ramp(p, 5.19, 5.30));
     if (p < 5.95) return vec3(0.92, 0.52, 0.80);
     if (p < 6.06) return mix(vec3(0.92, 0.52, 0.80), vec3(0.80, 0.78, 0.82), mcsm_ramp(p, 5.95, 6.04));
     if (p < 6.90) return vec3(0.98, 0.72, 0.60);                       // orange-lit at 6.1
@@ -715,7 +713,7 @@ vec3 mcsm_cloud_tint(float p) {
 
 vec3 mcsm_star_tint(float p) {
     if (!mcsm_fog_active(p)) return vec3(1.0);
-    if (p < 5.19) return vec3(0.18, 0.28, 0.48);
+    if (p < 5.19) return vec3(0.10, 0.24, 0.22);
     if (p < 5.95) return vec3(0.30, 0.14, 0.30);
     if (p < 6.90) return vec3(0.22, 0.18, 0.24);
     return vec3(0.28, 0.10, 0.08);

@@ -5,7 +5,7 @@ import net.dabicco.witherstormmod.config.WitherStormConfigs;
 import net.dabicco.witherstormmod.config.WitherStormWorldConfig;
 import net.minecraft.client.Minecraft;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.mcsm.extras.client.McsmCoreEngineController;
+import net.mcsm.extras.client.McsmHaloSkyRenderer;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Field;
@@ -47,22 +47,23 @@ public final class McsmGate {
 
     private static boolean clientDone = false;
     private static boolean worldDone = false;
-    private static boolean coreSunSlabRegistered = false;
+    private static boolean nativeHaloRegistered = false;
 
     /**
-     * The sun slab is the only level-wide component in the new architecture.
-     * The atmospheric overcast itself remains attached to WitherStormRenderer;
-     * this callback only places the camera-relative 500-block celestial prop.
+     * Register the Halo on the actual level submit event instead of relying
+     * solely on replacing the base mod's StormBackdrop callback. The base
+     * callback is version-sensitive and can be skipped by a harmless optional
+     * mixin; the Halo itself must remain visible in that case.
      */
-    private static synchronized void registerCoreSunSlabPass() {
-        if (coreSunSlabRegistered) {
+    private static synchronized void registerNativeHaloPass() {
+        if (nativeHaloRegistered) {
             return;
         }
         try {
-            LevelRenderEvents.COLLECT_SUBMITS.register(McsmCoreEngineController::submitSunSlab);
-            coreSunSlabRegistered = true;
+            LevelRenderEvents.COLLECT_SUBMITS.register(McsmHaloSkyRenderer::submit);
+            nativeHaloRegistered = true;
         } catch (Throwable ignored) {
-            // A Fabric event signature change must not break ordinary rendering.
+            // Rendering must remain fail-soft if Fabric changes the event API.
         }
     }
 
@@ -167,7 +168,7 @@ public final class McsmGate {
         if (clientDone) {
             return;
         }
-        registerCoreSunSlabPass();
+        registerNativeHaloPass();
         McsmExtrasConfig.load();
         clientDone = true;
         // 1.9.208: the vanilla look is permanently disabled -- there is no
@@ -182,11 +183,8 @@ public final class McsmGate {
             // ---- storm body + sky -----------------------------------------
             changed += setBool(c, "distantStorms", true);
             changed += setBool(c, "distantFog", true);
-            // Retire the old level-wide quad path. The only storm overcast is
-            // now submitted from WitherStormRenderer by the physical mesh
-            // component, so a config preset cannot resurrect the old card.
-            changed += retireBool(c, "stormBackdrop", false);
-            changed += retireBool(c, "stormBackdropQuad", false);
+            // The native SkyRenderer owns the full atmosphere for every
+            // phase; there is no alternate skybox feature to gate.
             changed += setBool(c, "cloudDeckLayer", true);
             changed += setBool(c, "regionalBiomeFog", true);
             changed += setBool(c, "phaseAnim", true);
@@ -237,11 +235,8 @@ public final class McsmGate {
             changed += setBool(c, "stormShadowSoftEdge", false);
             changed += setBool(c, "stormShadowHeightmap", false);
 
-            // ---- screen: keep the body effects, retire the sky-cover band --
-            // The attached oval remains in the entity renderer. The old HUD
-            // vignette is a camera-wide top/bottom band, so it cannot be part
-            // of the single continuous sky path.
-            changed += retireBool(c, "stormProximityVignette", false);
+            // ---- screen: smoke screen, tremor, sickness, glitch -----------
+            changed += setBool(c, "stormProximityVignette", true);
             changed += setBool(c, "sicknessVeinOverlay", true);
             changed += setBool(c, "groundShakingTremors", true);
             changed += setBool(c, "dynamicScreenShake", true);
@@ -388,18 +383,6 @@ public final class McsmGate {
     private static boolean persistedAtLeast(String name, double min) {
         Double v = persistedOverrides().get(name);
         return v != null && v >= min - 1e-9;
-    }
-
-    /** Retired renderer switches are not player-facing options anymore. */
-    private static int retireBool(Class<?> owner, String name, boolean value) {
-        try {
-            Field f = owner.getField(name);
-            boolean cur = f.getBoolean(null);
-            f.setBoolean(null, value);
-            return cur == value ? 0 : 1;
-        } catch (Throwable ignored) {
-            return 0;
-        }
     }
 
     private static int setBool(Class<?> owner, String name, boolean value) {

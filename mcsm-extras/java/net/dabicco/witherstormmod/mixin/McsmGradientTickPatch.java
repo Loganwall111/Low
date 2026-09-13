@@ -9,8 +9,8 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.mcsm.extras.McsmDiag;
 import net.mcsm.extras.McsmGate;
 import net.mcsm.extras.client.McsmClientBlasts;
+import net.mcsm.extras.client.McsmStormDebris;
 import net.mcsm.extras.client.McsmClientChat;
-import net.mcsm.extras.client.McsmCoreEngineController;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -29,9 +29,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * and active. A whole-jar bytecode scan for callers of that method returns
  * NOTHING -- it is dead code. Three classes read the results:
  *
- *     entity-attached atmosphere -> phase palette from WitherStormRenderState
- *     McsmFogCarrierMixin       -> yaw(), pitch(), phase(), fogStampActive()
- *     McsmBlobCarrierPatch      -> yaw(), pitch(), phase(), fogStampActive()
+ *     native SkyRenderer state -> phase/time sky carriers
+ *     McsmFogCarrierMixin     -> yaw(), pitch(), phase(), fogStampActive()
+ *     McsmBlobCarrierPatch    -> yaw(), pitch(), phase(), fogStampActive()
  *
  * but nobody ever populates them. So "active" stays false for the entire
  * session, fogStampActive() returns false, and BOTH carriers bail at their
@@ -76,23 +76,15 @@ public abstract class McsmGradientTickPatch {
             return;
         }
         try {
-            // Remove the retired screen-wide sky layers before either the
-            // native SkyRenderer or the level-end post passes can draw them.
-            net.dabicco.witherstormmod.client.McsmSkyArtifactGuard.disableExtraSkyLayers();
             McsmGate.openClient();
-            // McsmGate opens body visuals but its legacy look defaults include
-            // camera-wide vignette/cloud switches. Re-assert the sky owner
-            // after the gate so those settings cannot cover the native pass.
-            net.dabicco.witherstormmod.client.McsmSkyArtifactGuard.disableExtraSkyLayers();
             McsmDiag.banner();
             // MCSM 1.9.110 -- speak the build number in chat once per world
             // load. Chat is the one place the player is guaranteed to look, so
             // "which jar is actually running?" stops needing a log hunt.
             McsmClientChat.announceBuildOnce();
             StormSkyGradient.update(cameraState.pos);
-            McsmCoreEngineController.beginFrame(cameraState.pos);
-            // The Wither Storm renderer owns the atmosphere; no external
-            // skybox or camera-relative backdrop is toggled from the frame driver.
+            // The native SkyRenderer owns the atmosphere; no external
+            // skybox is toggled from the frame driver.
             net.mcsm.extras.client.McsmTeethPhaseTint.tick();
             // Report what update() produced. This is the value the glare blob
             // depends on -- if it never reports ACTIVE, the blob cannot draw
@@ -125,9 +117,8 @@ public abstract class McsmGradientTickPatch {
             // has been removed, and this hook runs for as long as the world is
             // being rendered. It steps at most once per game tick internally.
             McsmClientBlasts.tick();
-            // Keep the storm silhouette clean. The former always-max custom
-            // debris vortex made the body read as a cloud of black particles;
-            // native debris remains independently guarded by McsmDebrisKillPatch.
+            // 1.9.204 -- Story Mode debris/dust vortex around every storm.
+            McsmStormDebris.tick();
             // 1.9.208 -- volumetric beam strength rides the time of day:
             // near-noon the tractor beams flare hardest; deep night they
             // dim to a faint purple shaft. Written live every frame so the
@@ -151,10 +142,8 @@ public abstract class McsmGradientTickPatch {
             float t = (float) (mc.level.getGameTime() % 24000L);
             float day = 0.5F + 0.5F * (float) Math.cos(((t - 6000.0F) / 24000.0F) * Math.PI * 2.0D);
             DabyWSClientConfig.beamOpacity = 0.85F + 0.75F * day;
-            // Keep the eye/beam channel genuinely purple; teeth use their
-            // separate cyan/green phase palette.
-            DabyWSClientConfig.beamColorR  = 0.62F + 0.12F * day;
-            DabyWSClientConfig.beamColorG  = 0.18F + 0.10F * day;
+            DabyWSClientConfig.beamColorR  = 0.48F + 0.18F * day;
+            DabyWSClientConfig.beamColorG  = 0.10F + 0.12F * day;
             DabyWSClientConfig.beamColorB  = 1.00F;
         } catch (Throwable ignored) {
         }
