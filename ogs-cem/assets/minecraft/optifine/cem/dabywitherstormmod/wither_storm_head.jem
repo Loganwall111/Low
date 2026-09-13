@@ -1,4 +1,5 @@
 {
+	"texture": "witherstormmod:textures/entity/wither_storm/wither_storm.png",
 	"credit": "Telltale 1:1 meshes (extracted by wheatlycrab5892, voxelised by Devouring Storms)",
 	"textureSize": [160, 160],
 	"models": [

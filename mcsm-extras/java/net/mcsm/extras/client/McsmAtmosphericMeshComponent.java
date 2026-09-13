@@ -161,87 +161,52 @@ public final class McsmAtmosphericMeshComponent {
     private static int colour(float phase, double x, double y, float phaseFade) {
         float radius = Mth.clamp((float) Math.sqrt(x * x + y * y), 0.0F, 1.0F);
         float vertical = Mth.clamp((float) ((y + 1.0D) * 0.5D), 0.0F, 1.0F);
-        int p45 = phase45(radius);
-        int p5 = phase5(radius);
-        int p55 = phase55(radius, vertical);
+        int p45 = phase45(vertical);
+        int p5 = phase5(vertical);
+        int p55 = phase55(vertical);
         int p6 = phase6(vertical);
 
         int rgb;
         if (phase < 5.0F) {
-            // Phase 4.5 through 5.0 remains the green/teal local atmosphere;
-            // the body texture itself is never tinted by this backdrop.
-            rgb = mix(p45, p5, smoothstep(phase, 4.82F, 5.0F));
+            rgb = mix(p45, p5, smoothstep(phase, 4.45F, 5.0F));
         } else if (phase < 5.5F) {
             rgb = mix(p5, p55, smoothstep(phase, 5.0F, 5.5F));
         } else {
-            rgb = mix(p55, p6, smoothstep(phase, 5.9F, 6.05F));
+            rgb = mix(p55, p6, smoothstep(phase, 5.5F, 6.0F));
         }
 
         float outerFade = 1.0F - smoothstep(radius, 0.68F, 1.0F);
-        // Phase 5's black core is intentionally dark but not opaque: the
-        // cloud layer and the storm silhouette remain visible through it.
         float corePass = phase >= 5.0F
                 ? 0.22F + 0.78F * smoothstep(radius, 0.0F, 0.42F)
                 : 1.0F;
-        // Finish the lower edge as a dark silhouette instead of a bright
-        // floating slab. This anchors the atmosphere below the storm while
-        // the enlarged rear circle carries the cover up over its crown.
         float bottomSilhouette = 1.0F - smoothstep(vertical, 0.0F, 0.32F);
         rgb = mix(rgb, rgb(0x01, 0x03, 0x08), bottomSilhouette * 0.82F);
         float alpha = MAX_ALPHA * phaseFade * outerFade * corePass;
         return (Mth.clamp((int) (alpha * 255.0F), 0, 255) << 24) | (rgb & 0x00FFFFFF);
     }
 
-    private static int phase45(float radius) {
-        int core = rgb(0x06, 0x0E, 0x12);
-        int mid = rgb(0x12, 0x2A, 0x2B);
-        int fringe = rgb(0x35, 0x5E, 0x4B);
-        return radius < 0.40F
-                ? mix(core, mid, radius / 0.40F)
-                : mix(mid, fringe, (radius - 0.40F) / 0.60F);
+    /** Phase 4.5 green initialization, used only after the vanilla 4.0 path. */
+    private static int phase45(float vertical) {
+        return verticalGradient(rgb(0x6E, 0x8F, 0x73), rgb(0x17, 0x3B, 0x32), vertical);
     }
 
-    private static int phase5(float radius) {
-        // Phase 5 is the green/teal deck. Do not let the old navy-blue
-        // fallback return here; purple begins with the 5.3/5.5 transition.
-        int core = rgb(0x02, 0x0A, 0x0B);
-        int mid = rgb(0x08, 0x32, 0x31);
-        int fringe = rgb(0x2C, 0x9A, 0x83);
-        return radius < 0.40F
-                ? mix(core, mid, radius / 0.40F)
-                : mix(mid, fringe, (radius - 0.40F) / 0.60F);
+    /** Exact Phase 5 slate-teal track: #6E7873 horizon to #1D2B2B zenith. */
+    private static int phase5(float vertical) {
+        return verticalGradient(rgb(0x6E, 0x78, 0x73), rgb(0x1D, 0x2B, 0x2B), vertical);
     }
 
-    private static int phase55(float radius, float vertical) {
-        int core = rgb(0x05, 0x02, 0x08);
-        int mid = rgb(0x2A, 0x12, 0x3D);
-        int fringe = rgb(0x4B, 0x1E, 0x5E);
-        int horizon = rgb(0x7D, 0x4B, 0x91);
-        int radial = radius < 0.34F
-                ? mix(core, mid, radius / 0.34F)
-                : radius < 0.70F
-                        ? mix(mid, fringe, (radius - 0.34F) / 0.36F)
-                        : mix(fringe, horizon, (radius - 0.70F) / 0.30F);
-        // The horizon bleed is strongest below the center without replacing
-        // the radial dark core.
-        return mix(radial, horizon, (1.0F - vertical) * 0.20F * radius);
+    /** Exact Phase 5.5 track: #7F3AA6 horizon to #1A0A2A zenith. */
+    private static int phase55(float vertical) {
+        return verticalGradient(rgb(0x7F, 0x3A, 0xA6), rgb(0x1A, 0x0A, 0x2A), vertical);
     }
 
+    /** Exact Phase 6+ track: #A0757E horizon to #422E3B zenith. */
     private static int phase6(float vertical) {
-        // Phase 6 keeps the attached halo in the purple/pink family. The old
-        // salmon horizon was the orange strip that could read as a second sky
-        // layer at the top of the screen, so it is intentionally gone.
-        int zenith = rgb(0x12, 0x08, 0x22);
-        int upper = rgb(0x3A, 0x19, 0x50);
-        int lower = rgb(0x7A, 0x3A, 0x78);
-        int horizon = rgb(0xB5, 0x4E, 0x95);
-        if (vertical > 0.68F) {
-            return mix(upper, zenith, (vertical - 0.68F) / 0.32F);
-        }
-        if (vertical > 0.30F) {
-            return mix(lower, upper, (vertical - 0.30F) / 0.38F);
-        }
-        return mix(horizon, lower, vertical / 0.30F);
+        return verticalGradient(rgb(0xA0, 0x75, 0x7E), rgb(0x42, 0x2E, 0x3B), vertical);
+    }
+
+    private static int verticalGradient(int horizon, int zenith, float vertical) {
+        return mix(horizon, zenith, smoothstep(vertical, 0.0F, 1.0F));
     }
 
     private static double bodyRadius(float phase) {

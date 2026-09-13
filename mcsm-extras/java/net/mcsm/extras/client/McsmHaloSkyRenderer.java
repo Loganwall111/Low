@@ -77,7 +77,9 @@ public final class McsmHaloSkyRenderer {
             // Config is loaded by the client tick before render submission;
             // never perform config/file work in this geometry path.
             double bodyRadius = bodyRadius(storm.phase);
-            float phaseFade = Mth.clamp((storm.phase - 4.90F) / 0.18F, 0.0F, 1.0F);
+            // Phase 4 remains vanilla. The procedural overlay fades in at
+            // 4.5 so the green atmosphere has a smooth, non-banded onset.
+            float phaseFade = Mth.clamp((storm.phase - 4.45F) / 0.22F, 0.0F, 1.0F);
             float distanceFade = 1.0F - Mth.clamp(
                     (float) ((distance - 1500.0D) / 1300.0D), 0.0F, 1.0F);
             float visibility = phaseFade * distanceFade;
@@ -92,12 +94,15 @@ public final class McsmHaloSkyRenderer {
             double outerAngle = Math.toRadians(storm.phase >= 6.0F ? 31.0D : 27.0D);
             double horizontal = Math.max(bodyRadius * 2.2D,
                     distance * Math.tan(outerAngle)) * (0.72D + 0.14D * size);
-            double vertical = horizontal * 0.54D;
+            // Widen the vertical centre mask enough to cover the zenith and
+            // stop overworld-blue bleed above the storm. This is still the
+            // existing curved world-attached mesh, not a replacement sky card.
+            double vertical = horizontal * 1.35D;
             double depth = horizontal * 0.16D;
             // Keep the geometry bounded even if a config slider is set to its
             // maximum on a close camera; all colour still fades at the rim.
             horizontal = Math.min(horizontal, 720.0D);
-            vertical = Math.min(vertical, 390.0D);
+            vertical = Math.min(vertical, 860.0D);
             depth = Math.min(depth, 116.0D);
 
             Vec3 centre = stormPos; // exact u_StormPos tether; no camera offset
@@ -125,7 +130,7 @@ public final class McsmHaloSkyRenderer {
         ClientDistantStormManager.StormData best = null;
         double bestDistance = Double.MAX_VALUE;
         for (ClientDistantStormManager.StormData storm : ClientDistantStormManager.all()) {
-            if (storm.phase < 4.90F) {
+            if (storm.phase < 4.45F) {
                 continue;
             }
             double dx = storm.dispX - camera.x;
@@ -203,28 +208,40 @@ public final class McsmHaloSkyRenderer {
                 .setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 
-    /** Exact phase colour decks supplied for the recovered Halo payload. */
+    /**
+     * Exact cinematic phase tracks. The interpolation axis is the mesh's
+     * vertical coordinate: 0 is the horizon and 1 is the zenith. Phase 4 is
+     * intentionally absent because vanilla owns the atmosphere until 4.45.
+     */
     private static int palette(float phase, float vertical, double radius) {
-        int phase5 = gradient(
-                rgb(0x55, 0x70, 0x61), rgb(0x1D, 0x33, 0x35), rgb(0x0A, 0x11, 0x12),
-                vertical, 0.18F, 0.64F, 0.84F);
-        int phase55 = gradient(
-                rgb(0x4B, 0x1E, 0x5E), rgb(0x2A, 0x12, 0x3D), rgb(0x05, 0x02, 0x08),
-                vertical, 0.18F, 0.64F, 0.84F);
-        int phase6 = gradient6(vertical);
+        float y = smoothstep(0.0F, 1.0F, vertical);
+        int green = verticalGradient(rgb(0x6E, 0x8F, 0x73), rgb(0x17, 0x3B, 0x32), y);
+        int slate = verticalGradient(rgb(0x6E, 0x78, 0x73), rgb(0x1D, 0x2B, 0x2B), y);
+        int purple = verticalGradient(rgb(0x7F, 0x3A, 0xA6), rgb(0x1A, 0x0A, 0x2A), y);
+        int plum = verticalGradient(rgb(0xA0, 0x75, 0x7E), rgb(0x42, 0x2E, 0x3B), y);
 
-        float w55 = smoothstep(5.22F, 5.52F, phase);
-        float w6 = smoothstep(5.88F, 6.08F, phase);
-        int color = mixColor(phase5, phase55, w55);
-        color = mixColor(color, phase6, w6);
+        int color;
+        if (phase < 5.0F) {
+            color = mixColor(green, slate, smoothstep(4.45F, 5.0F, phase));
+        } else if (phase < 5.5F) {
+            color = mixColor(slate, purple, smoothstep(5.0F, 5.5F, phase));
+        } else if (phase < 6.0F) {
+            color = mixColor(purple, plum, smoothstep(5.5F, 6.0F, phase));
+        } else {
+            color = plum;
+        }
 
-        // The beam focus is a restrained native highlight near the lower
-        // centre; it never becomes a separate plate or detached band.
-        float focus = (float) Math.max(0.0D, 0.42D - radius) * (1.0F - vertical) * 0.32F;
-        if (focus > 0.0F) {
-            color = mixColor(color, rgb(0x84, 0x93, 0xFF), focus);
+        // Keep the old soft core/rim ownership: the exact vertical track is
+        // the overlay, while the center remains dark enough to hide sky bleed.
+        float core = 1.0F - smoothstep(0.0F, 0.72F, (float) radius);
+        if (phase >= 5.0F) {
+            color = mixColor(color, rgb(0x08, 0x05, 0x10), core * 0.28F);
         }
         return color;
+    }
+
+    private static int verticalGradient(int horizon, int zenith, float y) {
+        return mixColor(horizon, zenith, y);
     }
 
     private static int gradient6(float vertical) {

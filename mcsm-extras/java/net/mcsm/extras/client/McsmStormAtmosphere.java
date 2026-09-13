@@ -83,24 +83,29 @@ public final class McsmStormAtmosphere {
     /** Compatibility colour for older fog callers; native SkyRenderer is authoritative. */
     public static float skyBlend(float[] out) {
         float phase = nearestPhase();
-        if (phase < 4.90F || out == null || out.length < 3) {
+        if (phase < 4.45F || out == null || out.length < 3) {
+            // Phase 4 remains entirely vanilla.
             return 0.0F;
         }
-        float[] p5 = {0x14 / 255.0F, 0x22 / 255.0F, 0x26 / 255.0F};
-        // Ordinary phase 5.5 retains a purple upper atmosphere; the
-        // near-black zenith belongs only to the opt-in stage, never the
-        // normal storm presentation.
-        float[] p55 = {0x23 / 255.0F, 0x11 / 255.0F, 0x41 / 255.0F};
-        float[] p6 = {0x1A / 255.0F, 0x12 / 255.0F, 0x26 / 255.0F};
-        float t55 = ramp(phase, 5.00F, 5.50F);
-        float t6 = ramp(phase, 5.90F, 6.00F);
-        out[0] = p5[0] + (p55[0] - p5[0]) * t55;
-        out[1] = p5[1] + (p55[1] - p5[1]) * t55;
-        out[2] = p5[2] + (p55[2] - p5[2]) * t55;
-        out[0] += (p6[0] - out[0]) * t6;
-        out[1] += (p6[1] - out[1]) * t6;
-        out[2] += (p6[2] - out[2]) * t6;
-        return Mth.clamp(0.80F * distanceInfluence(), 0.0F, 0.80F);
+        float[] green = {0x6E / 255.0F, 0x8F / 255.0F, 0x73 / 255.0F};
+        float[] slate = {0x6E / 255.0F, 0x78 / 255.0F, 0x73 / 255.0F};
+        float[] purple = {0x7F / 255.0F, 0x3A / 255.0F, 0xA6 / 255.0F};
+        float[] plum = {0xA0 / 255.0F, 0x75 / 255.0F, 0x7E / 255.0F};
+        if (phase < 5.0F) {
+            blend(green, slate, ramp(phase, 4.45F, 5.0F), out);
+        } else if (phase < 5.5F) {
+            blend(slate, purple, ramp(phase, 5.0F, 5.5F), out);
+        } else {
+            blend(purple, plum, ramp(phase, 5.5F, 6.0F), out);
+        }
+        float density = phase < 5.0F ? 0.86F : (phase < 5.5F ? 0.72F : 0.66F);
+        return Mth.clamp(density * distanceInfluence(), 0.0F, 0.86F);
+    }
+
+    private static void blend(float[] a, float[] b, float t, float[] out) {
+        out[0] = a[0] + (b[0] - a[0]) * t;
+        out[1] = a[1] + (b[1] - a[1]) * t;
+        out[2] = a[2] + (b[2] - a[2]) * t;
     }
 
     public static void tick() {

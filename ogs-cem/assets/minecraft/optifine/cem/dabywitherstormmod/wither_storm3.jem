@@ -1,6 +1,6 @@
 {
 	"credit": "Telltale 1:1 meshes (extracted by wheatlycrab5892, voxelised by Devouring Storms)",
-	"texture": "textures/entity/cem/wither_storm_stage_b.png",
+	"texture": "witherstormmod:textures/entity/wither_storm/wither_storm.png",
 	"textureSize": [160, 160],
 	"models": [
 		{"part": "mass","id": "skM0_witherstormStageB","invertAxis": "xy","translate": [-1.441,-32.713,-0.305],"boxes": [

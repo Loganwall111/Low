@@ -1,4 +1,5 @@
 {
+	"texture": "witherstormmod:textures/entity/wither_storm/wither_storm.png",
 	"credit": "Made with Blockbench",
 	"textureSize": [160, 160],
 	"models": [

@@ -68,9 +68,42 @@ public final class McsmNativeSkyRenderer {
         if (level == null || out == null || out.length < 3 || !McsmSkyArtifactGuard.stormSkyActive()) {
             return 0.0F;
         }
-        StoryModeSkyTint.horizonColor(level.getOverworldClockTime(), out);
-        return Math.min(0.80F, Math.max(0.0F,
-                0.80F * McsmStormAtmosphere.distanceInfluence()));
+        float phase = McsmStormAtmosphere.nearestPhase();
+        phaseFogColor(phase, out);
+        // The green 4.5 deck is deliberately denser; later tracks remain
+        // visible but never become an opaque fullscreen plate.
+        float density = phase < 5.0F ? 0.86F : (phase < 5.5F ? 0.72F : 0.66F);
+        return Math.min(0.86F, Math.max(0.0F,
+                density * McsmStormAtmosphere.distanceInfluence()));
+    }
+
+    private static void phaseFogColor(float phase, float[] out) {
+        float t;
+        float[] green = {0x6E / 255.0F, 0x8F / 255.0F, 0x73 / 255.0F};
+        float[] slate = {0x6E / 255.0F, 0x78 / 255.0F, 0x73 / 255.0F};
+        float[] purple = {0x7F / 255.0F, 0x3A / 255.0F, 0xA6 / 255.0F};
+        float[] plum = {0xA0 / 255.0F, 0x75 / 255.0F, 0x7E / 255.0F};
+        if (phase < 5.0F) {
+            t = smoothstep(4.45F, 5.0F, phase);
+            mix(green, slate, t, out);
+        } else if (phase < 5.5F) {
+            t = smoothstep(5.0F, 5.5F, phase);
+            mix(slate, purple, t, out);
+        } else {
+            t = smoothstep(5.5F, 6.0F, phase);
+            mix(purple, plum, t, out);
+        }
+    }
+
+    private static void mix(float[] a, float[] b, float t, float[] out) {
+        for (int i = 0; i < 3; i++) {
+            out[i] = a[i] + (b[i] - a[i]) * t;
+        }
+    }
+
+    private static float smoothstep(float lo, float hi, float value) {
+        float t = Math.max(0.0F, Math.min(1.0F, (value - lo) / (hi - lo)));
+        return t * t * (3.0F - 2.0F * t);
     }
 
     public static boolean ownsSky() {

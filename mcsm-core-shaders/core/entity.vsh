@@ -58,12 +58,23 @@ out vec4 overlayColor;
 out vec2 texCoord0;
 flat out int mcsmAttach;
 out vec3 mcsmLocalPos;
+// Specular rim carrier for the storm body/head/tentacle entity pass.
+out float mcsmRim;
 
 void main() {
     vec3 pos = Position;
     mcsmLocalPos = Position;
 
     mcsmAttach = (UV2.x > 3900 && UV2.y > 3900) ? 1 : 0;
+
+    // Cinematic purple edge sheen. Work in view space so the view direction
+    // is the player's actual camera direction for every pose and phase.
+    vec3 mcsmViewNormal = normalize(mat3(ModelViewMat) * Normal);
+    vec3 mcsmViewPosition = (ModelViewMat * vec4(pos, 1.0)).xyz;
+    vec3 viewDir = normalize(-mcsmViewPosition);
+    float rim = 1.0 - max(dot(viewDir, mcsmViewNormal), 0.0);
+    rim = pow(rim, 3.5);
+    mcsmRim = rim;
 
     float mcsmP = mcsm_phase(FogSkyEnd, FogColor, FogRenderDistanceEnd);
     bool mcsmStormy = mcsm_active(mcsmP);

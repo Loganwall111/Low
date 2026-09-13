@@ -38,6 +38,7 @@ in vec4 overlayColor;
 in vec2 texCoord0;
 flat in int mcsmAttach;
 in vec3 mcsmLocalPos;
+in float mcsmRim;
 
 out vec4 fragColor;
 
@@ -79,6 +80,13 @@ void main() {
 #endif
 
     float mcsmP = mcsm_phase(FogSkyEnd, FogColor, FogRenderDistanceEnd);
+
+    // Purple specular rim overlay: #6A24D9, tight at block edges with the
+    // required pow(rim, 3.5) falloff. Attachments keep their own lattice color.
+    if (mcsmAttach == 0 && mcsm_active(mcsmP)) {
+        vec3 rimLight = vec3(106.0, 36.0, 217.0) / 255.0; // #6A24D9
+        color.rgb += rimLight * mcsmRim;
+    }
 
     if (mcsmAttach == 1 && mcsm_active(mcsmP)) {
         float clock = mcsm_clock(GameTime);

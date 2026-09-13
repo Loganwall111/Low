@@ -11,8 +11,8 @@ import net.minecraft.client.Minecraft;
  *   phase 4          small cool-white/cyan glow on the three heads
  *   phase 5          flat white teeth, no big glow
  *   phase 5.5        white teeth with glow
- *   phase 6          blue/cyan glowing teeth after the split
- *   phase 7+         green-blue glowing teeth
+ *   phase 4.5-5.4    sea-green emissive channels (#00A877)
+ *   phase 5.5+       neon-cyan emissive channels (#00F3FF)
  */
 public final class McsmTeethPhaseTint {
 
@@ -28,13 +28,12 @@ public final class McsmTeethPhaseTint {
 
     /** Packed full-bright ARGB used by the exact native eye hook. */
     public static int eyeTintArgb() {
-        // Keep the requested purple hue even when a migrated config has a
-        // stale/zero beam colour. Brightness is handled by the eyes render
-        // type, not by lowering alpha.
-        float r = Math.max(0.62F, (float) DabyWSClientConfig.beamColorR);
-        float g = Math.max(0.18F, Math.min(0.34F, (float) DabyWSClientConfig.beamColorG));
-        float b = Math.max(0.92F, (float) DabyWSClientConfig.beamColorB);
-        return rgb(r, g, b);
+        // Dedicated eyes stay on RenderType.eyes; only the phase tint shifts
+        // between the requested sea-green and neon-cyan decks.
+        double phase = McsmStormAtmosphere.nearestPhase();
+        return phase >= 5.5D
+                ? rgb(0.0F, 0.953F, 1.0F)   // #00F3FF
+                : rgb(0.0F, 0.659F, 0.467F); // #00A877
     }
 
     private static int rgb(float r, float g, float b) {
@@ -63,25 +62,16 @@ public final class McsmTeethPhaseTint {
             }
             float r, g, b, inten;
             boolean glow;
-            if (phase >= 7.0F) {
-                // phase 7+: GREEN-WHITE glow (user 2026-09-11)
-                r = 0.78F; g = 1.00F; b = 0.85F; inten = 4.20F; glow = true;
-            } else if (phase >= 6.0F) {
-                // phase 6: greenish-blue, MORE blue (user 2026-09-11)
-                r = 0.50F; g = 0.85F; b = 1.00F; inten = 4.20F; glow = true;
-            } else if (phase >= 5.5F) {
-                r = 0.82F; g = 1.00F; b = 0.96F; inten = 4.00F; glow = true;   // phase 5.5: cyan-white
-            } else if (phase >= 5.0F) {
-                // 1.9.202 regression fix: glow=false hid the teeth overlay
-                // entirely ("no glowing teeth"). Phase 5 must still RENDER —
-                // completely white, with the aura around the glow (user
-                // 2026-09-11: "During 5 they're meant to glow just white with
-                // an aura around the glow").
-                r = 1.00F; g = 1.00F; b = 1.00F; inten = 4.40F; glow = true;   // phase 5: the ONLY pure-white phase
+            if (phase >= 5.5F) {
+                // Neon-cyan deck requested for the late cinematic pass.
+                r = 0.00F; g = 0.953F; b = 1.00F; inten = 4.20F; glow = true; // #00F3FF
+            } else if (phase >= 4.5F) {
+                // Sea-green initialization through the slate transition.
+                r = 0.00F; g = 0.659F; b = 0.467F; inten = 3.90F; glow = true; // #00A877
             } else if (phase >= 4.0F) {
-                r = 0.82F; g = 1.00F; b = 0.96F; inten = 3.60F; glow = true;   // phase 4: cyan-white
+                r = 0.82F; g = 1.00F; b = 0.96F; inten = 3.60F; glow = true;
             } else {
-                r = 0.98F; g = 0.98F; b = 0.86F; inten = 0.0F; glow = false;  // phase 3: no glowing teeth
+                r = 0.98F; g = 0.98F; b = 0.86F; inten = 0.0F; glow = false;
             }
             DabyWSClientConfig.eyeColorR = r;
             DabyWSClientConfig.eyeColorG = g;
@@ -101,12 +91,15 @@ public final class McsmTeethPhaseTint {
             // 1.9.217 -- beamColor tints the EYEBALL itself (WitherStormHeadRenderer.eyeTint).
             // The eyes must read neon PURPLE, the beam colour constraint, not the
             // teeth colours; day/night only nudges the brightness, never the hue.
-            float day = 0.30F + 0.70F * (0.5F + 0.5F * (float)Math.sin(
-                    (mc.level.getGameTime() % 24000L) / 24000.0D * Math.PI * 2.0D - Math.PI / 2.0D));
-            float eyef = phase >= 7.0F ? 0.55F : (phase >= 6.0F ? 0.78F : (phase >= 5.5F ? 0.92F : 0.66F));
-            DabyWSClientConfig.beamColorR = 0.62F * (0.55F + 0.45F * day) * eyef;
-            DabyWSClientConfig.beamColorG = 0.26F * (0.55F + 0.45F * day) * eyef;
-            DabyWSClientConfig.beamColorB = 1.00F * (0.62F + 0.38F * day);
+            if (phase >= 5.5F) {
+                DabyWSClientConfig.beamColorR = 0.00F;
+                DabyWSClientConfig.beamColorG = 0.953F;
+                DabyWSClientConfig.beamColorB = 1.00F;
+            } else if (phase >= 4.5F) {
+                DabyWSClientConfig.beamColorR = 0.00F;
+                DabyWSClientConfig.beamColorG = 0.659F;
+                DabyWSClientConfig.beamColorB = 0.467F;
+            }
         } catch (Throwable ignored) {
         }
     }

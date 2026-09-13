@@ -2,21 +2,15 @@
 
 // ============================================================================
 //  MCSM visuals - mcsm_visuals.glsl   (shared state-machine library, v3)
-//  Retuned to the user's storyboarded phase timeline (screenshot refs, 
-//  2026-09-02) and the palettes sampled inside StormSkyDome.java:
-//    TURQ #182F2E  PURP #382553  MAGE #761A67  PINK #A32E92  RED  #661326
-//
-//  TIMELINE
-//    4.45-4.95  green fog only (sky untouched)
-//    5.00-5.15  turquoise sky + green glare blob ("brighter" at 5.1)
-//    5.20       sky goes dark purple (snap; teal hard-deactivated)
-//    5.20-5.40  morphs through purple
-//    5.40-5.55  morphs to pink with dark purple overhead (img 3)
-//    5.55-5.90  holds pink/purple, glare deepens magenta->pink
-//    6.00       dark grey sky (img 4)
-//    6.05-6.25  Command Block Overload tapestry: pink/crimson/magenta + orange
-//               rim + void-purple top (img 5-6)
-//    7.00-8.05  dark red sky, orange low band, near-black top (img 7)
+//  The legacy phase helpers below remain available to existing passes. The
+//  additive cinematic overlay added in this revision is keyed independently:
+//    Phase 4      vanilla atmosphere and fog only
+//    Phase 4.5    green initialization and thick green fog
+//    Phase 5      #1D2B2B zenith -> #6E7873 horizon
+//    Phase 5.5    #1A0A2A zenith -> #7F3AA6 horizon
+//    Phase 6+     #422E3B zenith -> #A0757E horizon
+//  Every endpoint is blended vertically with smoothstep; the existing mesh
+//  and legacy cloud/body passes are not replaced.
 //
 //  1.9.215.1 (port onto the user-designated 1.9.215 base): Atmospheric W's
 //  Cloud is the INFINITE SKYBOX CLOUD (user spec 2026-09-11): a separate
@@ -169,8 +163,8 @@ float mcsm_cloud_shadow(vec3 worldPos, vec3 sunDir, float clock, float upFace) {
     return 1.0 - cov * strength;
 }
 // ---------------------------------------------------------------- decode
-bool mcsm_fog_active(float p) { return p >= 4.42 && p <= 8.06; }
-bool mcsm_sky_active(float p) { return p >= 4.95 && p <= 8.06; }
+bool mcsm_fog_active(float p) { return p >= 4.45 && p <= 8.06; }
+bool mcsm_sky_active(float p) { return p >= 4.45 && p <= 8.06; }
 bool mcsm_active(float p)     { return mcsm_sky_active(p); }
 
 float mcsm_phase(float fogSkyEnd, vec4 fogColor, float fogRenderDistanceEnd) {
@@ -412,19 +406,31 @@ vec3 mcsm_apocalypse_bands(float height, float clock) {
     return col * flick;
 }
 
+// Definitive cinematic overlay: a smooth vertical Y-axis gradient. Phase 4
+// never enters this function in the active path, so vanilla owns that sky.
+vec3 mcsm_cinematic_sky(float height, float p) {
+    float y = smoothstep(0.0, 1.0, height * 0.5 + 0.5);
+    vec3 green = mix(vec3(110.0, 143.0, 115.0) / 255.0, // #6E8F73
+                     vec3(23.0, 59.0, 50.0) / 255.0, y); // #173B32
+    vec3 slate = mix(vec3(110.0, 120.0, 115.0) / 255.0, // #6E7873
+                     vec3(29.0, 43.0, 43.0) / 255.0, y); // #1D2B2B
+    vec3 purple = mix(vec3(127.0, 58.0, 166.0) / 255.0, // #7F3AA6
+                      vec3(26.0, 10.0, 42.0) / 255.0, y); // #1A0A2A
+    vec3 plum = mix(vec3(160.0, 117.0, 126.0) / 255.0, // #A0757E
+                    vec3(66.0, 46.0, 59.0) / 255.0, y); // #422E3B
+    if (p < 5.0) return mix(green, slate, mcsm_ramp(p, 4.45, 5.0));
+    if (p < 5.5) return mix(slate, purple, mcsm_ramp(p, 5.0, 5.5));
+    if (p < 6.0) return mix(purple, plum, mcsm_ramp(p, 5.5, 6.0));
+    return plum;
+}
+
 vec3 mcsm_sky_color(float height, float p, float clock) {
-    vec3 bot, mid, top; float lift, sharp;
-    mcsm_keys(p, bot, mid, top, lift, sharp);
-    float h = clamp(height, -1.0, 1.0);
-    float u = clamp((h + 0.10) / max(lift, 0.05), 0.0, 1.0);
-    float feather = mix(0.16, 0.015, sharp);
-    vec3 c = mix(bot, mid, smoothstep(0.0, 0.5, u));
-    c = mix(c, top, smoothstep(0.55 - feather, 0.55 + feather, u));
-    c *= 1.0 - 0.55 * smoothstep(0.45, 1.0, h);
-    c = mix(c, mcsm_apocalypse_bands(h, clock),
-            mcsm_ramp(p, 6.02, 6.18) * (1.0 - mcsm_ramp(p, 6.90, 7.30)));
-    c *= 0.97 + 0.03 * sin(clock * 0.55 + h * 2.5);
-    return mcsm_kill_teal(c, p);
+    if (p < 4.45) return vec3(0.0);
+    vec3 c = mcsm_cinematic_sky(height, p);
+    // Wide center zenith mask: leave the existing sky geometry intact while
+    // preventing blue overworld bleed through the fight's central dome.
+    float zenithMask = 0.82 + 0.18 * smoothstep(0.15, 0.85, height);
+    return c * zenithMask;
 }
 
 // ---------------------------------------------------------------- blob (glare)
@@ -683,21 +689,27 @@ vec4 mcsm_blob(vec3 worldDir, vec3 bossDir, float p, float clock, vec3 dome) {
 
 // ---------------------------------------------------------------- fog / tints
 vec3 mcsm_fog_color(float p, vec3 vanilla) {
-    // 4.5 green haze first, then the sky's own bottom colour drives the fog.
-    vec3 green = vec3(0.100, 0.420, 0.300);
-    float seg;
-    vec3 bot, mid, top; float lift, sharp;
-    mcsm_keys(p, bot, mid, top, lift, sharp);
-    vec3 c = bot * 0.75 + mid * 0.25;
-    seg = mcsm_ramp(p, 4.42, 4.95);
-    c = mix(green, c, seg);
-    return mcsm_kill_teal(mix(vanilla, c, 0.55 + 0.30 * seg), p);
+    // Thick green fog begins at 4.5; the requested horizon tracks then take
+    // over at 5, 5.5, and 6 without touching Phase 4 vanilla fog.
+    if (p < 4.45) return vanilla;
+    vec3 green = vec3(110.0, 143.0, 115.0) / 255.0; // #6E8F73
+    vec3 slate = vec3(110.0, 120.0, 115.0) / 255.0; // #6E7873
+    vec3 purple = vec3(127.0, 58.0, 166.0) / 255.0; // #7F3AA6
+    vec3 plum = vec3(160.0, 117.0, 126.0) / 255.0; // #A0757E
+    vec3 c;
+    if (p < 5.0) c = mix(green, slate, mcsm_ramp(p, 4.45, 5.0));
+    else if (p < 5.5) c = mix(slate, purple, mcsm_ramp(p, 5.0, 5.5));
+    else c = mix(purple, plum, mcsm_ramp(p, 5.5, 6.0));
+    float amount = p < 5.0 ? 0.86 : (p < 5.5 ? 0.72 : 0.66);
+    return mix(vanilla, c, amount);
 }
 
 float mcsm_fog_density(float p) {
     if (!mcsm_fog_active(p)) return 1.0;
+    float greenOnset = 0.62 * (1.0 - mcsm_ramp(p, 4.45, 5.0));
     float peak = mcsm_ramp(p, 4.95, 5.06) * (1.0 - mcsm_ramp(p, 5.16, 5.40));
-    return 1.0 + 0.40 * peak + 0.18 * mcsm_ramp(p, 5.4, 6.0) * (1.0 - mcsm_ramp(p, 7.0, 8.06));
+    return 1.0 + greenOnset + 0.40 * peak
+         + 0.18 * mcsm_ramp(p, 5.4, 6.0) * (1.0 - mcsm_ramp(p, 7.0, 8.06));
 }
 
 vec3 mcsm_cloud_tint(float p) {
