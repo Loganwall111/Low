@@ -23,26 +23,22 @@ import net.minecraft.world.phys.Vec3;
  * skybox resource, or screen-facing billboard is involved.
  *
  * The mesh is the original curved, low-poly 3D wall behind the body. Its
- * footprint is enlarged to 1000 x 1000 horizontal radii, 320 vertical radius,
- * and a 120-block rear offset without changing its construction or palette.
- * Its material uses a white render texture only as a neutral carrier for vertex colours; the phase
- * palette and alpha are calculated per vertex. The outer margin reaches zero
- * alpha, allowing vanilla clouds and the ordinary world to show through its
- * edge rather than ending at a hard rectangular card.
+ * footprint is phase-sized: close to the storm at Phase 5.5, then larger at
+ * Phases 6 and 7. It is a render-only translucent object with no collision, so
+ * the camera and clouds can pass through it instead of revealing a distant
+ * back face. The outer margin reaches zero alpha, allowing the ordinary world
+ * and clouds to show through its soft edge.
  */
 public final class McsmAtmosphericMeshComponent {
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(
             "dabywitherstormmod", "textures/misc/storm_white.png");
 
-    private static final int COLUMNS = 18;
-    private static final int ROWS = 8;
-    /** Restored original wall geometry, enlarged without changing its curve. */
-    private static final float RADIUS_X = 1000.0F;
-    private static final float RADIUS_Z = 1000.0F;
-    private static final float RADIUS_Y = 320.0F;
-    private static final float BEHIND_OFFSET = 120.0F;
-    private static final float MAX_ALPHA = 0.80F;
-    private static final double START_PHASE = 4.85D;
+    private static final int COLUMNS = 28;
+    private static final int ROWS = 12;
+    /** Close attached oval; it grows with the storm rather than becoming a far sky card. */
+    private static final float BEHIND_OFFSET = 36.0F;
+    private static final float MAX_ALPHA = 0.72F;
+    private static final double START_PHASE = 4.45D;
 
     private McsmAtmosphericMeshComponent() {
     }
@@ -61,7 +57,7 @@ public final class McsmAtmosphericMeshComponent {
         // Keep the phase input explicit: this is the Java-side u_StormPhase
         // carrier for the dynamic vertex palette, not a camera or level query.
         float u_StormPhase = (float) state.phase;
-        float phaseFade = smoothstep(u_StormPhase, 4.85F, 5.02F);
+        float phaseFade = smoothstep(u_StormPhase, 4.45F, 4.68F);
         float phase = u_StormPhase;
         if (phaseFade <= 0.004F) {
             return;
@@ -86,14 +82,19 @@ public final class McsmAtmosphericMeshComponent {
 
     private static void emitBackdrop(Pose pose, VertexConsumer consumer,
             float phase, float phaseFade) {
-        // Keep the original curved-wall construction; only its footprint is
-        // enlarged to the requested atmospheric horizon scale. This avoids the
-        // rejected closed ellipsoid/saucer, whose front cap read as a flat
-        // capsule and exposed broad low-poly bands in front of the boss.
-        double halfWidth = RADIUS_X;
-        double halfHeight = RADIUS_Y;
-        double depth = RADIUS_Z;
-        double behind = BEHIND_OFFSET;
+        // Keep the original curved-wall construction, but size it from the
+        // actual phase. At 5.5 the top is about 10 blocks above the body;
+        // Phases 6 and 7 deliberately grow the oval instead of moving it away.
+        double radius = bodyRadius(phase);
+        double widthFactor = phase < 5.0F ? 1.65D
+                : (phase < 5.5F ? 1.80D
+                : (phase < 6.0F ? 2.00D
+                : (phase < 7.0F ? 2.20D : 2.35D)));
+        double halfWidth = radius * widthFactor;
+        double extraTop = phase < 5.5F ? 8.0D : 10.0D + Math.max(0.0D, phase - 5.5D) * 20.0D;
+        double halfHeight = radius + extraTop;
+        double depth = Math.min(48.0D, halfWidth * 0.34D);
+        double behind = Math.min(BEHIND_OFFSET, Math.max(18.0D, radius * 0.85D));
 
         for (int row = 0; row < ROWS; row++) {
             double y0 = -1.0D + 2.0D * row / ROWS;
@@ -150,26 +151,47 @@ public final class McsmAtmosphericMeshComponent {
     private static int colour(float phase, double x, double y, float phaseFade) {
         float radius = Mth.clamp((float) Math.sqrt(x * x + y * y), 0.0F, 1.0F);
         float vertical = Mth.clamp((float) ((y + 1.0D) * 0.5D), 0.0F, 1.0F);
+        int p45 = phase45(radius);
         int p5 = phase5(radius);
         int p55 = phase55(radius, vertical);
         int p6 = phase6(vertical);
 
         int rgb;
-        if (phase < 5.5F) {
+        if (phase < 5.0F) {
+            // Bring back the green backdrop only as a local atmosphere around
+            // the storm. The body texture itself is never tinted green.
+            rgb = mix(p45, p5, smoothstep(phase, 4.82F, 5.0F));
+        } else if (phase < 5.5F) {
             rgb = mix(p5, p55, smoothstep(phase, 5.0F, 5.5F));
         } else {
             rgb = mix(p55, p6, smoothstep(phase, 5.9F, 6.05F));
         }
 
         float outerFade = 1.0F - smoothstep(radius, 0.68F, 1.0F);
-        float alpha = MAX_ALPHA * phaseFade * outerFade;
+        // Phase 5's black core is intentionally dark but not opaque: the
+        // cloud layer and the storm silhouette remain visible through it.
+        float corePass = phase >= 5.0F
+                ? 0.22F + 0.78F * smoothstep(radius, 0.0F, 0.42F)
+                : 1.0F;
+        float alpha = MAX_ALPHA * phaseFade * outerFade * corePass;
         return (Mth.clamp((int) (alpha * 255.0F), 0, 255) << 24) | (rgb & 0x00FFFFFF);
     }
 
+    private static int phase45(float radius) {
+        int core = rgb(0x06, 0x0E, 0x12);
+        int mid = rgb(0x12, 0x2A, 0x2B);
+        int fringe = rgb(0x35, 0x5E, 0x4B);
+        return radius < 0.40F
+                ? mix(core, mid, radius / 0.40F)
+                : mix(mid, fringe, (radius - 0.40F) / 0.60F);
+    }
+
     private static int phase5(float radius) {
-        int core = rgb(0x0A, 0x11, 0x18);
-        int mid = rgb(0x1D, 0x33, 0x48);
-        int fringe = rgb(0x50, 0x69, 0x87);
+        // Phase 5 is purple with a dark moon-blue outer halo and an almost
+        // black centre; the green phase-4.5 backdrop ends before this deck.
+        int core = rgb(0x03, 0x02, 0x0D);
+        int mid = rgb(0x11, 0x0E, 0x2A);
+        int fringe = rgb(0x1D, 0x2D, 0x5A);
         return radius < 0.40F
                 ? mix(core, mid, radius / 0.40F)
                 : mix(mid, fringe, (radius - 0.40F) / 0.60F);
@@ -206,7 +228,10 @@ public final class McsmAtmosphericMeshComponent {
 
     private static double bodyRadius(float phase) {
         if (phase < 5.0F) {
-            return 18.0D + 22.0D * (phase - 5.0D);
+            return 25.0D + 20.0D * Math.max(0.0D, phase - 4.45D);
+        }
+        if (phase < 6.0F) {
+            return 36.0D + 26.0D * (phase - 5.0D);
         }
         return Math.min(340.0D, 40.0D + 30.0D * (phase - 6.0D));
     }
