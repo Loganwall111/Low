@@ -111,13 +111,17 @@ public final class McsmStormRings {
                 // The supplied Vortex model belongs to the split/late ladder:
                 // it must not appear during phase 6 or the pre-split Stage C
                 // entries.  Phase 7 is the first frame where it is allowed.
-                final boolean vortex = phase >= 7.0F;
+                // The live mod ceiling is 6.99; 6.80+ is its Phase 9
+                // finale window. Explicit phase 7/8/9 editor values still
+                // take the same path.
+                final boolean vortex = phase >= 6.80F;
                 final boolean phase7 = phase >= 7.0F;
-                // Phase 9 is the sky-filling finale: expand the normal 1,200
-                // cube positions to the requested approximately 10,000. Keep
-                // the lighter phase-7/8 pass intact so the density ramps in
-                // instead of appearing as a single-frame wall.
-                final boolean phase9 = phase >= 8.0F;
+                // The base entity's natural ceiling is 6.99 even though the
+                // story ladder calls this the Phase 9 finale. Also accept an
+                // explicit 8+/9 value from editor/test commands. Expand the
+                // normal 1,200 positions to approximately 10,000 only there;
+                // the lighter phase-7/8 pass stays a gradual lead-in.
+                final boolean phase9 = phase >= 6.80F;
                 // p6-7: dark indigo blocks w/ purple edge; p8-9: ember
                 final float cr = vortex ? 62 : 34;
                 final float cg = vortex ? 26 : 27;
