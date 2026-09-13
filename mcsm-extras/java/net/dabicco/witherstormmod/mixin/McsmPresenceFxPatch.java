@@ -75,8 +75,13 @@ public abstract class McsmPresenceFxPatch {
             if (distanceFade <= 0.004F) {
                 continue;
             }
-            Vec3 view = toStorm.scale(1.0D / distance);
             double bodyRadius = bodyRadius(phase);
+            // Lift every phase's halo as a unit so its center sits over the
+            // storm's crown instead of cutting across the middle of the body.
+            // The lift grows with the phase because the later storm silhouette
+            // is taller and wider.
+            Vec3 haloCentre = centre.add(0.0D, haloLift(phase, bodyRadius), 0.0D);
+            Vec3 view = haloCentre.subtract(camera).normalize();
 
             // These are the actual colored backdrop assets, not placeholder
             // geometry. Cross-fade them through teal -> purple -> pink while
@@ -89,16 +94,16 @@ public abstract class McsmPresenceFxPatch {
                     * (1.0F - smoothstep(phase, 5.92F, 6.12F));
             float phaseSix = smoothstep(phase, 5.86F, 6.12F);
 
-            layer(poseStack, collector, TURQUOISE, centre, view,
+            layer(poseStack, collector, TURQUOISE, haloCentre, view,
                     bodyRadius * 3.35D, bodyRadius * 2.25D,
                     teal * distanceFade * 0.72F);
-            layer(poseStack, collector, PURPLE, centre, view,
+            layer(poseStack, collector, PURPLE, haloCentre, view,
                     bodyRadius * 3.55D, bodyRadius * 2.35D,
                     purple * distanceFade * 0.68F);
-            layer(poseStack, collector, PURPLE_PINK, centre, view,
+            layer(poseStack, collector, PURPLE_PINK, haloCentre, view,
                     bodyRadius * 3.85D, bodyRadius * 2.55D,
                     pink * distanceFade * 0.74F);
-            layer(poseStack, collector, PURPLE_PINK, centre, view,
+            layer(poseStack, collector, PURPLE_PINK, haloCentre, view,
                     bodyRadius * 4.05D, bodyRadius * 2.65D,
                     phaseSix * distanceFade * 0.48F);
 
@@ -113,23 +118,28 @@ public abstract class McsmPresenceFxPatch {
                     * (1.0F - smoothstep(phase, 5.70F, 5.96F));
             double ringWidth = bodyRadius * (4.35D + 3.05D * phase55Circle);
             double ringHeight = bodyRadius * (2.82D + 2.45D * phase55Circle);
-            layer(poseStack, collector, HALO_RING, centre, view,
+            layer(poseStack, collector, HALO_RING, haloCentre, view,
                     ringWidth, ringHeight,
                     ring * distanceFade * 0.88F);
             if (phase >= 5.82F) {
-                layer(poseStack, collector, HALO_RING, centre, view,
+                layer(poseStack, collector, HALO_RING, haloCentre, view,
                         bodyRadius * 3.05D, bodyRadius * 1.98D,
                         smoothstep(phase, 5.82F, 6.12F) * distanceFade * 0.46F);
                 // This is the retained white under-halo from the newer asset
                 // set. The texture is black outside its luminous shape, so it
                 // is submitted through the additive glow pipeline rather than
                 // as a translucent dark card.
-                Vec3 under = centre.add(0.0D, -bodyRadius * 0.38D, 0.0D);
+                Vec3 under = haloCentre.add(0.0D, -bodyRadius * 0.38D, 0.0D);
                 layer(poseStack, collector, HALO_WHITE, under, view,
                         bodyRadius * 3.25D, bodyRadius * 2.80D,
                         smoothstep(phase, 5.82F, 6.18F) * distanceFade * 0.34F);
             }
         }
+    }
+
+    private static double haloLift(float phase, double bodyRadius) {
+        float progression = Mth.clamp((phase - 4.45F) / 1.55F, 0.0F, 1.0F);
+        return bodyRadius * (0.80D + 0.20D * progression);
     }
 
     private static double bodyRadius(float phase) {

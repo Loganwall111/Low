@@ -51,6 +51,11 @@ public final class StormPresenceFX {
       }
    }
 
+   private static double haloLift(float phase, double bodyR) {
+      float progression = Mth.clamp((phase - 4.45F) / 1.55F, 0.0F, 1.0F);
+      return bodyR * (0.80D + 0.20D * progression);
+   }
+
    private static float pulseWave(int stormId, float timeSeconds) {
       float period = (float)Math.max(0.5, DabyWSClientConfig.pulsePeriod);
       float off = stormId % 977 * 0.618034F;
@@ -72,16 +77,19 @@ public final class StormPresenceFX {
             float phase = d.phase;
             Vec3 centre = new Vec3(d.dispX, d.dispY, d.dispZ);
             double bodyR = bodyRadius(phase);
+            // Keep the original halo pass aligned with the expanded halo: the
+            // full halo belongs over the storm crown, not through its center.
+            Vec3 haloCentre = centre.add(0.0, haloLift(phase, bodyR), 0.0);
             if (DabyWSClientConfig.blackGlare && phase >= 4.0F) {
                float strength = (float)DabyWSClientConfig.blackGlareStrength * Mth.clamp((phase - 3.6F) / 0.8F, 0.0F, 1.0F);
                if (strength > 0.004F) {
-                  Vec3 view = centre.subtract(cam).normalize();
+                  Vec3 view = haloCentre.subtract(cam).normalize();
                   quad(
                      poseStack,
                      collector,
                      net.dabicco.witherstormmod.client.GlowRenderTypes.translucent(HALO),
                      cam,
-                     centre,
+                     haloCentre,
                      view,
                      bodyR * 1.3,
                      4,
@@ -94,7 +102,7 @@ public final class StormPresenceFX {
                      collector,
                      net.dabicco.witherstormmod.client.GlowRenderTypes.translucent(HALO),
                      cam,
-                     centre,
+                     haloCentre,
                      view,
                      bodyR * 1.75,
                      3,
@@ -134,7 +142,7 @@ public final class StormPresenceFX {
                float ramp = Mth.clamp((phase - 5.8F) / 0.35F, 0.0F, 1.0F);
                float amount = (float)DabyWSClientConfig.haloStrength * ramp;
                if (amount > 0.004F) {
-                  Vec3 view = centre.subtract(cam).normalize();
+                  Vec3 view = haloCentre.subtract(cam).normalize();
                   net.dabicco.witherstormmod.client.StormPalettes.haloRingColor(col);
                   int aOuter = (int)(Mth.clamp(amount * 0.85F * (0.6F + 0.4F * pulseWave(d.entityId, nowSec)), 0.0F, 1.0F) * 255.0F);
                   quad(
@@ -142,7 +150,7 @@ public final class StormPresenceFX {
                      collector,
                      net.dabicco.witherstormmod.client.GlowRenderTypes.glow(HALO),
                      cam,
-                     centre,
+                     haloCentre,
                      view,
                      bodyR * 1.9,
                      (int)(col[0] * 255.0F),
@@ -151,7 +159,7 @@ public final class StormPresenceFX {
                      aOuter
                   );
                   net.dabicco.witherstormmod.client.StormPalettes.haloUnderColor(col);
-                  Vec3 underCentre = centre.add(0.0, -bodyR * 0.55, 0.0);
+                  Vec3 underCentre = haloCentre.add(0.0, -bodyR * 0.55, 0.0);
                   Vec3 viewUnder = underCentre.subtract(cam).normalize();
                   int aUnder = (int)(Mth.clamp(amount * 0.95F, 0.0F, 1.0F) * 255.0F);
                   quad(
