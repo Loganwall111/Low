@@ -21,7 +21,9 @@ public final class McsmTeethPhaseTint {
 
     /** Packed full-bright ARGB used by the exact native teeth hook. */
     public static int teethTintArgb() {
-        return rgb(DabyWSClientConfig.eyeColorR, DabyWSClientConfig.eyeColorG, DabyWSClientConfig.eyeColorB);
+        return rgb((float) DabyWSClientConfig.eyeColorR,
+                (float) DabyWSClientConfig.eyeColorG,
+                (float) DabyWSClientConfig.eyeColorB);
     }
 
     /** Packed full-bright ARGB used by the exact native eye hook. */

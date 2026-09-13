@@ -1,9 +1,14 @@
 package net.mcsm.extras.client;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import net.dabicco.witherstormmod.client.McsmSkyArtifactGuard;
 import net.dabicco.witherstormmod.client.StoryModeSkyTint;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.state.level.SkyRenderState;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Keeps Minecraft's native sky pass as the sole sky renderer.
@@ -60,4 +65,41 @@ public final class McsmNativeSkyRenderer {
     public static boolean ownsSky() {
         return ownsSky;
     }
+
+    /**
+     * Compatibility gate for the optional sun-slab feature. The current native
+     * sky path intentionally keeps ordinary sun/moon/stars, so this is only
+     * true when the opt-in accurate-sun setting explicitly owns the frame.
+     */
+    public static boolean suppressCelestials() {
+        return ownsSky && McsmExtrasConfig.storyModeAccurateSunSun;
+    }
+
+    /** True when the opt-in studio stage has put the camera outside its dome. */
+    public static boolean stageOutside() {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.level == null || !McsmExperimentalStoryStage.active()) {
+                return false;
+            }
+            Field rendererField = Minecraft.class.getDeclaredField("gameRenderer");
+            rendererField.setAccessible(true);
+            Object renderer = rendererField.get(mc);
+            if (renderer == null) {
+                return false;
+            }
+            Method cameraMethod = renderer.getClass().getMethod("getMainCamera");
+            Object camera = cameraMethod.invoke(renderer);
+            if (camera == null) {
+                return false;
+            }
+            Method positionMethod = camera.getClass().getMethod("getPosition");
+            Object position = positionMethod.invoke(camera);
+            return position instanceof Vec3
+                    && McsmExperimentalStoryStage.cameraOutside(mc.level, (Vec3) position);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
 }
+
