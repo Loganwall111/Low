@@ -47,11 +47,29 @@ public final class McsmNativeSkyRenderer {
                     | (Math.round(horizon[2] * 255.0F) & 0xFF);
         }
 
-        // Keep the ordinary native sky as the only layer. The sunrise/sunset
-        // fan is a separate upper band (and is what produced the orange strip
-        // in the supplied frames), so make that secondary layer transparent;
-        // McsmStormSkyColorPatch also cancels its geometry submission.
+        // Keep the ordinary native sky renderer as the only geometry path.
+        // During a storm, however, the raw native time-of-day colour can
+        // reintroduce the orange upper band. Blend its colour toward the
+        // lower storm atmosphere instead of adding another sky card; this
+        // keeps the native/main sky path while removing that top strip.
+        float[] stormSky = new float[3];
+        float stormBlend = McsmStormAtmosphere.skyBlend(stormSky);
+        if (stormBlend > 0.01F) {
+            float amount = Math.min(1.0F, stormBlend * 1.35F);
+            int sr = Math.round(stormSky[0] * 255.0F);
+            int sg = Math.round(stormSky[1] * 255.0F);
+            int sb = Math.round(stormSky[2] * 255.0F);
+            int ar = (authoritative >> 16) & 0xFF;
+            int ag = (authoritative >> 8) & 0xFF;
+            int ab = authoritative & 0xFF;
+            int r = Math.round(ar + (sr - ar) * amount);
+            int g = Math.round(ag + (sg - ag) * amount);
+            int b = Math.round(ab + (sb - ab) * amount);
+            authoritative = 0xFF000000 | (r & 0xFF) << 16 | (g & 0xFF) << 8 | (b & 0xFF);
+        }
         state.skyColor = authoritative;
+        // The sunrise/sunset fan is the separate upper band; make it
+        // transparent and cancel its geometry submission as well.
         state.sunriseAndSunsetColor = 0;
         state.shouldRenderDarkDisc = false;
         ownsSky = true;

@@ -106,8 +106,15 @@ public abstract class McsmPresenceFxPatch {
             // present in the newer builds. Its width is intentionally larger
             // than the body's top silhouette, matching the supplied reference.
             float ring = smoothstep(phase, 5.18F, 5.48F);
+            // Phase 5.5 is the broad rear-circle shot: enlarge the ring in
+            // both axes until it clears and visually swallows the top of the
+            // storm instead of reading as a small belt behind it.
+            float phase55Circle = smoothstep(phase, 5.22F, 5.50F)
+                    * (1.0F - smoothstep(phase, 5.70F, 5.96F));
+            double ringWidth = bodyRadius * (4.35D + 3.05D * phase55Circle);
+            double ringHeight = bodyRadius * (2.82D + 2.45D * phase55Circle);
             layer(poseStack, collector, HALO_RING, centre, view,
-                    bodyRadius * 4.35D, bodyRadius * 2.82D,
+                    ringWidth, ringHeight,
                     ring * distanceFade * 0.88F);
             if (phase >= 5.82F) {
                 layer(poseStack, collector, HALO_RING, centre, view,

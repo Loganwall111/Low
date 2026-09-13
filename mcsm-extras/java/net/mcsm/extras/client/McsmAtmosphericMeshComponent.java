@@ -102,6 +102,13 @@ public final class McsmAtmosphericMeshComponent {
         for (int row = 0; row < ROWS; row++) {
             double y0 = -1.0D + 2.0D * row / ROWS;
             double y1 = -1.0D + 2.0D * (row + 1) / ROWS;
+            // Keep only the lower atmospheric deck. The upper half was the
+            // unwanted second sky/card band visible above the storm; the
+            // native Minecraft sky remains responsible for the regular upper
+            // sky path.
+            if (y0 >= 0.0D) {
+                continue;
+            }
             for (int column = 0; column < COLUMNS; column++) {
                 double x0 = -1.0D + 2.0D * column / COLUMNS;
                 double x1 = -1.0D + 2.0D * (column + 1) / COLUMNS;
