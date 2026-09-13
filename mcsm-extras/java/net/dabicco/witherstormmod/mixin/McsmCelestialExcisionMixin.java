@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Removes only the native flat sun/moon/star draw call while the custom
- * physical 500-block slab is active. No sky renderer is used for the custom
- * atmosphere or replacement sun geometry.
+ * The old custom celestial slab is retired. The native sun, moon, and stars
+ * remain available; only the separate sunrise fan is suppressed by the
+ * continuous-sky hook.
  */
 @Mixin(value = SkyRenderer.class, priority = 1100)
 public abstract class McsmCelestialExcisionMixin {
@@ -23,8 +23,8 @@ public abstract class McsmCelestialExcisionMixin {
     private void mcsm$removeNativeCelestials(PoseStack poseStack, float sunAngle,
             float moonAngle, float starAngle, MoonPhase moonPhase,
             float rainBrightness, float starBrightness, CallbackInfo ci) {
-        if (McsmCoreEngineController.active()) {
-            ci.cancel();
-        }
+        // Native celestial geometry is authoritative. The former replacement
+        // slab is inert, so cancelling this call would remove the regular sky
+        // instead of merely removing the unwanted orange band.
     }
 }

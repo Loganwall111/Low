@@ -11,10 +11,11 @@ import net.minecraft.client.renderer.state.level.SkyRenderState;
  * The old sky implementation supplied a second upper layer and left the
  * native renderer's zenith endpoint in place.  That is what produced the
  * clipped black daytime strip and the warm nighttime strip at the top of the
- * view.  This hook does not submit geometry or install a texture: it copies
- * the colour already computed for the current sky into both native endpoints.
- * The lower/current native colour is therefore the only authority for every
- * sky pixel, including the extreme top of the spherical pass.
+ * view.  This hook does not submit geometry or install a texture: it keeps the
+ * colour already computed for the current native sky and removes the separate
+ * sunrise/sunset fan. The lower/current native colour is therefore the only
+ * authority for every sky pixel, including the extreme top of the spherical
+ * pass.
  */
 public final class McsmNativeSkyRenderer {
     private static volatile boolean ownsSky;
@@ -46,11 +47,12 @@ public final class McsmNativeSkyRenderer {
                     | (Math.round(horizon[2] * 255.0F) & 0xFF);
         }
 
-        // Both endpoints must be identical.  Keeping only one assignment would
-        // leave the native sunrise/zenith interpolation capable of reopening a
-        // second colour band at the top edge.
+        // Keep the ordinary native sky as the only layer. The sunrise/sunset
+        // fan is a separate upper band (and is what produced the orange strip
+        // in the supplied frames), so make that secondary layer transparent;
+        // McsmStormSkyColorPatch also cancels its geometry submission.
         state.skyColor = authoritative;
-        state.sunriseAndSunsetColor = authoritative;
+        state.sunriseAndSunsetColor = 0;
         state.shouldRenderDarkDisc = false;
         ownsSky = true;
     }

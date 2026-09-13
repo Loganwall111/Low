@@ -153,10 +153,16 @@ public final class McsmCoreEngineController {
     }
 
     /**
-     * Custom physical sun/moon replacement. The native celestial method is
-     * cancelled by McsmCelestialExcisionMixin while this slab is active.
+     * Retained registration hook for the former physical sun replacement.
+     * The native celestial pass remains authoritative now; this is intentionally
+     * inert so no camera-relative orange band can cover the sky.
      */
     public static void submitSunSlab(LevelRenderContext context) {
+        // The replacement slab was the orange, camera-relative band visible at
+        // the top of the supplied frames. Keep the native celestial/sky pass;
+        // the storm's atmosphere is supplied by its attached mesh and halos.
+        return;
+        /*
         if (context == null || !active() || u_StormPhase < MIN_PHASE) {
             return;
         }
@@ -186,6 +192,7 @@ public final class McsmCoreEngineController {
                 (pose, consumer) -> emitSunSlab(pose, consumer, r, g, b));
         poseStack.popPose();
     }
+    */
 
     private static Vec3 orbitalLightDirection(Minecraft mc) {
         // Do not turn the replacement sun into a second, warm moon layer at

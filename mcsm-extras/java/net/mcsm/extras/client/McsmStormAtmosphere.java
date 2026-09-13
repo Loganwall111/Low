@@ -87,7 +87,8 @@ public final class McsmStormAtmosphere {
         if (phase < 4.90F || out == null || out.length < 3) {
             return 0.0F;
         }
-        float[] p5 = {0x14 / 255.0F, 0x22 / 255.0F, 0x26 / 255.0F};
+        // Phase 5 is the green/teal deck, not the old navy-blue fallback.
+        float[] p5 = {0x0E / 255.0F, 0x3A / 255.0F, 0x35 / 255.0F};
         // Ordinary phase 5.5 retains a purple upper atmosphere; the
         // near-black zenith belongs only to the opt-in stage, never the
         // normal storm presentation.

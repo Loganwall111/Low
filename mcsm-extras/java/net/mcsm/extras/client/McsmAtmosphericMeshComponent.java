@@ -86,14 +86,17 @@ public final class McsmAtmosphericMeshComponent {
         // actual phase. At 5.5 the top is about 10 blocks above the body;
         // Phases 6 and 7 deliberately grow the oval instead of moving it away.
         double radius = bodyRadius(phase);
-        double widthFactor = phase < 5.0F ? 1.65D
-                : (phase < 5.5F ? 1.80D
-                : (phase < 6.0F ? 2.00D
-                : (phase < 7.0F ? 2.20D : 2.35D)));
+        // The reference halo is a broad horizontal oval, not a small round
+        // smudge. Keep it attached to the body but make its width exceed the
+        // top silhouette from phase 5.5 onward.
+        double widthFactor = phase < 5.0F ? 2.15D
+                : (phase < 5.5F ? 2.65D
+                : (phase < 6.0F ? 3.15D
+                : (phase < 7.0F ? 3.55D : 3.80D)));
         double halfWidth = radius * widthFactor;
-        double extraTop = phase < 5.5F ? 8.0D : 10.0D + Math.max(0.0D, phase - 5.5D) * 20.0D;
-        double halfHeight = radius + extraTop;
-        double depth = Math.min(48.0D, halfWidth * 0.34D);
+        double extraTop = phase < 5.5F ? 8.0D : 8.0D + Math.max(0.0D, phase - 5.5D) * 14.0D;
+        double halfHeight = radius * 0.86D + extraTop;
+        double depth = Math.min(58.0D, halfWidth * 0.30D);
         double behind = Math.min(BEHIND_OFFSET, Math.max(18.0D, radius * 0.85D));
 
         for (int row = 0; row < ROWS; row++) {
@@ -158,8 +161,8 @@ public final class McsmAtmosphericMeshComponent {
 
         int rgb;
         if (phase < 5.0F) {
-            // Bring back the green backdrop only as a local atmosphere around
-            // the storm. The body texture itself is never tinted green.
+            // Phase 4.5 through 5.0 remains the green/teal local atmosphere;
+            // the body texture itself is never tinted by this backdrop.
             rgb = mix(p45, p5, smoothstep(phase, 4.82F, 5.0F));
         } else if (phase < 5.5F) {
             rgb = mix(p5, p55, smoothstep(phase, 5.0F, 5.5F));
@@ -187,11 +190,11 @@ public final class McsmAtmosphericMeshComponent {
     }
 
     private static int phase5(float radius) {
-        // Phase 5 is purple with a dark moon-blue outer halo and an almost
-        // black centre; the green phase-4.5 backdrop ends before this deck.
-        int core = rgb(0x03, 0x02, 0x0D);
-        int mid = rgb(0x11, 0x0E, 0x2A);
-        int fringe = rgb(0x1D, 0x2D, 0x5A);
+        // Phase 5 is the green/teal deck. Do not let the old navy-blue
+        // fallback return here; purple begins with the 5.3/5.5 transition.
+        int core = rgb(0x02, 0x0A, 0x0B);
+        int mid = rgb(0x08, 0x32, 0x31);
+        int fringe = rgb(0x2C, 0x9A, 0x83);
         return radius < 0.40F
                 ? mix(core, mid, radius / 0.40F)
                 : mix(mid, fringe, (radius - 0.40F) / 0.60F);
@@ -213,10 +216,13 @@ public final class McsmAtmosphericMeshComponent {
     }
 
     private static int phase6(float vertical) {
-        int zenith = rgb(0x10, 0x0A, 0x1A);
-        int upper = rgb(0x33, 0x1C, 0x3D);
-        int lower = rgb(0x8A, 0x53, 0x61);
-        int horizon = rgb(0xC4, 0x7A, 0x5A);
+        // Phase 6 keeps the attached halo in the purple/pink family. The old
+        // salmon horizon was the orange strip that could read as a second sky
+        // layer at the top of the screen, so it is intentionally gone.
+        int zenith = rgb(0x12, 0x08, 0x22);
+        int upper = rgb(0x3A, 0x19, 0x50);
+        int lower = rgb(0x7A, 0x3A, 0x78);
+        int horizon = rgb(0xB5, 0x4E, 0x95);
         if (vertical > 0.68F) {
             return mix(upper, zenith, (vertical - 0.68F) / 0.32F);
         }
