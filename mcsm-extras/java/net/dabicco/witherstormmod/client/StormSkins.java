@@ -4,17 +4,20 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.resources.Identifier;
 
 /**
- * Native fallback atlases for the phase renderer.
+ * Texture policy for every native storm model pass.
  *
- * The OGS CEM pack owns the high-detail phase-5.5 and phase-6 silhouettes;
- * these sheets are the matching UV-safe fallback for the Java model passes.
- * Keep this registry in the mod namespace: the older overlay accidentally
- * used "witherstormmod", which does not exist and made every command-spawned
- * storm render with missing/black materials.
+ * Phase 0 deliberately keeps its tiny starter atlas. Every later storm body,
+ * head, jaw, skull, neck, tentacle, detached piece, and distant preview uses
+ * the dark Phase 6 body sheet. Emissive layers may still use their dedicated
+ * eye/teeth sheets through RenderTypes.eyes(...).
  */
 public final class StormSkins {
     private static final Identifier LEGACY_CLASSIC = id("textures/entity/wither_storm.png");
     private static final Identifier LEGACY_OG = id("textures/entity/wither_storm_og.png");
+    private static final Identifier PHASE6_BODY = id("textures/entity/wither_storm/wither_storm.png");
+
+    // Retained as compatibility constants for callers that still ask for the
+    // old phase ladder. They are intentionally no longer selected for bodies.
     private static final Identifier PHASE4_CLASSIC = id("textures/entity/phase_4_assets.png");
     private static final Identifier PHASE4_OG = id("textures/entity/phase_4_assets_og.png");
     private static final Identifier PHASE55_CLASSIC = id("textures/entity/phase_4_assets_p55.png");
@@ -53,28 +56,33 @@ public final class StormSkins {
         return Math.round(DabyWSClientConfig.stormSkin) >= 1L;
     }
 
+    /**
+     * Phase 0 only: retain the tiny starter model's original atlas. Once the
+     * entity has entered Phase 1, the universal Phase 6 body sheet takes over.
+     */
     public static Identifier legacy() {
-        return og() ? LEGACY_OG : LEGACY_CLASSIC;
+        return phaseHint >= 1.0D ? PHASE6_BODY : (og() ? LEGACY_OG : LEGACY_CLASSIC);
     }
 
-    /** Phase 4 through the end of the baby/body transition at 5.9. */
+    /** Select the universal skin without changing the Phase 0 starter atlas. */
+    public static Identifier body(double phase) {
+        setPhaseHint(phase);
+        return phase >= 1.0D ? PHASE6_BODY : (og() ? LEGACY_OG : LEGACY_CLASSIC);
+    }
+
+    /** The one opaque body atlas used by all Phase 1 and later model passes. */
+    public static Identifier phase6Body() {
+        return PHASE6_BODY;
+    }
+
+    /** Compatibility name used by older renderer bytecode; head/body callers are Phase 1+. */
     public static Identifier phase4() {
-        boolean ogSkin = og();
-        double p = phaseHint;
-        if (p >= 7.0D) return ogSkin ? PHASE7_OG : PHASE7_CLASSIC;
-        if (p >= 6.0D) return ogSkin ? PHASE6_OG : PHASE6_CLASSIC;
-        if (p >= 5.5D) return ogSkin ? PHASE55_OG : PHASE55_CLASSIC;
-        return ogSkin ? PHASE4_OG : PHASE4_CLASSIC;
+        return PHASE6_BODY;
     }
 
-    /** Detached/devourer native fallback, with the same phase ladder. */
+    /** Detached/devourer pieces use the same universal body atlas. */
     public static Identifier devourer() {
-        boolean ogSkin = og();
-        double p = phaseHint;
-        if (p >= 7.0D) return ogSkin ? DEVOURER7_OG : DEVOURER7_CLASSIC;
-        if (p >= 6.0D) return ogSkin ? DEVOURER6_OG : DEVOURER6_CLASSIC;
-        if (p >= 5.5D) return ogSkin ? DEVOURER55_OG : DEVOURER55_CLASSIC;
-        return ogSkin ? DEVOURER_OG : DEVOURER_CLASSIC;
+        return PHASE6_BODY;
     }
 
     /** Actual emissive teeth atlases; never bind the opaque body sheet as glow. */

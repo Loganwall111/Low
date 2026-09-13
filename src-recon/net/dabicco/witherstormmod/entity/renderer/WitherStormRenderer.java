@@ -123,22 +123,9 @@ public class WitherStormRenderer
       return super.getBoundingBoxForCulling(entity).inflate(512.0);
    }
 
+   /** Keep every opaque storm skin pass at neutral white vertex tint. */
    protected int getModelTint(WitherStormRenderState state) {
-      if (this.previewShadowPass) {
-         return 940578856;
-      } else {
-         int argb = super.getModelTint(state);
-         float w = Mth.clamp(state.changeover, 0.0F, 1.0F);
-         if (w <= 0.001F) {
-            return argb;
-         } else {
-            int a = argb >>> 24 & 0xFF;
-            int r = (int)Mth.lerp(w, argb >> 16 & 0xFF, 255.0F);
-            int g = (int)Mth.lerp(w, argb >> 8 & 0xFF, 255.0F);
-            int b = (int)Mth.lerp(w, argb & 0xFF, 255.0F);
-            return a << 24 | r << 16 | g << 8 | b;
-         }
-      }
+      return this.previewShadowPass ? 940578856 : -1;
    }
 
    private static void applyChangeoverShake(PoseStack poseStack, WitherStormRenderState state) {
@@ -624,7 +611,7 @@ public class WitherStormRenderer
                      this.previewShadowPass ? this.hunchbackShadowModel : this.hunchbackModel,
                      state,
                      poseStack,
-                     FoglessRenderTypes.eyes(glow),
+                     RenderTypes.eyes(glow),
                      15728880,
                      OverlayTexture.NO_OVERLAY,
                      -1,
@@ -655,7 +642,7 @@ public class WitherStormRenderer
             this.previewShadowPass ? this.hunchbackShadowModel : this.hunchbackModel,
             state,
             poseStack,
-            this.pieceType(StormSkins.phase4()),
+            this.pieceType(StormSkins.body(state.phase)),
             state.lightCoords,
             OverlayTexture.NO_OVERLAY,
             this.pieceTint(),
@@ -687,7 +674,7 @@ public class WitherStormRenderer
          poseStack.mulPose(Axis.XP.rotationDegrees(36.0F));
          poseStack.scale(0.42F, 0.42F, 0.42F);
          submitNodeCollector.submitModel(
-            tentacle, state, poseStack, this.pieceType(StormSkins.phase4()), state.lightCoords, OverlayTexture.NO_OVERLAY, this.pieceTint(), null, 0, null
+            tentacle, state, poseStack, this.pieceType(StormSkins.body(state.phase)), state.lightCoords, OverlayTexture.NO_OVERLAY, this.pieceTint(), null, 0, null
          );
          poseStack.popPose();
       }
@@ -736,7 +723,7 @@ public class WitherStormRenderer
                state.idleTimeTicks,
                state.devourer,
                early,
-               StormSkins.phase4()
+               StormSkins.phase6Body()
             );
       }
    }
@@ -894,7 +881,7 @@ public class WitherStormRenderer
             devTentacles,
             state,
             poseStack,
-            this.pieceType(StormSkins.devourer()),
+            this.pieceType(StormSkins.phase6Body()),
             state.lightCoords,
             OverlayTexture.NO_OVERLAY,
             this.pieceTint(),
@@ -956,7 +943,7 @@ public class WitherStormRenderer
          this.miniHeadModel,
          headState,
          poseStack,
-         FoglessRenderTypes.bodyCutout(StormSkins.phase4()),
+         FoglessRenderTypes.bodyCutout(StormSkins.body(state.phase)),
          state.lightCoords,
          OverlayTexture.NO_OVERLAY,
          -1,
@@ -968,7 +955,7 @@ public class WitherStormRenderer
          this.miniHeadGlowModel,
          headState,
          poseStack,
-         RenderTypes.eyes(StormSkins.phase4()),
+         RenderTypes.eyes(StormSkins.body(state.phase)),
          15728880,
          OverlayTexture.NO_OVERLAY,
          WitherStormHeadRenderer.glowTint(),
@@ -1027,10 +1014,8 @@ public class WitherStormRenderer
    }
 
    public Identifier getTextureLocation(WitherStormRenderState state) {
-      if (state.devourer) {
-         return StormSkins.devourer();
-      } else {
-         return state.phase4 ? StormSkins.phase4() : StormSkins.legacy();
-      }
+      // Phase 0 alone keeps the tiny starter atlas. Every later opaque pass,
+      // including the pre-Phase-4 body, uses the same dark Phase 6 sheet.
+      return state.devourer || state.phase >= 1.0D ? StormSkins.phase6Body() : StormSkins.legacy();
    }
 }

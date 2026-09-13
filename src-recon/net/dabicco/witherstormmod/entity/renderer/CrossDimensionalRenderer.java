@@ -67,7 +67,7 @@ public class CrossDimensionalRenderer extends EntityRenderer<net.dabicco.withers
          scratch.xRot = 0.0F;
          scratch.phase = 5.0;
          collector.submitModel(
-            this.tentacleModel, scratch, poseStack, RenderTypes.entityCutout(StormSkins.phase4()), 15728880, OverlayTexture.NO_OVERLAY, -1, null, 0, null
+            this.tentacleModel, scratch, poseStack, RenderTypes.entityCutout(StormSkins.phase6Body()), 15728880, OverlayTexture.NO_OVERLAY, -1, null, 0, null
          );
          poseStack.popPose();
       }

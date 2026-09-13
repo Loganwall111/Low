@@ -329,7 +329,7 @@ echo "[glsl] shaderpack-v5 validates"
 # fails the build instead of shipping.
 # ---------------------------------------------------------------------------
 CFG=mcsm-extras/java/net/mcsm/extras/McsmExtrasConfig.java
-sed -i "s/BUILD_VERSION = \"[0-9][0-9.]*\"/BUILD_VERSION = \"${VER}\"/" "$CFG"
+sed -i "s/BUILD_VERSION = \"[^\"]*\"/BUILD_VERSION = \"${VER}\"/" "$CFG"
 echo "[version] BUILD_VERSION synced to ${VER}"
 
 DRIFT="$(grep -rn '"[^"]*1\.9\.[0-9]' --include='*.java' mcsm-extras/java \

@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider.Context;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
@@ -105,15 +106,9 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
       }
    }
 
+   /** Body vertices stay neutral; phase colour belongs only to eyes/teeth FX. */
    private static int deadTint(float lit) {
-      if (lit >= 0.999F) {
-         return -1;
-      } else {
-         int r = (int)Mth.lerp(lit, 156.0F, 255.0F);
-         int g = (int)Mth.lerp(lit, 138.0F, 255.0F);
-         int b = (int)Mth.lerp(lit, 62.0F, 255.0F);
-         return 0xFF000000 | r << 16 | g << 8 | b;
-      }
+      return -1;
    }
 
    public static int glowTint() {
@@ -409,7 +404,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
          this.model,
          state,
          poseStack,
-         FoglessRenderTypes.bodyCutout(StormSkins.phase4()),
+         FoglessRenderTypes.bodyCutout(StormSkins.phase6Body()),
          state.lightCoords,
          OverlayTexture.NO_OVERLAY,
          deadTint(state.lit),
@@ -423,7 +418,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
             this.glowModel,
             state,
             poseStack,
-            GlowRenderTypes.emitterMark(StormSkins.phase4()),
+            RenderTypes.eyes(StormSkins.phase6Body()),
             15728880,
             OverlayTexture.NO_OVERLAY,
             scaleTint(glowTint(), emit),
@@ -435,7 +430,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
             this.teethBoostModel,
             state,
             poseStack,
-            GlowRenderTypes.emitterMark(StormSkins.phase4()),
+            RenderTypes.eyes(StormSkins.phase6Body()),
             15728880,
             OverlayTexture.NO_OVERLAY,
             scaleTint(glowTint(), emit),
@@ -451,7 +446,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
                this.eyeGlowModel,
                state,
                poseStack,
-               GlowRenderTypes.emitterMark(StormSkins.phase4()),
+               RenderTypes.eyes(StormSkins.phase6Body()),
                15728880,
                OverlayTexture.NO_OVERLAY,
                state.eyeDark ? -15066590 : eyeTint(),
@@ -465,7 +460,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
                   this.eyeBoostModel,
                   state,
                   poseStack,
-                  GlowRenderTypes.emitterMark(StormSkins.phase4()),
+                  RenderTypes.eyes(StormSkins.phase6Body()),
                   15728880,
                   OverlayTexture.NO_OVERLAY,
                   eyeTint(),
@@ -477,7 +472,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
       }
 
       if (state.lit >= 0.999F && StormBloom.wantsEntityTarget()) {
-         RenderType into = GlowRenderTypes.bloomSource(StormSkins.phase4());
+         RenderType into = RenderTypes.eyes(StormSkins.phase6Body());
          submitNodeCollector.order(1).submitModel(this.teethBloomModel, state, poseStack, into, 15728880, OverlayTexture.NO_OVERLAY, glowTint(), null, 0, null);
          submitNodeCollector.order(1)
             .submitModel(this.teethBloom2Model, state, poseStack, into, 15728880, OverlayTexture.NO_OVERLAY, glowTint(), null, 0, null);
@@ -492,7 +487,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
                this.bloomOccluderModel,
                state,
                poseStack,
-               GlowRenderTypes.bloomOccluder(StormSkins.phase4()),
+               GlowRenderTypes.bloomOccluder(StormSkins.phase6Body()),
                state.lightCoords,
                OverlayTexture.NO_OVERLAY,
                -1,
@@ -505,7 +500,7 @@ public class WitherStormHeadRenderer extends EntityRenderer<net.dabicco.witherst
                this.sceneEraseModel,
                state,
                poseStack,
-               GlowRenderTypes.bloomEraseOccluded(StormSkins.phase4()),
+               GlowRenderTypes.bloomEraseOccluded(StormSkins.phase6Body()),
                state.lightCoords,
                OverlayTexture.NO_OVERLAY,
                -1,

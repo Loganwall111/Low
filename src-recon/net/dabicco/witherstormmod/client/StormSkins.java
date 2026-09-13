@@ -3,37 +3,77 @@ package net.dabicco.witherstormmod.client;
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.resources.Identifier;
 
+/**
+ * Single source of truth for storm body materials. Phase 0 keeps its tiny
+ * starter atlas; every Phase 1+ opaque storm piece uses the dark Phase 6 sheet.
+ */
 public final class StormSkins {
-   private static final Identifier LEGACY_CLASSIC = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/wither_storm.png");
-   private static final Identifier LEGACY_OG = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/wither_storm_og.png");
-   private static final Identifier PHASE4_CLASSIC = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/phase_4_assets.png");
-   private static final Identifier PHASE4_OG = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/phase_4_assets_og.png");
-   private static final Identifier DEVOURER_CLASSIC = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/devourer_assets.png");
-   private static final Identifier DEVOURER_OG = Identifier.fromNamespaceAndPath("dabywitherstormmod", "textures/entity/devourer_assets_og.png");
+   private static final Identifier LEGACY_CLASSIC = id("textures/entity/wither_storm.png");
+   private static final Identifier LEGACY_OG = id("textures/entity/wither_storm_og.png");
+   private static final Identifier PHASE6_BODY = id("textures/entity/wither_storm/wither_storm.png");
+
+   private static volatile double phaseHint;
 
    private StormSkins() {
+   }
+
+   private static Identifier id(String path) {
+      return Identifier.fromNamespaceAndPath("dabywitherstormmod", path);
+   }
+
+   public static void setPhaseHint(double phase) {
+      phaseHint = phase;
+   }
+
+   public static double phaseHint() {
+      return phaseHint;
    }
 
    public static boolean og() {
       return Math.round(DabyWSClientConfig.stormSkin) >= 1L;
    }
 
+   /** Phase 0 only; Phase 1 and later use phase6Body(). */
    public static Identifier legacy() {
-      return og() ? LEGACY_OG : LEGACY_CLASSIC;
+      return phaseHint >= 1.0D ? PHASE6_BODY : (og() ? LEGACY_OG : LEGACY_CLASSIC);
    }
 
+   /** Select the universal skin while preserving the Phase 0 starter atlas. */
+   public static Identifier body(double phase) {
+      setPhaseHint(phase);
+      return phase >= 1.0D ? PHASE6_BODY : (og() ? LEGACY_OG : LEGACY_CLASSIC);
+   }
+
+   /** Universal opaque atlas for bodies, heads, jaws, necks, and tentacles. */
+   public static Identifier phase6Body() {
+      return PHASE6_BODY;
+   }
+
+   /** Compatibility name retained for old Phase 1+ renderer callers. */
    public static Identifier phase4() {
-      return og() ? PHASE4_OG : PHASE4_CLASSIC;
+      return PHASE6_BODY;
    }
 
+   /** Detached/devourer pieces share the universal body atlas. */
    public static Identifier devourer() {
-      return og() ? DEVOURER_OG : DEVOURER_CLASSIC;
+      return PHASE6_BODY;
    }
 
    public static Identifier teethGlow(double phase) {
+      setPhaseHint(phase);
       boolean og = DabyWSClientConfig.stormSkin >= 0.5;
-      return phase >= 5.0 && phase < 6.0
-         ? Identifier.fromNamespaceAndPath("dabywitherstormmod", og ? "textures/entity/wither_storm_og_p5_e.png" : "textures/entity/wither_storm_p5_e.png")
-         : Identifier.fromNamespaceAndPath("dabywitherstormmod", og ? "textures/entity/wither_storm_og_e.png" : "textures/entity/wither_storm_e.png");
+      return phase >= 7.0
+         ? id(og ? "textures/entity/wither_storm_og_p7_e.png" : "textures/entity/wither_storm_p7_e.png")
+         : phase >= 6.0
+            ? id(og ? "textures/entity/wither_storm_og_p6_e.png" : "textures/entity/wither_storm_p6_e.png")
+            : phase >= 5.5
+               ? id(og ? "textures/entity/wither_storm_og_p55_e.png" : "textures/entity/wither_storm_p55_e.png")
+               : phase >= 5.1
+                  ? id(og ? "textures/entity/wither_storm_og_p51_e.png" : "textures/entity/wither_storm_p51_e.png")
+                  : phase >= 5.0
+                     ? id(og ? "textures/entity/wither_storm_og_p5_e.png" : "textures/entity/wither_storm_p5_e.png")
+                     : phase >= 4.0
+                        ? id(og ? "textures/entity/wither_storm_og_e.png" : "textures/entity/wither_storm_e.png")
+                        : id("textures/entity/wither_storm_no_teeth_glow_e.png");
    }
 }

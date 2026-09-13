@@ -78,7 +78,7 @@ public class NetherScaleRenderer extends EntityRenderer<net.dabicco.witherstormm
          scratch.xRot = 0.0F;
          scratch.lightCoords = 15728880;
          collector.submitModel(
-            this.tentaclesModel, scratch, poseStack, FoglessRenderTypes.bodyCutout(StormSkins.phase4()), 15728880, OverlayTexture.NO_OVERLAY, -1, null, 0, null
+            this.tentaclesModel, scratch, poseStack, FoglessRenderTypes.bodyCutout(StormSkins.phase6Body()), 15728880, OverlayTexture.NO_OVERLAY, -1, null, 0, null
          );
          poseStack.popPose();
       }
