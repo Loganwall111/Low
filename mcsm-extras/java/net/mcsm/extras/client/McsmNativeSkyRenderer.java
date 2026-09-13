@@ -51,7 +51,6 @@ public final class McsmNativeSkyRenderer {
         // second colour band at the top edge.
         state.skyColor = authoritative;
         state.sunriseAndSunsetColor = authoritative;
-        state.isSunriseOrSunset = false;
         state.shouldRenderDarkDisc = false;
         ownsSky = true;
     }

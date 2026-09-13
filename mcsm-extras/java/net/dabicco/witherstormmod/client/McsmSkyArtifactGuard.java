@@ -1,6 +1,7 @@
 package net.dabicco.witherstormmod.client;
 
 import net.dabicco.witherstormmod.config.DabyWSClientConfig;
+import net.mcsm.extras.client.McsmStormAtmosphere;
 
 /**
  * Single owner for the retired camera-wide sky layers.
