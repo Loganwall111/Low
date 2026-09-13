@@ -167,9 +167,9 @@ public final class McsmAtmosphericMeshComponent {
     }
 
     private static int phase5(float radius) {
-        int core = rgb(0x0A, 0x11, 0x12);
-        int mid = rgb(0x1D, 0x33, 0x35);
-        int fringe = rgb(0x55, 0x70, 0x61);
+        int core = rgb(0x0A, 0x11, 0x18);
+        int mid = rgb(0x1D, 0x33, 0x48);
+        int fringe = rgb(0x50, 0x69, 0x87);
         return radius < 0.40F
                 ? mix(core, mid, radius / 0.40F)
                 : mix(mid, fringe, (radius - 0.40F) / 0.60F);

@@ -143,59 +143,13 @@ public final class McsmCoreEngineController {
     }
 
     /**
-     * Screen-space cinematic pass. It is invoked after the level scene has
-     * rendered and writes only a translucent colour overlay, avoiding a
-     * read/write alias of the main scene target.
+     * Retained compatibility hook for the old screen-space cinematic pass.
+     * The pass is intentionally inert: it was an unbounded hidden colour
+     * filter whose early-phase deck turned entities and the Wither Storm green.
      */
     public static void renderAmbientPass(CameraRenderState camera) {
-        if (ambientFailed || camera == null || !active()) {
-            return;
-        }
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.level == null) {
-            return;
-        }
-        RenderTarget scene = StormBloom.sceneTarget(mc);
-        if (scene == null || scene.getColorTextureView() == null) {
-            return;
-        }
-
-        GpuBuffer config = null;
-        RenderPass pass = null;
-        try {
-            ByteBuffer data = staging(new Std140SizeCalculator().putVec4().putVec4().get());
-            // PhaseData: phase, active, time of day, distance fade.
-            // StormPos: absolute u_StormPos.xyz, distance fade in w.
-            Std140Builder.intoBuffer(data)
-                    .putVec4(u_StormPhase, 1.0F, timeOfDay, stormDistanceFade)
-                    .putVec4(u_StormX, u_StormY, u_StormZ, stormDistanceFade);
-            data.rewind();
-            config = RenderSystem.getDevice().createBuffer(
-                    () -> "mcsm core engine config", 128, data);
-
-            pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-                    () -> "mcsm core ambient", scene.getColorTextureView(), Optional.empty());
-            pass.setPipeline(ambientPipeline());
-            pass.setUniform("McsmCoreConfig", config);
-            pass.draw(3, 1, 0, 0);
-        } catch (Throwable failure) {
-            ambientFailed = true;
-            System.out.println("[dabywitherstormmod] MCSM core ambient pass disabled: " + failure);
-        } finally {
-            if (pass != null) {
-                try {
-                    pass.close();
-                } catch (Throwable ignored) {
-                }
-            }
-            if (config != null) {
-                try {
-                    config.close();
-                } catch (Throwable ignored) {
-                }
-            }
-        }
+        // Native entity fog, phase atlases, teeth/eye emitters, particles, and
+        // the attached atmosphere remain active without a screen overlay.
     }
 
     /**

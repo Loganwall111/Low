@@ -18,9 +18,9 @@ layout(std140) uniform McsmCoreConfig {
 out vec4 fragColor;
 
 vec3 phase5(float t) {
-    vec3 core = vec3(10.0 / 255.0, 17.0 / 255.0, 18.0 / 255.0);
-    vec3 mid = vec3(29.0 / 255.0, 51.0 / 255.0, 53.0 / 255.0);
-    vec3 outer = vec3(85.0 / 255.0, 112.0 / 255.0, 97.0 / 255.0);
+    vec3 core = vec3(10.0 / 255.0, 17.0 / 255.0, 24.0 / 255.0);
+    vec3 mid = vec3(29.0 / 255.0, 51.0 / 255.0, 72.0 / 255.0);
+    vec3 outer = vec3(80.0 / 255.0, 105.0 / 255.0, 135.0 / 255.0);
     return mix(mix(core, mid, smoothstep(0.0, 0.5, t)), outer,
             smoothstep(0.5, 1.0, t));
 }

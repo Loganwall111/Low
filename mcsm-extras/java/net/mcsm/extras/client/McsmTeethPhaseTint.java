@@ -23,6 +23,15 @@ public final class McsmTeethPhaseTint {
                 }
             }
             net.dabicco.witherstormmod.client.StormSkins.setPhaseHint(phase);
+            // The old phase-4/5 presentation left a green backdrop/fog layout
+            // enabled in the client config. It was a world/body colour filter,
+            // not the requested sea-green Phase 6+ teeth colour. Keep the
+            // native purple/ember layers available, but permanently close the
+            // legacy green controls so the storm body cannot be re-hued green.
+            DabyWSClientConfig.stormBackdropTurquoise = false;
+            DabyWSClientConfig.phaseSky45Enabled = false;
+            DabyWSClientConfig.phaseSky50Enabled = false;
+            DabyWSClientConfig.phaseFogPalettes = false;
             int color = phase >= 6.0F ? SEA_GREEN : CYAN;
             if (phase < 4.0F) {
                 color = 0xFFFFFFFF;

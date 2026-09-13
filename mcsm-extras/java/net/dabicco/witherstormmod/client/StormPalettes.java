@@ -21,7 +21,7 @@ public final class StormPalettes {
    private static final float[] STAR_PURPLE = new float[]{0.74F, 0.58F, 1.0F};
    private static final float[] STAR_TEAL = new float[]{0.45F, 0.95F, 0.85F};
    public static final float[] EJECTA_TEAL = new float[]{0.2F, 0.95F, 0.72F};
-   public static final float[] EJECTA_GREEN = new float[]{0.35F, 0.88F, 0.3F};
+   public static final float[] EJECTA_GREEN = new float[]{0.24F, 0.36F, 0.55F}; // compatibility name; neutral navy now
    public static final float[] EJECTA_PALE = new float[]{0.8F, 0.68F, 1.0F};
 
    private StormPalettes() {
