@@ -4366,9 +4366,11 @@ public class WitherStormEntity extends WitherBoss implements net.dabicco.withers
          this.ultimateTargetUUID = UUID.fromString(uuid);
       }
 
+      boolean hasSavedHeads = false;
       for (int i = 0; i < 3; i++) {
          String headUuid = input.getStringOr("Head" + i, "");
          this.headUUIDs[i] = headUuid.isEmpty() ? null : UUID.fromString(headUuid);
+         hasSavedHeads |= !headUuid.isEmpty();
       }
 
       this.ultimateTargetLocked = input.getBooleanOr("UltimateTargetLocked", false);
@@ -4432,11 +4434,18 @@ public class WitherStormEntity extends WitherBoss implements net.dabicco.withers
       this.spawnFreezeTotalTicks = input.getIntOr("SpawnFreezeTotalTicks", this.spawnFreezeTicks);
       this.spawnWailPending = input.getBooleanOr("SpawnWailPending", false);
       if (this.phase4) {
-         this.headSpawnGraceTicks = 100;
+         // Saved storms get a short reference-resolution grace period. A
+         // command summon with Phase set has no saved child UUIDs, so it must
+         // initialize its real WitherStormHeadEntity children immediately
+         // instead of looking like a headless/generic body for five seconds.
+         this.headSpawnGraceTicks = hasSavedHeads ? 100 : 0;
       }
 
       this.updateBossBar();
       this.loadingFromSave = false;
+      if (this.phase4 && !hasSavedHeads) {
+         this.spawnHeadsIfNeeded();
+      }
    }
 
    public static enum MoveMode {
