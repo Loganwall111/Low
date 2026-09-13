@@ -437,11 +437,9 @@ rm -f "$FX/cls/net/mcsm/extras/client/McsmBlobOval.class" \
       "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/vortex_tile_witherstormVortexA_alp.png" \
       "$FX/cls/assets/dabywitherstormmod/textures/mcsm_atmosphere/vortex_tile_witherstormVortexABackdrop.png" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStormBlobMixin.class" \
-      "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStormSkyColorPatch.class" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/SkyRendererMixin.class" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/McsmNativeFogMixin.class" \
       "$FX/cls/net/dabicco/witherstormmod/mixin/McsmStageCloudMixin.class" \
-      "$FX/cls/net/mcsm/extras/client/McsmNativeSkyRenderer.class" \
       "$FX/cls/net/mcsm/extras/client/McsmStoryModeSunSlab.class" \
       "$FX/cls/net/mcsm/extras/client/McsmSkyDome.class" \
       "$FX/cls/net/mcsm/extras/client/McsmStormSkyLayer.class" \
@@ -599,8 +597,8 @@ p = os.path.join(cls_dir, target)
 d = json.load(open(p))
 retired_sky_mixins = {
     "StormSkyGradientMixin", "StoryModeSkyDomeMixin",
-    "SkyRendererMixin", "McsmStormSkyColorPatch", "McsmStormBlobMixin",
-    "McsmNativeFogMixin", "McsmStageCloudMixin"
+    "SkyRendererMixin", "McsmStormBlobMixin", "McsmNativeFogMixin",
+    "McsmStageCloudMixin"
 }
 removed = []
 for key in ("mixins", "client"):

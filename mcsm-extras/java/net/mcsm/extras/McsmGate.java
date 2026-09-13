@@ -237,8 +237,11 @@ public final class McsmGate {
             changed += setBool(c, "stormShadowSoftEdge", false);
             changed += setBool(c, "stormShadowHeightmap", false);
 
-            // ---- screen: smoke screen, tremor, sickness, glitch -----------
-            changed += setBool(c, "stormProximityVignette", true);
+            // ---- screen: keep the body effects, retire the sky-cover band --
+            // The attached oval remains in the entity renderer. The old HUD
+            // vignette is a camera-wide top/bottom band, so it cannot be part
+            // of the single continuous sky path.
+            changed += retireBool(c, "stormProximityVignette", false);
             changed += setBool(c, "sicknessVeinOverlay", true);
             changed += setBool(c, "groundShakingTremors", true);
             changed += setBool(c, "dynamicScreenShake", true);

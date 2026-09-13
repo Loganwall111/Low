@@ -1,0 +1,62 @@
+package net.mcsm.extras.client;
+
+import net.dabicco.witherstormmod.client.McsmSkyArtifactGuard;
+import net.dabicco.witherstormmod.client.StoryModeSkyTint;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.state.level.SkyRenderState;
+
+/**
+ * Keeps Minecraft's native sky pass as the sole sky renderer.
+ *
+ * The old sky implementation supplied a second upper layer and left the
+ * native renderer's zenith endpoint in place.  That is what produced the
+ * clipped black daytime strip and the warm nighttime strip at the top of the
+ * view.  This hook does not submit geometry or install a texture: it copies
+ * the colour already computed for the current sky into both native endpoints.
+ * The lower/current native colour is therefore the only authority for every
+ * sky pixel, including the extreme top of the spherical pass.
+ */
+public final class McsmNativeSkyRenderer {
+    private static volatile boolean ownsSky;
+
+    private McsmNativeSkyRenderer() {
+    }
+
+    /** Apply one continuous colour to the native sky while a storm is present. */
+    public static void apply(ClientLevel level, SkyRenderState state) {
+        ownsSky = false;
+        McsmSkyArtifactGuard.disableExtraSkyLayers();
+        if (level == null || state == null || !McsmSkyArtifactGuard.stormSkyActive()) {
+            return;
+        }
+
+        // SkyRenderState.skyColor is the live colour selected by Minecraft for
+        // the current time/biome.  Prefer it over a second palette so the
+        // lower, already-correct sky remains authoritative.
+        int authoritative = state.skyColor;
+        if ((authoritative & 0x00FFFFFF) == 0) {
+            authoritative = state.sunriseAndSunsetColor;
+        }
+        if ((authoritative & 0x00FFFFFF) == 0) {
+            float[] horizon = new float[3];
+            StoryModeSkyTint.horizonColor(level.getOverworldClockTime(), horizon);
+            authoritative = 0xFF000000
+                    | (Math.round(horizon[0] * 255.0F) & 0xFF) << 16
+                    | (Math.round(horizon[1] * 255.0F) & 0xFF) << 8
+                    | (Math.round(horizon[2] * 255.0F) & 0xFF);
+        }
+
+        // Both endpoints must be identical.  Keeping only one assignment would
+        // leave the native sunrise/zenith interpolation capable of reopening a
+        // second colour band at the top edge.
+        state.skyColor = authoritative;
+        state.sunriseAndSunsetColor = authoritative;
+        state.isSunriseOrSunset = false;
+        state.shouldRenderDarkDisc = false;
+        ownsSky = true;
+    }
+
+    public static boolean ownsSky() {
+        return ownsSky;
+    }
+}

@@ -77,7 +77,14 @@ public abstract class McsmGradientTickPatch {
             return;
         }
         try {
+            // Remove the retired screen-wide sky layers before either the
+            // native SkyRenderer or the level-end post passes can draw them.
+            net.dabicco.witherstormmod.client.McsmSkyArtifactGuard.disableExtraSkyLayers();
             McsmGate.openClient();
+            // McsmGate opens body visuals but its legacy look defaults include
+            // camera-wide vignette/cloud switches. Re-assert the sky owner
+            // after the gate so those settings cannot cover the native pass.
+            net.dabicco.witherstormmod.client.McsmSkyArtifactGuard.disableExtraSkyLayers();
             McsmDiag.banner();
             // MCSM 1.9.110 -- speak the build number in chat once per world
             // load. Chat is the one place the player is guaranteed to look, so

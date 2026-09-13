@@ -188,16 +188,12 @@ public final class McsmCoreEngineController {
     }
 
     private static Vec3 orbitalLightDirection(Minecraft mc) {
-        float day = (float) Math.floorMod(mc.level.getOverworldClockTime(), 24000L)
-                / 24000.0F - 0.25F;
-        if (day < 0.0F) {
-            day += 1.0F;
-        }
-        float eased = 1.0F - (float) ((Math.cos(day * Math.PI) + 1.0D) * 0.5D);
-        float angle = (day + (eased - day) / 3.0F) * (float) (Math.PI * 2.0D);
-        Vec3 sun = new Vec3(-Math.sin(angle), Math.cos(angle), 0.0D);
-        // At night the opposite orbital vector is the moon's physical slab.
-        return sun.y <= 0.0D ? sun.scale(-1.0D) : sun;
+        // Do not turn the replacement sun into a second, warm moon layer at
+        // night.  The old opposite-vector fallback was the source of the
+        // gigantic yellow band at the top of nighttime frames.  At night the
+        // native continuous sky remains unoccluded; the custom daytime slab
+        // simply has no submission to make.
+        return net.dabicco.witherstormmod.client.StormShadow.sunDirection(mc);
     }
 
     private static void emitSunSlab(PoseStack.Pose pose, VertexConsumer consumer,

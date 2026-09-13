@@ -29,7 +29,7 @@ uniform vec3 fogColor;
 #define VIBRANCE          1.08  // [0.50 0.80 1.00 1.08 1.28 1.45 1.70]
 #define STORM_PURPLE_ON   1     // [0 1]
 #define STORM_PURPLE      0.40  // [0.00 0.25 0.40 0.55 0.75 1.00]
-#define STORM_VIGNETTE_ON 1     // [0 1]
+#define STORM_VIGNETTE_ON 0     // [0 1]
 #define STORM_VIGNETTE    0.60  // [0.00 0.20 0.35 0.55 0.60 0.80]
 
 const vec3 STORM_TINT = vec3(0.42, 0.20, 0.62);
