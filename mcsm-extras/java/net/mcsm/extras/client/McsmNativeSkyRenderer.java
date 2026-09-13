@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 
 import net.dabicco.witherstormmod.client.McsmSkyArtifactGuard;
 import net.dabicco.witherstormmod.client.StoryModeSkyTint;
+import net.mcsm.extras.McsmExtrasConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.state.level.SkyRenderState;
@@ -62,6 +63,16 @@ public final class McsmNativeSkyRenderer {
         ownsSky = true;
     }
 
+    /** Return the storm's native horizon colour and its distance blend. */
+    public static float fogColor(ClientLevel level, float[] out) {
+        if (level == null || out == null || out.length < 3 || !McsmSkyArtifactGuard.stormSkyActive()) {
+            return 0.0F;
+        }
+        StoryModeSkyTint.horizonColor(level.getOverworldClockTime(), out);
+        return Math.min(0.80F, Math.max(0.0F,
+                0.80F * McsmStormAtmosphere.distanceInfluence()));
+    }
+
     public static boolean ownsSky() {
         return ownsSky;
     }
@@ -102,4 +113,3 @@ public final class McsmNativeSkyRenderer {
         }
     }
 }
-
