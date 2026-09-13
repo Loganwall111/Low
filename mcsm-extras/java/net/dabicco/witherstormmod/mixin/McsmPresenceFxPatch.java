@@ -147,7 +147,13 @@ public abstract class McsmPresenceFxPatch {
                 : new Vec3(0.0D, 1.0D, 0.0D);
         Vec3 right = view.cross(upHint).normalize().scale(horizontalRadius);
         Vec3 up = right.normalize().cross(view).normalize().scale(verticalRadius);
-        RenderType type = GlowRenderTypes.glow(texture);
+        // The backdrop PNGs carry the requested teal/purple/pink color, so
+        // they use the normal translucent textured pipeline. The historical
+        // halo assets use the emissive pipeline only for the white under-halo;
+        // the purple ring stays textured so its violet/pink RGB is preserved.
+        RenderType type = texture.equals(HALO_WHITE)
+                ? GlowRenderTypes.glow(texture)
+                : GlowRenderTypes.translucent(texture);
         collector.submitCustomGeometry(poseStack, type, (pose, consumer) -> {
             vertex(pose, consumer, centre.subtract(right).subtract(up), 0.0F, 0.0F, a);
             vertex(pose, consumer, centre.add(right).subtract(up), 1.0F, 0.0F, a);
