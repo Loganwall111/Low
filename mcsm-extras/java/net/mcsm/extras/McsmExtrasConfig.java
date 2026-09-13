@@ -74,6 +74,8 @@ public final class McsmExtrasConfig {
     /** Phase 6+: real cubed rings orbiting the storm (clockwise + diagonal +
      *  vertical), growing into the gigantic layered vortex at phase 8-9. */
     public static boolean stormRings = true;
+    /** Total phase-9 cube instances distributed across the three ten-layer rings. */
+    public static int phase9RingCubes = 10000;
 
     // ---- MCSM 1.9.100 batch: the gates ------------------------------------
     /** Force the client's Story Mode look on (shadows, glare, smoke screen,
@@ -247,6 +249,7 @@ public final class McsmExtrasConfig {
             p.setProperty("debris_always_max", String.valueOf(debrisAlwaysMax));
             p.setProperty("glacier_flakes", String.valueOf(glacierFlakes));
             p.setProperty("storm_rings", String.valueOf(stormRings));
+            p.setProperty("phase9_ring_cubes", String.valueOf(phase9RingCubes));
             try (OutputStream out = new FileOutputStream(f)) {
                 p.store(out, "MCSM - storm gameplay patches + visuals + gates. config_version below is the build that wrote this file.");
             }
@@ -367,6 +370,7 @@ public final class McsmExtrasConfig {
             debrisAlwaysMax    = bool(p, "debris_always_max", debrisAlwaysMax);
             glacierFlakes      = bool(p, "glacier_flakes", glacierFlakes);
             stormRings         = bool(p, "storm_rings", stormRings);
+            phase9RingCubes     = integer(p, "phase9_ring_cubes", phase9RingCubes, 30, 100000);
             if (cv == null || !BUILD_VERSION.equals(cv.trim())) {
                 // 1.9.196 migration: old configs wrote embedded_shader_pack=true,
                 // which kept auto-selecting the heavy Iris pack and caused
@@ -395,6 +399,14 @@ public final class McsmExtrasConfig {
 
     private static double dbl(Properties p, String k, double d) {
         try { return Double.parseDouble(p.getProperty(k).trim()); } catch (Throwable t) { return d; }
+    }
+
+    private static int integer(Properties p, String k, int d, int lo, int hi) {
+        try {
+            return Math.max(lo, Math.min(hi, Integer.parseInt(p.getProperty(k).trim())));
+        } catch (Throwable t) {
+            return d;
+        }
     }
 
     private McsmExtrasConfig() {}

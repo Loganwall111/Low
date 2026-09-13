@@ -148,12 +148,15 @@ public class DabyWSClientConfig {
    public static double pulsePeriod = 4.0;
    public static double pulseSize = 1.0;
    public static boolean stormBackdrop = true;
-   public static boolean stormBackdropQuad = false;
+   // The world-anchored Story Mode backdrop is on by default; the retired
+   // full-screen/cylinder cloud layers remain separately disabled.
+   public static boolean stormBackdropQuad = true;
    public static double stormBackdropStrength = 1.0;
    public static double stormBackdropSize = 6.0;
    public static double stormBackdropPulse = 1.0;
    public static boolean stormBackdropGrow = true;
-   public static boolean stormBackdropBlack = true;
+   /** Keep the central black cylinder/blur off by default; the backdrop supplies the atmosphere. */
+   public static boolean stormBackdropBlack = false;
    public static double stormBackdropBlackStrength = 1.0;
    public static boolean stormBackdropPhase4 = true;
    public static double stormBackdropPhase4Strength = 1.0;

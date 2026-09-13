@@ -31,4 +31,21 @@ public abstract class McsmHeadEyesRenderTypeMixin {
     private static RenderType mcsm$headBloomEyes(Identifier texture) {
         return RenderTypes.eyes(texture);
     }
+
+    /**
+     * The native Phase 6 head has separate glow/eye model parts, but the
+     * renderer historically fed both passes the opaque body atlas. Redirect
+     * those eyes calls to the matching 512x512 transparent emissive atlas;
+     * this keeps the uploaded universal body texture out of eye/teeth glow.
+     */
+    @Redirect(
+            method = "submit",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/rendertype/RenderTypes;eyes(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;"),
+            remap = false,
+            require = 0)
+    private static RenderType mcsm$headDedicatedEmissive(Identifier texture) {
+        return RenderTypes.eyes(net.dabicco.witherstormmod.client.StormSkins.phase6Emissive());
+    }
 }

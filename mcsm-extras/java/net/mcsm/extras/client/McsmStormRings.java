@@ -113,6 +113,11 @@ public final class McsmStormRings {
                 // entries.  Phase 7 is the first frame where it is allowed.
                 final boolean vortex = phase >= 7.0F;
                 final boolean phase7 = phase >= 7.0F;
+                // Phase 9 is the sky-filling finale: expand the normal 1,200
+                // cube positions to the requested approximately 10,000. Keep
+                // the lighter phase-7/8 pass intact so the density ramps in
+                // instead of appearing as a single-frame wall.
+                final boolean phase9 = phase >= 8.0F;
                 // p6-7: dark indigo blocks w/ purple edge; p8-9: ember
                 final float cr = vortex ? 62 : 34;
                 final float cg = vortex ? 26 : 27;
@@ -128,7 +133,7 @@ public final class McsmStormRings {
                             // never a replacement for the existing animation.
                             drawPhase67(pose, consumer, c, cam, bR, tSec, fade, phase7, cr, cg, cb);
                             if (vortex) {
-                                drawVortex(pose, consumer, c, cam, bR, tSec, fade, cr, cg, cb);
+                                drawVortex(pose, consumer, c, cam, bR, tSec, fade, cr, cg, cb, phase9);
                             }
                         });
                 // 1.9.220 -- the REAL Telltale vortex model (ported from
@@ -181,13 +186,20 @@ public final class McsmStormRings {
     /** Phase 8-9: three major rings, each 10 layered thin sub-rings, funneled
      *  (thin at the top), outer clockwise / inner counter-clockwise. */
     private static void drawVortex(Pose pose, VertexConsumer consumer, Vec3 c, Vec3 cam,
-            double bR, float tSec, float fade, float cr, float cg, float cb) {
-        // keep the procedural cube rings as the under-layer of the vortex
-        int n = 40;
+            double bR, float tSec, float fade, float cr, float cg, float cb, boolean phase9) {
+        // Keep the procedural cube rings as the under-layer of the vortex. In
+        // phase 9 the thirty ring/layer buckets receive an even quota of the
+        // configured target, producing exactly 10,000 positions by default
+        // (rather than the old 3 x 10 x 40 = 1,200).
+        int target = phase9 ? Math.max(30, McsmExtrasConfig.phase9RingCubes) : 1200;
+        int perBucket = target / 30;
+        int remainder = target % 30;
         for (int ringIdx = 0; ringIdx < 3; ringIdx++) {
             double majorR = bR * (4.30D - 0.55D * ringIdx);
             boolean ccw = (ringIdx == 2);
             for (int layer = 0; layer < 10; layer++) {
+                int bucket = ringIdx * 10 + layer;
+                int n = phase9 ? perBucket + (bucket < remainder ? 1 : 0) : 40;
                 double h = (layer - 4.5D) / 4.5D;
                 double r = majorR * (1.0D - 0.16D * Math.max(0.0D, h));
                 double yOff = bR * h * 0.55D * (1.0D + 0.25D * ringIdx);

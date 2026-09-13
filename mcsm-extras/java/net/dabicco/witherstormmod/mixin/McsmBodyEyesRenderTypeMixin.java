@@ -21,4 +21,16 @@ public abstract class McsmBodyEyesRenderTypeMixin {
     private static RenderType mcsm$bodyEyes(Identifier texture) {
         return RenderTypes.eyes(texture);
     }
+
+    /** Keep the native mini-head glow on the dedicated 512x512 emissive atlas. */
+    @Redirect(
+            method = "submitMiniHead",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/rendertype/RenderTypes;eyes(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;"),
+            remap = false,
+            require = 0)
+    private static RenderType mcsm$miniHeadDedicatedEmissive(Identifier texture) {
+        return RenderTypes.eyes(net.dabicco.witherstormmod.client.StormSkins.phase6Emissive());
+    }
 }

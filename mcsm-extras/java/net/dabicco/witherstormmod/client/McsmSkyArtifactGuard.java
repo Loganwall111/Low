@@ -21,7 +21,13 @@ public final class McsmSkyArtifactGuard {
         DabyWSClientConfig.vignetteIntensity = 0.0D;
         DabyWSClientConfig.sunGlow = false;
         DabyWSClientConfig.sunGlowStrength = 0.0D;
-        DabyWSClientConfig.stormBackdropQuad = false;
+        // The storm backdrop is the intended world-anchored atmosphere. Keep
+        // it enabled; only the obsolete cloud/celestial covers are retired.
+        DabyWSClientConfig.stormBackdrop = true;
+        DabyWSClientConfig.stormBackdropQuad = true;
+        // The old central black cylinder obscures the backdrop and is not
+        // part of the requested Story Mode atmosphere.
+        DabyWSClientConfig.stormBackdropBlack = false;
         DabyWSClientConfig.stormCloudDeck = 0.0D;
         DabyWSClientConfig.cloudDeckLayer = false;
     }

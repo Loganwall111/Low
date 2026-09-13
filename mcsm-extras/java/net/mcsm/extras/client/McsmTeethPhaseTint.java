@@ -19,6 +19,29 @@ public final class McsmTeethPhaseTint {
     private McsmTeethPhaseTint() {
     }
 
+    /** Packed full-bright ARGB used by the exact native teeth hook. */
+    public static int teethTintArgb() {
+        return rgb(DabyWSClientConfig.eyeColorR, DabyWSClientConfig.eyeColorG, DabyWSClientConfig.eyeColorB);
+    }
+
+    /** Packed full-bright ARGB used by the exact native eye hook. */
+    public static int eyeTintArgb() {
+        // Keep the requested purple hue even when a migrated config has a
+        // stale/zero beam colour. Brightness is handled by the eyes render
+        // type, not by lowering alpha.
+        float r = Math.max(0.62F, (float) DabyWSClientConfig.beamColorR);
+        float g = Math.max(0.18F, Math.min(0.34F, (float) DabyWSClientConfig.beamColorG));
+        float b = Math.max(0.92F, (float) DabyWSClientConfig.beamColorB);
+        return rgb(r, g, b);
+    }
+
+    private static int rgb(float r, float g, float b) {
+        int ir = Math.max(0, Math.min(255, Math.round(r * 255.0F)));
+        int ig = Math.max(0, Math.min(255, Math.round(g * 255.0F)));
+        int ib = Math.max(0, Math.min(255, Math.round(b * 255.0F)));
+        return 0xFF000000 | ir << 16 | ig << 8 | ib;
+    }
+
     public static void tick() {
         try {
             net.mcsm.extras.client.McsmStormAtmosphere.tick();

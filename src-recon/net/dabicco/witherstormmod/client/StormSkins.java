@@ -14,6 +14,9 @@ public final class StormSkins {
    // Phase 6 main/head/tentacle atlas. Do not use the nested 160x160
    // vanilla sheet here; these models use the 512x512 phase atlas UVs.
    private static final Identifier PHASE6_BODY = id("textures/entity/phase_4_assets_p6.png");
+   // Matching 512x512 UV layout, transparent except for native eye/teeth
+   // emissive islands. The 160x160 CEM sheets must not be bound here.
+   private static final Identifier PHASE6_EMISSIVE = id("textures/entity/phase_4_assets_e.png");
    private static final Identifier PHASE6_DEVOURER = id("textures/entity/devourer_assets_p6.png");
 
    private static volatile double phaseHint;
@@ -51,6 +54,11 @@ public final class StormSkins {
    /** Main-model Phase 6 atlas for bodies, heads, jaws, necks, and tentacles. */
    public static Identifier phase6Body() {
       return PHASE6_BODY;
+   }
+
+   /** Dedicated native-model eye/teeth emissive atlas with matching 512 UVs. */
+   public static Identifier phase6Emissive() {
+      return PHASE6_EMISSIVE;
    }
 
    /** Compatibility name retained for old Phase 1+ renderer callers. */
