@@ -475,26 +475,26 @@ public class DabyWSCommand {
 
    private static int spawnWitherStorm(CommandContext<CommandSourceStack> ctx) {
       CommandSourceStack source = (CommandSourceStack)ctx.getSource();
-      ServerPlayer player = source.getPlayer();
       ServerLevel level = source.getLevel();
-      if (level instanceof ServerLevel) {
-         WitherStormEntity entity = (WitherStormEntity)ModEntityTypes.WITHER_STORM.create(level, EntitySpawnReason.COMMAND);
-         if (entity != null && ((CommandSourceStack)ctx.getSource()).getPlayer() != null) {
-            ModAdvancements.grant(((CommandSourceStack)ctx.getSource()).getPlayer(), "nothing_built");
-         }
-
-         if (entity != null) {
-            Vec3 spawnPos = player.position().add(0.0, 2.0, 0.0);
-            entity.setPos(spawnPos);
-            entity.setPhase(0.0);
-            level.addFreshEntity(entity);
-            source.sendSuccess(() -> Component.literal("Wither Storm spawned at " + spawnPos), true);
-            return 1;
-         }
+      Vec3 spawnPos = source.getPosition().add(0.0, 2.0, 0.0);
+      WitherStormEntity entity = (WitherStormEntity)ModEntityTypes.WITHER_STORM.create(level, EntitySpawnReason.COMMAND);
+      if (entity == null) {
+         source.sendFailure(Component.literal("Failed to create Wither Storm"));
+         return 0;
       }
 
-      source.sendFailure(Component.literal("Failed to spawn Wither Storm"));
-      return 0;
+      // Initialize the phase before tracking the entity. This publishes the
+      // phase-4 flag and head-spawn state in the same initial sync instead of
+      // briefly rendering a command body with an uninitialized render state.
+      entity.setPos(spawnPos);
+      entity.setPhaseExact(0.0);
+      level.addFreshEntity(entity);
+      ServerPlayer player = source.getPlayer();
+      if (player != null) {
+         ModAdvancements.grant(player, "nothing_built");
+      }
+      source.sendSuccess(() -> Component.literal("Wither Storm spawned at " + spawnPos), true);
+      return 1;
    }
 
    private static int setPhase(CommandContext<CommandSourceStack> ctx, float phase) {
@@ -685,22 +685,23 @@ public class DabyWSCommand {
 
    private static int spawnStormAtPhase(CommandContext<CommandSourceStack> ctx, float phase) {
       CommandSourceStack source = (CommandSourceStack)ctx.getSource();
-      ServerPlayer player = source.getPlayer();
       ServerLevel level = source.getLevel();
-      if (level instanceof ServerLevel) {
-         WitherStormEntity entity = (WitherStormEntity)ModEntityTypes.WITHER_STORM.create(level, EntitySpawnReason.COMMAND);
-         if (entity != null) {
-            Vec3 spawnPos = player.position().add(0.0, 2.0, 0.0);
-            entity.setPos(spawnPos);
-            entity.setPhaseExact(phase);
-            level.addFreshEntity(entity);
-            source.sendSuccess(() -> Component.literal("Wither Storm spawned at phase §e" + phase), true);
-            return 1;
-         }
+      Vec3 spawnPos = source.getPosition().add(0.0, 2.0, 0.0);
+      WitherStormEntity entity = (WitherStormEntity)ModEntityTypes.WITHER_STORM.create(level, EntitySpawnReason.COMMAND);
+      if (entity == null) {
+         source.sendFailure(Component.literal("Failed to create Wither Storm"));
+         return 0;
       }
 
-      source.sendFailure(Component.literal("Failed to spawn Wither Storm"));
-      return 0;
+      // setPhaseExact updates both the server field and the synchronized
+      // PHASE/PHASE4/SUBGROWTH values before the first client snapshot. This
+      // is especially important for /dabyws storm spawn <phase>, where the
+      // client otherwise receives the phase-0 command-body state first.
+      entity.setPos(spawnPos);
+      entity.setPhaseExact(phase);
+      level.addFreshEntity(entity);
+      source.sendSuccess(() -> Component.literal("Wither Storm spawned at phase §e" + phase), true);
+      return 1;
    }
 
    private static int stormBuild(CommandContext<CommandSourceStack> ctx, String type) {

@@ -141,6 +141,9 @@ public class DistantStormRenderer {
                      headState.lightCoords = 15728880;
                      headState.jawAngle = 0.0F;
                      headState.damaged = false;
+                     headState.devourer = d.phase >= 6.0F;
+                     headState.earlyPhase = d.phase < 4.0F;
+                     headState.headScale = 6.0F;
                      headState.idleTimeTicks = now;
                      headState.spawnElapsedTicks = Float.MAX_VALUE;
                      headState.fireElapsedTicks = d.headFireStart[i] >= 0L ? (float)(gt - d.headFireStart[i]) + frac : -1.0F;

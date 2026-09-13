@@ -946,6 +946,7 @@ for active_need in \
   resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm.properties \
   resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm1.jem \
   resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm5.jem \
+  resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm7.jem \
   resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm8.jem \
   resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm10.jem \
   resourcepacks/ogs-cem/assets/minecraft/optifine/cem/dabywitherstormmod/wither_storm11.jem \

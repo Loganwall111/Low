@@ -15,7 +15,7 @@ import java.util.Properties;
  * Written with defaults on first launch.
  */
 public final class McsmExtrasConfig {
-    public static final String BUILD_VERSION = "1.9.104";
+    public static final String BUILD_VERSION = "1.9.305";
     public static boolean enableTentacleGrab = true;
     // Automatic schematic/town placement is deliberately OFF.  It can queue
     // three large structures and thousands of chunk rebuilds on first join,

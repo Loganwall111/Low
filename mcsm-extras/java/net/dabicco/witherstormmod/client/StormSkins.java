@@ -1,18 +1,36 @@
 package net.dabicco.witherstormmod.client;
 
+import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.minecraft.resources.Identifier;
 
 /**
- * Canonical phase texture registry for the 1.9.103 rendering baseline.
+ * Native fallback atlases for the phase renderer.
  *
- * All three sheets are 160x160 UV atlases sourced from the real CEM assets;
- * no generated colour filter or layout rewrite is applied at render time.
+ * The OGS CEM pack owns the high-detail phase-5.5 and phase-6 silhouettes;
+ * these sheets are the matching UV-safe fallback for the Java model passes.
+ * Keep this registry in the mod namespace: the older overlay accidentally
+ * used "witherstormmod", which does not exist and made every command-spawned
+ * storm render with missing/black materials.
  */
 public final class StormSkins {
-    private static final Identifier AUTHENTIC_BODY = id("textures/entity/wither_storm/wither_storm.png");
-    private static final Identifier PHASE_MID = id("textures/entity/wither_storm/phase_mid_skin.png");
-    private static final Identifier PHASE_LATE = id("textures/entity/wither_storm/phase_late_skin.png");
-    private static final Identifier PHASE_ENDGAME = id("textures/entity/wither_storm/phase_endgame_skin.png");
+    private static final Identifier LEGACY_CLASSIC = id("textures/entity/wither_storm.png");
+    private static final Identifier LEGACY_OG = id("textures/entity/wither_storm_og.png");
+    private static final Identifier PHASE4_CLASSIC = id("textures/entity/phase_4_assets.png");
+    private static final Identifier PHASE4_OG = id("textures/entity/phase_4_assets_og.png");
+    private static final Identifier PHASE55_CLASSIC = id("textures/entity/phase_4_assets_p55.png");
+    private static final Identifier PHASE55_OG = id("textures/entity/phase_4_assets_og_p55.png");
+    private static final Identifier PHASE6_CLASSIC = id("textures/entity/phase_4_assets_p6.png");
+    private static final Identifier PHASE6_OG = id("textures/entity/phase_4_assets_og_p6.png");
+    private static final Identifier PHASE7_CLASSIC = id("textures/entity/phase_4_assets_p7.png");
+    private static final Identifier PHASE7_OG = id("textures/entity/phase_4_assets_og_p7.png");
+    private static final Identifier DEVOURER_CLASSIC = id("textures/entity/devourer_assets.png");
+    private static final Identifier DEVOURER_OG = id("textures/entity/devourer_assets_og.png");
+    private static final Identifier DEVOURER55_CLASSIC = id("textures/entity/devourer_assets_p55.png");
+    private static final Identifier DEVOURER55_OG = id("textures/entity/devourer_assets_og_p55.png");
+    private static final Identifier DEVOURER6_CLASSIC = id("textures/entity/devourer_assets_p6.png");
+    private static final Identifier DEVOURER6_OG = id("textures/entity/devourer_assets_og_p6.png");
+    private static final Identifier DEVOURER7_CLASSIC = id("textures/entity/devourer_assets_p7.png");
+    private static final Identifier DEVOURER7_OG = id("textures/entity/devourer_assets_og_p7.png");
 
     private static volatile double phaseHint;
 
@@ -20,7 +38,7 @@ public final class StormSkins {
     }
 
     private static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath("witherstormmod", path);
+        return Identifier.fromNamespaceAndPath("dabywitherstormmod", path);
     }
 
     public static void setPhaseHint(double phase) {
@@ -31,41 +49,54 @@ public final class StormSkins {
         return phaseHint;
     }
 
-    /** Compatibility signal for the old config surface; texture choice is canonical. */
     public static boolean og() {
-        return false;
+        return Math.round(DabyWSClientConfig.stormSkin) >= 1L;
     }
 
     public static Identifier legacy() {
-        return AUTHENTIC_BODY;
+        return og() ? LEGACY_OG : LEGACY_CLASSIC;
     }
 
-    /** Phase 4 through 5.9. */
+    /** Phase 4 through the end of the baby/body transition at 5.9. */
     public static Identifier phase4() {
-        return phaseTexture(phaseHint);
+        boolean ogSkin = og();
+        double p = phaseHint;
+        if (p >= 7.0D) return ogSkin ? PHASE7_OG : PHASE7_CLASSIC;
+        if (p >= 6.0D) return ogSkin ? PHASE6_OG : PHASE6_CLASSIC;
+        if (p >= 5.5D) return ogSkin ? PHASE55_OG : PHASE55_CLASSIC;
+        return ogSkin ? PHASE4_OG : PHASE4_CLASSIC;
     }
 
-    /** Detached/devourer bodies remain on the same phase atlas. */
+    /** Detached/devourer native fallback, with the same phase ladder. */
     public static Identifier devourer() {
-        return phaseTexture(phaseHint);
+        boolean ogSkin = og();
+        double p = phaseHint;
+        if (p >= 7.0D) return ogSkin ? DEVOURER7_OG : DEVOURER7_CLASSIC;
+        if (p >= 6.0D) return ogSkin ? DEVOURER6_OG : DEVOURER6_CLASSIC;
+        if (p >= 5.5D) return ogSkin ? DEVOURER55_OG : DEVOURER55_CLASSIC;
+        return ogSkin ? DEVOURER_OG : DEVOURER_CLASSIC;
     }
 
-    /** Teeth/eye geometry samples the same phase atlas as the body. */
+    /** Actual emissive teeth atlases; never bind the opaque body sheet as glow. */
     public static Identifier teethGlow(double phase) {
         setPhaseHint(phase);
-        return phaseTexture(phase);
-    }
-
-    private static Identifier phaseTexture(double phase) {
-        if (phase >= 8.0D) {
-            return PHASE_ENDGAME;
+        boolean ogSkin = DabyWSClientConfig.stormSkin >= 0.5;
+        String path;
+        if (phase >= 7.0D) {
+            path = ogSkin ? "textures/entity/wither_storm_og_p7_e.png" : "textures/entity/wither_storm_p7_e.png";
+        } else if (phase >= 6.0D) {
+            path = ogSkin ? "textures/entity/wither_storm_og_p6_e.png" : "textures/entity/wither_storm_p6_e.png";
+        } else if (phase >= 5.5D) {
+            path = ogSkin ? "textures/entity/wither_storm_og_p55_e.png" : "textures/entity/wither_storm_p55_e.png";
+        } else if (phase >= 5.1D) {
+            path = ogSkin ? "textures/entity/wither_storm_og_p51_e.png" : "textures/entity/wither_storm_p51_e.png";
+        } else if (phase >= 5.0D) {
+            path = ogSkin ? "textures/entity/wither_storm_og_p5_e.png" : "textures/entity/wither_storm_p5_e.png";
+        } else if (phase >= 4.0D) {
+            path = ogSkin ? "textures/entity/wither_storm_og_e.png" : "textures/entity/wither_storm_e.png";
+        } else {
+            path = "textures/entity/wither_storm_no_teeth_glow_e.png";
         }
-        if (phase >= 6.0D) {
-            return PHASE_LATE;
-        }
-        if (phase >= 4.0D) {
-            return PHASE_MID;
-        }
-        return AUTHENTIC_BODY;
+        return id(path);
     }
 }

@@ -528,6 +528,10 @@ public class WitherStormRenderer
    }
 
    public void submit(WitherStormRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+      // Texture selection must follow this entity, not the last distant storm
+      // ticked by the client palette driver. Command-spawned phase storms can
+      // otherwise borrow the previous storm's atlas for their first frame.
+      StormSkins.setPhaseHint(state.phase);
       poseStack.pushPose();
       applyChangeoverShake(poseStack, state);
       this.frameCollector = submitNodeCollector;
@@ -579,11 +583,17 @@ public class WitherStormRenderer
                this.submitNightLight(state, poseStack, submitNodeCollector, camera);
             }
 
-            if (state.phase >= 4.5) {
+            // The black growth/back layers are the complete baby body. Keep
+            // them through 5.9 so the purple/pink phase-5.5 CEM face can grow
+            // into that body. At phase 6 the authoritative CEM model changes
+            // to the Wither Storm skull silhouette; the old growth and
+            // tentacle passes must not remain underneath it.
+            boolean babyBody = state.phase < 6.0D;
+            if (babyBody && state.phase >= 4.5D) {
                this.submitGrowth5(state, poseStack, submitNodeCollector);
             }
 
-            if (state.phase >= 5.0) {
+            if (babyBody && state.phase >= 5.0D) {
                this.submitTentacles5(state, poseStack, submitNodeCollector);
             }
          } else {
@@ -597,22 +607,32 @@ public class WitherStormRenderer
             }
          }
 
-         super.submit(state, poseStack, submitNodeCollector, camera);
-         if (!this.previewShadowPass && DabyWSClientConfig.turquoiseTeeth) {
-            Identifier glow = StormSkins.teethGlow(state.phase);
-            if (glow != null) {
-               submitNodeCollector.submitModel(
-                  this.previewShadowPass ? this.hunchbackShadowModel : this.hunchbackModel,
-                  state,
-                  poseStack,
-                  FoglessRenderTypes.eyes(glow),
-                  15728880,
-                  OverlayTexture.NO_OVERLAY,
-                  -1,
-                  null,
-                  0,
-                  null
-               );
+         // Phase 6 is not a devourer body with a few extra tentacles. The
+         // host's WitherStormHeadEntity children are the authoritative skull
+         // form and are rendered by WitherStormHeadRenderer with their synced
+         // head state, scale, jaw, eye, and beam data. The preview path has
+         // already submitted the same WitherStormHead model instances above.
+         // Do not submit the generic parent body or its old hunchback teeth
+         // pass under those skulls.
+         boolean skullForm = state.phase >= 6.0D;
+         if (!skullForm) {
+            super.submit(state, poseStack, submitNodeCollector, camera);
+            if (!this.previewShadowPass && DabyWSClientConfig.turquoiseTeeth) {
+               Identifier glow = StormSkins.teethGlow(state.phase);
+               if (glow != null) {
+                  submitNodeCollector.submitModel(
+                     this.previewShadowPass ? this.hunchbackShadowModel : this.hunchbackModel,
+                     state,
+                     poseStack,
+                     FoglessRenderTypes.eyes(glow),
+                     15728880,
+                     OverlayTexture.NO_OVERLAY,
+                     -1,
+                     null,
+                     0,
+                     null
+                  );
+               }
             }
          }
       } finally {
