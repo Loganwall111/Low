@@ -193,6 +193,7 @@ public final class McsmCoreEngineController {
         poseStack.popPose();
     }
     */
+    }
 
     private static Vec3 orbitalLightDirection(Minecraft mc) {
         // Do not turn the replacement sun into a second, warm moon layer at
