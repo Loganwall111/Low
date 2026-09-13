@@ -5,8 +5,6 @@ import net.dabicco.witherstormmod.entity.renderer.WitherStormRenderer;
 import net.dabicco.witherstormmod.entity.state.WitherStormRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.mcsm.extras.client.McsmAtmosphericMeshComponent;
-import net.mcsm.extras.client.McsmAttachedVortex;
 import net.mcsm.extras.client.McsmCoreEngineController;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

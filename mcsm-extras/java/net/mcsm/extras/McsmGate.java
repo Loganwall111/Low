@@ -4,8 +4,6 @@ import net.dabicco.witherstormmod.config.DabyWSClientConfig;
 import net.dabicco.witherstormmod.config.WitherStormConfigs;
 import net.dabicco.witherstormmod.config.WitherStormWorldConfig;
 import net.minecraft.client.Minecraft;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.mcsm.extras.client.McsmHaloSkyRenderer;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Field;
@@ -37,8 +35,9 @@ import java.util.regex.Pattern;
  * then never touches the config again, so anything the player changes in the
  * mod's own config screen sticks for the rest of the session.
  *
- * Booleans are only ever forced ON. Numeric values are only RAISED to a floor,
- * never lowered, so a player who already turned something up keeps their value.
+ * Presentation booleans are forced ON except for retired black overlay paths.
+ * Numeric values are only RAISED to a floor unless an obsolete overlay is being
+ * retired, so a player who already turned something up keeps their value.
  *
  * Both halves are wrapped in a blanket catch: a renamed field after a mod update
  * must cost a visual, never a crash.
@@ -47,25 +46,6 @@ public final class McsmGate {
 
     private static boolean clientDone = false;
     private static boolean worldDone = false;
-    private static boolean nativeHaloRegistered = false;
-
-    /**
-     * Register the Halo on the actual level submit event instead of relying
-     * solely on replacing the base mod's StormBackdrop callback. The base
-     * callback is version-sensitive and can be skipped by a harmless optional
-     * mixin; the Halo itself must remain visible in that case.
-     */
-    private static synchronized void registerNativeHaloPass() {
-        if (nativeHaloRegistered) {
-            return;
-        }
-        try {
-            LevelRenderEvents.COLLECT_SUBMITS.register(McsmHaloSkyRenderer::submit);
-            nativeHaloRegistered = true;
-        } catch (Throwable ignored) {
-            // Rendering must remain fail-soft if Fabric changes the event API.
-        }
-    }
 
     /**
      * MCSM 1.9.112 -- memory of every value this gate writes, keyed by field.
@@ -168,11 +148,9 @@ public final class McsmGate {
         if (clientDone) {
             return;
         }
-        // The native Halo was a world-attached oval that could intersect the
-        // terrain and read as a giant black/white object. The original smooth
-        // StormBackdrop is restored by McsmStormBlobMixin; do not register the
-        // retired Halo pass here.
-        nativeHaloRegistered = true;
+        // The world-attached Halo registration was retired: it could intersect
+        // terrain and read as a giant black/white object. StormBackdrop now
+        // owns the smooth phase atmosphere.
         McsmExtrasConfig.load();
         clientDone = true;
         // 1.9.208: the vanilla look is permanently disabled -- there is no
@@ -215,8 +193,8 @@ public final class McsmGate {
             changed += floorField(c, null, "beamOpacity", 1.35);
 
             // ---- the halo / glare the user has been chasing ----------------
-            // 1.9.212: the fake sun-glow card is off (the shader draws its
-            // own sun); the ORIGINAL oval Catalyst Halo is back on.
+            // The shader owns the sun; the retired generated Halo card stays
+            // disabled and the base StormBackdrop supplies the atmosphere.
             changed += setBool(c, "sunGlow", false);
             // Retire the generated black glare ring; the restored backdrop
             // already supplies the smooth phase atmosphere.
